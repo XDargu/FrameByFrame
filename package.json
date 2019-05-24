@@ -1,0 +1,22 @@
+{
+  "name": "test-dev",
+  "version": "1.0.0",
+  "description": "Tool Test",
+  "main": "./app/main.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "electron ./app/main.js",
+    "dist": "build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Daniel Armesto",
+  "license": "ISC",
+  "dependencies": {
+    "babylonjs": "^4.0.3"
+  },
+  "devDependencies": {
+    "electron": "^5.0.1",
+    "electron-builder": "^20.40.2",
+    "typescript": "^3.4.5"
+  }
+}
