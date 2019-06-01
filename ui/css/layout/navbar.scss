@@ -1,0 +1,26 @@
+@import "../variables.scss";
+
+.basico-navbar {
+    display: block;
+    max-width: calc(100% - 2 * 20px);
+    height: 36px;
+    padding-top: 7px;
+    padding-bottom: 7px;
+    padding-left: 20px;
+    padding-right: 20px;
+    text-align: left;
+
+    @include surface-elevation($nav-bar-elevation);
+}
+
+.basico-navbar .basico-navbar-title {
+    display: inline-block;
+    height: 36px;
+    line-height: 36px;
+    font-size: 20px;
+    text-decoration: none;
+    padding-left: 0;
+    padding-right: 0;
+
+    @include text-highlight-high($on-surface-color);
+}

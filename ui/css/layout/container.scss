@@ -1,0 +1,29 @@
+.basico-container {
+    display: block;
+    padding: 5px;
+    overflow: auto;
+}
+
+.basico-container-compact {
+    padding: 0px;
+}
+
+/* width */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: none;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+    background-color: #555;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+    background-color: #666;
+}

@@ -1,0 +1,33 @@
+@import "../variables.scss";
+
+.basico-button {
+    display: inline-block;
+    cursor: pointer;
+    text-align: center;
+    font-size: 16px;
+    padding: 5px 10px;
+    border-radius: 2px;
+    border: 0;
+
+    @include text-highlight-high($on-primary-color);
+    @include surface-elevation($button-elevation, $primary-color);
+}
+
+.basico-button:hover {
+    @include surface-hovered($button-elevation, $primary-color);
+}
+
+.basico-button.basico-small {
+    padding: 3px 8px;
+    font-size: 12px;
+}
+
+.basico-button.basico-disabled {
+    cursor: not-allowed;
+    @include surface-disabled($button-elevation, $primary-color);
+    @include text-highlight-low($on-surface-color);
+}
+
+.basico-button-group {
+    display: inline-block;
+}
