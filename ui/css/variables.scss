@@ -5,8 +5,8 @@ $primary-color: #bb86fc;
 $secondary-color: #03DAC6;
 $secondary-color-variant: #03DAC6;
 
-$background-color: mix($background-color-base, $primary-color, 90%);
-$surface-color: mix($surface-color-base, $primary-color, 95%);
+$background-color: mix($background-color-base, $primary-color, 98%);
+$surface-color: mix($surface-color-base, $primary-color, 99%);
 $error-color: #CF6679;
 
 $on-primary-color: #000000;
@@ -108,7 +108,7 @@ $mdc-elevation-ambient-map: (
     @if $elevation == 0 {
         @return $surface-base-color;
     } @else {
-        @return lighten($surface-base-color, 5 + $elevation * 1%);
+        @return lighten($surface-base-color, 5 + $elevation * 0.5%);
     }
 }
 
@@ -144,26 +144,33 @@ $mdc-elevation-ambient-map: (
     background-color: surface-disabled-color(surface-elevation-color($color, $elevation));
 }
 
-@mixin surface-elevation($elevation, $color: $surface-color) {
+@mixin surface-elevation($elevation, $color: $surface-color, $ignore-shadow: false) {
     background-color: surface-elevation-color($color, $elevation);
-
-    $umbra-z-value: map-get($mdc-elevation-umbra-map, $elevation);
-    $penumbra-z-value: map-get($mdc-elevation-penumbra-map, $elevation);
-    $ambient-z-value: map-get($mdc-elevation-ambient-map, $elevation);
-
-    $umbra-color: rgba($mdc-elevation-baseline-color, $mdc-elevation-umbra-opacity);
-    $penumbra-color: rgba($mdc-elevation-baseline-color, $mdc-elevation-penumbra-opacity);
-    $ambient-color: rgba($mdc-elevation-baseline-color, $mdc-elevation-ambient-opacity);
-
-    box-shadow:
-      #{"#{$umbra-z-value} #{$umbra-color}"},
-      #{"#{$penumbra-z-value} #{$penumbra-color}"},
-      #{$ambient-z-value} $ambient-color;
-
-    transition: box-shadow 0.25s cubic-bezier(.4, 0, .2, 1);
     transition: background-color 0.25s cubic-bezier(.4, 0, .2, 1);
 
+    @if $ignore-shadow != true {
+
+        $umbra-z-value: map-get($mdc-elevation-umbra-map, $elevation);
+        $penumbra-z-value: map-get($mdc-elevation-penumbra-map, $elevation);
+        $ambient-z-value: map-get($mdc-elevation-ambient-map, $elevation);
+
+        $umbra-color: rgba($mdc-elevation-baseline-color, $mdc-elevation-umbra-opacity);
+        $penumbra-color: rgba($mdc-elevation-baseline-color, $mdc-elevation-penumbra-opacity);
+        $ambient-color: rgba($mdc-elevation-baseline-color, $mdc-elevation-ambient-opacity);
+
+        box-shadow:
+        #{"#{$umbra-z-value} #{$umbra-color}"},
+        #{"#{$penumbra-z-value} #{$penumbra-color}"},
+        #{$ambient-z-value} $ambient-color;
+
+        transition: box-shadow 0.25s cubic-bezier(.4, 0, .2, 1);
+    }
+
     z-index: $elevation;
+}
+
+@mixin surface-elevation-no-shadow($elevation, $color: $surface-color) {
+    @include surface-elevation($elevation, $color, true);
 }
 
 @function highlight-high($color) {
@@ -191,12 +198,14 @@ $mdc-elevation-ambient-map: (
 }
 
 /* Elevation of elements */
-$list-elevation: 15;
+$list-elevation: 8;
 $card-elevation: 3;
 $nav-bar-elevation: 9;
 $button-elevation: 2;
 $tag-elevation: 1;
-$footer-elevation: 1;
+$footer-elevation: 0;
+$tabs-elevation: 1;
+$title-elevation: 19;
 
 :root {
     --primary-color-rgb: 187, 134, 252;

@@ -153,3 +153,63 @@ class Splitter {
 window.onload = function () {
     splitControl.init();
 };*/
+
+// Select from list
+function basicoCreateList(listElement, onItemSelectedCallback) {
+
+    let listItems = listElement.querySelectorAll(".basico-list-item");
+    let i = 0;
+    for (; i < listItems.length; i++) {
+        let item = listItems[i];
+        
+        item.addEventListener("click", function() {
+            listElement.querySelectorAll(".basico-list-item").forEach(function(node){
+                node.classList.remove("basico-list-item-active");
+            });
+            this.classList.add("basico-list-item-active");
+
+            onItemSelectedCallback(this);
+        });
+    }
+}
+
+class TabControl {
+    constructor(tabElements, tabContentElements, defaultActiveTabIdx = 0) {
+        this.tabElements = tabElements;
+        this.tabContentElements = tabContentElements;
+        this.activeTab = this.tabElements[defaultActiveTabIdx];
+        this.activeContent = this.tabContentElements[defaultActiveTabIdx];
+
+        if (this.tabElements.length != this.tabContentElements.length) {
+            console.error("Tabs and tabs content have different amounts.");
+        }
+
+        this.initialize();
+    }
+
+    initialize() {
+        let control = this;
+
+        for (let i = 0; i < this.tabElements.length; i++) {
+
+            let currentTab = this.tabElements[i];
+            let currentContent = this.tabContentElements[i];
+
+            currentTab.onclick = function() {
+                control.activeTab.classList.remove("basico-tabs-selected");
+                currentTab.classList.add("basico-tabs-selected");
+                control.activeTab = currentTab;
+
+                control.activeContent.style.display = "none";
+                currentContent.style.display = "block";
+                control.activeContent = currentContent;
+            }
+
+            currentTab.classList.remove("basico-tabs-selected");
+            currentContent.style.display = "none";
+        }
+
+        this.activeTab.classList.add("basico-tabs-selected");
+        this.activeContent.style.display = "block";
+    }
+}

@@ -1,0 +1,69 @@
+.basico-tabs {
+    display: flex;
+    position: relative;
+    width: 100%;
+    height: 30px;
+    font-size: 14px;
+    margin-bottom: 20px;
+    text-align: left;
+    white-space: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    @include text-highlight-high($on-surface-color);
+    @include surface-elevation($tabs-elevation);
+}
+
+.basico-tabs.basico-vertical-tabs {
+    flex-direction: column;
+    height: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+    z-index: 50;
+
+    @include surface-elevation($nav-bar-elevation);
+}
+
+.basico-tabs::-webkit-scrollbar {
+    height: 5px;
+}
+
+.basico-tabs-item {
+    height: 30px;
+    line-height: 30px;
+    padding-left: 6px;
+    padding-right: 6px;
+    cursor: pointer;
+    transition: all .3s;
+
+    @include text-highlight-medium($on-surface-color);
+    @include surface-elevation-no-shadow($tabs-elevation + 2);
+}
+
+.basico-tabs-item:hover {
+    @include text-highlight-high($on-surface-color);
+    @include surface-hovered($tabs-elevation);
+}
+
+.basico-tabs-selected {
+    @include text-highlight-high($on-surface-color);
+    @include surface-active($tabs-elevation);
+}
+
+.basico-vertical-tabs .basico-tabs-item {
+    height: 40px;
+    line-height: 40px;
+    text-align: center;
+
+    @include surface-elevation-no-shadow($nav-bar-elevation + 2);
+}
+
+.basico-vertical-tabs .basico-tabs-item:hover {
+    @include text-highlight-high($on-surface-color);
+    @include surface-hovered($nav-bar-elevation);
+}
+
+.basico-vertical-tabs .basico-tabs-selected {
+    @include text-highlight-high($on-surface-color);
+    @include surface-active($nav-bar-elevation);
+}

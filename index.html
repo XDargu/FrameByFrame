@@ -16,17 +16,8 @@
             padding: 0;
         }
 
-        #render-canvas {
-            position: absolute;
-            touch-action: none;
-        }
-
         .header {
             height: 35px;
-        }
-
-        .timeline {
-            height: 50px;
         }
 
         .content {
@@ -44,10 +35,16 @@
             display: flex;
             flex: 1 1 auto;
             flex-direction: column;
+            font-family: Roboto, sans-serif;
         }
 
         .content-wrapper .content {
             flex: 1 1 auto;
+            overflow: hidden;
+        }
+
+        .vertical-navBar {
+            flex: 0 0 60px;
         }
 
         .sidebar {
@@ -60,6 +57,11 @@
 
         #console {
             flex: 0 0 250px;
+        }
+
+        #render-canvas {
+            position: absolute;
+            touch-action: none;
         }
     </style>
 </head>
@@ -74,7 +76,16 @@
             <div class="basico-button basico-disabled">Basico Button Disabled</div>
         </div>
         <div class="content-wrapper">
-            <div class="sidebar basico-container basico-container-compact">
+            <div class="vertical-navBar basico-container basico-container-compact">
+                <div class="basico-tabs basico-vertical-tabs" id="control-tabs">
+                    <div class="basico-tabs-item basico-tabs-selected">Entities</div>
+                    <div class="basico-tabs-item">Vars</div>
+                    <div class="basico-tabs-item">Recent</div>
+                    <div class="basico-tabs-item">Settings</div>
+                </div>
+            </div>
+            <div class="sidebar basico-container basico-container-compact" id="entity-list">
+                <div class="basico-title basico-title-compact">Entities</div>
                 <div class="basico-list basico-list-compact">
                         <div class="basico-list-item">
                             <div class="basico-tag">Basico Tag</div>
@@ -95,31 +106,69 @@
                         <div class="basico-list-item">Basico List Item</div>
                 </div>
                 <div class="basico-list">
-                        <div class="basico-list-item">
-                            Basico List Item
-                        </div>
-                        <div class="basico-list-item">
-                            Basico List Item</div>
-                        <div class="basico-list-item">
-                            <div class="basico-tag">Basico Tag</div>
-                            <div class="basico-text-oneline">VeryLongNameWithoutSpacesAtAll</div>
-                        </div>
-                        <div class="basico-list-item">Basico List Item</div>
-                        <div class="basico-list-item">Basico List Item</div>
-                        <div class="basico-list-item">Basico List Item</div>
-                        <div class="basico-list-item">Basico List Item</div>
-                        <div class="basico-list-item">Basico List Item</div>
-                        <div class="basico-list-item">Basico List Item</div>
+                    <div class="basico-list-item">
+                        Basico List Item
+                    </div>
+                    <div class="basico-list-item">
+                        Basico List Item</div>
+                    <div class="basico-list-item">
+                        <div class="basico-tag">Basico Tag</div>
+                        <div class="basico-text-oneline">VeryLongNameWithoutSpacesAtAll</div>
+                    </div>
+                    <div class="basico-list-item">Basico List Item</div>
+                    <div class="basico-list-item">Basico List Item</div>
+                    <div class="basico-list-item">Basico List Item</div>
+                    <div class="basico-list-item">Basico List Item</div>
+                    <div class="basico-list-item">Basico List Item</div>
+                    <div class="basico-list-item">Basico List Item</div>
+                </div>
+            </div>
+            <div class="sidebar basico-container basico-container-compact" id="var-list">
+                <div class="basico-title basico-title-compact">Vars</div>
+                <div class="basico-list">
+                    <div class="basico-list-item">Ragdolls</div>
+                    <div class="basico-list-item">Colliders</div>
+                    <div class="basico-list-item">
+                        <div class="basico-tag">Basico Tag</div>
+                        <div class="basico-text-oneline">Navigation</div>
+                    </div>
+                    <div class="basico-list-item">Damage Handling</div>
+                </div>
+            </div>
+            <div class="sidebar basico-container basico-container-compact" id="recent-list">
+                <div class="basico-title basico-title-compact">Recent Files</div>
+                <div class="basico-list">
+                    <div class="basico-list-item">RecordingAsd.record</div>
+                    <div class="basico-list-item">ServerTest.record</div>
+                    <div class="basico-list-item">RagdollExample.record</div>
+                </div>
+            </div>
+            <div class="sidebar basico-container basico-container-compact" id="setting-list">
+                <div class="basico-title basico-title-compact">Settings</div>
+                <div class="basico-list">
+                    <div class="basico-list-item">Setting 1</div>
+                    <div class="basico-list-item">Setting 2</div>
+                    <div class="basico-list-item">Setting 3</div>
                 </div>
             </div>
             <div class="content vertical-wrapper">
                 <div id="viewport">
                     <canvas id="render-canvas"></canvas>
                 </div>
-                <div id="console" class="basico-footer"></div>
+                <div id="console" class="basico-footer">
+                    <div class="basico-tabs">
+                        <div class="basico-tabs-item">Tab 1</div>
+                        <div class="basico-tabs-item basico-tabs-selected">Tab 2</div>
+                        <div class="basico-tabs-item">Tab 3</div>
+                        <div class="basico-tabs-item">Tab 4</div>
+                        <div class="basico-tabs-item">Tab 5</div>
+                        <div class="basico-tabs-item">Tab 6</div>
+                    </div>
+                    <div>Content</div>
+                </div>
             </div>
             <div class="sidebar basico-container">
-                <div class="basico-card">
+                <div class="basico-card" id="cardToClone">
                         <div class="basico-card-header">Basico Card Header</div>
                         <div class="basico-card-image"><img style="width: 250px;" src ="https://images.pexels.com/photos/814499/pexels-photo-814499.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500"></img></div>
                         <div class="basico-card-element">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</div>
@@ -134,8 +183,8 @@
                         <div class="basico-card-element">Basico Card Element</div>
                         <div class="basico-card-footer">
                             <div class="basico-button-group">
-                                <div class="basico-button basico-disabled">Button</div>
-                                <div class="basico-button">Button</div>
+                                <div class="basico-button basico-disabled" id="removeCardBtn">Button</div>
+                                <div class="basico-button" id="createCardBtn" onclick="createNewCard()">Button</div>
                             </div>
                         </div>
                 </div>
@@ -154,6 +203,55 @@
             document.getElementById('render-canvas').style.left = entries[0].target.offsetLeft + "px";
         });
         resizeObserver.observe(document.getElementById('viewport'));
+    </script>
+
+    <script>
+        // Select from list
+        var listItems = document.getElementsByClassName("basico-list");
+        var i;
+
+        for (i = 0; i < listItems.length; i++) {
+            basicoCreateList(listItems[i], function(element) {
+                console.log(element);
+            });
+        }
+
+        // Create new card
+        function createNewCard()
+        {
+            var dupNode = document.getElementById("cardToClone").cloneNode(true);
+            dupNode.classList.add("popout");
+            dupNode.id = "cardToRemove";
+
+            document.getElementById("createCardBtn").classList.add("basico-disabled");
+            document.getElementById("createCardBtn").onclick = null;
+            document.getElementById("removeCardBtn").classList.remove("basico-disabled");
+            document.getElementById("removeCardBtn").onclick = function() { removeNewCard(); };
+
+            document.getElementById("cardToClone").parentElement.appendChild(dupNode);
+        }
+
+        function removeNewCard()
+        {
+            var dupNode = document.getElementById("cardToRemove");
+            dupNode.parentNode.removeChild(dupNode);
+
+            document.getElementById("createCardBtn").classList.remove("basico-disabled");
+            document.getElementById("createCardBtn").onclick = function() { createNewCard(); };
+            document.getElementById("removeCardBtn").classList.add("basico-disabled");
+            document.getElementById("removeCardBtn").onclick = null;
+        }
+
+        // Create tab control
+        var controlTabs = new TabControl(
+            document.getElementById("control-tabs").children,
+            [
+                document.getElementById("entity-list"), 
+                document.getElementById("var-list"),
+                document.getElementById("recent-list"),
+                document.getElementById("setting-list")
+            ]
+        );
     </script>
 </body>
 
