@@ -1,14 +1,15 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, Menu } from "electron";
 import * as path from "path";
 import * as url from "url";
+import menu from "./components/Menu";
 
 let mainWindow: Electron.BrowserWindow;
 
 function createWindow() {
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    height: 600,
-    width: 800,
+    height: 768,
+    width: 1024,
     webPreferences: {
         nodeIntegration: true
     }
@@ -22,7 +23,7 @@ function createWindow() {
   }));
 
   // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+  mainWindow.webContents.openDevTools({mode: 'detach'});
 
   // Emitted when the window is closed.
   mainWindow.on("closed", () => {
@@ -31,6 +32,8 @@ function createWindow() {
     // when you should delete the corresponding element.
     mainWindow = null;
   });
+
+  Menu.setApplicationMenu(menu(mainWindow));
 }
 
 // This method will be called when Electron has finished
