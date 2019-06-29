@@ -1,9 +1,11 @@
 import * as BABYLON from 'babylonjs';
+import RecordedData from './recording/RecordingData';
 
 export default class Renderer {
     private _canvas: HTMLCanvasElement;
     private _engine: BABYLON.Engine;
     private _scene: BABYLON.Scene;
+    private recordedData: RecordedData;
 
     createScene(canvas: HTMLCanvasElement, engine: BABYLON.Engine) {
         this._canvas = canvas;
@@ -100,6 +102,44 @@ export default class Renderer {
         window.addEventListener('resize', function () {
             engine.resize();
         });
+
+        this.recordedData = new RecordedData();
+        this.recordedData.addTestData();
+
+        this.applyFrame(0);
+    }
+
+    applyFrame(frame : number) {
+        const frameData = this.recordedData.buildFrameData(frame);
+
+        console.log(frameData);
+        console.log(this.recordedData);
+
+        let entityList = document.getElementById("entity-list");
+        let listElement = entityList.querySelector(".basico-list");
+
+        let counter = 0;
+        for (let entityID in frameData.entities) {
+            let element = <HTMLElement>listElement.children[counter];
+
+            if (element) {
+                element.innerText = entityID;
+            }
+            else {
+                let listItem = document.createElement("div");
+                listItem.classList.add("basico-list-item");
+                listItem.innerText = entityID;
+                listElement.appendChild(listItem);
+            }
+            counter++;
+        }
+
+        // Remove remaining elements
+        for (let i=counter; i<listElement.childElementCount; i++)
+        {
+            let element = <HTMLElement>listElement.children[i];
+            listElement.removeChild(element);
+        }
     }
 }
 

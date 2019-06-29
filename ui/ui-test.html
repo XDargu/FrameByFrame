@@ -177,6 +177,9 @@
                             </div>
                         </div>
                 </div>
+                <div class="basico-tree" id="basico-tree-example">
+                    <ul></ul>
+                </div>
             </div>
         </div>
     </div>
@@ -198,6 +201,15 @@
                 console.log(element);
             });
         }
+
+        // Create tree
+        var treeParent = document.getElementById('basico-tree-example');
+        var treeControl = new TreeControl(treeParent);
+
+        var nav = treeControl.addItem(treeControl.root, "Navigation", false, 0);
+        var targetData = treeControl.addItem(nav, "Target Data", true, 1);
+        treeControl.addItem(targetData, "Position: 50 150 32", true, 2);
+        treeControl.addItem(targetData, "Distance: 12", true, 3);
 
         // Create new card
         function createNewCard()
