@@ -173,7 +173,7 @@ function basicoCreateList(listElement, onItemSelectedCallback) {
     }
 }
 
-function toggleTreeElement(treeItemWrapperElement) {
+function basicoToggleTreeElement(treeItemWrapperElement) {
 
     treeItemWrapperElement.addEventListener("click", function() {
 
@@ -202,7 +202,7 @@ class TreeControl {
 
         let wrapper = document.createElement("span");
         wrapper.classList.add("basico-tree-item-wrapper");
-        toggleTreeElement(wrapper);
+        basicoToggleTreeElement(wrapper);
         listItem.appendChild(wrapper);
 
         let toggle = document.createElement("span");

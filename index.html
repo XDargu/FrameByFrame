@@ -80,6 +80,7 @@
                 <div class="basico-tabs basico-vertical-tabs" id="control-tabs">
                     <div class="basico-tabs-item basico-tabs-selected">Entities</div>
                     <div class="basico-tabs-item">Vars</div>
+                    <div class="basico-tabs-item">Connections</div>
                     <div class="basico-tabs-item">Recent</div>
                     <div class="basico-tabs-item">Settings</div>
                 </div>
@@ -118,6 +119,12 @@
                     <div class="basico-list-item">Damage Handling</div>
                 </div>
             </div>
+            <div class="sidebar basico-container basico-container-compact" id="connection-list">
+                    <div class="basico-title basico-title-compact">Connections</div>
+                    <div class="basico-list">
+                        
+                    </div>
+                </div>
             <div class="sidebar basico-container basico-container-compact" id="recent-list">
                 <div class="basico-title basico-title-compact">Recent Files</div>
                 <div class="basico-list">
@@ -151,7 +158,11 @@
                 </div>
             </div>
             <div class="sidebar basico-container">
-                <div class="basico-card" id="cardToClone">
+                <div class="basico-tree" id="property-tree">
+                    <div class="">Properties</div>
+                    <ul></ul>
+                </div>
+                <!--<div class="basico-card" id="cardToClone">
                         <div class="basico-card-header">Basico Card Header</div>
                         <div class="basico-card-image"><img style="width: 250px;" src ="https://images.pexels.com/photos/814499/pexels-photo-814499.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500"></img></div>
                         <div class="basico-card-element">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</div>
@@ -171,6 +182,7 @@
                             </div>
                         </div>
                 </div>
+                -->
             </div>
         </div>
     </div>
@@ -231,10 +243,25 @@
             [
                 document.getElementById("entity-list"), 
                 document.getElementById("var-list"),
+                document.getElementById("connection-list"),
                 document.getElementById("recent-list"),
                 document.getElementById("setting-list")
             ]
         );
+
+        // Create tree
+        var treeParent = document.getElementById('property-tree');
+        var treeControl = new TreeControl(treeParent);
+
+        var propertyId = 0;
+
+        var trans = treeControl.addItem(treeControl.root, "Transform", false, propertyId++);
+        treeControl.addItem(trans, "Position: 12 56 32", true, propertyId++);
+
+        var nav = treeControl.addItem(treeControl.root, "Navigation", false, propertyId++);
+        var targetData = treeControl.addItem(nav, "Target Data", true, propertyId++);
+        treeControl.addItem(targetData, "Position: 50 150 32", true, propertyId++);
+        treeControl.addItem(targetData, "Distance: 12", true, propertyId++);
     </script>
 </body>
 

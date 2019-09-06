@@ -7,6 +7,12 @@
             "type": "npm",
             "script": "build",
             "problemMatcher": []
+        },
+        {
+            "label": "Sass Compile",
+            "type": "shell",
+            "command": "sass ui/css/ui.scss ui/css/basico.css",
+            "group": "build"
         }
     ]
 }

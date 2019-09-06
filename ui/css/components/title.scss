@@ -4,7 +4,7 @@
     display: block;
     width: 100%;
     font-size: 14px;
-    padding: 4px;
+    padding: 4px 0 4px 0;
 
     @include text-highlight-high($on-surface-color);
     @include surface-elevation($title-elevation);
