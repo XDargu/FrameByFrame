@@ -173,6 +173,79 @@ function basicoCreateList(listElement, onItemSelectedCallback) {
     }
 }
 
+function basicoToggleTreeElement(treeItemWrapperElement) {
+
+    treeItemWrapperElement.addEventListener("click", function() {
+
+        let listItem = this.parentElement;
+
+        if (listItem.classList.contains("basico-tree-closed")) {
+            listItem.classList.remove("basico-tree-closed");
+        }
+        else {
+            listItem.classList.add("basico-tree-closed");
+        }
+    });
+}
+
+class TreeControl {
+    constructor(treeElement) {
+        this.root = treeElement;
+    }
+
+    addItem(parentListItem, contentData, hidden = false, value = null) {
+
+        let parentList = parentListItem.querySelector("ul");
+
+        let listItem = document.createElement("li");
+        listItem.classList.add("basico-tree-leaf");
+
+        let wrapper = document.createElement("span");
+        wrapper.classList.add("basico-tree-item-wrapper");
+        basicoToggleTreeElement(wrapper);
+        listItem.appendChild(wrapper);
+
+        let toggle = document.createElement("span");
+        toggle.classList.add("basico-tree-item-toggle");
+        wrapper.appendChild(toggle);
+
+        let content = document.createElement("span");
+        content.classList.add("basico-tree-item-content");
+        content.innerHTML = contentData;
+        wrapper.appendChild(content);
+
+        let children = document.createElement("ul");
+        listItem.appendChild(children);
+
+        parentList.appendChild(listItem);
+        parentListItem.classList.remove("basico-tree-leaf");
+
+        if (hidden)
+        {
+            parentListItem.classList.add("basico-tree-closed");
+        }
+
+        if (value != null)
+        {
+            listItem.setAttribute('data-tree-value', value);
+        }
+
+        return listItem;
+    }
+
+    getValueOfItem(listItem) {
+        return listItem.getAttribute('data-tree-value');
+    }
+
+    getItemsWithValue(value) {
+        return this.root.querySelectorAll('[data-tree-value="' + value + '"]');
+    }
+
+    getItemWithValue(value) {
+        return this.root.querySelector('[data-tree-value="' + value + '"]');
+    }
+}
+
 class TabControl {
     constructor(tabElements, tabContentElements, defaultActiveTabIdx = 0) {
         this.tabElements = tabElements;
