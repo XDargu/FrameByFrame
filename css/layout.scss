@@ -1,0 +1,69 @@
+html,
+body {
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.header {
+    height: 35px;
+}
+
+.content {
+    height: 100%;
+}
+
+.content-wrapper {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: row;
+}
+
+.page-wrapper,
+.vertical-wrapper {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    font-family: Roboto, sans-serif;
+}
+
+.content-wrapper .content {
+    flex: 1 1 auto;
+    overflow: hidden;
+}
+
+.vertical-navBar {
+    flex: 0 0 50px;
+}
+
+.vertical-navBar .basico-tabs-item {
+    height: 50px;
+}
+
+.vertical-navBar i.fas {
+    font-size: 1.5em;
+    vertical-align: middle;
+}
+
+.sidebar {
+    flex: 0 0 250px;
+}
+
+#viewport {
+    flex: 1 1 auto;
+}
+
+#console {
+    flex: 0 0 250px;
+}
+
+#render-canvas {
+    position: absolute;
+    touch-action: none;
+}
+
+#timeline-wrapper {
+    height: 50px;
+}

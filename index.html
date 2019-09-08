@@ -4,70 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Babylon JS Electron App</title>
-    <link rel="stylesheet" type="text/css" href="ui/css/basico.css">
-    
-    <style>
-        html,
-        body {
-            overflow: hidden;
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 0;
-        }
-
-        .header {
-            height: 35px;
-        }
-
-        .content {
-            height: 100%;
-        }
-
-        .content-wrapper {
-            display: flex;
-            flex: 1 1 auto;
-            flex-direction: row;
-        }
-
-        .page-wrapper,
-        .vertical-wrapper {
-            display: flex;
-            flex: 1 1 auto;
-            flex-direction: column;
-            font-family: Roboto, sans-serif;
-        }
-
-        .content-wrapper .content {
-            flex: 1 1 auto;
-            overflow: hidden;
-        }
-
-        .vertical-navBar {
-            flex: 0 0 60px;
-        }
-
-        .sidebar {
-            flex: 0 0 250px;
-        }
-
-        #viewport {
-            flex: 1 1 auto;
-        }
-
-        #console {
-            flex: 0 0 250px;
-        }
-
-        #render-canvas {
-            position: absolute;
-            touch-action: none;
-        }
-
-        #timeline-wrapper {
-            height: 50px;
-        }
-    </style>
+    <link rel="stylesheet" type="text/css" href="css/styles.css">
+    <link rel="stylesheet" type="text/css" href="css/all.min.css">
 </head>
 
 <body>
@@ -85,11 +23,11 @@
         <div class="content-wrapper">
             <div class="vertical-navBar basico-container basico-container-compact">
                 <div class="basico-tabs basico-vertical-tabs" id="control-tabs">
-                    <div class="basico-tabs-item basico-tabs-selected">Entities</div>
-                    <div class="basico-tabs-item">Vars</div>
-                    <div class="basico-tabs-item">Connections</div>
-                    <div class="basico-tabs-item">Recent</div>
-                    <div class="basico-tabs-item">Settings</div>
+                    <div class="basico-tabs-item basico-tabs-selected" title="Entity list"><i class="fas fa-list"></i></div>
+                    <div class="basico-tabs-item" title="Vars"><i class="fas fa-check-square"></i></div>
+                    <div class="basico-tabs-item" title="Connections"><i class="fas fa-network-wired"></i></div>
+                    <div class="basico-tabs-item" title="Recent"><i class="fas fa-folder"></i></div>
+                    <div class="basico-tabs-item" title="Settings"><i class="fas fa-cog"></i></div>
                 </div>
             </div>
             <div class="sidebar basico-container basico-container-compact" id="entity-list">
