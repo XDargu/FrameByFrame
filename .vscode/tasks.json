@@ -13,6 +13,19 @@
             "type": "shell",
             "command": "sass ui/css/ui.scss ui/css/basico.css",
             "group": "build"
+        },
+        {
+            "label": "Npm build",
+            "type": "shell",
+            "command": "npm run build",
+            "group": "build"
+        },
+        {
+            "label": "Build",
+            "type": "shell",
+            "dependsOrder": "sequence",
+            "dependsOn": ["Sass Compile", "Npm build"],
+            "group": "build"
         }
     ]
 }

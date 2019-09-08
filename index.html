@@ -63,6 +63,10 @@
             position: absolute;
             touch-action: none;
         }
+
+        #timeline-wrapper {
+            height: 50px;
+        }
     </style>
 </head>
 
@@ -74,6 +78,9 @@
             <button class="basico-button">Basico Button</button>
             <div class="basico-button basico-small">Basico Button Small</div>
             <div class="basico-button basico-disabled">Basico Button Disabled</div>
+        </div>
+        <div id="timeline-wrapper">
+            <canvas id="timeline" width="200" height="50" style="border:-1px solid #444;"></canvas>
         </div>
         <div class="content-wrapper">
             <div class="vertical-navBar basico-container basico-container-compact">
@@ -198,6 +205,10 @@
             document.getElementById('render-canvas').style.left = entries[0].target.offsetLeft + "px";
         });
         resizeObserver.observe(document.getElementById('viewport'));
+    </script>
+
+    <script>
+        
     </script>
 
     <script>

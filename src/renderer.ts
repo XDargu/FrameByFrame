@@ -1,11 +1,13 @@
 import * as BABYLON from 'babylonjs';
 import RecordedData from './recording/RecordingData';
+import Timeline from './timeline/timeline';
 
 export default class Renderer {
     private _canvas: HTMLCanvasElement;
     private _engine: BABYLON.Engine;
     private _scene: BABYLON.Scene;
     private recordedData: RecordedData;
+    private timeline: Timeline;
 
     createScene(canvas: HTMLCanvasElement, engine: BABYLON.Engine) {
         this._canvas = canvas;
@@ -103,14 +105,20 @@ export default class Renderer {
             engine.resize();
         });
 
+        this.initializeTimeline();
+
         this.recordedData = new RecordedData();
         this.recordedData.addTestData();
+
+        this.timeline.length = this.recordedData.frameTable.entryIDs.length;
 
         this.applyFrame(0);
     }
 
     applyFrame(frame : number) {
         const frameData = this.recordedData.buildFrameData(frame);
+
+        this.timeline.currentFrame = frame;
 
         console.log(frameData);
         console.log(this.recordedData);
@@ -140,6 +148,19 @@ export default class Renderer {
             let element = <HTMLElement>listElement.children[i];
             listElement.removeChild(element);
         }
+    }
+
+    initializeTimeline()
+    {
+        let timelineElement: HTMLCanvasElement = <HTMLCanvasElement>document.getElementById('timeline');
+        let timelineWrapper: HTMLElement = document.getElementById('timeline-wrapper');
+        this.timeline = new Timeline(timelineElement, timelineWrapper);
+        this.timeline.setFrameClickedCallback(this.onTimelineClicked.bind(this));
+    }
+
+    onTimelineClicked(frame: number)
+    {
+        this.applyFrame(frame);
     }
 }
 
