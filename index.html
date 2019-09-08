@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <title>Babylon JS Electron App</title>
     <link rel="stylesheet" type="text/css" href="ui/css/basico.css">
-    <script src="ui/src/ui.js"></script>
+    
     <style>
         html,
         body {
@@ -95,23 +95,6 @@
             <div class="sidebar basico-container basico-container-compact" id="entity-list">
                 <div class="basico-title basico-title-compact">Entities</div>
                 <div class="basico-list basico-list-compact">
-                        <div class="basico-list-item">
-                            <div class="basico-tag">Basico Tag</div>
-                            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                        </div>
-                        <div class="basico-list-item">
-                            <div class="basico-tag">Basico Tag</div>
-                            Basico List Item</div>
-                        <div class="basico-list-item">
-                            <div class="basico-tag">Basico Tag</div>
-                            <div class="basico-text-oneline">VeryLongNameWithoutSpacesAtAll</div>
-                        </div>
-                        <div class="basico-list-item">Basico List Item</div>
-                        <div class="basico-list-item">Basico List Item</div>
-                        <div class="basico-list-item">Basico List Item</div>
-                        <div class="basico-list-item">Basico List Item</div>
-                        <div class="basico-list-item">Basico List Item</div>
-                        <div class="basico-list-item">Basico List Item</div>
                 </div>
             </div>
             <div class="sidebar basico-container basico-container-compact" id="var-list">
@@ -169,27 +152,6 @@
                     <div class="">Properties</div>
                     <ul></ul>
                 </div>
-                <!--<div class="basico-card" id="cardToClone">
-                        <div class="basico-card-header">Basico Card Header</div>
-                        <div class="basico-card-image"><img style="width: 250px;" src ="https://images.pexels.com/photos/814499/pexels-photo-814499.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500"></img></div>
-                        <div class="basico-card-element">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</div>
-                        <div class="basico-card-divider"></div>
-                        <div class="basico-card-element">Basico Card Element</div>
-                        <div class="basico-card-interactive">Basico Card Interactive</div>
-                        <div class="basico-card-footer">Basico Card Footer</div>
-                </div>
-                <div class="basico-card">
-                        <div class="basico-card-header">Basico Header<div class="basico-tag">Basico Tag</div></div>
-                        <div class="basico-card-element">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</div>
-                        <div class="basico-card-element">Basico Card Element</div>
-                        <div class="basico-card-footer">
-                            <div class="basico-button-group">
-                                <div class="basico-button basico-disabled" id="removeCardBtn">Button</div>
-                                <div class="basico-button" id="createCardBtn" onclick="createNewCard()">Button</div>
-                            </div>
-                        </div>
-                </div>
-                -->
             </div>
         </div>
     </div>
@@ -205,74 +167,6 @@
             document.getElementById('render-canvas').style.left = entries[0].target.offsetLeft + "px";
         });
         resizeObserver.observe(document.getElementById('viewport'));
-    </script>
-
-    <script>
-        
-    </script>
-
-    <script>
-        // Select from list
-        var listItems = document.getElementsByClassName("basico-list");
-        var i;
-
-        for (i = 0; i < listItems.length; i++) {
-            basicoCreateList(listItems[i], function(element) {
-                console.log(element);
-            });
-        }
-
-        // Create new card
-        function createNewCard()
-        {
-            var dupNode = document.getElementById("cardToClone").cloneNode(true);
-            dupNode.classList.add("popout");
-            dupNode.id = "cardToRemove";
-
-            document.getElementById("createCardBtn").classList.add("basico-disabled");
-            document.getElementById("createCardBtn").onclick = null;
-            document.getElementById("removeCardBtn").classList.remove("basico-disabled");
-            document.getElementById("removeCardBtn").onclick = function() { removeNewCard(); };
-
-            document.getElementById("cardToClone").parentElement.appendChild(dupNode);
-        }
-
-        function removeNewCard()
-        {
-            var dupNode = document.getElementById("cardToRemove");
-            dupNode.parentNode.removeChild(dupNode);
-
-            document.getElementById("createCardBtn").classList.remove("basico-disabled");
-            document.getElementById("createCardBtn").onclick = function() { createNewCard(); };
-            document.getElementById("removeCardBtn").classList.add("basico-disabled");
-            document.getElementById("removeCardBtn").onclick = null;
-        }
-
-        // Create tab control
-        var controlTabs = new TabControl(
-            document.getElementById("control-tabs").children,
-            [
-                document.getElementById("entity-list"), 
-                document.getElementById("var-list"),
-                document.getElementById("connection-list"),
-                document.getElementById("recent-list"),
-                document.getElementById("setting-list")
-            ]
-        );
-
-        // Create tree
-        var treeParent = document.getElementById('property-tree');
-        var treeControl = new TreeControl(treeParent);
-
-        var propertyId = 0;
-
-        var trans = treeControl.addItem(treeControl.root, "Transform", false, propertyId++);
-        treeControl.addItem(trans, "Position: 12 56 32", true, propertyId++);
-
-        var nav = treeControl.addItem(treeControl.root, "Navigation", false, propertyId++);
-        var targetData = treeControl.addItem(nav, "Target Data", true, propertyId++);
-        treeControl.addItem(targetData, "Position: 50 150 32", true, propertyId++);
-        treeControl.addItem(targetData, "Distance: 12", true, propertyId++);
     </script>
 </body>
 

@@ -1,37 +1,37 @@
-interface IProperty {
+export interface IProperty {
 	type: string;
 	name: string;
 	value: any;
 }
 
-interface IPropertyGroup {
+export interface IPropertyGroup {
 	type: string;
 	name: string;
 	value: IProperty[];
 }
 
-interface IEvent {
+export interface IEvent {
 	name: string;
 	tag: string;
 	properties: IPropertyGroup;
 }
 
-interface IEntity {
+export interface IEntity {
 	id: number;
 	groupMap?: any;
 	properties: IProperty[];
 	events: IEvent[];
 }
 
-interface IFrameEntityData {
+export interface IFrameEntityData {
 	[key:number]: IEntity
 }
 
-interface IFrameData {
+export interface IFrameData {
 	entities: IFrameEntityData
 }
 
-class PropertyTable {
+export class PropertyTable {
 	types: any[];
 	names: string[];
 	parentIDs: number[];
@@ -72,7 +72,7 @@ class PropertyTable {
 	}
 }
 
-class ValueTable {
+export class ValueTable {
 	values: any[];
 	size: number;
 	constructor() {
@@ -104,7 +104,7 @@ class ValueTable {
 	}
 }
 
-class PropertyValueTable {
+export class PropertyValueTable {
 	propertyIDs: number[];
 	valueIDs: number[];
 	size: number;
@@ -138,7 +138,7 @@ class PropertyValueTable {
 	}
 }
 
-class EntityPropertyValueTable {
+export class EntityPropertyValueTable {
 	propValueIDs: number[];
 	entityIDs: number[];
 	size: number;
@@ -172,7 +172,7 @@ class EntityPropertyValueTable {
 	}
 }
 
-class EventDescriptorTable {
+export class EventDescriptorTable {
 	names: string[];
 	tags: string[];
 	size: number;
@@ -207,7 +207,7 @@ class EventDescriptorTable {
 	}
 }
 
-class EventTable {
+export class EventTable {
 	descriptorIDs: number[];
 	propValueIDs: number[];
 	entityIDs: number[];
@@ -245,7 +245,7 @@ class EventTable {
 	}
 }
 
-class FrameTable {
+export class FrameTable {
 	entryIDs: any[];
 	size: number;
 	constructor() {
@@ -266,7 +266,75 @@ class FrameTable {
 	}
 }
 
-export default class RecordedData {
+export class NaiveRecordedData {
+	frameData: IFrameData[];
+
+	constructor() {
+		this.frameData = [];
+	}
+
+	static getEntityName(entity: IEntity) : string
+	{
+		// Name is always part of the special groups
+		return entity.properties[1].value[0].value;
+	}
+
+	addProperties(frame: number, entity : IEntity) {
+		if (!this.frameData[frame])
+		{
+			this.frameData[frame] = { entities: [] };
+		}
+
+		this.frameData[frame].entities[entity.id] = entity;
+	}
+
+	buildFrameData(frame : number) : IFrameData {
+		return this.frameData[frame];
+	}
+
+	getSize()
+	{
+		return this.frameData.length;
+	}
+
+	addTestData() {
+		for (let i=0; i<100; ++i)
+		{
+			const frame = i;
+			
+			for (let j=0; j<15; ++j)
+			{
+				const entityID = j + 1;
+
+				var entity : IEntity = { id: entityID, properties: [], events: [] };
+				
+				var propertyGroup = { type: "group", name: "properties", value: [
+					{ type: "int", name: "Target ID", value: 122 },
+					{ type: "string", name: "Target Name", value: "Player" },
+					{ type: "float", name: "Target Distance", value: Math.random() * 352 },
+					{ type: "group", name: "Target Info", value: [
+						{ type: "float", name: "Target Radius", value: Math.random() * 5 },
+						{ type: "float", name: "Target Length", value: Math.random() * 20 }
+						] }
+					]
+				};
+
+				var specialGroup = { type: "group", name: "special", value: [
+					{ type: "string", name: "Name", value: "My Entity Name " + entityID },
+					{ type: "vec3", name: "Position", value: "1, 2, 4" }
+					]
+				};
+
+				entity.properties.push(propertyGroup);
+				entity.properties.push(specialGroup);
+
+				this.addProperties(frame, entity);
+			}
+		}
+	}
+}
+
+export class RecordedData {
 	propertyTable: PropertyTable;
 	valueTable: ValueTable;
 	propertyValueTable: PropertyValueTable;
@@ -304,6 +372,11 @@ export default class RecordedData {
 	addEvents(frame : number, entityID : number, eventData : any) {
 
 	}
+
+	getSize()
+	{
+		this.frameTable.entryIDs.length;
+	}
 	
 	addProperty(frame : number, entityID : number, propertyData : IProperty, parentID : number) {
 		const propertyID = this.propertyTable.registerEntry(propertyData.type, propertyData.name, parentID);
@@ -330,7 +403,7 @@ export default class RecordedData {
 		}
 	}
 	
-	buildFrameData(frame : number) : any {
+	buildFrameData(frame : number) : IFrameData {
 		let frameData : IFrameData = { entities: {} };
 		let tempPropertyData : IProperty = { type: null, value: null, name: null};
 		
@@ -414,7 +487,7 @@ export default class RecordedData {
 				};
 
 				var specialGroup = { type: "group", name: "special", value: [
-					{ type: "string", name: "Name", value: "My Entity Name " + j },
+					{ type: "string", name: "Name", value: "My Entity Name " + entityID },
 					{ type: "vec3", name: "Position", value: "1, 2, 4" }
 					]
 				};
