@@ -1,11 +1,23 @@
 import * as BABYLON from 'babylonjs';
-import RecordedData from './recording/RecordingData';
+import * as RECORDING from './recording/RecordingData';
+import Timeline from './timeline/timeline';
+import * as BASICO from './ui/ui';
 
 export default class Renderer {
     private _canvas: HTMLCanvasElement;
     private _engine: BABYLON.Engine;
     private _scene: BABYLON.Scene;
-    private recordedData: RecordedData;
+    private recordedData: RECORDING.NaiveRecordedData;
+    private timeline: Timeline;
+    private currentPropertyId: number;
+
+    // Per frame cache
+    private frameData: RECORDING.IFrameData;
+
+    // UI Elements
+    private propertyTree: BASICO.TreeControl;
+    private entityList: BASICO.ListControl;
+    private selectedEntityId: number;
 
     createScene(canvas: HTMLCanvasElement, engine: BABYLON.Engine) {
         this._canvas = canvas;
@@ -103,33 +115,83 @@ export default class Renderer {
             engine.resize();
         });
 
-        this.recordedData = new RecordedData();
+        this.selectedEntityId = null;
+
+        this.initializeTimeline();
+        this.initializeUI();
+
+        this.recordedData = new RECORDING.NaiveRecordedData();
         this.recordedData.addTestData();
+
+        this.timeline.length = this.recordedData.getSize();
 
         this.applyFrame(0);
     }
 
-    applyFrame(frame : number) {
-        const frameData = this.recordedData.buildFrameData(frame);
+    initializeUI()
+    {
+        // Create tree
+        let treeParent = document.getElementById('property-tree');
+        this.propertyTree = new BASICO.TreeControl(treeParent);
 
-        console.log(frameData);
+        this.currentPropertyId = 0;
+        
+        var trans = this.propertyTree.addItem(this.propertyTree.root, "Transform", false, this.getNextPropertyId());
+        this.propertyTree.addItem(trans, "Position: 12 56 32", true, this.getNextPropertyId());
+
+        var nav = this.propertyTree.addItem(this.propertyTree.root, "Navigation", false, this.getNextPropertyId());
+        var targetData = this.propertyTree.addItem(nav, "Target Data", true, this.getNextPropertyId());
+        this.propertyTree.addItem(targetData, "Position: 50 150 32", true, this.getNextPropertyId());
+        this.propertyTree.addItem(targetData, "Distance: 12", true, this.getNextPropertyId());
+
+        const entityListElement = <HTMLElement>document.getElementById('entity-list').querySelector('.basico-list');
+
+        var renderer = this;
+        this.entityList = new BASICO.ListControl(entityListElement);
+
+        // Create tab control
+        var controlTabs = new BASICO.TabControl(
+            <HTMLElement[]><any>document.getElementById("control-tabs").children,
+            [
+                document.getElementById("entity-list"), 
+                document.getElementById("var-list"),
+                document.getElementById("connection-list"),
+                document.getElementById("recent-list"),
+                document.getElementById("setting-list")
+            ]
+        );
+    }
+
+    getNextPropertyId() : string
+    {
+        return (++this.currentPropertyId).toString();
+    }
+
+    applyFrame(frame : number) {
+        this.frameData = this.recordedData.buildFrameData(frame);
+
+        this.timeline.currentFrame = frame;
+
+        console.log(this.frameData);
         console.log(this.recordedData);
 
-        let entityList = document.getElementById("entity-list");
-        let listElement = entityList.querySelector(".basico-list");
+        // Update entity list
+        let listElement = this.entityList.listWrapper;
 
         let counter = 0;
-        for (let entityID in frameData.entities) {
+        for (let entityID in this.frameData.entities) {
             let element = <HTMLElement>listElement.children[counter];
 
+            const entityName = RECORDING.NaiveRecordedData.getEntityName(this.frameData.entities[entityID]);
+
             if (element) {
-                element.innerText = entityID;
+                element.innerText = entityName;
+                this.entityList.setValueOfItem(element, entityID);
             }
             else {
-                let listItem = document.createElement("div");
-                listItem.classList.add("basico-list-item");
-                listItem.innerText = entityID;
-                listElement.appendChild(listItem);
+                this.entityList.appendElement(entityName, function(element) {
+                    renderer.onEntitySelected(parseInt(renderer.entityList.getValueOfItem(element)));
+                }, entityID);
             }
             counter++;
         }
@@ -140,6 +202,60 @@ export default class Renderer {
             let element = <HTMLElement>listElement.children[i];
             listElement.removeChild(element);
         }
+
+        // Rebuild property tree
+        this.buildPropertyTree();
+    }
+
+    onEntitySelected(entityId: number)
+    {
+        console.log("Selected: " + entityId);
+        this.selectedEntityId = entityId;
+        this.buildPropertyTree();
+    }
+
+    buildPropertyTree()
+    {
+        this.propertyTree.clear();
+
+        if (this.selectedEntityId != null)
+        {
+            const selectedEntity = this.frameData.entities[this.selectedEntityId];
+
+            for (let i=0; i<selectedEntity.properties.length; ++i)
+            {
+                this.addToPropertyTree(this.propertyTree.root, selectedEntity.properties[i]);
+            }
+        }
+    }
+
+    addToPropertyTree(parent: HTMLElement, property: RECORDING.IProperty)
+    {
+        if (property.type == "group")
+        {
+            let addedItem = this.propertyTree.addItem(parent, property.name);
+            for (let i=0; i<property.value.length; ++i)
+            {
+                this.addToPropertyTree(addedItem, property.value[i]);
+            }
+        }
+        else
+        {
+            this.propertyTree.addItem(parent, property.name + ": " + property.value);
+        }
+    }
+
+    initializeTimeline()
+    {
+        let timelineElement: HTMLCanvasElement = <HTMLCanvasElement>document.getElementById('timeline');
+        let timelineWrapper: HTMLElement = document.getElementById('timeline-wrapper');
+        this.timeline = new Timeline(timelineElement, timelineWrapper);
+        this.timeline.setFrameClickedCallback(this.onTimelineClicked.bind(this));
+    }
+
+    onTimelineClicked(frame: number)
+    {
+        this.applyFrame(frame);
     }
 }
 

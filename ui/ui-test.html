@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html>
 
+<script>
+var exports = {};
+</script>
+
 <head>
     <meta charset="UTF-8">
     <title>UI Test</title>
     <link rel="stylesheet" type="text/css" href="css/basico.css">
-    <script src="src/ui.js"></script>
+    <script src="../app/ui/src/ui.js"></script>
     <style>
 
         .header {
@@ -197,7 +201,7 @@
         var i;
 
         for (i = 0; i < listItems.length; i++) {
-            basicoCreateList(listItems[i], function(element) {
+            var listControl = new ListControl(listItems[i], function(element) {
                 console.log(element);
             });
         }

@@ -1,7 +1,16 @@
-class Splitter {
+/*export class Splitter {
+
+    dividers: HTMLCollectionOf<Element>;
+    leftPane: HTMLElement;
+    rightPane: HTMLElement;
+    splitter: HTMLElement;
+    splitterMode: string;
+    selectedElement: HTMLElement;
+    oldPos: number;
+
     constructor()
     {
-        this.dividers = [];
+        this.dividers = new HTMLCollection();
         this.leftPane = null;
         this.rightPane = null;
         this.splitter = null;
@@ -10,17 +19,17 @@ class Splitter {
         this.oldPos = 0;
     }
 
-    getPropertyValue(element, property, defaultValue)
+    getPropertyValue(element : HTMLElement, property : string, defaultValue : number) : number
     {
-        const propertyValue = window.getComputedStyle(element, null).getPropertyValue(property);
-        const numberValue = parseFloat(propertyValue);
+        const propertyValue : string = window.getComputedStyle(element, null).getPropertyValue(property);
+        const numberValue : number = parseFloat(propertyValue);
         return isNaN(numberValue) ? defaultValue : numberValue;
     }
 
     getCurrentDividerRange()
     {
         if (this.splitterMode == "horizontal") {
-            const sizeDivider = splitControl.selectedElement.offsetWidth;
+            const sizeDivider = this.selectedElement.offsetWidth;
 
             const leftPaneMinSize = this.getPropertyValue(this.leftPane, "min-width", 0);
             const leftPaneMaxSize = this.getPropertyValue(this.leftPane, "max-width", Number.MAX_VALUE);
@@ -67,12 +76,12 @@ class Splitter {
         {
             this.dividers[i].onmousedown = function(event) {
 
-                splitControl.selectedElement = this;
-                splitControl.splitter = this.parentElement;
-                splitControl.splitterMode = this.parentElement.getAttribute("mode");
+                this.selectedElement = this;
+                this.splitter = this.parentElement;
+                this.splitterMode = this.parentElement.getAttribute("mode");
 
-                splitControl.leftPane = splitControl.selectedElement.previousElementSibling;
-                splitControl.rightPane = splitControl.selectedElement.nextElementSibling;
+                this.leftPane = this.selectedElement.previousElementSibling;
+                this.rightPane = this.selectedElement.nextElementSibling;
 
                 event.preventDefault();
                 return false;
@@ -81,9 +90,9 @@ class Splitter {
 
         document.onmousemove = function(event)
         {
-            if (splitControl.selectedElement)
+            if (this.selectedElement)
             {
-                if (splitControl.splitterMode == "horizontal") {
+                if (this.splitterMode == "horizontal") {
                     const sizeDivider = splitControl.selectedElement.offsetWidth;
                     const leftPaneSize = splitControl.leftPane.offsetWidth;
 
@@ -146,7 +155,7 @@ class Splitter {
             return false;
         }
     }
-}
+}*/
 
 /*var splitControl = new Splitter();
 
@@ -155,45 +164,82 @@ window.onload = function () {
 };*/
 
 // Select from list
-function basicoCreateList(listElement, onItemSelectedCallback) {
+interface IListCallback {
+    (item: HTMLElement) : void;
+}
 
-    let listItems = listElement.querySelectorAll(".basico-list-item");
-    let i = 0;
-    for (; i < listItems.length; i++) {
-        let item = listItems[i];
-        
-        item.addEventListener("click", function() {
-            listElement.querySelectorAll(".basico-list-item").forEach(function(node){
+export class ListControl {
+
+    listWrapper: HTMLElement;
+
+    constructor(listWrapper : HTMLElement, onItemSelectedCallback : IListCallback = null, value : string = null) {
+        this.listWrapper = listWrapper;
+        let listItems = this.listWrapper.querySelectorAll(".basico-list-item");
+        let i = 0;
+        const length = listItems.length;
+        for (; i < length; i++) {
+            let item = <HTMLElement>listItems[i];
+            this.addElementToList(item, onItemSelectedCallback, value);
+        }
+    }
+
+    appendElement(textContent : string, onItemSelectedCallback : IListCallback = null, value : string = null)
+    {
+        let listItem = document.createElement("div");
+        listItem.classList.add("basico-list-item");
+        listItem.innerText = textContent;
+        this.listWrapper.appendChild(listItem);
+
+        this.addElementToList(listItem, onItemSelectedCallback, value)
+    }
+
+    private addElementToList(element : HTMLElement, onItemSelectedCallback : IListCallback, value : string = null)
+    {
+        var listWrapper = this.listWrapper;
+        element.addEventListener("click", function() {
+            listWrapper.querySelectorAll(".basico-list-item").forEach(function(node){
                 node.classList.remove("basico-list-item-active");
             });
             this.classList.add("basico-list-item-active");
 
-            onItemSelectedCallback(this);
+            if (onItemSelectedCallback != null)
+            {
+                onItemSelectedCallback(this);
+            }
         });
+
+        if (value != null)
+        {
+            element.setAttribute('data-list-value', value);
+        }
+    }
+
+    setValueOfItem(listItem : HTMLElement, value : string) {
+        listItem.setAttribute('data-list-value', value);
+    }
+
+    getValueOfItem(listItem : HTMLElement) {
+        return listItem.getAttribute('data-list-value');
+    }
+
+    getItemsWithValue(value : HTMLElement) {
+        return this.listWrapper.querySelectorAll('[data-list-value="' + value + '"]');
+    }
+
+    getItemWithValue(value : HTMLElement) {
+        return this.listWrapper.querySelector('[data-list-value="' + value + '"]');
     }
 }
 
-function basicoToggleTreeElement(treeItemWrapperElement) {
+export class TreeControl {
 
-    treeItemWrapperElement.addEventListener("click", function() {
+    root: HTMLElement;
 
-        let listItem = this.parentElement;
-
-        if (listItem.classList.contains("basico-tree-closed")) {
-            listItem.classList.remove("basico-tree-closed");
-        }
-        else {
-            listItem.classList.add("basico-tree-closed");
-        }
-    });
-}
-
-class TreeControl {
-    constructor(treeElement) {
+    constructor(treeElement : HTMLElement) {
         this.root = treeElement;
     }
 
-    addItem(parentListItem, contentData, hidden = false, value = null) {
+    addItem(parentListItem : HTMLElement, contentData : string, hidden = false, value : string = null) {
 
         let parentList = parentListItem.querySelector("ul");
 
@@ -202,7 +248,7 @@ class TreeControl {
 
         let wrapper = document.createElement("span");
         wrapper.classList.add("basico-tree-item-wrapper");
-        basicoToggleTreeElement(wrapper);
+        this.toggleItem(wrapper);
         listItem.appendChild(wrapper);
 
         let toggle = document.createElement("span");
@@ -233,21 +279,48 @@ class TreeControl {
         return listItem;
     }
 
-    getValueOfItem(listItem) {
+    toggleItem(treeItemWrapperElement : HTMLSpanElement) {
+
+        treeItemWrapperElement.addEventListener("click", function() {
+    
+            let listItem = this.parentElement;
+    
+            if (listItem.classList.contains("basico-tree-closed")) {
+                listItem.classList.remove("basico-tree-closed");
+            }
+            else {
+                listItem.classList.add("basico-tree-closed");
+            }
+        });
+    }
+
+    getValueOfItem(listItem : HTMLElement) {
         return listItem.getAttribute('data-tree-value');
     }
 
-    getItemsWithValue(value) {
+    getItemsWithValue(value : HTMLElement) {
         return this.root.querySelectorAll('[data-tree-value="' + value + '"]');
     }
 
-    getItemWithValue(value) {
+    getItemWithValue(value : HTMLElement) {
         return this.root.querySelector('[data-tree-value="' + value + '"]');
+    }
+
+    clear()
+    {
+        let rootList = this.root.querySelector("ul");
+        rootList.innerHTML = "";
     }
 }
 
-class TabControl {
-    constructor(tabElements, tabContentElements, defaultActiveTabIdx = 0) {
+export class TabControl {
+
+    tabElements: HTMLElement[];
+    tabContentElements: HTMLElement[];
+    activeTab: HTMLElement;
+    activeContent: HTMLElement;
+
+    constructor(tabElements : HTMLElement[], tabContentElements : HTMLElement[], defaultActiveTabIdx : number = 0) {
         this.tabElements = tabElements;
         this.tabContentElements = tabContentElements;
         this.activeTab = this.tabElements[defaultActiveTabIdx];
