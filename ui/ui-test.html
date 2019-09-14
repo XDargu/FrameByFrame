@@ -8,7 +8,7 @@ var exports = {};
 <head>
     <meta charset="UTF-8">
     <title>UI Test</title>
-    <link rel="stylesheet" type="text/css" href="css/basico.css">
+    <link rel="stylesheet" type="text/css" href="../css/styles.css">
     <script src="../app/ui/src/ui.js"></script>
     <style>
 
@@ -76,7 +76,7 @@ var exports = {};
                 <div class="basico-tabs basico-vertical-tabs" id="control-tabs">
                     <div class="basico-tabs-item basico-tabs-selected">Entities</div>
                     <div class="basico-tabs-item">Vars</div>
-                    <div class="basico-tabs-item">Recent</div>
+                    <div class="basico-tabs-item">Connections</div>
                     <div class="basico-tabs-item">Settings</div>
                 </div>
             </div>
@@ -131,19 +131,48 @@ var exports = {};
                 </div>
             </div>
             <div class="sidebar basico-container basico-container-compact" id="recent-list">
-                    <div class="basico-list">
-                            <div class="basico-list-item">RecordingAsd.record</div>
-                            <div class="basico-list-item">ServerTest.record</div>
-                            <div class="basico-list-item">RagdollExample.record</div>
-                    </div>
-                </div>
-                <div class="sidebar basico-container basico-container-compact" id="setting-list">
-                        <div class="basico-list">
-                                <div class="basico-list-item">Setting 1</div>
-                                <div class="basico-list-item">Setting 2</div>
-                                <div class="basico-list-item">Setting 3</div>
+                <div class="basico-title basico-title-compact">Connections</div>
+                <div class="basico-container">
+                    <div class="basico-card">
+                        <div class="basico-card-element">
+                            <div class="basico-form">
+                                <div class="basico-form-field">
+                                    <div class="basico-form-field-label">Address:</div>
+                                    <input type="text" class="basico-input" value="localhost">
+                                </div>
+                                <div class="basico-form-field">
+                                    <div class="basico-form-field-label">Port:</div>
+                                    <input type="text" class="basico-input" value="23001">
+                                </div>
+                                <div class="basico-form-field">
+                                    <div class="basico-button basico-small">Add new connection</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
+                </div>
+                <div class="basico-container">
+                    <div class="basico-title basico-title-compact">locahlhost:23001</div>
+                    <div class="basico-card">
+                        <div class="basico-list basico-list-compact">
+                            <div class="basico-list-item">Status<div class="basico-tag">Connected</div></div>
+                        </div>
+                        <div class="basico-card-footer">
+                            <div class="basico-button-group">
+                                <div class="basico-button basico-small">Disconnect</div>
+                                <div class="basico-button basico-small">Remove connection</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                <div class="sidebar basico-container basico-container-compact" id="setting-list">
+                    <div class="basico-list">
+                            <div class="basico-list-item">Setting 1</div>
+                            <div class="basico-list-item">Setting 2</div>
+                            <div class="basico-list-item">Setting 3</div>
+                    </div>
+                </div>
             <div class="content vertical-wrapper">
                 <div id="viewport">
                     <canvas id="myCanvas" width="200" height="100" style="background: #454545;"></canvas>
