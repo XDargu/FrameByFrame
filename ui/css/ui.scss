@@ -3,6 +3,7 @@
 @import "layout/layout.scss";
 @import "elements/elements.scss";
 @import "components/components.scss";
+@import "forms/forms.scss";
 
 html, body {
     padding: 0;
@@ -11,8 +12,4 @@ html, body {
     font-size: 1.1em;
     text-align: center;
     color: #FFF;
-}
-
-:focus {
-    outline: 1px solid $secondary-color;
 }

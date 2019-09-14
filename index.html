@@ -48,11 +48,31 @@
                 </div>
             </div>
             <div class="sidebar basico-container basico-container-compact" id="connection-list">
-                    <div class="basico-title basico-title-compact">Connections</div>
-                    <div class="basico-list">
-                        
+                <div class="basico-title basico-title-compact">Connections</div>
+                <div class="basico-container">
+                    <div class="basico-card">
+                        <div class="basico-card-element">
+                            <div class="basico-form">
+                                <div class="basico-form-field">
+                                    <div class="basico-form-field-label">Address:</div>
+                                    <input type="text" class="basico-input" id="addConnectionAddress" value="localhost">
+                                </div>
+                                <div class="basico-form-field">
+                                    <div class="basico-form-field-label">Port:</div>
+                                    <input type="text" class="basico-input" id="addConnectionPort" value="23001">
+                                </div>
+                                <div class="basico-form-field">
+                                    <div class="basico-button basico-small" id="addConnectionBtn">Add new connection</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
+                <div class="basico-container">
+                    <div class="basico-list basico-list-compact" id="connectionsList">
+                    </div>
+                </div>
+            </div>
             <div class="sidebar basico-container basico-container-compact" id="recent-list">
                 <div class="basico-title basico-title-compact">Recent Files</div>
                 <div class="basico-list">
