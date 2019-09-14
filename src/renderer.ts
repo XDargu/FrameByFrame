@@ -1,7 +1,11 @@
 import * as BABYLON from 'babylonjs';
 import * as RECORDING from './recording/RecordingData';
 import Timeline from './timeline/timeline';
+import ConnectionsManager from './network/conectionsManager';
+import ConnectionId from './network/conectionsManager';
 import * as BASICO from './ui/ui';
+import Connection from './network/simpleClient';
+
 
 export default class Renderer {
     private _canvas: HTMLCanvasElement;
@@ -18,6 +22,10 @@ export default class Renderer {
     private propertyTree: BASICO.TreeControl;
     private entityList: BASICO.ListControl;
     private selectedEntityId: number;
+
+    // Networking
+    private connectionsManager: ConnectionsManager;
+    private connectionsMap: Map<ConnectionId, HTMLElement>
 
     createScene(canvas: HTMLCanvasElement, engine: BABYLON.Engine) {
         this._canvas = canvas;
@@ -124,6 +132,8 @@ export default class Renderer {
         this.recordedData.addTestData();
 
         this.timeline.length = this.recordedData.getSize();
+        this.connectionsManager = new ConnectionsManager();
+        this.connectionsMap = new Map<ConnectionId, HTMLElement>();
 
         this.applyFrame(0);
     }
@@ -160,6 +170,98 @@ export default class Renderer {
                 document.getElementById("setting-list")
             ]
         );
+
+        // Connections
+        let addConnectionButton: HTMLElement = document.getElementById("addConnectionBtn");
+        addConnectionButton.onclick = this.addConnectionCallback.bind(this);
+    }
+
+    // Networking
+    addConnectionCallback()
+    {
+        let addressElement: HTMLInputElement = document.getElementById("addConnectionAddress") as HTMLInputElement;
+        let portElement: HTMLInputElement = document.getElementById("addConnectionPort") as HTMLInputElement;
+
+        const id: ConnectionId = this.connectionsManager.addConnection(addressElement.value, portElement.value) as unknown as ConnectionId;
+
+        // Add new element to list
+        let html:string = `<div class="basico-title basico-title-compact" id="connection-${id}">${addressElement.value}:${portElement.value}</div>
+                    <div class="basico-card">
+                        <div class="basico-list basico-list-compact">
+                            <div class="basico-list-item">Status<div class="basico-tag" id="connection-${id}-status">Connecting...</div></div>
+                        </div>
+                        <div class="basico-card-footer">
+                            <div class="basico-button-group">
+                                <div class="basico-button basico-small" id="connection-${id}-connect">Disconnect</div>
+                                <div class="basico-button basico-small" id="connection-${id}-remove">Remove connection</div>
+                            </div>
+                        </div>
+                    </div>`;
+
+        let connectionsList: HTMLElement = document.getElementById(`connectionsList`);
+        connectionsList.innerHTML += html;
+
+        let connectionElement: HTMLElement = document.getElementById(`connection-${id}`);
+        this.connectionsMap.set(id, connectionElement);
+
+        let connectButton: HTMLElement = document.getElementById(`connection-${id}-connect`);
+        let removeButton: HTMLElement = document.getElementById(`connection-${id}-remove`);
+        let connectionStatus: HTMLElement = document.getElementById(`connection-${id}-status`);
+        
+        let control = this;
+        connectButton.onclick = function() {
+            control.connectButtonCallback(id);
+        };
+        removeButton.onclick = function() {
+            control.removeButtonCallback(id);
+        };
+
+        let connection: Connection = this.connectionsManager.getConnection(<number><unknown>id);
+        connection.onMessage = function(openEvent : MessageEvent) {
+            // TODO: Record data
+        };
+        connection.onConnected = function(openEvent : Event) {
+            connectionStatus.textContent = "Connected";
+        };
+        connection.onDisconnected = function(closeEvent : CloseEvent) {
+            connectionStatus.textContent = "Disconnected";
+        };
+        connection.onError = function(errorEvent : Event) {
+            // TODO: Output the error somewhere?
+        };
+
+        console.log(connection);
+    }
+
+    connectButtonCallback(id: ConnectionId)
+    {
+        let connectionStatus: HTMLElement = document.getElementById(`connection-${id}-status`);
+        let connectButton: HTMLElement = document.getElementById(`connection-${id}-connect`);
+        let connection: Connection = this.connectionsManager.getConnection(<number><unknown>id);
+
+        if (connection.isConnected())
+        {
+            connection.disconnect();
+            connectionStatus.textContent = "Disconnecting...";
+            connectButton.textContent = "Connect";
+        }
+        else
+        {
+            connectionStatus.textContent = "Connecting...";
+            connectButton.textContent = "Disconnect";
+            connection.connect();
+        }
+    }
+
+    removeButtonCallback(id: ConnectionId)
+    {
+        let connectionsList: HTMLElement = document.getElementById(`connectionsList`);
+        let connectionElement: HTMLElement = this.connectionsMap.get(id);
+
+        connectionsList.removeChild(connectionElement);
+
+        this.connectionsManager.removeConnection(<number><unknown>id);
+        this.connectionsMap.delete(id);
     }
 
     getNextPropertyId() : string
