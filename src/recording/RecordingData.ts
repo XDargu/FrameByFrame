@@ -1,7 +1,18 @@
+export interface IVec3 {
+	x: number;
+	y: number;
+	z: number;
+}
+
 export interface IProperty {
 	type: string;
 	name: string;
 	value: any;
+}
+
+export interface IPropertySphere extends IProperty {
+	position: IVec3;
+	radius: number;
 }
 
 export interface IPropertyGroup {
@@ -24,11 +35,14 @@ export interface IEntity {
 }
 
 export interface IFrameEntityData {
-	[key:number]: IEntity
+	[key:number]: IEntity;
 }
 
 export interface IFrameData {
-	entities: IFrameEntityData
+	entities: IFrameEntityData;
+	frameId: number;
+	elapsedTime: number;
+	tag: string;
 }
 
 export class PropertyTable {
@@ -279,13 +293,9 @@ export class NaiveRecordedData {
 		return entity.properties[1].value[0].value;
 	}
 
-	addProperties(frame: number, entity : IEntity) {
-		if (!this.frameData[frame])
-		{
-			this.frameData[frame] = { entities: [] };
-		}
-
-		this.frameData[frame].entities[entity.id] = entity;
+	pushFrame(frame: IFrameData)
+	{
+		this.frameData.push(frame);
 	}
 
 	buildFrameData(frame : number) : IFrameData {
@@ -300,7 +310,7 @@ export class NaiveRecordedData {
 	addTestData() {
 		for (let i=0; i<100; ++i)
 		{
-			const frame = i;
+			let frameData : IFrameData = { entities: {}, frameId: i, elapsedTime: 0.0166, tag: "" };
 			
 			for (let j=0; j<15; ++j)
 			{
@@ -328,8 +338,10 @@ export class NaiveRecordedData {
 				entity.properties.push(propertyGroup);
 				entity.properties.push(specialGroup);
 
-				this.addProperties(frame, entity);
+				frameData.entities[entity.id] = entity;
 			}
+
+			this.pushFrame(frameData);
 		}
 	}
 }
@@ -404,7 +416,7 @@ export class RecordedData {
 	}
 	
 	buildFrameData(frame : number) : IFrameData {
-		let frameData : IFrameData = { entities: {} };
+		let frameData : IFrameData = { entities: {}, frameId: 0, elapsedTime: 0, tag: "" };
 		let tempPropertyData : IProperty = { type: null, value: null, name: null};
 		
 		const entityPropValIDs =  this.frameTable.entryIDs[frame];

@@ -1,16 +1,14 @@
 import * as BABYLON from 'babylonjs';
 import * as RECORDING from './recording/RecordingData';
 import Timeline from './timeline/timeline';
-import ConnectionsManager from './network/conectionsManager';
-import ConnectionId from './network/conectionsManager';
+import ConnectionsList from './frontend/ConnectionsList';
 import * as BASICO from './ui/ui';
-import Connection from './network/simpleClient';
+import * as NET_TYPES from './network/types';
+import SceneController from './render/sceneController';
 
 
 export default class Renderer {
-    private _canvas: HTMLCanvasElement;
-    private _engine: BABYLON.Engine;
-    private _scene: BABYLON.Scene;
+    private sceneController: SceneController;
     private recordedData: RECORDING.NaiveRecordedData;
     private timeline: Timeline;
     private currentPropertyId: number;
@@ -24,104 +22,12 @@ export default class Renderer {
     private selectedEntityId: number;
 
     // Networking
-    private connectionsManager: ConnectionsManager;
-    private connectionsMap: Map<ConnectionId, HTMLElement>
-
-    createScene(canvas: HTMLCanvasElement, engine: BABYLON.Engine) {
-        this._canvas = canvas;
-
-        this._engine = engine;
-
-        // This creates a basic Babylon Scene object (non-mesh)
-        const scene = new BABYLON.Scene(engine);
-        this._scene = scene;
-
-        // This creates and positions a free camera (non-mesh)
-        const camera = new BABYLON.ArcRotateCamera("Camera", 3 * Math.PI / 2, Math.PI / 8, 50, BABYLON.Vector3.Zero(), scene);
-
-        // This targets the camera to scene origin
-        camera.setTarget(BABYLON.Vector3.Zero());
-
-        // This attaches the camera to the canvas
-        camera.attachControl(canvas, true);
-
-        // This creates a light, aiming 0,1,0 - to the sky (non-mesh)
-        const light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
-
-        // Default intensity is 1. Let's dim the light a small amount
-        light.intensity = 0.7;
-
-        //Creation of a box
-        //(name of the box, size, scene)
-        var box = BABYLON.Mesh.CreateBox("box", 6.0, scene);
-
-        //Creation of a sphere 
-        //(name of the sphere, segments, diameter, scene) 
-        var sphere = BABYLON.Mesh.CreateSphere("sphere", 10.0, 10.0, scene);
-
-        //Creation of a plan
-        //(name of the plane, size, scene)
-        var plan = BABYLON.Mesh.CreatePlane("plane", 10.0, scene);
-
-        //Creation of a cylinder
-        //(name, height, diameter, tessellation, scene, updatable)
-        var cylinder = BABYLON.Mesh.CreateCylinder("cylinder", 3, 3, 3, 6, 1, scene, false);
-
-        // Creation of a torus
-        // (name, diameter, thickness, tessellation, scene, updatable)
-        var torus = BABYLON.Mesh.CreateTorus("torus", 5, 1, 10, scene, false);
-
-        // Creation of a knot
-        // (name, radius, tube, radialSegments, tubularSegments, p, q, scene, updatable)
-        var knot = BABYLON.Mesh.CreateTorusKnot("knot", 2, 0.5, 128, 64, 2, 3, scene);
-
-        // Creation of a lines mesh
-        var lines = BABYLON.Mesh.CreateLines("lines", [
-            new BABYLON.Vector3(-10, 0, 0),
-            new BABYLON.Vector3(10, 0, 0),
-            new BABYLON.Vector3(0, 0, -10),
-            new BABYLON.Vector3(0, 0, 10)
-        ], scene);
-
-        // Creation of a ribbon
-        // let's first create many paths along a maths exponential function as an example 
-        var exponentialPath = function (p : number) {
-            var path = [];
-            for (var i = -10; i < 10; i++) {
-                path.push(new BABYLON.Vector3(p, i, Math.sin(p / 3) * 5 * Math.exp(-(i - p) * (i - p) / 60) + i / 3));
-            }
-            return path;
-        };
-        // let's populate arrayOfPaths with all these different paths
-        var arrayOfPaths = [];
-        for (var p = 0; p < 20; p++) {
-            arrayOfPaths[p] = exponentialPath(p);
-        }
-
-        // (name, array of paths, closeArray, closePath, offset, scene)
-        var ribbon = BABYLON.Mesh.CreateRibbon("ribbon", arrayOfPaths, false, false, 0, scene);
-
-        // Moving elements
-        box.position = new BABYLON.Vector3(-10, 0, 0);   // Using a vector
-        sphere.position = new BABYLON.Vector3(0, 10, 0); // Using a vector
-        plan.position.z = 10;                            // Using a single coordinate component
-        cylinder.position.z = -10;
-        torus.position.x = 10;
-        knot.position.y = -10;
-        ribbon.position = new BABYLON.Vector3(-10, -10, 20);
-    }
+    private connectionsList: ConnectionsList;
 
     initialize(canvas: HTMLCanvasElement) {
-        const engine = new BABYLON.Engine(canvas, true);
-        this.createScene(canvas, engine);
 
-        engine.runRenderLoop(() => {
-            this._scene.render();
-        });
-
-        window.addEventListener('resize', function () {
-            engine.resize();
-        });
+        this.sceneController = new SceneController();
+        this.sceneController.initialize(canvas);
 
         this.selectedEntityId = null;
 
@@ -132,8 +38,10 @@ export default class Renderer {
         this.recordedData.addTestData();
 
         this.timeline.length = this.recordedData.getSize();
-        this.connectionsManager = new ConnectionsManager();
-        this.connectionsMap = new Map<ConnectionId, HTMLElement>();
+
+        let connectionsListElement: HTMLElement = document.getElementById(`connectionsList`);
+        this.connectionsList = new ConnectionsList(connectionsListElement, this.onMessageArrived.bind(this));
+        this.connectionsList.initialize();
 
         this.applyFrame(0);
     }
@@ -156,7 +64,6 @@ export default class Renderer {
 
         const entityListElement = <HTMLElement>document.getElementById('entity-list').querySelector('.basico-list');
 
-        var renderer = this;
         this.entityList = new BASICO.ListControl(entityListElement);
 
         // Create tab control
@@ -170,98 +77,49 @@ export default class Renderer {
                 document.getElementById("setting-list")
             ]
         );
-
-        // Connections
-        let addConnectionButton: HTMLElement = document.getElementById("addConnectionBtn");
-        addConnectionButton.onclick = this.addConnectionCallback.bind(this);
     }
 
-    // Networking
-    addConnectionCallback()
+    onMessageArrived(data: string) : void
     {
-        let addressElement: HTMLInputElement = document.getElementById("addConnectionAddress") as HTMLInputElement;
-        let portElement: HTMLInputElement = document.getElementById("addConnectionPort") as HTMLInputElement;
+        let message: NET_TYPES.IMessage = JSON.parse(data) as NET_TYPES.IMessage;
 
-        const id: ConnectionId = this.connectionsManager.addConnection(addressElement.value, portElement.value) as unknown as ConnectionId;
+        console.log("Received: " + data);
+        console.log(message);
 
-        // Add new element to list
-        let html:string = `<div class="basico-title basico-title-compact" id="connection-${id}">${addressElement.value}:${portElement.value}</div>
-                    <div class="basico-card">
-                        <div class="basico-list basico-list-compact">
-                            <div class="basico-list-item">Status<div class="basico-tag" id="connection-${id}-status">Connecting...</div></div>
-                        </div>
-                        <div class="basico-card-footer">
-                            <div class="basico-button-group">
-                                <div class="basico-button basico-small" id="connection-${id}-connect">Disconnect</div>
-                                <div class="basico-button basico-small" id="connection-${id}-remove">Remove connection</div>
-                            </div>
-                        </div>
-                    </div>`;
-
-        let connectionsList: HTMLElement = document.getElementById(`connectionsList`);
-        connectionsList.innerHTML += html;
-
-        let connectionElement: HTMLElement = document.getElementById(`connection-${id}`);
-        this.connectionsMap.set(id, connectionElement);
-
-        let connectButton: HTMLElement = document.getElementById(`connection-${id}-connect`);
-        let removeButton: HTMLElement = document.getElementById(`connection-${id}-remove`);
-        let connectionStatus: HTMLElement = document.getElementById(`connection-${id}-status`);
-        
-        let control = this;
-        connectButton.onclick = function() {
-            control.connectButtonCallback(id);
-        };
-        removeButton.onclick = function() {
-            control.removeButtonCallback(id);
-        };
-
-        let connection: Connection = this.connectionsManager.getConnection(<number><unknown>id);
-        connection.onMessage = function(openEvent : MessageEvent) {
-            // TODO: Record data
-        };
-        connection.onConnected = function(openEvent : Event) {
-            connectionStatus.textContent = "Connected";
-        };
-        connection.onDisconnected = function(closeEvent : CloseEvent) {
-            connectionStatus.textContent = "Disconnected";
-        };
-        connection.onError = function(errorEvent : Event) {
-            // TODO: Output the error somewhere?
-        };
-
-        console.log(connection);
-    }
-
-    connectButtonCallback(id: ConnectionId)
-    {
-        let connectionStatus: HTMLElement = document.getElementById(`connection-${id}-status`);
-        let connectButton: HTMLElement = document.getElementById(`connection-${id}-connect`);
-        let connection: Connection = this.connectionsManager.getConnection(<number><unknown>id);
-
-        if (connection.isConnected())
+        // TODO: Make message types: frame data, command, etc. In an enum.
+        // Also, move to a helper class
+        if (message.type !== undefined)
         {
-            connection.disconnect();
-            connectionStatus.textContent = "Disconnecting...";
-            connectButton.textContent = "Connect";
+            switch(message.type)
+            {
+                case NET_TYPES.MessageType.FrameData:
+                {
+                    let frame: NET_TYPES.IMessageFrameData = message.data;
+
+                    // Build frame
+                    let frameToBuild: RECORDING.IFrameData = {
+                        entities: {},
+                        frameId: frame.frameId,
+                        elapsedTime: frame.elapsedTime,
+                        tag: frame.tag,
+                    };
+
+                    // Add all entity data
+                    const length = frame.entities.length;
+                    for (let i=0; i<length; ++i)
+                    {
+                        const entityData = frame.entities[i];
+                        frameToBuild.entities[entityData.id] = entityData;
+                    }
+
+                    this.recordedData.pushFrame(frameToBuild);
+                    this.timeline.length = this.recordedData.getSize();
+
+                    console.log(frameToBuild);
+                }
+                break;
+            }
         }
-        else
-        {
-            connectionStatus.textContent = "Connecting...";
-            connectButton.textContent = "Disconnect";
-            connection.connect();
-        }
-    }
-
-    removeButtonCallback(id: ConnectionId)
-    {
-        let connectionsList: HTMLElement = document.getElementById(`connectionsList`);
-        let connectionElement: HTMLElement = this.connectionsMap.get(id);
-
-        connectionsList.removeChild(connectionElement);
-
-        this.connectionsManager.removeConnection(<number><unknown>id);
-        this.connectionsMap.delete(id);
     }
 
     getNextPropertyId() : string
@@ -324,9 +182,12 @@ export default class Renderer {
         {
             const selectedEntity = this.frameData.entities[this.selectedEntityId];
 
-            for (let i=0; i<selectedEntity.properties.length; ++i)
+            if (selectedEntity)
             {
-                this.addToPropertyTree(this.propertyTree.root, selectedEntity.properties[i]);
+                for (let i=0; i<selectedEntity.properties.length; ++i)
+                {
+                    this.addToPropertyTree(this.propertyTree.root, selectedEntity.properties[i]);
+                }
             }
         }
     }
@@ -340,6 +201,18 @@ export default class Renderer {
             {
                 this.addToPropertyTree(addedItem, property.value[i]);
             }
+        }
+        else if (property.type == "vec3")
+        {
+            this.propertyTree.addItem(parent, property.name + ": " + property.value.x + ", " + property.value.y + ", " + + property.value.z);
+        }
+        else if (property.type == "sphere")
+        {
+            const sphere = property as RECORDING.IPropertySphere;
+
+            let addedItem = this.propertyTree.addItem(parent, property.name);
+            this.propertyTree.addItem(addedItem, "Position: " + sphere.position.x + ", " + sphere.position.y + ", " + + sphere.position.z);
+            this.propertyTree.addItem(addedItem, "Radius: " + sphere.radius);
         }
         else
         {
