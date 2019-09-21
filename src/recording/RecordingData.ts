@@ -293,6 +293,12 @@ export class NaiveRecordedData {
 		return entity.properties[1].value[0].value;
 	}
 
+	static getEntityPosition(entity: IEntity) : IVec3
+	{
+		// Position is always part of the special groups
+		return entity.properties[1].value[1].value;
+	}
+
 	pushFrame(frame: IFrameData)
 	{
 		this.frameData.push(frame);
@@ -331,7 +337,7 @@ export class NaiveRecordedData {
 
 				var specialGroup = { type: "group", name: "special", value: [
 					{ type: "string", name: "Name", value: "My Entity Name " + entityID },
-					{ type: "vec3", name: "Position", value: "1, 2, 4" }
+					{ type: "vec3", name: "Position", value: { x: Math.random() * 10, y: Math.random() * 10, z: Math.random() * 10} }
 					]
 				};
 

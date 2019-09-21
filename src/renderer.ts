@@ -1,4 +1,3 @@
-import * as BABYLON from 'babylonjs';
 import * as RECORDING from './recording/RecordingData';
 import Timeline from './timeline/timeline';
 import ConnectionsList from './frontend/ConnectionsList';
@@ -28,6 +27,7 @@ export default class Renderer {
 
         this.sceneController = new SceneController();
         this.sceneController.initialize(canvas);
+        this.sceneController.onEntitySelected = this.onEntitySelected.bind(this);
 
         this.selectedEntityId = null;
 
@@ -138,11 +138,17 @@ export default class Renderer {
         // Update entity list
         let listElement = this.entityList.listWrapper;
 
+        this.sceneController.hideAllEntities();
+
         let counter = 0;
         for (let entityID in this.frameData.entities) {
             let element = <HTMLElement>listElement.children[counter];
 
-            const entityName = RECORDING.NaiveRecordedData.getEntityName(this.frameData.entities[entityID]);
+            const entity = this.frameData.entities[entityID];
+            const entityName = RECORDING.NaiveRecordedData.getEntityName(entity);
+            
+            // Set in the scene renderer
+            this.sceneController.setEntity(entity);
 
             if (element) {
                 element.innerText = entityName;
@@ -172,6 +178,8 @@ export default class Renderer {
         console.log("Selected: " + entityId);
         this.selectedEntityId = entityId;
         this.buildPropertyTree();
+        this.entityList.selectElementOfValue(entityId.toString());
+        this.sceneController.markEntityAsSelected(entityId);
     }
 
     buildPropertyTree()
