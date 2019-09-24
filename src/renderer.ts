@@ -169,6 +169,9 @@ export default class Renderer {
             listElement.removeChild(element);
         }
 
+        // Draw properties
+        this.renderProperties();
+
         // Rebuild property tree
         this.buildPropertyTree();
     }
@@ -180,6 +183,7 @@ export default class Renderer {
         this.buildPropertyTree();
         this.entityList.selectElementOfValue(entityId.toString());
         this.sceneController.markEntityAsSelected(entityId);
+        this.renderProperties();
     }
 
     buildPropertyTree()
@@ -200,31 +204,60 @@ export default class Renderer {
         }
     }
 
+    renderProperties()
+    {
+        if (this.selectedEntityId != null)
+        {
+            const selectedEntity = this.frameData.entities[this.selectedEntityId];
+            if (selectedEntity)
+            {
+                let sceneController = this.sceneController;
+                sceneController.removeAllProperties();
+
+                this.recordedData.visitEntityProperties(selectedEntity, function(property: RECORDING.IProperty) {
+                    sceneController.addProperty(selectedEntity, property);
+                });
+            }
+        }
+    }
+
     addToPropertyTree(parent: HTMLElement, property: RECORDING.IProperty)
     {
         if (property.type == "group")
         {
-            let addedItem = this.propertyTree.addItem(parent, property.name);
-            for (let i=0; i<property.value.length; ++i)
+            let addedItem = this.propertyTree.addItem(parent, property.name, false, property.id.toString());
+            const propertyGroup = property as RECORDING.IPropertyGroup;
+
+            for (let i=0; i<propertyGroup.value.length; ++i)
             {
-                this.addToPropertyTree(addedItem, property.value[i]);
+                this.addToPropertyTree(addedItem, propertyGroup.value[i]);
             }
         }
         else if (property.type == "vec3")
         {
-            this.propertyTree.addItem(parent, property.name + ": " + property.value.x + ", " + property.value.y + ", " + + property.value.z);
+            const vector = property.value as RECORDING.IVec3;
+
+            this.propertyTree.addItem(parent, property.name + ": " + vector.x + ", " + vector.y + ", " + + vector.z, false, property.id.toString());
         }
         else if (property.type == "sphere")
         {
             const sphere = property as RECORDING.IPropertySphere;
 
-            let addedItem = this.propertyTree.addItem(parent, property.name);
+            let addedItem = this.propertyTree.addItem(parent, property.name, false, property.id.toString());
             this.propertyTree.addItem(addedItem, "Position: " + sphere.position.x + ", " + sphere.position.y + ", " + + sphere.position.z);
             this.propertyTree.addItem(addedItem, "Radius: " + sphere.radius);
         }
+        else if (property.type == "line")
+        {
+            const line = property as RECORDING.IPropertyLine;
+
+            let addedItem = this.propertyTree.addItem(parent, property.name, false, property.id.toString());
+            this.propertyTree.addItem(addedItem, "Origin: " + line.origin.x + ", " + line.origin.y + ", " + + line.origin.z);
+            this.propertyTree.addItem(addedItem, "Destination: " + line.destination.x + ", " + line.destination.y + ", " + + line.destination.z);
+        }
         else
         {
-            this.propertyTree.addItem(parent, property.name + ": " + property.value);
+            this.propertyTree.addItem(parent, property.name + ": " + property.value, false, property.id.toString());
         }
     }
 

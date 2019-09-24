@@ -7,6 +7,12 @@ export interface IEntitySelectedCallback
     (id: number) : void
 }
 
+interface IEntityData
+{
+    mesh: BABYLON.Mesh;
+    properties: Map<number, BABYLON.Mesh>;
+}
+
 export default class SceneController
 {
     private _canvas: HTMLCanvasElement;
@@ -20,9 +26,9 @@ export default class SceneController
      - Instead of creating and destroying entities constantly, we can just move them around, and maybe hide the ones that doesn´t exist in the current frame
     */
 
-    private entities: Map<number, BABYLON.Mesh>;
-    private selectedEntity: BABYLON.Mesh;
-    private hoveredEntity: BABYLON.Mesh;
+    private entities: Map<number, IEntityData>;
+    private selectedEntity: IEntityData;
+    private hoveredEntity: IEntityData;
 
     private entityMaterial: BABYLON.StandardMaterial;
     private selectedMaterial: BABYLON.StandardMaterial;
@@ -30,34 +36,106 @@ export default class SceneController
 
     public onEntitySelected: IEntitySelectedCallback;
 
-    createEntity(entity: RECORDING.IEntity) : BABYLON.Mesh
+    removeAllProperties()
+    {
+        for (let data of this.entities.values())
+        {
+            for (let propertyMesh of data.properties.values())
+            {
+                this._scene.removeMesh(propertyMesh, true);
+                if (propertyMesh.material)
+                {
+                    this._scene.removeMaterial(propertyMesh.material);
+                }
+            }
+            data.properties.clear();
+        }
+    }
+
+    private isPropertyShape(property: RECORDING.IProperty)
+    {
+        return property.type == "sphere" || property.type == "line";
+    }
+
+    addProperty(entity: RECORDING.IEntity, property: RECORDING.IProperty)
+    {
+        if (this.isPropertyShape(property))
+        {
+            let entityData = this.entities.get(entity.id);
+            
+            if (entityData)
+            {
+                if (property.type == "sphere")
+                {
+                    let sphereProperty = property as RECORDING.IPropertySphere;
+
+                    // #TODO: This should be in a mesh/material pool
+                    let sphere = BABYLON.Mesh.CreateSphere(sphereProperty.name, 8.0, sphereProperty.radius * 2, this._scene);
+                    sphere.isPickable = false;
+                    sphere.id = sphereProperty.id.toString();
+
+                    sphere.position.set(sphereProperty.position.x, sphereProperty.position.y, sphereProperty.position.z);
+
+                    let material = new BABYLON.StandardMaterial("entityMaterial", this._scene);
+                    material.diffuseColor = new BABYLON.Color3(sphereProperty.color.r, sphereProperty.color.g, sphereProperty.color.b);
+                    material.alpha = sphereProperty.color.a;
+                    sphere.material = material;
+
+                    entityData.properties.set(sphereProperty.id, sphere);
+                }
+                else if (property.type == "line")
+                {
+                    let lineProperty = property as RECORDING.IPropertyLine;
+
+                    let linePoints = [
+                        new BABYLON.Vector3(lineProperty.origin.x, lineProperty.origin.y, lineProperty.origin.z),
+                        new BABYLON.Vector3(lineProperty.destination.x, lineProperty.destination.y, lineProperty.destination.z),
+                    ];
+
+                    let lineColors = [
+                        new BABYLON.Color4(lineProperty.color.r, lineProperty.color.g, lineProperty.color.b, lineProperty.color.a),
+                        new BABYLON.Color4(lineProperty.color.r, lineProperty.color.g, lineProperty.color.b, lineProperty.color.a),
+                    ];
+
+                    let lines = BABYLON.MeshBuilder.CreateLines("lines", {points: linePoints, colors: lineColors}, this._scene);
+                    lines.isPickable = false;
+                    lines.id = lineProperty.id.toString();
+
+                    entityData.properties.set(lineProperty.id, lines);
+                }
+            }
+        }
+    }
+
+    createEntity(entity: RECORDING.IEntity) : IEntityData
     {
         let sphere = BABYLON.Mesh.CreateSphere("sphere", 10.0, 1.0, this._scene);
         sphere.material = this.entityMaterial;
         sphere.isPickable = true;
-        sphere.id = "" + entity.id;
-        this.entities.set(entity.id, sphere);
-        return sphere;
+        sphere.id = entity.id.toString();
+        let entityData: IEntityData = { mesh: sphere, properties: new Map<number, BABYLON.Mesh>() };
+        this.entities.set(entity.id, entityData);
+        return entityData;
     }
 
     setEntity(entity: RECORDING.IEntity)
     {
-        let storedMesh = this.entities.get(entity.id);
-        if (!storedMesh)
+        let entityData = this.entities.get(entity.id);
+        if (!entityData)
         {
-            storedMesh = this.createEntity(entity);
+            entityData = this.createEntity(entity);
         }
         
         const postion = RECORDING.NaiveRecordedData.getEntityPosition(entity);
-        storedMesh.position.set(postion.x, postion.y, postion.z);
-        storedMesh.setEnabled(true);
+        entityData.mesh.position.set(postion.x, postion.y, postion.z);
+        entityData.mesh.setEnabled(true);
     }
 
     hideAllEntities()
     {
-        for (let mesh of this.entities.values())
+        for (let data of this.entities.values())
         {
-            mesh.setEnabled(false);
+            data.mesh.setEnabled(false);
         }
     }
 
@@ -69,10 +147,10 @@ export default class SceneController
             // Restore previous entity material
             if (this.selectedEntity)
             {
-                this.selectedEntity.material = this.entityMaterial;
+                this.selectedEntity.mesh.material = this.entityMaterial;
             }
 
-            storedMesh.material = this.selectedMaterial;
+            storedMesh.mesh.material = this.selectedMaterial;
             this.selectedEntity = storedMesh;
         }
     }
@@ -87,15 +165,15 @@ export default class SceneController
             {
                 if (this.hoveredEntity == this.selectedEntity)
                 {
-                    this.hoveredEntity.material = this.selectedMaterial;
+                    this.hoveredEntity.mesh.material = this.selectedMaterial;
                 }
                 else
                 {
-                    this.hoveredEntity.material = this.entityMaterial;
+                    this.hoveredEntity.mesh.material = this.entityMaterial;
                 }
             }
 
-            storedMesh.material = this.hoveredMaterial;
+            storedMesh.mesh.material = this.hoveredMaterial;
             this.hoveredEntity = storedMesh;
         }
     }
@@ -107,11 +185,11 @@ export default class SceneController
         {
             if (this.hoveredEntity == this.selectedEntity)
             {
-                this.hoveredEntity.material = this.selectedMaterial;
+                this.hoveredEntity.mesh.material = this.selectedMaterial;
             }
             else
             {
-                this.hoveredEntity.material = this.entityMaterial;
+                this.hoveredEntity.mesh.material = this.entityMaterial;
             }
         }
         this.hoveredEntity = null;
@@ -129,7 +207,7 @@ export default class SceneController
             engine.resize();
         });
 
-        this.entities = new Map<number, BABYLON.Mesh>();
+        this.entities = new Map<number, IEntityData>();
     }
 
     createScene(canvas: HTMLCanvasElement, engine: BABYLON.Engine) {
@@ -167,8 +245,8 @@ export default class SceneController
         groundMaterial.minorUnitVisibility = 0.45;
         groundMaterial.gridRatio = 1;
         groundMaterial.backFaceCulling = false;
-        groundMaterial.mainColor = new BABYLON.Color3(1, 1, 1);
-        groundMaterial.lineColor = new BABYLON.Color3(1.0, 1.0, 1.0);
+        groundMaterial.mainColor = new BABYLON.Color3(0.8, 0.8, 0.8);
+        groundMaterial.lineColor = new BABYLON.Color3(0.5, 0.5, 0.5);
         groundMaterial.opacity = 0.5;
 
         grid.material = groundMaterial;
