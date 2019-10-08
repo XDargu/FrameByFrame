@@ -23,6 +23,18 @@ export interface IPropertySphere extends IProperty {
 	radius: number;
 	value: string;
 	color: IColor;
+	layer: string;
+}
+
+export interface IPropertyPlane extends IProperty {
+	position: IVec3;
+	normal: IVec3;
+	up: IVec3;
+	width: number;
+	length: number;
+	value: string;
+	color: IColor;
+	layer: string;
 }
 
 export interface IPropertyLine extends IProperty {
@@ -30,6 +42,7 @@ export interface IPropertyLine extends IProperty {
 	destination: IVec3;
 	value: string;
 	color: IColor;
+	layer: string;
 }
 
 export interface IPropertyGroup {

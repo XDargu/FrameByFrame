@@ -54,7 +54,7 @@ export default class SceneController
 
     private isPropertyShape(property: RECORDING.IProperty)
     {
-        return property.type == "sphere" || property.type == "line";
+        return property.type == "sphere" || property.type == "line"|| property.type == "plane";
     }
 
     addProperty(entity: RECORDING.IEntity, property: RECORDING.IProperty)
@@ -82,6 +82,31 @@ export default class SceneController
                     sphere.material = material;
 
                     entityData.properties.set(sphereProperty.id, sphere);
+                }
+                else if (property.type == "plane")
+                {
+                    const planeProperty = property as RECORDING.IPropertyPlane;
+                    
+                    let sourcePlane = new BABYLON.Plane(planeProperty.normal.x, planeProperty.normal.y, planeProperty.normal.z, 0);
+
+                    // #TODO: This should be in a mesh/material pool
+                    let plane = BABYLON.MeshBuilder.CreatePlane("plane", {height: planeProperty.length, width: planeProperty.width, sourcePlane: sourcePlane, sideOrientation: BABYLON.Mesh.DOUBLESIDE}, this._scene);
+                    plane.isPickable = false;
+                    plane.id = planeProperty.id.toString();
+
+                    plane.position.set(planeProperty.position.x, planeProperty.position.y, planeProperty.position.z);
+                    
+                    // #TODO: Rotate plane
+                    let up = new BABYLON.Vector3(planeProperty.up.x, planeProperty.up.y, planeProperty.up.z);
+                    let angle = BABYLON.Vector3.GetAngleBetweenVectors(plane.forward, up, plane.up);
+                    plane.rotate(plane.up, angle, BABYLON.Space.WORLD);
+
+                    let material = new BABYLON.StandardMaterial("entityMaterial", this._scene);
+                    material.diffuseColor = new BABYLON.Color3(planeProperty.color.r, planeProperty.color.g, planeProperty.color.b);
+                    material.alpha = planeProperty.color.a;
+                    plane.material = material;
+
+                    entityData.properties.set(planeProperty.id, plane);
                 }
                 else if (property.type == "line")
                 {

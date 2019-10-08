@@ -206,7 +206,17 @@ export default class Renderer {
 
     renderProperties()
     {
-        if (this.selectedEntityId != null)
+        let sceneController = this.sceneController;
+        sceneController.removeAllProperties();
+
+        for (let entityID in this.frameData.entities) {
+            const entity = this.frameData.entities[entityID];
+
+            this.recordedData.visitEntityProperties(entity, function(property: RECORDING.IProperty) {
+                sceneController.addProperty(entity, property);
+            });
+        }
+        /*if (this.selectedEntityId != null)
         {
             const selectedEntity = this.frameData.entities[this.selectedEntityId];
             if (selectedEntity)
@@ -218,7 +228,7 @@ export default class Renderer {
                     sceneController.addProperty(selectedEntity, property);
                 });
             }
-        }
+        }*/
     }
 
     addToPropertyTree(parent: HTMLElement, property: RECORDING.IProperty)
@@ -246,6 +256,17 @@ export default class Renderer {
             let addedItem = this.propertyTree.addItem(parent, property.name, false, property.id.toString());
             this.propertyTree.addItem(addedItem, "Position: " + sphere.position.x + ", " + sphere.position.y + ", " + + sphere.position.z);
             this.propertyTree.addItem(addedItem, "Radius: " + sphere.radius);
+        }
+        else if (property.type == "plane")
+        {
+            const plane = property as RECORDING.IPropertyPlane;
+
+            let addedItem = this.propertyTree.addItem(parent, property.name, false, property.id.toString());
+            this.propertyTree.addItem(addedItem, "Position: " + plane.position.x + ", " + plane.position.y + ", " + + plane.position.z);
+            this.propertyTree.addItem(addedItem, "Normal: " + plane.normal.x + ", " + plane.normal.y + ", " + + plane.normal.z);
+            this.propertyTree.addItem(addedItem, "Up: " + plane.up.x + ", " + plane.up.y + ", " + + plane.up.z);
+            this.propertyTree.addItem(addedItem, "Width: " + plane.width);
+            this.propertyTree.addItem(addedItem, "Length: " + plane.length);
         }
         else if (property.type == "line")
         {
