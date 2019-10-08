@@ -17,6 +17,16 @@
             <div class="basico-button basico-small">Basico Button Small</div>
             <div class="basico-button basico-disabled">Basico Button Disabled</div>
         </div>
+        <div class="header basico-navbar basico-navbar-compact">
+            <div class="basico-navbar-title" id="timeline-frame-counter">Frame: 1/100</div>
+            <div class="basico-button-group" id="step-controls">
+                <button class="basico-button basico-small" id="timeline-first"><i class="fas fa-backward"></i></button>
+                <button class="basico-button basico-small" id="timeline-prev"><i class="fas fa-step-backward"></i></button>
+                <button class="basico-button basico-small" id="timeline-play"><i id="timeline-play-icon" class="fas fa-play"></i></button>
+                <button class="basico-button basico-small" id="timeline-next"><i class="fas fa-step-forward"></i></button>
+                <button class="basico-button basico-small" id="timeline-last"><i class="fas fa-forward"></i></button>
+            </div>
+        </div>
         <div id="timeline-wrapper">
             <canvas id="timeline" width="200" height="50" style="border:-1px solid #444;"></canvas>
         </div>
@@ -62,7 +72,7 @@
                                     <input type="text" class="basico-input" id="addConnectionPort" value="23001">
                                 </div>
                                 <div class="basico-form-field">
-                                    <div class="basico-button basico-small" id="addConnectionBtn">Add new connection</div>
+                                    <button class="basico-button basico-small" id="addConnectionBtn">Add new connection</button>
                                 </div>
                             </div>
                         </div>

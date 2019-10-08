@@ -4,6 +4,10 @@ interface ITimelineFrameClickedCallback {
 	(frame: number) : void;
 }
 
+interface ITimelineUpdatedCallback {
+	(secondsPassed: number) : void;
+}
+
 interface ITimelineEvent {
     frame: number;
     color: string;
@@ -41,9 +45,13 @@ export default class Timeline {
 
     // Callbacks
     private onframeClicked : ITimelineFrameClickedCallback;
+    private ontimelineUpdated : ITimelineUpdatedCallback;
 
     // Events
     private events : Map<number, ITimelineEvent>
+
+    // Time control
+    private timeStampLastUpdate: number;
 
     constructor(canvas : HTMLCanvasElement, wrapper: HTMLElement)
     {
@@ -65,6 +73,8 @@ export default class Timeline {
 
         this.onframeClicked = null;
         this.events = new Map<number, ITimelineEvent>();
+
+        this.timeStampLastUpdate = 0;
 
         canvas.addEventListener("mousemove", this.onMouseMove.bind(this));
         canvas.addEventListener("mousedown", this.onMouseDown.bind(this));
@@ -115,6 +125,11 @@ export default class Timeline {
         this.onframeClicked = callback;
     }
 
+    setTimelineUpdatedCallback(callback : ITimelineUpdatedCallback)
+    {
+        this.ontimelineUpdated = callback;
+    }
+
     private disableEvent(event : any) {
         event.preventDefault();
     }
@@ -136,6 +151,11 @@ export default class Timeline {
             const canvasPosition : number = event.offsetX;
             this.currentFrame = Math.round(this.canvas2frame(canvasPosition));
             this.pressing = true;
+
+            if (this.onframeClicked)
+            {
+                this.onframeClicked(this.currentFrame);
+            }
         }
     }
 
@@ -179,8 +199,16 @@ export default class Timeline {
         this.translation = Math.min(Math.max(this.translation + deltaTranslation, 0), this.totalSize - this.width);
     }
 
-    render()
+    render(timeStamp : number)
     {
+        const secondsPassed : number = (timeStamp - this.timeStampLastUpdate) / 1000;
+        this.timeStampLastUpdate = timeStamp;
+
+        if (this.ontimelineUpdated)
+        {
+            this.ontimelineUpdated(secondsPassed);
+        }
+
         this.ctx.fillStyle = "#444";
         this.ctx.fillRect(0,0,this.width,this.height);
 
@@ -298,5 +326,11 @@ export default class Timeline {
 
         this.calculateRenderingConstants();
         //this.render();
+    }
+
+    updateLength(length: number)
+    {
+        this.length = length;
+        this.calculateRenderingConstants();
     }
 }

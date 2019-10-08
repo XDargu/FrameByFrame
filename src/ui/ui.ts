@@ -214,6 +214,14 @@ export class ListControl {
         }
     }
 
+    public selectElementOfValue(value : string) {
+        let element = this.getItemWithValue(value) as HTMLElement;
+        if (element)
+        {
+            element.click();
+        }
+    }
+
     setValueOfItem(listItem : HTMLElement, value : string) {
         listItem.setAttribute('data-list-value', value);
     }
@@ -222,11 +230,11 @@ export class ListControl {
         return listItem.getAttribute('data-list-value');
     }
 
-    getItemsWithValue(value : HTMLElement) {
+    getItemsWithValue(value : string) {
         return this.listWrapper.querySelectorAll('[data-list-value="' + value + '"]');
     }
 
-    getItemWithValue(value : HTMLElement) {
+    getItemWithValue(value : string) {
         return this.listWrapper.querySelector('[data-list-value="' + value + '"]');
     }
 }
@@ -298,11 +306,11 @@ export class TreeControl {
         return listItem.getAttribute('data-tree-value');
     }
 
-    getItemsWithValue(value : HTMLElement) {
+    getItemsWithValue(value : string) {
         return this.root.querySelectorAll('[data-tree-value="' + value + '"]');
     }
 
-    getItemWithValue(value : HTMLElement) {
+    getItemWithValue(value : string) {
         return this.root.querySelector('[data-tree-value="' + value + '"]');
     }
 

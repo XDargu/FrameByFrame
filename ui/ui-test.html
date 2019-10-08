@@ -9,6 +9,7 @@ var exports = {};
     <meta charset="UTF-8">
     <title>UI Test</title>
     <link rel="stylesheet" type="text/css" href="../css/styles.css">
+    <link rel="stylesheet" type="text/css" href="../css/all.min.css">
     <script src="../app/ui/src/ui.js"></script>
     <style>
 
@@ -59,6 +60,12 @@ var exports = {};
             position: absolute;
         }
 
+        #step-controls {
+            position: absolute;
+            left: 50%;
+            transform: translate(-50%, 0);
+        }
+
     </style>
 </head>
 
@@ -70,6 +77,16 @@ var exports = {};
             <button class="basico-button">Basico Button</button>
             <div class="basico-button basico-small">Basico Button Small</div>
             <div class="basico-button basico-disabled">Basico Button Disabled</div>
+        </div>
+        <div class="header basico-navbar basico-navbar-compact">
+            <div class="basico-navbar-title">Frame 1/100</div>
+            <div class="basico-button-group" id="step-controls">
+                <div class="basico-button basico-small"><i class="fas fa-backward"></i></div>
+                <div class="basico-button basico-small"><i class="fas fa-step-backward"></i></div>
+                <div class="basico-button basico-small"><i class="fas fa-play"></i></div>
+                <div class="basico-button basico-small"><i class="fas fa-step-forward"></i></div>
+                <div class="basico-button basico-small"><i class="fas fa-forward"></i></div>
+            </div>
         </div>
         <div class="content-wrapper">
             <div class="vertical-navBar basico-container basico-container-compact">

@@ -89,7 +89,7 @@ export default class Connection {
 		console.log("WebSocket MESSAGE: " + message);
 		
 		if (this.onMessage) {
-			this.onMessage(message);
+			this.onMessage(messageEvent);
 		}
 	}
 	

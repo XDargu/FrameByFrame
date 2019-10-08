@@ -1,34 +1,90 @@
+export interface IVec3 {
+	x: number;
+	y: number;
+	z: number;
+}
+
+export interface IColor {
+	r: number;
+	g: number;
+	b: number;
+	a: number;
+}
+
 export interface IProperty {
 	type: string;
 	name: string;
-	value: any;
+	value: string | number | IVec3 | IProperty[];
+	id?: number;
+}
+
+export interface IPropertySphere extends IProperty {
+	position: IVec3;
+	radius: number;
+	value: string;
+	color: IColor;
+	layer: string;
+}
+
+export interface IPropertyPlane extends IProperty {
+	position: IVec3;
+	normal: IVec3;
+	up: IVec3;
+	width: number;
+	length: number;
+	value: string;
+	color: IColor;
+	layer: string;
+}
+
+export interface IPropertyLine extends IProperty {
+	origin: IVec3;
+	destination: IVec3;
+	value: string;
+	color: IColor;
+	layer: string;
 }
 
 export interface IPropertyGroup {
 	type: string;
 	name: string;
 	value: IProperty[];
+	id?: number;
 }
 
 export interface IEvent {
 	name: string;
 	tag: string;
 	properties: IPropertyGroup;
+	id?: number;
 }
 
 export interface IEntity {
 	id: number;
 	groupMap?: any;
-	properties: IProperty[];
+	properties: IPropertyGroup[];
 	events: IEvent[];
 }
 
 export interface IFrameEntityData {
-	[key:number]: IEntity
+	[key:number]: IEntity;
 }
 
 export interface IFrameData {
-	entities: IFrameEntityData
+	entities: IFrameEntityData;
+	frameId: number;
+	elapsedTime: number;
+	tag: string;
+}
+
+export interface IPropertyVisitorCallback
+{
+    (id: IProperty) : void
+}
+
+export interface IEventVisitorCallback
+{
+    (id: IEvent) : void
 }
 
 export class PropertyTable {
@@ -276,20 +332,68 @@ export class NaiveRecordedData {
 	static getEntityName(entity: IEntity) : string
 	{
 		// Name is always part of the special groups
-		return entity.properties[1].value[0].value;
+		return (entity.properties[1] as IPropertyGroup).value[0].value as string;
 	}
 
-	addProperties(frame: number, entity : IEntity) {
-		if (!this.frameData[frame])
-		{
-			this.frameData[frame] = { entities: [] };
-		}
+	static getEntityPosition(entity: IEntity) : IVec3
+	{
+		// Position is always part of the special groups
+		return (entity.properties[1] as IPropertyGroup).value[1].value as IVec3;
+	}
 
-		this.frameData[frame].entities[entity.id] = entity;
+	pushFrame(frame: IFrameData)
+	{
+		this.frameData.push(frame);
+	}
+
+	visitEntityProperties(entity: IEntity, callback: IPropertyVisitorCallback)
+	{
+		this.visitProperties(entity.properties, callback);
+	}
+
+	visitProperties(properties: IProperty[], callback: IPropertyVisitorCallback)
+	{
+		const propertyCount = properties.length;
+		for (let i=0; i<propertyCount; ++i)
+		{
+			if (properties[i].type == 'group')
+			{
+				callback(properties[i]);
+				this.visitProperties((properties[i] as IPropertyGroup).value, callback);
+			}
+			else
+			{
+				callback(properties[i]);
+			}
+		}
+	}
+
+	visitEvents(events: IEvent[], callback: IEventVisitorCallback)
+	{
+		const eventCount = events.length;
+		for (let i=0; i<eventCount; ++i)
+		{
+			callback(events[i]);
+		}
 	}
 
 	buildFrameData(frame : number) : IFrameData {
-		return this.frameData[frame];
+		// Instead of building the frame data here we just set the propertyID (overriding previous ones)
+		let frameData = this.frameData[frame];
+		let eventId = 1;
+		let propId = 1;
+
+		for (let id in frameData.entities)
+		{
+			this.visitProperties(frameData.entities[id].properties, function(property: IProperty){
+				property.id = propId++;
+			});
+			this.visitEvents(frameData.entities[id].events, function(event: IEvent){
+				event.id = eventId++;
+			});
+		}
+
+		return frameData;
 	}
 
 	getSize()
@@ -300,7 +404,7 @@ export class NaiveRecordedData {
 	addTestData() {
 		for (let i=0; i<100; ++i)
 		{
-			const frame = i;
+			let frameData : IFrameData = { entities: {}, frameId: i, elapsedTime: 0.0166, tag: "" };
 			
 			for (let j=0; j<15; ++j)
 			{
@@ -321,15 +425,17 @@ export class NaiveRecordedData {
 
 				var specialGroup = { type: "group", name: "special", value: [
 					{ type: "string", name: "Name", value: "My Entity Name " + entityID },
-					{ type: "vec3", name: "Position", value: "1, 2, 4" }
+					{ type: "vec3", name: "Position", value: { x: Math.random() * 10, y: Math.random() * 10, z: Math.random() * 10} }
 					]
 				};
 
 				entity.properties.push(propertyGroup);
 				entity.properties.push(specialGroup);
 
-				this.addProperties(frame, entity);
+				frameData.entities[entity.id] = entity;
 			}
+
+			this.pushFrame(frameData);
 		}
 	}
 }
@@ -383,8 +489,9 @@ export class RecordedData {
 		
 		// Register children if it's a group
 		if (propertyData.type == "group") {
-			for (let i=0; i<propertyData.value.length; i++) {
-				this.addProperty(frame, entityID, propertyData.value[i], propertyID);
+			let propertyGroup = propertyData as IPropertyGroup;
+			for (let i=0; i<propertyGroup.value.length; i++) {
+				this.addProperty(frame, entityID, propertyGroup.value[i], propertyID);
 			}
 		}
 		else {
@@ -404,7 +511,7 @@ export class RecordedData {
 	}
 	
 	buildFrameData(frame : number) : IFrameData {
-		let frameData : IFrameData = { entities: {} };
+		let frameData : IFrameData = { entities: {}, frameId: 0, elapsedTime: 0, tag: "" };
 		let tempPropertyData : IProperty = { type: null, value: null, name: null};
 		
 		const entityPropValIDs =  this.frameTable.entryIDs[frame];
@@ -442,7 +549,7 @@ export class RecordedData {
 			while (true) {
 				
 				if (currentParentID == -1) {
-					entityData.properties.push(tempPropertyData);
+					entityData.properties.push(tempPropertyData as IPropertyGroup);
 					break;
 				}
 				

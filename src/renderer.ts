@@ -1,16 +1,138 @@
-import * as BABYLON from 'babylonjs';
 import * as RECORDING from './recording/RecordingData';
 import Timeline from './timeline/timeline';
-import ConnectionsManager from './network/conectionsManager';
-import ConnectionId from './network/conectionsManager';
+import ConnectionsList from './frontend/ConnectionsList';
 import * as BASICO from './ui/ui';
-import Connection from './network/simpleClient';
+import * as NET_TYPES from './network/types';
+import SceneController from './render/sceneController';
 
+class PlaybackController {
+
+    private renderer: Renderer;
+    private isPlaying: boolean;
+    private elapsedTime: number;
+
+    constructor(renderer: Renderer) {
+        this.isPlaying = false;
+        this.elapsedTime = 0;
+        this.renderer = renderer;
+    }
+
+    update(elapsedSeconds: number) {
+        if (this.isPlaying)
+        {
+            this.elapsedTime += elapsedSeconds;
+
+            // Check how many frames we have to skip
+            let currentFrame = this.renderer.getCurrentFrame();
+            let currentElapsedTime = this.renderer.getElapsedTimeOfFrame(currentFrame);
+
+            while (this.elapsedTime > currentElapsedTime && currentFrame < this.renderer.getFrameCount() - 1)
+            {
+                currentFrame++;
+                this.elapsedTime -= currentElapsedTime;
+                currentElapsedTime = this.renderer.getElapsedTimeOfFrame(currentFrame);
+            }
+
+            this.renderer.applyFrame(currentFrame);
+
+            // Stop in the last frame
+            if (currentFrame == this.renderer.getFrameCount() - 1)
+            {
+                this.stopPlayback();
+            }
+        }
+    }
+
+    updateUI()
+    {
+        if (this.isPlaying) {
+            document.getElementById("timeline-play-icon").classList.remove("fa-play");
+            document.getElementById("timeline-play-icon").classList.add("fa-stop");
+        }
+        else {
+            document.getElementById("timeline-play-icon").classList.remove("fa-stop");
+            document.getElementById("timeline-play-icon").classList.add("fa-play");
+        }
+
+        if (this.renderer.getCurrentFrame() == 0) {
+            document.getElementById("timeline-first").classList.add("basico-disabled");
+            document.getElementById("timeline-prev").classList.add("basico-disabled");
+        }
+        else {
+            document.getElementById("timeline-first").classList.remove("basico-disabled");
+            document.getElementById("timeline-prev").classList.remove("basico-disabled");
+        }
+
+        if (this.renderer.getCurrentFrame() == this.renderer.getFrameCount() - 1) {
+            document.getElementById("timeline-last").classList.add("basico-disabled");
+            document.getElementById("timeline-next").classList.add("basico-disabled");
+        }
+        else {
+            document.getElementById("timeline-last").classList.remove("basico-disabled");
+            document.getElementById("timeline-next").classList.remove("basico-disabled");
+        }
+    }
+
+    startPlayback()
+    {
+        this.isPlaying = true;
+        this.updateUI();
+    }
+
+    stopPlayback()
+    {
+        this.isPlaying = false;
+        this.elapsedTime = 0;
+        this.updateUI();
+    }
+
+    onTimelineNextClicked()
+    {
+        if (this.renderer.getCurrentFrame() < this.renderer.getFrameCount() - 1) {
+            this.renderer.applyFrame(this.renderer.getCurrentFrame() + 1);
+            this.updateUI();
+        }
+    }
+
+    onTimelinePrevClicked()
+    {
+        if (this.renderer.getCurrentFrame() > 0) {
+            this.renderer.applyFrame(this.renderer.getCurrentFrame() - 1);
+            this.updateUI();
+        }
+    }
+
+    onTimelineFirstClicked()
+    {
+        if (this.renderer.getCurrentFrame() != 0) {
+            this.renderer.applyFrame(0);
+            this.updateUI();
+        }
+    }
+
+    onTimelineLastClicked()
+    {
+        if (this.renderer.getCurrentFrame() != this.renderer.getFrameCount() - 1) {
+            this.renderer.applyFrame(this.renderer.getFrameCount() - 1);
+            this.updateUI();
+        }
+    }
+
+    onTimelinePlayClicked()
+    {
+        if (!this.isPlaying)
+        {
+            this.startPlayback();
+        }
+        else
+        {
+            this.stopPlayback();
+        }
+    }
+}
 
 export default class Renderer {
-    private _canvas: HTMLCanvasElement;
-    private _engine: BABYLON.Engine;
-    private _scene: BABYLON.Scene;
+    private sceneController: SceneController;
     private recordedData: RECORDING.NaiveRecordedData;
     private timeline: Timeline;
     private currentPropertyId: number;
@@ -24,104 +146,18 @@ export default class Renderer {
     private selectedEntityId: number;
 
     // Networking
-    private connectionsManager: ConnectionsManager;
-    private connectionsMap: Map<ConnectionId, HTMLElement>
+    private connectionsList: ConnectionsList;
 
-    createScene(canvas: HTMLCanvasElement, engine: BABYLON.Engine) {
-        this._canvas = canvas;
-
-        this._engine = engine;
-
-        // This creates a basic Babylon Scene object (non-mesh)
-        const scene = new BABYLON.Scene(engine);
-        this._scene = scene;
-
-        // This creates and positions a free camera (non-mesh)
-        const camera = new BABYLON.ArcRotateCamera("Camera", 3 * Math.PI / 2, Math.PI / 8, 50, BABYLON.Vector3.Zero(), scene);
-
-        // This targets the camera to scene origin
-        camera.setTarget(BABYLON.Vector3.Zero());
-
-        // This attaches the camera to the canvas
-        camera.attachControl(canvas, true);
-
-        // This creates a light, aiming 0,1,0 - to the sky (non-mesh)
-        const light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
-
-        // Default intensity is 1. Let's dim the light a small amount
-        light.intensity = 0.7;
-
-        //Creation of a box
-        //(name of the box, size, scene)
-        var box = BABYLON.Mesh.CreateBox("box", 6.0, scene);
-
-        //Creation of a sphere 
-        //(name of the sphere, segments, diameter, scene) 
-        var sphere = BABYLON.Mesh.CreateSphere("sphere", 10.0, 10.0, scene);
-
-        //Creation of a plan
-        //(name of the plane, size, scene)
-        var plan = BABYLON.Mesh.CreatePlane("plane", 10.0, scene);
-
-        //Creation of a cylinder
-        //(name, height, diameter, tessellation, scene, updatable)
-        var cylinder = BABYLON.Mesh.CreateCylinder("cylinder", 3, 3, 3, 6, 1, scene, false);
-
-        // Creation of a torus
-        // (name, diameter, thickness, tessellation, scene, updatable)
-        var torus = BABYLON.Mesh.CreateTorus("torus", 5, 1, 10, scene, false);
-
-        // Creation of a knot
-        // (name, radius, tube, radialSegments, tubularSegments, p, q, scene, updatable)
-        var knot = BABYLON.Mesh.CreateTorusKnot("knot", 2, 0.5, 128, 64, 2, 3, scene);
-
-        // Creation of a lines mesh
-        var lines = BABYLON.Mesh.CreateLines("lines", [
-            new BABYLON.Vector3(-10, 0, 0),
-            new BABYLON.Vector3(10, 0, 0),
-            new BABYLON.Vector3(0, 0, -10),
-            new BABYLON.Vector3(0, 0, 10)
-        ], scene);
-
-        // Creation of a ribbon
-        // let's first create many paths along a maths exponential function as an example 
-        var exponentialPath = function (p : number) {
-            var path = [];
-            for (var i = -10; i < 10; i++) {
-                path.push(new BABYLON.Vector3(p, i, Math.sin(p / 3) * 5 * Math.exp(-(i - p) * (i - p) / 60) + i / 3));
-            }
-            return path;
-        };
-        // let's populate arrayOfPaths with all these different paths
-        var arrayOfPaths = [];
-        for (var p = 0; p < 20; p++) {
-            arrayOfPaths[p] = exponentialPath(p);
-        }
-
-        // (name, array of paths, closeArray, closePath, offset, scene)
-        var ribbon = BABYLON.Mesh.CreateRibbon("ribbon", arrayOfPaths, false, false, 0, scene);
-
-        // Moving elements
-        box.position = new BABYLON.Vector3(-10, 0, 0);   // Using a vector
-        sphere.position = new BABYLON.Vector3(0, 10, 0); // Using a vector
-        plan.position.z = 10;                            // Using a single coordinate component
-        cylinder.position.z = -10;
-        torus.position.x = 10;
-        knot.position.y = -10;
-        ribbon.position = new BABYLON.Vector3(-10, -10, 20);
-    }
+    // Playback
+    private playbackController: PlaybackController;
 
     initialize(canvas: HTMLCanvasElement) {
-        const engine = new BABYLON.Engine(canvas, true);
-        this.createScene(canvas, engine);
 
-        engine.runRenderLoop(() => {
-            this._scene.render();
-        });
+        this.playbackController = new PlaybackController(this);
 
-        window.addEventListener('resize', function () {
-            engine.resize();
-        });
+        this.sceneController = new SceneController();
+        this.sceneController.initialize(canvas);
+        this.sceneController.onEntitySelected = this.onEntitySelected.bind(this);
 
         this.selectedEntityId = null;
 
@@ -131,9 +167,11 @@ export default class Renderer {
         this.recordedData = new RECORDING.NaiveRecordedData();
         this.recordedData.addTestData();
 
-        this.timeline.length = this.recordedData.getSize();
-        this.connectionsManager = new ConnectionsManager();
-        this.connectionsMap = new Map<ConnectionId, HTMLElement>();
+        this.timeline.updateLength(this.recordedData.getSize());
+
+        let connectionsListElement: HTMLElement = document.getElementById(`connectionsList`);
+        this.connectionsList = new ConnectionsList(connectionsListElement, this.onMessageArrived.bind(this));
+        this.connectionsList.initialize();
 
         this.applyFrame(0);
     }
@@ -156,7 +194,6 @@ export default class Renderer {
 
         const entityListElement = <HTMLElement>document.getElementById('entity-list').querySelector('.basico-list');
 
-        var renderer = this;
         this.entityList = new BASICO.ListControl(entityListElement);
 
         // Create tab control
@@ -171,97 +208,55 @@ export default class Renderer {
             ]
         );
 
-        // Connections
-        let addConnectionButton: HTMLElement = document.getElementById("addConnectionBtn");
-        addConnectionButton.onclick = this.addConnectionCallback.bind(this);
+        // Create timeline callbacks
+        document.getElementById("timeline-play").onclick = this.playbackController.onTimelinePlayClicked.bind(this.playbackController);
+        document.getElementById("timeline-next").onclick = this.playbackController.onTimelineNextClicked.bind(this.playbackController);
+        document.getElementById("timeline-prev").onclick = this.playbackController.onTimelinePrevClicked.bind(this.playbackController);
+        document.getElementById("timeline-first").onclick = this.playbackController.onTimelineFirstClicked.bind(this.playbackController);
+        document.getElementById("timeline-last").onclick = this.playbackController.onTimelineLastClicked.bind(this.playbackController);
     }
 
-    // Networking
-    addConnectionCallback()
+    onMessageArrived(data: string) : void
     {
-        let addressElement: HTMLInputElement = document.getElementById("addConnectionAddress") as HTMLInputElement;
-        let portElement: HTMLInputElement = document.getElementById("addConnectionPort") as HTMLInputElement;
+        let message: NET_TYPES.IMessage = JSON.parse(data) as NET_TYPES.IMessage;
 
-        const id: ConnectionId = this.connectionsManager.addConnection(addressElement.value, portElement.value) as unknown as ConnectionId;
+        console.log("Received: " + data);
+        console.log(message);
 
-        // Add new element to list
-        let html:string = `<div class="basico-title basico-title-compact" id="connection-${id}">${addressElement.value}:${portElement.value}</div>
-                    <div class="basico-card">
-                        <div class="basico-list basico-list-compact">
-                            <div class="basico-list-item">Status<div class="basico-tag" id="connection-${id}-status">Connecting...</div></div>
-                        </div>
-                        <div class="basico-card-footer">
-                            <div class="basico-button-group">
-                                <div class="basico-button basico-small" id="connection-${id}-connect">Disconnect</div>
-                                <div class="basico-button basico-small" id="connection-${id}-remove">Remove connection</div>
-                            </div>
-                        </div>
-                    </div>`;
-
-        let connectionsList: HTMLElement = document.getElementById(`connectionsList`);
-        connectionsList.innerHTML += html;
-
-        let connectionElement: HTMLElement = document.getElementById(`connection-${id}`);
-        this.connectionsMap.set(id, connectionElement);
-
-        let connectButton: HTMLElement = document.getElementById(`connection-${id}-connect`);
-        let removeButton: HTMLElement = document.getElementById(`connection-${id}-remove`);
-        let connectionStatus: HTMLElement = document.getElementById(`connection-${id}-status`);
-        
-        let control = this;
-        connectButton.onclick = function() {
-            control.connectButtonCallback(id);
-        };
-        removeButton.onclick = function() {
-            control.removeButtonCallback(id);
-        };
-
-        let connection: Connection = this.connectionsManager.getConnection(<number><unknown>id);
-        connection.onMessage = function(openEvent : MessageEvent) {
-            // TODO: Record data
-        };
-        connection.onConnected = function(openEvent : Event) {
-            connectionStatus.textContent = "Connected";
-        };
-        connection.onDisconnected = function(closeEvent : CloseEvent) {
-            connectionStatus.textContent = "Disconnected";
-        };
-        connection.onError = function(errorEvent : Event) {
-            // TODO: Output the error somewhere?
-        };
-
-        console.log(connection);
-    }
-
-    connectButtonCallback(id: ConnectionId)
-    {
-        let connectionStatus: HTMLElement = document.getElementById(`connection-${id}-status`);
-        let connectButton: HTMLElement = document.getElementById(`connection-${id}-connect`);
-        let connection: Connection = this.connectionsManager.getConnection(<number><unknown>id);
-
-        if (connection.isConnected())
+        // TODO: Make message types: frame data, command, etc. In an enum.
+        // Also, move to a helper class
+        if (message.type !== undefined)
         {
-            connection.disconnect();
-            connectionStatus.textContent = "Disconnecting...";
-            connectButton.textContent = "Connect";
+            switch(message.type)
+            {
+                case NET_TYPES.MessageType.FrameData:
+                {
+                    let frame: NET_TYPES.IMessageFrameData = message.data;
+
+                    // Build frame
+                    let frameToBuild: RECORDING.IFrameData = {
+                        entities: {},
+                        frameId: frame.frameId,
+                        elapsedTime: frame.elapsedTime,
+                        tag: frame.tag,
+                    };
+
+                    // Add all entity data
+                    const length = frame.entities.length;
+                    for (let i=0; i<length; ++i)
+                    {
+                        const entityData = frame.entities[i];
+                        frameToBuild.entities[entityData.id] = entityData;
+                    }
+
+                    this.recordedData.pushFrame(frameToBuild);
+                    this.timeline.updateLength(this.recordedData.getSize());
+
+                    console.log(frameToBuild);
+                }
+                break;
+            }
         }
-        else
-        {
-            connectionStatus.textContent = "Connecting...";
-            connectButton.textContent = "Disconnect";
-            connection.connect();
-        }
-    }
-
-    removeButtonCallback(id: ConnectionId)
-    {
-        let connectionsList: HTMLElement = document.getElementById(`connectionsList`);
-        let connectionElement: HTMLElement = this.connectionsMap.get(id);
-
-        connectionsList.removeChild(connectionElement);
-
-        this.connectionsManager.removeConnection(<number><unknown>id);
-        this.connectionsMap.delete(id);
     }
 
     getNextPropertyId() : string
@@ -273,18 +268,28 @@ export default class Renderer {
         this.frameData = this.recordedData.buildFrameData(frame);
 
         this.timeline.currentFrame = frame;
+        this.playbackController.updateUI();
 
         console.log(this.frameData);
         console.log(this.recordedData);
 
+        // Update frame counter
+        document.getElementById("timeline-frame-counter").textContent = `Frame: ${frame + 1} / ${this.getFrameCount()}`;
+
         // Update entity list
         let listElement = this.entityList.listWrapper;
+
+        this.sceneController.hideAllEntities();
 
         let counter = 0;
         for (let entityID in this.frameData.entities) {
             let element = <HTMLElement>listElement.children[counter];
 
-            const entityName = RECORDING.NaiveRecordedData.getEntityName(this.frameData.entities[entityID]);
+            const entity = this.frameData.entities[entityID];
+            const entityName = RECORDING.NaiveRecordedData.getEntityName(entity);
+            
+            // Set in the scene renderer
+            this.sceneController.setEntity(entity);
 
             if (element) {
                 element.innerText = entityName;
@@ -305,6 +310,9 @@ export default class Renderer {
             listElement.removeChild(element);
         }
 
+        // Draw properties
+        this.renderProperties();
+
         // Rebuild property tree
         this.buildPropertyTree();
     }
@@ -314,6 +322,9 @@ export default class Renderer {
         console.log("Selected: " + entityId);
         this.selectedEntityId = entityId;
         this.buildPropertyTree();
+        this.entityList.selectElementOfValue(entityId.toString());
+        this.sceneController.markEntityAsSelected(entityId);
+        this.renderProperties();
     }
 
     buildPropertyTree()
@@ -324,26 +335,91 @@ export default class Renderer {
         {
             const selectedEntity = this.frameData.entities[this.selectedEntityId];
 
-            for (let i=0; i<selectedEntity.properties.length; ++i)
+            if (selectedEntity)
             {
-                this.addToPropertyTree(this.propertyTree.root, selectedEntity.properties[i]);
+                for (let i=0; i<selectedEntity.properties.length; ++i)
+                {
+                    this.addToPropertyTree(this.propertyTree.root, selectedEntity.properties[i]);
+                }
             }
         }
+    }
+
+    renderProperties()
+    {
+        let sceneController = this.sceneController;
+        sceneController.removeAllProperties();
+
+        for (let entityID in this.frameData.entities) {
+            const entity = this.frameData.entities[entityID];
+
+            this.recordedData.visitEntityProperties(entity, function(property: RECORDING.IProperty) {
+                sceneController.addProperty(entity, property);
+            });
+        }
+        /*if (this.selectedEntityId != null)
+        {
+            const selectedEntity = this.frameData.entities[this.selectedEntityId];
+            if (selectedEntity)
+            {
+                let sceneController = this.sceneController;
+                sceneController.removeAllProperties();
+
+                this.recordedData.visitEntityProperties(selectedEntity, function(property: RECORDING.IProperty) {
+                    sceneController.addProperty(selectedEntity, property);
+                });
+            }
+        }*/
     }
 
     addToPropertyTree(parent: HTMLElement, property: RECORDING.IProperty)
     {
         if (property.type == "group")
         {
-            let addedItem = this.propertyTree.addItem(parent, property.name);
-            for (let i=0; i<property.value.length; ++i)
+            let addedItem = this.propertyTree.addItem(parent, property.name, false, property.id.toString());
+            const propertyGroup = property as RECORDING.IPropertyGroup;
+
+            for (let i=0; i<propertyGroup.value.length; ++i)
             {
-                this.addToPropertyTree(addedItem, property.value[i]);
+                this.addToPropertyTree(addedItem, propertyGroup.value[i]);
             }
+        }
+        else if (property.type == "vec3")
+        {
+            const vector = property.value as RECORDING.IVec3;
+
+            this.propertyTree.addItem(parent, property.name + ": " + vector.x + ", " + vector.y + ", " + + vector.z, false, property.id.toString());
+        }
+        else if (property.type == "sphere")
+        {
+            const sphere = property as RECORDING.IPropertySphere;
+
+            let addedItem = this.propertyTree.addItem(parent, property.name, false, property.id.toString());
+            this.propertyTree.addItem(addedItem, "Position: " + sphere.position.x + ", " + sphere.position.y + ", " + + sphere.position.z);
+            this.propertyTree.addItem(addedItem, "Radius: " + sphere.radius);
+        }
+        else if (property.type == "plane")
+        {
+            const plane = property as RECORDING.IPropertyPlane;
+
+            let addedItem = this.propertyTree.addItem(parent, property.name, false, property.id.toString());
+            this.propertyTree.addItem(addedItem, "Position: " + plane.position.x + ", " + plane.position.y + ", " + + plane.position.z);
+            this.propertyTree.addItem(addedItem, "Normal: " + plane.normal.x + ", " + plane.normal.y + ", " + + plane.normal.z);
+            this.propertyTree.addItem(addedItem, "Up: " + plane.up.x + ", " + plane.up.y + ", " + + plane.up.z);
+            this.propertyTree.addItem(addedItem, "Width: " + plane.width);
+            this.propertyTree.addItem(addedItem, "Length: " + plane.length);
+        }
+        else if (property.type == "line")
+        {
+            const line = property as RECORDING.IPropertyLine;
+
+            let addedItem = this.propertyTree.addItem(parent, property.name, false, property.id.toString());
+            this.propertyTree.addItem(addedItem, "Origin: " + line.origin.x + ", " + line.origin.y + ", " + + line.origin.z);
+            this.propertyTree.addItem(addedItem, "Destination: " + line.destination.x + ", " + line.destination.y + ", " + + line.destination.z);
         }
         else
         {
-            this.propertyTree.addItem(parent, property.name + ": " + property.value);
+            this.propertyTree.addItem(parent, property.name + ": " + property.value, false, property.id.toString());
         }
     }
 
@@ -353,11 +429,40 @@ export default class Renderer {
         let timelineWrapper: HTMLElement = document.getElementById('timeline-wrapper');
         this.timeline = new Timeline(timelineElement, timelineWrapper);
         this.timeline.setFrameClickedCallback(this.onTimelineClicked.bind(this));
+        this.timeline.setTimelineUpdatedCallback(this.onTimelineUpdated.bind(this));
     }
 
+    getCurrentFrame()
+    {
+        return this.timeline.currentFrame;
+    }
+
+    getFrameCount()
+    {
+        return this.timeline.length;
+    }
+
+    getElapsedTimeOfFrame(frame: number)
+    {
+        if (frame == this.getCurrentFrame())
+        {
+            return this.frameData.elapsedTime;
+        }
+        else
+        {
+            return this.recordedData.buildFrameData(frame).elapsedTime;
+        }
+    }
+
+    // Callbacks
     onTimelineClicked(frame: number)
     {
         this.applyFrame(frame);
+    }
+
+    onTimelineUpdated(elapsedSeconds: number)
+    {
+        this.playbackController.update(elapsedSeconds);
     }
 }
 
