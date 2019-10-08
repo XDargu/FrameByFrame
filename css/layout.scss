@@ -67,3 +67,9 @@ body {
 #timeline-wrapper {
     height: 50px;
 }
+
+#step-controls {
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, -10%);
+}
