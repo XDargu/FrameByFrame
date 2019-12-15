@@ -1,15 +1,21 @@
-import { app, BrowserWindow, Menu } from "electron";
+import { app, BrowserWindow, Menu, ipcMain } from "electron";
 import * as path from "path";
 import * as url from "url";
 import menu from "./components/Menu";
+import FileManager from './files/FileManager';
+import * as Messaging from "./messaging/MessageDefinitions";
 
 let mainWindow: Electron.BrowserWindow;
+
+// File Manager
+let fileManager: FileManager;
 
 function createWindow() {
   // Create the browser window.
   mainWindow = new BrowserWindow({
     height: 768,
     width: 1024,
+    /*frame: false,*/
     webPreferences: {
         nodeIntegration: true,
         nodeIntegrationInWorker: true
@@ -35,6 +41,8 @@ function createWindow() {
   });
 
   Menu.setApplicationMenu(menu(mainWindow));
+
+  fileManager = new FileManager();
 }
 
 // This method will be called when Electron has finished
@@ -61,3 +69,23 @@ app.on("activate", () => {
 
 // In this file you can include the rest of your app"s specific main process
 // code. You can also put them in separate files and require them here.
+
+ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
+  switch(arg.type)
+  {
+    case Messaging.MessageType.Save:
+    {
+      fileManager.saveFile(arg.data);
+      break;
+    }
+    case Messaging.MessageType.Open:
+    {
+      fileManager.openFile((path: string, content: string) => {
+        console.log('Returning! ');
+        console.log(event);
+        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
+      });
+      break;
+    }
+  }
+})

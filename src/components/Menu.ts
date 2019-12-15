@@ -3,9 +3,15 @@ import { app, Menu } from "electron";
 export default function(win : any){
     return Menu.buildFromTemplate([
         {
-            label: app.getName(),
+            label: 'File',
             submenu: [
-                { label: `Hello`, click: () => console.log("Hello world") }
+                { label: 'Open recording...' },
+                { label: 'Open recent', submenu: [
+                    { label: 'Example file.fbf' },
+                ]},
+                { type: 'separator' },
+                { label: 'Export recording...' },
+                { label: 'Exit', role: 'quit' }
             ]
         },
         {
