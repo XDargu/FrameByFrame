@@ -341,6 +341,16 @@ export class NaiveRecordedData {
 		return (entity.properties[1] as IPropertyGroup).value[1].value as IVec3;
 	}
 
+	loadFromString(data: string)
+	{
+		this.frameData = JSON.parse(data).frameData;
+	}
+
+	clear()
+	{
+		this.frameData = [];
+	}
+
 	pushFrame(frame: IFrameData)
 	{
 		this.frameData.push(frame);
@@ -380,9 +390,19 @@ export class NaiveRecordedData {
 	buildFrameData(frame : number) : IFrameData {
 		// Instead of building the frame data here we just set the propertyID (overriding previous ones)
 		let frameData = this.frameData[frame];
+
+		if (!frameData)
+		{
+			return { entities: [],
+				frameId: 0,
+				elapsedTime: 0,
+				tag: ""
+			};
+		}
+
 		let eventId = 1;
 		let propId = 1;
-
+		
 		for (let id in frameData.entities)
 		{
 			this.visitProperties(frameData.entities[id].properties, function(property: IProperty){
@@ -392,6 +412,7 @@ export class NaiveRecordedData {
 				event.id = eventId++;
 			});
 		}
+		
 
 		return frameData;
 	}

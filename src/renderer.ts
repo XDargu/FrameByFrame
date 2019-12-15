@@ -1,9 +1,11 @@
+import { ipcRenderer } from "electron";
 import * as RECORDING from './recording/RecordingData';
 import Timeline from './timeline/timeline';
 import ConnectionsList from './frontend/ConnectionsList';
 import * as BASICO from './ui/ui';
 import * as NET_TYPES from './network/types';
 import SceneController from './render/sceneController';
+import * as Messaging from "./messaging/MessageDefinitions";
 
 class PlaybackController {
 
@@ -165,7 +167,7 @@ export default class Renderer {
         this.initializeUI();
 
         this.recordedData = new RECORDING.NaiveRecordedData();
-        this.recordedData.addTestData();
+        //this.recordedData.addTestData();
 
         this.timeline.updateLength(this.recordedData.getSize());
 
@@ -214,6 +216,25 @@ export default class Renderer {
         document.getElementById("timeline-prev").onclick = this.playbackController.onTimelinePrevClicked.bind(this.playbackController);
         document.getElementById("timeline-first").onclick = this.playbackController.onTimelineFirstClicked.bind(this.playbackController);
         document.getElementById("timeline-last").onclick = this.playbackController.onTimelineLastClicked.bind(this.playbackController);
+
+        // Create control bar callbacks
+        document.getElementById("control-bar-open").onclick = this.onOpenFile.bind(this);
+        document.getElementById("control-bar-save").onclick = this.onSaveFile.bind(this);
+        document.getElementById("control-bar-clear").onclick = this.onClearFile.bind(this);
+    }
+
+    loadData(data: string)
+    {
+        this.recordedData.loadFromString(data);
+        this.timeline.updateLength(this.recordedData.getSize());
+        this.applyFrame(0);
+    }
+
+    clear()
+    {
+        this.recordedData.clear();
+        this.timeline.updateLength(this.recordedData.getSize());
+        this.applyFrame(0);
     }
 
     onMessageArrived(data: string) : void
@@ -270,8 +291,8 @@ export default class Renderer {
         this.timeline.currentFrame = frame;
         this.playbackController.updateUI();
 
-        console.log(this.frameData);
-        console.log(this.recordedData);
+        //console.log(this.frameData);
+        //console.log(this.recordedData);
 
         // Update frame counter
         document.getElementById("timeline-frame-counter").textContent = `Frame: ${frame + 1} / ${this.getFrameCount()}`;
@@ -304,9 +325,10 @@ export default class Renderer {
         }
 
         // Remove remaining elements
-        for (let i=counter; i<listElement.childElementCount; i++)
+        const remainingElements = listElement.childElementCount;
+        for (let i=counter; i<remainingElements; i++)
         {
-            let element = <HTMLElement>listElement.children[i];
+            let element = <HTMLElement>listElement.children[counter];
             listElement.removeChild(element);
         }
 
@@ -454,7 +476,7 @@ export default class Renderer {
         }
     }
 
-    // Callbacks
+    // Timeline callbacks
     onTimelineClicked(frame: number)
     {
         this.applyFrame(frame);
@@ -464,7 +486,43 @@ export default class Renderer {
     {
         this.playbackController.update(elapsedSeconds);
     }
+
+    // Control bar callbacks
+    onOpenFile()
+    {
+        ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.Open, ""));
+    }
+    
+    onSaveFile()
+    {
+        ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.Save, JSON.stringify(this.recordedData)));
+    }
+
+    onClearFile()
+    {
+        ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.Clear, ""));
+    }
 }
 
 const renderer = new Renderer();
 renderer.initialize(document.getElementById('render-canvas') as HTMLCanvasElement);
+
+ipcRenderer.on('asynchronous-reply', (event: any, arg: Messaging.Message) => {
+    console.log(arg);
+    switch(arg.type)
+    {
+        case Messaging.MessageType.OpenResult:
+        {
+            renderer.loadData(arg.data as string)
+            break;
+        }
+        case Messaging.MessageType.ClearResult:
+        {
+            const result = arg.data as Messaging.IClearResultData;
+            if (result.clear)
+            {
+                renderer.clear();
+            }
+        }
+    }
+});

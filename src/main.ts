@@ -1,15 +1,21 @@
-import { app, BrowserWindow, Menu } from "electron";
+import { app, BrowserWindow, Menu, ipcMain, dialog } from "electron";
 import * as path from "path";
 import * as url from "url";
 import menu from "./components/Menu";
+import FileManager from './files/FileManager';
+import * as Messaging from "./messaging/MessageDefinitions";
 
 let mainWindow: Electron.BrowserWindow;
+
+// File Manager
+let fileManager: FileManager;
 
 function createWindow() {
   // Create the browser window.
   mainWindow = new BrowserWindow({
     height: 768,
     width: 1024,
+    /*frame: false,*/
     webPreferences: {
         nodeIntegration: true,
         nodeIntegrationInWorker: true
@@ -35,6 +41,8 @@ function createWindow() {
   });
 
   Menu.setApplicationMenu(menu(mainWindow));
+
+  fileManager = new FileManager();
 }
 
 // This method will be called when Electron has finished
@@ -61,3 +69,57 @@ app.on("activate", () => {
 
 // In this file you can include the rest of your app"s specific main process
 // code. You can also put them in separate files and require them here.
+class SessionOptions {
+  public showClearDataDialog: boolean = true;
+}
+
+let sessionOptions: SessionOptions = new SessionOptions();
+
+ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
+  switch(arg.type)
+  {
+    case Messaging.MessageType.Save:
+    {
+      fileManager.saveFile(arg.data as string);
+      break;
+    }
+    case Messaging.MessageType.Open:
+    {
+      fileManager.openFile((path: string, content: string) => {
+        console.log('Returning! ');
+        console.log(event);
+        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
+      });
+      break;
+    }
+    case Messaging.MessageType.Clear:
+    {
+      if (!sessionOptions.showClearDataDialog) {
+        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.ClearResult, {clear: true, remember: true}));
+        break;
+      }
+
+      const options = {
+        type: 'warning',
+        buttons: ['Remove data', 'Cancel'],
+        defaultId: 2,
+        title: 'Remove data',
+        message: 'Are you sure you want to remove all existing data?',
+        detail: 'This will remove all recorded data',
+        checkboxLabel: "Don't ask again",
+        checkboxChecked: false,
+      };
+    
+      dialog.showMessageBox(null, options, (response, checkboxChecked) => {
+        const shouldClear: boolean = response == 0;
+
+        if (shouldClear && checkboxChecked) {
+          sessionOptions.showClearDataDialog = false;
+        }
+
+        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.ClearResult, {clear: shouldClear, remember: checkboxChecked}));
+      });
+      break;
+    }
+  }
+})

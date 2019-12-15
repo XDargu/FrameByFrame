@@ -173,6 +173,11 @@ $mdc-elevation-ambient-map: (
     @include surface-elevation($elevation, $color, true);
 }
 
+@mixin surface-remove() {
+    background-color: unset;
+    box-shadow: unset;
+}
+
 @function highlight-high($color) {
     @return darken($color, 15%);
 }
@@ -202,6 +207,7 @@ $list-elevation: 8;
 $card-elevation: 3;
 $nav-bar-elevation: 9;
 $button-elevation: 2;
+$seamless-button-elevation: 12;
 $tag-elevation: 1;
 $footer-elevation: 0;
 $tabs-elevation: 1;
