@@ -11,13 +11,12 @@ export default class FileManager
 {
     constructor()
     {
-        //const userDataPath = (app || remote.app).getPath('userData');
+        
     }
 
     openFile(callback: IOpenFileCallback)
     {
         const options = {
-            /*properties: ['openFile', 'multiSelections'],*/
             filters: [
                 { name: 'Recordings', extensions: ['fbf'] },
             ]
@@ -47,6 +46,9 @@ export default class FileManager
     {
         const options = {
             defaultPath: app.getPath('documents') + '/recording.fbf',
+            filters: [
+                { name: 'Recordings', extensions: ['fbf'] },
+            ]
         }
 
         dialog.showSaveDialog(null, options, (path: string) => {

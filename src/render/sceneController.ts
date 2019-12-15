@@ -356,7 +356,6 @@ export default class SceneController
         // Move forward with mouse wheel
 
         let zoomCallback = function(evt: WheelEvent) {
-            console.log(evt);
             const delta = Math.max(-1, Math.min(1,(evt.deltaY)));
             camera.position = BABYLON.Vector3.Lerp(camera.position, camera.getFrontPosition(-delta), 0.5);
         }

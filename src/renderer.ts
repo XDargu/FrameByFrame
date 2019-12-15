@@ -220,13 +220,20 @@ export default class Renderer {
         // Create control bar callbacks
         document.getElementById("control-bar-open").onclick = this.onOpenFile.bind(this);
         document.getElementById("control-bar-save").onclick = this.onSaveFile.bind(this);
+        document.getElementById("control-bar-clear").onclick = this.onClearFile.bind(this);
     }
 
     loadData(data: string)
     {
         this.recordedData.loadFromString(data);
         this.timeline.updateLength(this.recordedData.getSize());
+        this.applyFrame(0);
+    }
 
+    clear()
+    {
+        this.recordedData.clear();
+        this.timeline.updateLength(this.recordedData.getSize());
         this.applyFrame(0);
     }
 
@@ -318,9 +325,10 @@ export default class Renderer {
         }
 
         // Remove remaining elements
-        for (let i=counter; i<listElement.childElementCount; i++)
+        const remainingElements = listElement.childElementCount;
+        for (let i=counter; i<remainingElements; i++)
         {
-            let element = <HTMLElement>listElement.children[i];
+            let element = <HTMLElement>listElement.children[counter];
             listElement.removeChild(element);
         }
 
@@ -489,6 +497,11 @@ export default class Renderer {
     {
         ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.Save, JSON.stringify(this.recordedData)));
     }
+
+    onClearFile()
+    {
+        ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.Clear, ""));
+    }
 }
 
 const renderer = new Renderer();
@@ -500,8 +513,16 @@ ipcRenderer.on('asynchronous-reply', (event: any, arg: Messaging.Message) => {
     {
         case Messaging.MessageType.OpenResult:
         {
-            renderer.loadData(arg.data)
+            renderer.loadData(arg.data as string)
             break;
+        }
+        case Messaging.MessageType.ClearResult:
+        {
+            const result = arg.data as Messaging.IClearResultData;
+            if (result.clear)
+            {
+                renderer.clear();
+            }
         }
     }
 });
