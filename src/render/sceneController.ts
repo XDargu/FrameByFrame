@@ -13,6 +13,100 @@ interface IEntityData
     properties: Map<number, BABYLON.Mesh>;
 }
 
+// Unused for now, should be used later on
+class UniversalCameraCustomKeyboardInput implements BABYLON.ICameraInput<BABYLON.UniversalCamera>
+{
+    camera: BABYLON.UniversalCamera;
+    
+    private keysLeft = [37, 65];
+    private keysRight = [39, 68];
+    private keysUp = [38, 87];
+    private keysDown = [40, 83];
+    private sensibility = 0.2;
+
+    private _keys: number[] = [];
+    private _onKeyDown: (ev: KeyboardEvent)=> any
+    private _onKeyUp: (ev: KeyboardEvent)=> any
+    
+    getClassName(): string {
+        return "UniversalCameraCustomKeyboardInput";
+    }
+    getSimpleName(): string {
+        return "CustomKeyboardInput";
+    }
+    attachControl(element: HTMLElement, noPreventDefault?: boolean): void {
+        var _this = this;
+        if (!this._onKeyDown) {
+            element.tabIndex = 1;
+            this._onKeyDown = function (evt) {
+                if (_this.keysLeft.indexOf(evt.keyCode) !== -1 || _this.keysRight.indexOf(evt.keyCode) !== -1) {
+                    var index = _this._keys.indexOf(evt.keyCode);
+                    if (index === -1) {
+                        _this._keys.push(evt.keyCode);
+                    }
+                    if (!noPreventDefault) {
+                        evt.preventDefault();
+                    }
+                }
+            };
+            this._onKeyUp = function (evt) {
+                if (_this.keysLeft.indexOf(evt.keyCode) !== -1 || _this.keysRight.indexOf(evt.keyCode) !== -1) {
+                    var index = _this._keys.indexOf(evt.keyCode);
+                    if (index >= 0) {
+                        _this._keys.splice(index, 1);
+                    }
+                    if (!noPreventDefault) {
+                        evt.preventDefault();
+                    }
+                }
+            };
+
+            element.addEventListener("keydown", this._onKeyDown, false);
+            element.addEventListener("keyup", this._onKeyUp, false);
+        }
+    }
+
+    detachControl(element: HTMLElement): void {
+        if (this._onKeyDown) {
+            element.removeEventListener("keydown", this._onKeyDown);
+            element.removeEventListener("keyup", this._onKeyUp);
+            this._keys = [];
+            this._onKeyDown = null;
+            this._onKeyUp = null;
+        }
+    }
+
+    checkInputs() {
+        if (this._onKeyDown) {
+            var camera = this.camera;
+
+            // Keyboard
+            for (var index = 0; index < this._keys.length; index++) {
+                var keyCode = this._keys[index];
+                if (this.keysLeft.indexOf(keyCode) !== -1) {
+                    const right = camera.getWorldMatrix().getRow(0).toVector3();
+                    camera.position = BABYLON.Vector3.Lerp(camera.position, camera.position.subtract(right) , this.sensibility);
+                }
+                else if (this.keysRight.indexOf(keyCode) !== -1) {
+                    const right = camera.getWorldMatrix().getRow(0).toVector3();
+                    camera.position = BABYLON.Vector3.Lerp(camera.position, camera.position.add(right) , this.sensibility);
+                }
+                else if (this.keysUp.indexOf(keyCode) !== -1) {
+                    const forward = camera.getWorldMatrix().getRow(2).toVector3();
+                    camera.position = BABYLON.Vector3.Lerp(camera.position, camera.position.add(forward) , this.sensibility);
+
+                    //camera.position = BABYLON.Vector3.Lerp(camera.position, camera.getFrontPosition(1), this.sensibility);
+                }
+                else if (this.keysDown.indexOf(keyCode) !== -1) {
+                    const forward = camera.getWorldMatrix().getRow(2).toVector3();
+                    camera.position = BABYLON.Vector3.Lerp(camera.position, camera.position.subtract(forward) , this.sensibility);
+                    //camera.position = BABYLON.Vector3.Lerp(camera.position, camera.getFrontPosition(-1), this.sensibility);
+                }
+            }
+        }
+    }
+}
+
 export default class SceneController
 {
     private _canvas: HTMLCanvasElement;
@@ -246,7 +340,28 @@ export default class SceneController
 
         
         // This creates and positions a free camera (non-mesh)
-        const camera = new BABYLON.ArcRotateCamera("Camera", 3 * Math.PI / 2, Math.PI / 8, 50, BABYLON.Vector3.Zero(), scene);
+        //const camera = new BABYLON.ArcRotateCamera("Camera", 3 * Math.PI / 2, Math.PI / 8, 50, BABYLON.Vector3.Zero(), scene);
+        const camera = new BABYLON.UniversalCamera("UniversalCamera", new BABYLON.Vector3(0, 0, -10), scene);
+        camera.inertia = 0;
+        camera.speed = 10;
+        camera.angularSensibility = 500;
+
+        // Manually add inputs here for WASD
+        let keyboardInputs: any = camera.inputs.attached['keyboard'];
+        keyboardInputs.keysDown.push(83);
+        keyboardInputs.keysUp.push(87);
+        keyboardInputs.keysLeft.push(65);
+        keyboardInputs.keysRight.push(68);
+
+        // Move forward with mouse wheel
+
+        let zoomCallback = function(evt: WheelEvent) {
+            console.log(evt);
+            const delta = Math.max(-1, Math.min(1,(evt.deltaY)));
+            camera.position = BABYLON.Vector3.Lerp(camera.position, camera.getFrontPosition(-delta), 0.5);
+        }
+
+        canvas.addEventListener("wheel", zoomCallback, false);
 
         // This targets the camera to scene origin
         camera.setTarget(BABYLON.Vector3.Zero());
