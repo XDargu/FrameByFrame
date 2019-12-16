@@ -26,6 +26,24 @@ export interface IPropertySphere extends IProperty {
 	layer: string;
 }
 
+export interface IPropertyAABB extends IProperty {
+	position: IVec3;
+	size: IVec3;
+	value: string;
+	color: IColor;
+	layer: string;
+}
+
+export interface IPropertyOOBB extends IProperty {
+	position: IVec3;
+	size: IVec3;
+	up: IVec3;
+	forward: IVec3;
+	value: string;
+	color: IColor;
+	layer: string;
+}
+
 export interface IPropertyPlane extends IProperty {
 	position: IVec3;
 	normal: IVec3;

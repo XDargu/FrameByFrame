@@ -1,6 +1,7 @@
 import * as BABYLON from 'babylonjs';
 import * as RECORDING from '../recording/RecordingData';
 import { GridMaterial } from 'babylonjs-materials';
+import { Quaternion } from 'babylonjs';
 
 export interface IEntitySelectedCallback
 {
@@ -148,7 +149,7 @@ export default class SceneController
 
     private isPropertyShape(property: RECORDING.IProperty)
     {
-        return property.type == "sphere" || property.type == "line"|| property.type == "plane";
+        return property.type == "sphere" || property.type == "line"|| property.type == "plane" || property.type == "aabb" || property.type == "oobb";
     }
 
     addProperty(entity: RECORDING.IEntity, property: RECORDING.IProperty)
@@ -176,6 +177,52 @@ export default class SceneController
                     sphere.material = material;
 
                     entityData.properties.set(sphereProperty.id, sphere);
+                }
+                else if (property.type == "aabb")
+                {
+                    let aabbProperty = property as RECORDING.IPropertyAABB;
+
+                    // #TODO: This should be in a mesh/material pool
+                    let aabb = BABYLON.MeshBuilder.CreateBox(aabbProperty.name, {height: aabbProperty.size.x, width: aabbProperty.size.y, depth: aabbProperty.size.z}, this._scene)
+                    aabb.isPickable = false;
+                    aabb.id = aabbProperty.id.toString();
+
+                    aabb.position.set(aabbProperty.position.x, aabbProperty.position.y, aabbProperty.position.z);
+
+                    let material = new BABYLON.StandardMaterial("entityMaterial", this._scene);
+                    material.diffuseColor = new BABYLON.Color3(aabbProperty.color.r, aabbProperty.color.g, aabbProperty.color.b);
+                    material.alpha = aabbProperty.color.a;
+                    aabb.material = material;
+
+                    entityData.properties.set(aabbProperty.id, aabb);
+                }
+                else if (property.type == "oobb")
+                {
+                    let oobbProperty = property as RECORDING.IPropertyOOBB;
+
+                    // #TODO: This should be in a mesh/material pool
+                    let oobb = BABYLON.MeshBuilder.CreateBox(oobbProperty.name, {height: oobbProperty.size.y, width: oobbProperty.size.x, depth: oobbProperty.size.z}, this._scene)
+                    oobb.isPickable = false;
+                    oobb.id = oobbProperty.id.toString();
+
+                    oobb.position.set(oobbProperty.position.x, oobbProperty.position.y, oobbProperty.position.z);
+                    let up = new BABYLON.Vector3(oobbProperty.up.x, oobbProperty.up.y, oobbProperty.up.z);
+                    let forward = new BABYLON.Vector3(oobbProperty.forward.x, oobbProperty.forward.y, oobbProperty.forward.z);
+                    let right = BABYLON.Vector3.Cross(up, forward);
+
+                    let rotationMatrix = new BABYLON.Matrix();
+                    rotationMatrix.setRow(0, new BABYLON.Vector4(right.x, right.y, right.z, 0));
+                    rotationMatrix.setRow(1, new BABYLON.Vector4(up.x, up.y, up.z, 0));
+                    rotationMatrix.setRow(2, new BABYLON.Vector4(forward.x, forward.y, forward.z, 0));
+                    oobb.rotationQuaternion = new Quaternion();
+                    oobb.rotationQuaternion.fromRotationMatrix(rotationMatrix);
+
+                    let material = new BABYLON.StandardMaterial("entityMaterial", this._scene);
+                    material.diffuseColor = new BABYLON.Color3(oobbProperty.color.r, oobbProperty.color.g, oobbProperty.color.b);
+                    material.alpha = oobbProperty.color.a;
+                    oobb.material = material;
+
+                    entityData.properties.set(oobbProperty.id, oobb);
                 }
                 else if (property.type == "plane")
                 {

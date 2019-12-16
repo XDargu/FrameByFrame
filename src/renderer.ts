@@ -420,6 +420,24 @@ export default class Renderer {
             this.propertyTree.addItem(addedItem, "Position: " + sphere.position.x + ", " + sphere.position.y + ", " + + sphere.position.z);
             this.propertyTree.addItem(addedItem, "Radius: " + sphere.radius);
         }
+        else if (property.type == "aabb")
+        {
+            const aabb = property as RECORDING.IPropertyAABB;
+
+            let addedItem = this.propertyTree.addItem(parent, property.name, false, property.id.toString());
+            this.propertyTree.addItem(addedItem, "Position: " + aabb.position.x + ", " + aabb.position.y + ", " + + aabb.position.z);
+            this.propertyTree.addItem(addedItem, "Size: " + aabb.size.x + ", " + aabb.size.y + ", " + + aabb.size.z);
+        }
+        else if (property.type == "oobb")
+        {
+            const oobb = property as RECORDING.IPropertyOOBB;
+
+            let addedItem = this.propertyTree.addItem(parent, property.name, false, property.id.toString());
+            this.propertyTree.addItem(addedItem, "Position: " + oobb.position.x + ", " + oobb.position.y + ", " + + oobb.position.z);
+            this.propertyTree.addItem(addedItem, "Size: " + oobb.size.x + ", " + oobb.size.y + ", " + + oobb.size.z);
+            this.propertyTree.addItem(addedItem, "Forward: " + oobb.forward.x + ", " + oobb.forward.y + ", " + + oobb.forward.z);
+            this.propertyTree.addItem(addedItem, "Up: " + oobb.up.x + ", " + oobb.up.y + ", " + + oobb.up.z);
+        }
         else if (property.type == "plane")
         {
             const plane = property as RECORDING.IPropertyPlane;
