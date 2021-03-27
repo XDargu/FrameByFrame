@@ -12,6 +12,10 @@
     @include surface-elevation($tag-elevation, $primary-color);
 }
 
+.basico-tag.basico-big {
+    font-size: 11px;
+}
+
 .basico-card-header .basico-tag {
     float: right;
 }

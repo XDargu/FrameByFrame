@@ -13,8 +13,9 @@ let fileManager: FileManager;
 function createWindow() {
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    height: 768,
-    width: 1024,
+    height: 1080,
+    width: 1920,
+    /*fullscreen: true,*/
     /*frame: false,*/
     webPreferences: {
         nodeIntegration: true,

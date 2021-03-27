@@ -339,6 +339,10 @@
   z-index: 1;
 }
 
+.basico-tag.basico-big {
+  font-size: 11px;
+}
+
 .basico-card-header .basico-tag {
   float: right;
 }

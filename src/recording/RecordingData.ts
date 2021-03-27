@@ -11,10 +11,14 @@ export interface IColor {
 	a: number;
 }
 
+export interface IPropertyCustomType {
+	[nameId: string] : string | number | boolean;
+}
+
 export interface IProperty {
 	type: string;
 	name: string;
-	value: string | number | IVec3 | IProperty[];
+	value: string | number | IVec3 | IPropertyCustomType | IProperty[];
 	id?: number;
 }
 
