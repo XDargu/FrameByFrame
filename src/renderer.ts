@@ -460,8 +460,6 @@ export default class Renderer {
         else
         {
             const type = this.typeRegistry.findType(property.type);
-            console.log("Prop type: " + property.type);
-            console.log(type);
             if (type)
             {
                 this.addCustomTypeToPropertyTree(parent, property, type);

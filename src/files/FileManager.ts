@@ -7,11 +7,34 @@ export interface IOpenFileCallback
     (path: string, content: string) : void;
 }
 
+export interface IHistoryChangedCallback
+{
+    (paths: string[]) : void;
+}
+
+interface IPathHistory
+{
+    paths : string[];
+}
+
 export default class FileManager
 {
+    historyDir : string;
+    historyFile : string;
+    pathHistory : IPathHistory;
+    onHistoryChangedCallback : IHistoryChangedCallback;
+
     constructor()
     {
-        
+        this.historyDir = "/.config/history";
+        this.historyFile = "info.json";
+        this.pathHistory = { paths: [] };
+    }
+
+    initialize(onHistoryChangedCallback : IHistoryChangedCallback)
+    {
+        this.onHistoryChangedCallback = onHistoryChangedCallback;
+        this.loadHistory();
     }
 
     openFile(callback: IOpenFileCallback)
@@ -28,17 +51,20 @@ export default class FileManager
                 return;
             }
 
-            fs.readFile(paths[0], 'utf-8', (err, data) => {
-                if(err){
-                    alert("An error ocurred reading the file :" + err.message);
-                    return;
-                }
-        
-                // Change how to handle the file content
-                console.log("The file content is : " + data);
+            this.loadFile(paths[0], callback);
+        });
+    }
 
-                callback(paths[0], data);
-            });
+    loadFile(path: string, callback: IOpenFileCallback)
+    {
+        fs.readFile(path, 'utf-8', (err, data) => {
+            if(err){
+                alert("An error ocurred reading the file :" + err.message);
+                return;
+            }
+    
+            this.updateHistory(path);
+            callback(path, data);
         });
     }
 
@@ -61,9 +87,75 @@ export default class FileManager
                 if(err){
                     console.log("An error ocurred creating the file "+ err.message)
                 }
-                            
+
+                this.updateHistory(path);
                 console.log("The file has been succesfully saved");
             });
         });
+    }
+
+    loadHistory()
+    {
+        console.log('Loading history');
+        if (!fs.existsSync(this.historyDir))
+        {
+            console.log('Creating history dir');
+            fs.mkdirSync(this.historyDir, { recursive: true });
+        }
+
+        const historyPath = this.getHistoryPath();
+
+        if (!fs.existsSync(historyPath))
+        {
+            console.log('Creating history file');
+            fs.writeFile(historyPath, JSON.stringify(this.pathHistory), (err) => {
+                if(err){
+                    console.log("An error ocurred creating the history file "+ err.message)
+                }
+            });
+        }
+        else
+        {
+            console.log('Loading history file');
+            fs.readFile(historyPath, 'utf-8', (err, data) => {
+                if(err){
+                    alert("An error ocurred reading the history file :" + err.message);
+                    return; 
+                }
+
+                this.pathHistory = JSON.parse(data);
+                if (this.onHistoryChangedCallback)
+                {
+                    this.onHistoryChangedCallback(this.pathHistory.paths);
+                }
+            });
+        }
+    }
+
+    updateHistory(path : string)
+    {
+        const historyPath = this.getHistoryPath();
+
+        const index = this.pathHistory.paths.indexOf(path);
+        if (index > -1)
+        {
+            this.pathHistory.paths.splice(index);
+        }
+        
+        this.pathHistory.paths.push(path);
+        fs.writeFile(historyPath, JSON.stringify(this.pathHistory), (err) => {
+            if(err){
+                console.log("An error ocurred creating the history file "+ err.message)
+            }
+
+            if (this.onHistoryChangedCallback)
+            {
+                this.onHistoryChangedCallback(this.pathHistory.paths);
+            }
+        });
+    }
+
+    private getHistoryPath() : string {
+        return `${this.historyDir}/${this.historyFile}`;
     }
 }

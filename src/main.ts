@@ -1,7 +1,7 @@
-import { app, BrowserWindow, Menu, ipcMain, dialog } from "electron";
+import { app, BrowserWindow, Menu, ipcMain, dialog, ipcRenderer } from "electron";
 import * as path from "path";
 import * as url from "url";
-import menu from "./components/Menu";
+import MenuBuilder from "./components/Menu";
 import FileManager from './files/FileManager';
 import * as Messaging from "./messaging/MessageDefinitions";
 
@@ -9,6 +9,7 @@ let mainWindow: Electron.BrowserWindow;
 
 // File Manager
 let fileManager: FileManager;
+let menuBuilder: MenuBuilder;
 
 function createWindow() {
   // Create the browser window.
@@ -41,9 +42,33 @@ function createWindow() {
     mainWindow = null;
   });
 
-  Menu.setApplicationMenu(menu(mainWindow));
+  menuBuilder = new MenuBuilder(onOpenFileClicked, onExportFileClicked, onOpenRecentFileClicked);
+  Menu.setApplicationMenu(menuBuilder.buildMenu(mainWindow));
 
   fileManager = new FileManager();
+  fileManager.initialize((paths: string[]) => {
+      menuBuilder.updateRecentMenu(paths);
+      Menu.setApplicationMenu(menuBuilder.buildMenu(mainWindow));
+  });
+}
+
+function onOpenFileClicked()
+{
+  fileManager.openFile((path: string, content: string) => {
+    mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
+  });
+}
+
+function onExportFileClicked()
+{
+  // TODO
+}
+
+function onOpenRecentFileClicked(path : string)
+{
+  fileManager.loadFile(path, (path: string, content: string) => {
+    mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
+  });
 }
 
 // This method will be called when Electron has finished
