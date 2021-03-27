@@ -1,7 +1,7 @@
-import { app, BrowserWindow, Menu, ipcMain, dialog } from "electron";
+import { app, BrowserWindow, Menu, ipcMain, dialog, ipcRenderer } from "electron";
 import * as path from "path";
 import * as url from "url";
-import menu from "./components/Menu";
+import MenuBuilder from "./components/Menu";
 import FileManager from './files/FileManager';
 import * as Messaging from "./messaging/MessageDefinitions";
 
@@ -9,6 +9,7 @@ let mainWindow: Electron.BrowserWindow;
 
 // File Manager
 let fileManager: FileManager;
+let menuBuilder: MenuBuilder;
 
 function createWindow() {
   // Create the browser window.
@@ -41,9 +42,46 @@ function createWindow() {
     mainWindow = null;
   });
 
-  Menu.setApplicationMenu(menu(mainWindow));
+  menuBuilder = new MenuBuilder(onOpenFileClicked, onExportFileClicked, onOpenRecentFileClicked);
+  Menu.setApplicationMenu(menuBuilder.buildMenu(mainWindow));
 
   fileManager = new FileManager();
+  fileManager.initialize(onFileHistoryChanged);
+
+  mainWindow.webContents.once('dom-ready', onRendererReady);
+}
+
+function onRendererReady()
+{
+  // We need to send the recent files here because the first time they load the renderer is not ready yet
+  onFileHistoryChanged(fileManager.pathHistory.paths);
+}
+
+// File callbacks
+function onFileHistoryChanged(paths: string[])
+{
+  menuBuilder.updateRecentMenu(paths);
+  Menu.setApplicationMenu(menuBuilder.buildMenu(mainWindow));
+  mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.UpdateRecentFiles, paths.toString()));
+}
+
+function onOpenFileClicked()
+{
+  fileManager.openFile((path: string, content: string) => {
+    mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
+  });
+}
+
+function onExportFileClicked()
+{
+  mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.RequestSave, ""));
+}
+
+function onOpenRecentFileClicked(path : string)
+{
+  fileManager.loadFile(path, (path: string, content: string) => {
+    mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
+  });
 }
 
 // This method will be called when Electron has finished
@@ -82,6 +120,16 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
     case Messaging.MessageType.Save:
     {
       fileManager.saveFile(arg.data as string);
+      break;
+    }
+    case Messaging.MessageType.Load:
+    {
+      const filePath = arg.data as string;
+      fileManager.loadFile(filePath, (path: string, content: string) => {
+        console.log('Returning! ');
+        console.log(event);
+        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
+      });
       break;
     }
     case Messaging.MessageType.Open:

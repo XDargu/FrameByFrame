@@ -388,7 +388,7 @@ export default class SceneController
         
         // This creates and positions a free camera (non-mesh)
         //const camera = new BABYLON.ArcRotateCamera("Camera", 3 * Math.PI / 2, Math.PI / 8, 50, BABYLON.Vector3.Zero(), scene);
-        const camera = new BABYLON.UniversalCamera("UniversalCamera", new BABYLON.Vector3(0, 0, -10), scene);
+        const camera = new BABYLON.UniversalCamera("UniversalCamera", new BABYLON.Vector3(10, 10, -10), scene);
         camera.inertia = 0;
         camera.speed = 10;
         camera.angularSensibility = 500;
