@@ -59,7 +59,15 @@ export default class FileManager
     {
         fs.readFile(path, 'utf-8', (err, data) => {
             if(err){
-                alert("An error ocurred reading the file :" + err.message);
+                const options = {
+                    type: 'error',
+                    buttons: ['OK'],
+                    title: 'Error reading file',
+                    message: 'An error ocurred reading the file',
+                    detail: err.message,
+                    checkboxChecked: false,
+                  };
+                dialog.showMessageBox(null, options);
                 return;
             }
     
@@ -119,7 +127,15 @@ export default class FileManager
             console.log('Loading history file');
             fs.readFile(historyPath, 'utf-8', (err, data) => {
                 if(err){
-                    alert("An error ocurred reading the history file :" + err.message);
+                    const options = {
+                        type: 'error',
+                        buttons: ['OK'],
+                        title: 'Error loading recent files',
+                        message: 'An error ocurred loading the list of recent files',
+                        detail: err.message,
+                        checkboxChecked: false,
+                      };
+                    dialog.showMessageBox(null, options);
                     return; 
                 }
 

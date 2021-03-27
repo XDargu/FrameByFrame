@@ -615,15 +615,19 @@ ipcRenderer.on('asynchronous-reply', (event: any, arg: Messaging.Message) => {
             {
                 renderer.clear();
             }
+            break;
         }
         case Messaging.MessageType.RequestSave:
         {
             renderer.onSaveFile();
+            break;
         }
         case Messaging.MessageType.UpdateRecentFiles:
         {
             const recentFiles = (arg.data as string).split(",");
+            console.log(recentFiles);
             renderer.updateRecentFiles(recentFiles);
+            break;
         }
     }
 });

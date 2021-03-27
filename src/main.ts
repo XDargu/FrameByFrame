@@ -47,6 +47,14 @@ function createWindow() {
 
   fileManager = new FileManager();
   fileManager.initialize(onFileHistoryChanged);
+
+  mainWindow.webContents.once('dom-ready', onRendererReady);
+}
+
+function onRendererReady()
+{
+  // We need to send the recent files here because the first time they load the renderer is not ready yet
+  onFileHistoryChanged(fileManager.pathHistory.paths);
 }
 
 // File callbacks
