@@ -28,6 +28,17 @@ export function buildPrimitiveType(stringValue : string) : EPrimitiveType
 
 export class TypeRegistry
 {
+    private static instance: TypeRegistry;
+    public static getInstance(): TypeRegistry
+    {
+        if (!TypeRegistry.instance)
+        {
+            TypeRegistry.instance = new TypeRegistry();
+        }
+
+        return TypeRegistry.instance;
+    }
+
     private types: Map<string, IType>;
 
     constructor()
