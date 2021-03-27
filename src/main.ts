@@ -46,10 +46,15 @@ function createWindow() {
   Menu.setApplicationMenu(menuBuilder.buildMenu(mainWindow));
 
   fileManager = new FileManager();
-  fileManager.initialize((paths: string[]) => {
-      menuBuilder.updateRecentMenu(paths);
-      Menu.setApplicationMenu(menuBuilder.buildMenu(mainWindow));
-  });
+  fileManager.initialize(onFileHistoryChanged);
+}
+
+// File callbacks
+function onFileHistoryChanged(paths: string[])
+{
+  menuBuilder.updateRecentMenu(paths);
+  Menu.setApplicationMenu(menuBuilder.buildMenu(mainWindow));
+  mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.UpdateRecentFiles, paths.toString()));
 }
 
 function onOpenFileClicked()
@@ -61,7 +66,7 @@ function onOpenFileClicked()
 
 function onExportFileClicked()
 {
-  // TODO
+  mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.RequestSave, ""));
 }
 
 function onOpenRecentFileClicked(path : string)
@@ -107,6 +112,16 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
     case Messaging.MessageType.Save:
     {
       fileManager.saveFile(arg.data as string);
+      break;
+    }
+    case Messaging.MessageType.Load:
+    {
+      const filePath = arg.data as string;
+      fileManager.loadFile(filePath, (path: string, content: string) => {
+        console.log('Returning! ');
+        console.log(event);
+        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
+      });
       break;
     }
     case Messaging.MessageType.Open:

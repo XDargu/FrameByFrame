@@ -139,10 +139,14 @@ export default class FileManager
         const index = this.pathHistory.paths.indexOf(path);
         if (index > -1)
         {
-            this.pathHistory.paths.splice(index);
+            this.pathHistory.paths.splice(index, 1);
         }
         
-        this.pathHistory.paths.push(path);
+        this.pathHistory.paths.unshift(path);
+        if (this.pathHistory.paths.length > 15)
+        {
+            this.pathHistory.paths.pop();
+        }
         fs.writeFile(historyPath, JSON.stringify(this.pathHistory), (err) => {
             if(err){
                 console.log("An error ocurred creating the history file "+ err.message)

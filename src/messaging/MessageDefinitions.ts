@@ -1,9 +1,12 @@
-export enum MessageType {
+export enum MessageType { // TODO: Maybe rename these to make clear the direction of the messge (main->render or render->main)
+    RequestSave,
     Save,
-    Open,
+    Load, // Load specific file
+    Open, // Open file prompt
     OpenResult,
     Clear,
-    ClearResult
+    ClearResult,
+    UpdateRecentFiles
 }
 
 export interface IClearResultData

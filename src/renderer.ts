@@ -2,6 +2,7 @@ import { ipcRenderer } from "electron";
 import * as RECORDING from './recording/RecordingData';
 import Timeline from './timeline/timeline';
 import ConnectionsList from './frontend/ConnectionsList';
+import FileListController from "./frontend/FileListController";
 import * as BASICO from './ui/ui';
 import * as NET_TYPES from './network/types';
 import SceneController from './render/sceneController';
@@ -155,6 +156,9 @@ export default class Renderer {
     // Networking
     private connectionsList: ConnectionsList;
 
+    // Recent files
+    private recentFilesController: FileListController;
+
     // Playback
     private playbackController: PlaybackController;
 
@@ -179,6 +183,9 @@ export default class Renderer {
         let connectionsListElement: HTMLElement = document.getElementById(`connectionsList`);
         this.connectionsList = new ConnectionsList(connectionsListElement, this.onMessageArrived.bind(this));
         this.connectionsList.initialize();
+
+        let recentFilesListElement: HTMLElement = document.getElementById(`recentFilesList`);
+        this.recentFilesController = new FileListController(recentFilesListElement, this.onRecentFileClicked.bind(this))
 
         this.typeRegistry = new TypeSystem.TypeRegistry();
 
@@ -550,6 +557,11 @@ export default class Renderer {
         }
     }
 
+    updateRecentFiles(paths: string[])
+    {
+        this.recentFilesController.updateRecentFiles(paths);
+    }
+
     // Timeline callbacks
     onTimelineClicked(frame: number)
     {
@@ -576,6 +588,12 @@ export default class Renderer {
     {
         ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.Clear, ""));
     }
+
+    // Recent files callbacks
+    onRecentFileClicked(path: string)
+    {
+        ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.Load, path));
+    }
 }
 
 const renderer = new Renderer();
@@ -597,6 +615,15 @@ ipcRenderer.on('asynchronous-reply', (event: any, arg: Messaging.Message) => {
             {
                 renderer.clear();
             }
+        }
+        case Messaging.MessageType.RequestSave:
+        {
+            renderer.onSaveFile();
+        }
+        case Messaging.MessageType.UpdateRecentFiles:
+        {
+            const recentFiles = (arg.data as string).split(",");
+            renderer.updateRecentFiles(recentFiles);
         }
     }
 });
