@@ -716,6 +716,7 @@
   display: inline-block;
   padding-bottom: 4px;
   padding-top: 4px;
+  width: 100%;
 }
 
 /* Elevation of elements */

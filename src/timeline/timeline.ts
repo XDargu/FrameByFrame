@@ -252,8 +252,18 @@ export default class Timeline {
             {
                 this.ctx.moveTo(position, Timeline.headerHeight);
                 this.ctx.lineTo(position, Timeline.headerHeight - Timeline.markerHeight);
-                
-                this.ctx.fillText(i + "", position, Timeline.textHeight);
+
+                let offset = 0;
+                if (i == 0)
+                {
+                    offset = this.ctx.measureText(i + "").width;
+                }
+                else if (i == lastFrame - 1)
+                {
+                    offset = -this.ctx.measureText(i + "").width * 0.6;
+                }
+
+                this.ctx.fillText(i + "", position + offset, Timeline.textHeight);
             }
             else
             {
