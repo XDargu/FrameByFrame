@@ -52,7 +52,25 @@ body {
 }
 
 .sidebar {
-    flex: 0 0 250px;
+    flex: 0 0 320px;
+}
+
+/* Property tree view */
+.property-name {
+    width: 50%;
+}
+
+.property-group {
+    display: flex;
+    float: right;
+    width: 50%;
+}
+
+.property-group .property-primitive {
+    margin: 0px 2px;
+    flex: 1 1 0;
+    width: 0;
+    overflow: hidden;
 }
 
 #viewport {

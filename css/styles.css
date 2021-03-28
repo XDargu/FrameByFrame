@@ -683,7 +683,7 @@
 }
 
 .basico-tree .basico-tree-leaf .basico-tree-item-wrapper {
-  padding-left: 25px;
+  padding-left: 15px;
 }
 
 .basico-tree .basico-tree-leaf .basico-tree-item-toggle {
@@ -716,6 +716,10 @@
   display: inline-block;
   padding-bottom: 4px;
   padding-top: 4px;
+}
+
+.basico-tree .basico-tree-leaf .basico-tree-item-content {
+  width: 100%;
 }
 
 /* Elevation of elements */
@@ -859,7 +863,25 @@ body {
 }
 
 .sidebar {
-  flex: 0 0 250px;
+  flex: 0 0 320px;
+}
+
+/* Property tree view */
+.property-name {
+  width: 50%;
+}
+
+.property-group {
+  display: flex;
+  float: right;
+  width: 50%;
+}
+
+.property-group .property-primitive {
+  margin: 0px 2px;
+  flex: 1 1 0;
+  width: 0;
+  overflow: hidden;
 }
 
 #viewport {

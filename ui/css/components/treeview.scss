@@ -41,7 +41,7 @@
 }
 
 .basico-tree .basico-tree-leaf .basico-tree-item-wrapper {
-    padding-left: 25px;
+    padding-left: 15px;
 }
 
 .basico-tree .basico-tree-leaf .basico-tree-item-toggle {
@@ -74,4 +74,8 @@
     display: inline-block;
     padding-bottom: 4px;
     padding-top: 4px;
+}
+
+.basico-tree .basico-tree-leaf .basico-tree-item-content {
+    width: 100%;
 }

@@ -7,143 +7,15 @@ import * as BASICO from './ui/ui';
 import * as NET_TYPES from './network/types';
 import SceneController from './render/sceneController';
 import * as Messaging from "./messaging/MessageDefinitions";
-import * as TypeSystem from "./types/typeRegistry";
 import { _TypeStore } from "babylonjs";
-
-class PlaybackController {
-
-    private renderer: Renderer;
-    private isPlaying: boolean;
-    private elapsedTime: number;
-
-    constructor(renderer: Renderer) {
-        this.isPlaying = false;
-        this.elapsedTime = 0;
-        this.renderer = renderer;
-    }
-
-    update(elapsedSeconds: number) {
-        if (this.isPlaying)
-        {
-            this.elapsedTime += elapsedSeconds;
-
-            // Check how many frames we have to skip
-            let currentFrame = this.renderer.getCurrentFrame();
-            let currentElapsedTime = this.renderer.getElapsedTimeOfFrame(currentFrame);
-
-            while (this.elapsedTime > currentElapsedTime && currentFrame < this.renderer.getFrameCount() - 1)
-            {
-                currentFrame++;
-                this.elapsedTime -= currentElapsedTime;
-                currentElapsedTime = this.renderer.getElapsedTimeOfFrame(currentFrame);
-            }
-
-            this.renderer.applyFrame(currentFrame);
-
-            // Stop in the last frame
-            if (currentFrame == this.renderer.getFrameCount() - 1)
-            {
-                this.stopPlayback();
-            }
-        }
-    }
-
-    updateUI()
-    {
-        if (this.isPlaying) {
-            document.getElementById("timeline-play-icon").classList.remove("fa-play");
-            document.getElementById("timeline-play-icon").classList.add("fa-stop");
-        }
-        else {
-            document.getElementById("timeline-play-icon").classList.remove("fa-stop");
-            document.getElementById("timeline-play-icon").classList.add("fa-play");
-        }
-
-        if (this.renderer.getCurrentFrame() == 0) {
-            document.getElementById("timeline-first").classList.add("basico-disabled");
-            document.getElementById("timeline-prev").classList.add("basico-disabled");
-        }
-        else {
-            document.getElementById("timeline-first").classList.remove("basico-disabled");
-            document.getElementById("timeline-prev").classList.remove("basico-disabled");
-        }
-
-        if (this.renderer.getCurrentFrame() == this.renderer.getFrameCount() - 1) {
-            document.getElementById("timeline-last").classList.add("basico-disabled");
-            document.getElementById("timeline-next").classList.add("basico-disabled");
-        }
-        else {
-            document.getElementById("timeline-last").classList.remove("basico-disabled");
-            document.getElementById("timeline-next").classList.remove("basico-disabled");
-        }
-    }
-
-    startPlayback()
-    {
-        this.isPlaying = true;
-        this.updateUI();
-    }
-
-    stopPlayback()
-    {
-        this.isPlaying = false;
-        this.elapsedTime = 0;
-        this.updateUI();
-    }
-
-    onTimelineNextClicked()
-    {
-        if (this.renderer.getCurrentFrame() < this.renderer.getFrameCount() - 1) {
-            this.renderer.applyFrame(this.renderer.getCurrentFrame() + 1);
-            this.updateUI();
-        }
-    }
-
-    onTimelinePrevClicked()
-    {
-        if (this.renderer.getCurrentFrame() > 0) {
-            this.renderer.applyFrame(this.renderer.getCurrentFrame() - 1);
-            this.updateUI();
-        }
-    }
-
-    onTimelineFirstClicked()
-    {
-        if (this.renderer.getCurrentFrame() != 0) {
-            this.renderer.applyFrame(0);
-            this.updateUI();
-        }
-    }
-
-    onTimelineLastClicked()
-    {
-        if (this.renderer.getCurrentFrame() != this.renderer.getFrameCount() - 1) {
-            this.renderer.applyFrame(this.renderer.getFrameCount() - 1);
-            this.updateUI();
-        }
-    }
-
-    onTimelinePlayClicked()
-    {
-        if (!this.isPlaying)
-        {
-            this.startPlayback();
-        }
-        else
-        {
-            this.stopPlayback();
-        }
-    }
-}
+import { PlaybackController } from "./timeline/PlaybackController";
+import { PropertyTreeController } from "./frontend/PropertyTreeController";
 
 export default class Renderer {
     private sceneController: SceneController;
     private recordedData: RECORDING.NaiveRecordedData;
     private timeline: Timeline;
     private currentPropertyId: number;
-
-    // Types
-    private typeRegistry : TypeSystem.TypeRegistry;
 
     // Per frame cache
     private frameData: RECORDING.IFrameData;
@@ -152,6 +24,7 @@ export default class Renderer {
     private propertyTree: BASICO.TreeControl;
     private entityList: BASICO.ListControl;
     private selectedEntityId: number;
+    private propertyTreeController: PropertyTreeController;
 
     // Networking
     private connectionsList: ConnectionsList;
@@ -187,7 +60,7 @@ export default class Renderer {
         let recentFilesListElement: HTMLElement = document.getElementById(`recentFilesList`);
         this.recentFilesController = new FileListController(recentFilesListElement, this.onRecentFileClicked.bind(this))
 
-        this.typeRegistry = new TypeSystem.TypeRegistry();
+        this.propertyTreeController = new PropertyTreeController(this.propertyTree);
 
         this.applyFrame(0);
     }
@@ -375,7 +248,7 @@ export default class Renderer {
             {
                 for (let i=0; i<selectedEntity.properties.length; ++i)
                 {
-                    this.addToPropertyTree(this.propertyTree.root, selectedEntity.properties[i]);
+                    this.propertyTreeController.addToPropertyTree(this.propertyTree.root, selectedEntity.properties[i]);
                 }
             }
         }
@@ -406,124 +279,6 @@ export default class Renderer {
                 });
             }
         }*/
-    }
-
-    getPrimitiveTypeAsString(value : any, primitiveType : TypeSystem.EPrimitiveType) : string
-    {
-        switch(primitiveType)
-        {
-            case TypeSystem.EPrimitiveType.Number:
-            {
-                // TODO: Either check type here, or validate incomming data so this is always valid data
-                return (+value.toFixed(2)).toString();
-            }
-            case TypeSystem.EPrimitiveType.String:
-            {
-                return value;
-            }
-            case TypeSystem.EPrimitiveType.Boolean:
-            {
-                return value;
-            }
-        }
-    }
-
-    wrapPrimitiveType(content : string) : string
-    {
-        return `<div class="basico-tag basico-big">${content}</div> `;
-    }
-
-    addCustomTypeToPropertyTree(parent: HTMLElement, property: RECORDING.IProperty, type : TypeSystem.IType)
-    {
-        // Complex value type
-        let layout = `${property.name}: `;
-        for (const [layoutId, primitiveType] of Object.entries(type.layout))
-        {
-            const customTypeValue  = property.value as RECORDING.IPropertyCustomType;
-            const value = customTypeValue[layoutId];
-            if (value)
-            {
-                const valueAsString = this.getPrimitiveTypeAsString(value, primitiveType);
-                layout += this.wrapPrimitiveType(valueAsString);
-            }
-        }
-
-        this.propertyTree.addItem(parent, layout, false, property.id.toString());
-    }
-
-    addToPropertyTree(parent: HTMLElement, property: RECORDING.IProperty)
-    {
-        if (property.type == "group")
-        {
-            let addedItem = this.propertyTree.addItem(parent, property.name, false, property.id.toString());
-            const propertyGroup = property as RECORDING.IPropertyGroup;
-
-            for (let i=0; i<propertyGroup.value.length; ++i)
-            {
-                this.addToPropertyTree(addedItem, propertyGroup.value[i]);
-            }
-        }
-        // Find type
-        else
-        {
-            const type = this.typeRegistry.findType(property.type);
-            if (type)
-            {
-                this.addCustomTypeToPropertyTree(parent, property, type);
-            }
-            else if (property.type == "sphere")
-            {
-                const sphere = property as RECORDING.IPropertySphere;
-
-                let addedItem = this.propertyTree.addItem(parent, property.name, false, property.id.toString());
-                this.propertyTree.addItem(addedItem, "Position: " + sphere.position.x + ", " + sphere.position.y + ", " + + sphere.position.z);
-                this.propertyTree.addItem(addedItem, "Radius: " + sphere.radius);
-            }
-            else if (property.type == "aabb")
-            {
-                const aabb = property as RECORDING.IPropertyAABB;
-
-                let addedItem = this.propertyTree.addItem(parent, property.name, false, property.id.toString());
-                this.propertyTree.addItem(addedItem, "Position: " + aabb.position.x + ", " + aabb.position.y + ", " + + aabb.position.z);
-                this.propertyTree.addItem(addedItem, "Size: " + aabb.size.x + ", " + aabb.size.y + ", " + + aabb.size.z);
-            }
-            else if (property.type == "oobb")
-            {
-                const oobb = property as RECORDING.IPropertyOOBB;
-
-                let addedItem = this.propertyTree.addItem(parent, property.name, false, property.id.toString());
-                this.propertyTree.addItem(addedItem, "Position: " + oobb.position.x + ", " + oobb.position.y + ", " + + oobb.position.z);
-                this.propertyTree.addItem(addedItem, "Size: " + oobb.size.x + ", " + oobb.size.y + ", " + + oobb.size.z);
-                this.propertyTree.addItem(addedItem, "Forward: " + oobb.forward.x + ", " + oobb.forward.y + ", " + + oobb.forward.z);
-                this.propertyTree.addItem(addedItem, "Up: " + oobb.up.x + ", " + oobb.up.y + ", " + + oobb.up.z);
-            }
-            else if (property.type == "plane")
-            {
-                const plane = property as RECORDING.IPropertyPlane;
-
-                let addedItem = this.propertyTree.addItem(parent, property.name, false, property.id.toString());
-                this.propertyTree.addItem(addedItem, "Position: " + plane.position.x + ", " + plane.position.y + ", " + + plane.position.z);
-                this.propertyTree.addItem(addedItem, "Normal: " + plane.normal.x + ", " + plane.normal.y + ", " + + plane.normal.z);
-                this.propertyTree.addItem(addedItem, "Up: " + plane.up.x + ", " + plane.up.y + ", " + + plane.up.z);
-                this.propertyTree.addItem(addedItem, "Width: " + plane.width);
-                this.propertyTree.addItem(addedItem, "Length: " + plane.length);
-            }
-            else if (property.type == "line")
-            {
-                const line = property as RECORDING.IPropertyLine;
-
-                let addedItem = this.propertyTree.addItem(parent, property.name, false, property.id.toString());
-                this.propertyTree.addItem(addedItem, "Origin: " + line.origin.x + ", " + line.origin.y + ", " + + line.origin.z);
-                this.propertyTree.addItem(addedItem, "Destination: " + line.destination.x + ", " + line.destination.y + ", " + + line.destination.z);
-            }
-            else
-            {
-                const primitiveType = TypeSystem.buildPrimitiveType(property.type);
-                const value = primitiveType ? this.getPrimitiveTypeAsString(property.value, primitiveType) : property.value as string;
-                const layout = `${property.name}: ${this.wrapPrimitiveType(value)}`;
-                this.propertyTree.addItem(parent, layout, false, property.id.toString());
-            }
-        }
     }
 
     initializeTimeline()
