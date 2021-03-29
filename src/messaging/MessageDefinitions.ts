@@ -6,7 +6,9 @@ export enum MessageType { // TODO: Maybe rename these to make clear the directio
     OpenResult,
     Clear,
     ClearResult,
-    UpdateRecentFiles
+    UpdateRecentFiles,
+    LogToConsole,
+    LogErrorToConsole
 }
 
 export interface IClearResultData

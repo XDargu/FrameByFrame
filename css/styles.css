@@ -351,6 +351,10 @@
   float: right;
 }
 
+.basico-console-line .basico-tag {
+  float: right;
+}
+
 /* Elevation of elements */
 :root {
   --primary-color-rgb: 187, 134, 252;
@@ -522,7 +526,7 @@
 
 .basico-tabs.basico-vertical-tabs {
   flex-direction: column;
-  height: auto;
+  height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
   z-index: 50;
@@ -577,6 +581,14 @@
 .basico-vertical-tabs .basico-tabs-selected {
   color: #d9d9d9;
   background-color: #615c61;
+}
+
+.basico-vertical-tabs .basico-tabs-selected.basico-border-left {
+  border-left: 2px solid #FFFFFF;
+}
+
+.basico-vertical-tabs .basico-tabs-selected.basico-border-right {
+  border-right: 2px solid #FFFFFF;
 }
 
 /* Elevation of elements */
@@ -720,6 +732,65 @@
 
 .basico-tree .basico-tree-leaf .basico-tree-item-content {
   width: 100%;
+}
+
+/* Elevation of elements */
+:root {
+  --primary-color-rgb: 187, 134, 252;
+  --primary-color: rgb(var(--primary-color-rgb));
+  --primary-color-hover: rgba(var(--primary-color-rgb), 0.6);
+  --primary-color-variant: #3700B3;
+  --secondary-color: #03DAC6;
+  --secondary-color-variant: #03DAC6;
+  --background-color: #1c191f;
+  --surface-color: #2f2d31;
+  --error-color: #CF6679;
+  --on-primary-color: #000000;
+  --on-secondary-color: #000000;
+  --on-background-color: #FFFFFF;
+  --on-surface-color: #FFFFFF;
+  --on-error-color: #000000;
+  --text-high-emphasis-opacity: 0.87;
+  --text-medium-emphasis-opacity: 0.6;
+  --text-disabled-emphasis-opacity: 0.38;
+}
+
+.basico-console-block {
+  border-bottom: 1px solid #999999;
+  padding: 2px 10px;
+}
+
+.basico-console-block.basico-error {
+  background-color: #290d12;
+  color: #CF6679;
+  margin-top: -1px;
+  border-bottom: 1px solid #501923;
+  border-top: 1px solid #501923;
+}
+
+.basico-console-line {
+  font-size: 12px;
+  text-align: left;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.basico-console-icon {
+  padding: 0px 10px;
+  width: 1em;
+  text-align: center;
+  font-size: 10px;
+}
+
+.basico-console-link {
+  cursor: pointer;
+  font-weight: bold;
+  text-decoration: underline;
+  color: #bb86fc;
+}
+
+.basico-console-link:hover {
+  color: text-highlight-low(#bb86fc);
 }
 
 /* Elevation of elements */
@@ -890,6 +961,10 @@ body {
 
 #console {
   flex: 0 0 250px;
+}
+
+#default-console .basico-container {
+  max-height: 250px;
 }
 
 #render-canvas {

@@ -15,7 +15,7 @@
 
 .basico-tabs.basico-vertical-tabs {
     flex-direction: column;
-    height: auto;
+    height: 100%;
     overflow-x: hidden;
     overflow-y: auto;
     z-index: 50;
@@ -65,4 +65,12 @@
 .basico-vertical-tabs .basico-tabs-selected {
     @include text-highlight-high($on-surface-color);
     @include surface-active($nav-bar-elevation);
+}
+
+.basico-vertical-tabs .basico-tabs-selected.basico-border-left {
+    border-left: 2px solid $on-surface-color;
+}
+
+.basico-vertical-tabs .basico-tabs-selected.basico-border-right {
+    border-right: 2px solid $on-surface-color;
 }

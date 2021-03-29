@@ -68,6 +68,7 @@ function onFileHistoryChanged(paths: string[])
 function onOpenFileClicked()
 {
   fileManager.openFile((path: string, content: string) => {
+    mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LogToConsole, `Loading file ${path}`));
     mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
   });
 }
@@ -80,6 +81,7 @@ function onExportFileClicked()
 function onOpenRecentFileClicked(path : string)
 {
   fileManager.loadFile(path, (path: string, content: string) => {
+    mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LogToConsole, `Loading file ${path}`));
     mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
   });
 }
@@ -128,6 +130,7 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
       fileManager.loadFile(filePath, (path: string, content: string) => {
         console.log('Returning! ');
         console.log(event);
+        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LogToConsole, `Loading file ${path}`));
         event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
       });
       break;
@@ -137,6 +140,7 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
       fileManager.openFile((path: string, content: string) => {
         console.log('Returning! ');
         console.log(event);
+        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LogToConsole, `Loading file ${path}`));
         event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
       });
       break;

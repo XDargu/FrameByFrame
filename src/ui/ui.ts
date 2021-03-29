@@ -321,18 +321,27 @@ export class TreeControl {
     }
 }
 
+export const enum TabBorder
+{
+    None,
+    Left = "basico-border-left",
+    Righ = "basico-border-right"
+}
+
 export class TabControl {
 
     tabElements: HTMLElement[];
     tabContentElements: HTMLElement[];
     activeTab: HTMLElement;
     activeContent: HTMLElement;
+    tabBorder: TabBorder;
 
-    constructor(tabElements : HTMLElement[], tabContentElements : HTMLElement[], defaultActiveTabIdx : number = 0) {
+    constructor(tabElements : HTMLElement[], tabContentElements : HTMLElement[], defaultActiveTabIdx : number = 0, tabBorder: TabBorder = TabBorder.None) {
         this.tabElements = tabElements;
         this.tabContentElements = tabContentElements;
         this.activeTab = this.tabElements[defaultActiveTabIdx];
         this.activeContent = this.tabContentElements[defaultActiveTabIdx];
+        this.tabBorder = tabBorder;
 
         if (this.tabElements.length != this.tabContentElements.length) {
             console.error("Tabs and tabs content have different amounts.");
@@ -360,6 +369,9 @@ export class TabControl {
             }
 
             currentTab.classList.remove("basico-tabs-selected");
+            if (this.tabBorder != TabBorder.None) {
+                currentTab.classList.add(this.tabBorder);
+            }
             currentContent.style.display = "none";
         }
 

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=2">
-    <title>Babylon JS Electron App</title>
+    <title>Frame By Frame</title>
     <link rel="stylesheet" type="text/css" href="css/styles.css">
     <link rel="stylesheet" type="text/css" href="css/all.min.css">
 </head>
@@ -102,15 +102,12 @@
                     <canvas id="render-canvas"></canvas>
                 </div>
                 <div id="console" class="basico-footer">
-                    <div class="basico-tabs">
-                        <div class="basico-tabs-item">Tab 1</div>
-                        <div class="basico-tabs-item basico-tabs-selected">Tab 2</div>
-                        <div class="basico-tabs-item">Tab 3</div>
-                        <div class="basico-tabs-item">Tab 4</div>
-                        <div class="basico-tabs-item">Tab 5</div>
-                        <div class="basico-tabs-item">Tab 6</div>
+                    <div class="basico-tabs" id="console-tabs">
+                        <div class="basico-tabs-item">Console</div>
                     </div>
-                    <div>Content</div>
+                    <div id="default-console">
+                        <div class="sidebar basico-container basico-container-compact"></div>
+                    </div>
                 </div>
             </div>
             <div class="sidebar basico-container">

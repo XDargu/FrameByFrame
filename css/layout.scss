@@ -81,6 +81,10 @@ body {
     flex: 0 0 250px;
 }
 
+#default-console .basico-container {
+    max-height: 250px;
+}
+
 #render-canvas {
     position: absolute;
     touch-action: none;

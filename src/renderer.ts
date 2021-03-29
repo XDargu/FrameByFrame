@@ -10,6 +10,7 @@ import * as Messaging from "./messaging/MessageDefinitions";
 import { _TypeStore } from "babylonjs";
 import { PlaybackController } from "./timeline/PlaybackController";
 import { PropertyTreeController } from "./frontend/PropertyTreeController";
+import { ConsoleWindow } from "./frontend/ConsoleController";
 
 export default class Renderer {
     private sceneController: SceneController;
@@ -31,6 +32,9 @@ export default class Renderer {
 
     // Recent files
     private recentFilesController: FileListController;
+
+    // Console
+    private consoleWindow : ConsoleWindow;
 
     // Playback
     private playbackController: PlaybackController;
@@ -95,7 +99,21 @@ export default class Renderer {
                 document.getElementById("recent-list"),
                 document.getElementById("setting-list")
             ]
+            , 0, BASICO.TabBorder.Left
         );
+
+        var controlTabs = new BASICO.TabControl(
+            <HTMLElement[]><any>document.getElementById("console-tabs").children,
+            [
+                document.getElementById("default-console")
+            ]
+            , 0, BASICO.TabBorder.Left
+        );
+
+        const consoleElement = document.getElementById("default-console").children[0] as HTMLElement;
+        console.log(consoleElement);
+        this.consoleWindow = new ConsoleWindow(consoleElement);
+        this.consoleWindow.logError("Error: test");
 
         // Create timeline callbacks
         document.getElementById("timeline-play").onclick = this.playbackController.onTimelinePlayClicked.bind(this.playbackController);
@@ -349,6 +367,17 @@ export default class Renderer {
     {
         ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.Load, path));
     }
+
+    // Logging
+    logToConsole(message: string)
+    {
+        this.consoleWindow.logMessage(message);
+    }
+
+    logErrorToConsole(message: string)
+    {
+        this.consoleWindow.logError(message);
+    }
 }
 
 const renderer = new Renderer();
@@ -382,6 +411,16 @@ ipcRenderer.on('asynchronous-reply', (event: any, arg: Messaging.Message) => {
             const recentFiles = (arg.data as string).split(",");
             console.log(recentFiles);
             renderer.updateRecentFiles(recentFiles);
+            break;
+        }
+        case Messaging.MessageType.LogToConsole:
+        {
+            renderer.logToConsole(arg.data as string);
+            break;
+        }
+        case Messaging.MessageType.LogErrorToConsole:
+        {
+            renderer.logErrorToConsole(arg.data as string);
             break;
         }
     }
