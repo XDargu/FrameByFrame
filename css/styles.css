@@ -554,7 +554,11 @@
   z-index: 3;
 }
 
-.basico-tabs-item:hover {
+.basico-tabs-item.basico-no-hover {
+  cursor: inherit;
+}
+
+.basico-tabs-item:hover:not(.basico-no-hover) {
   color: #d9d9d9;
   background-color: #2f2d2f;
 }
@@ -589,6 +593,20 @@
 
 .basico-vertical-tabs .basico-tabs-selected.basico-border-right {
   border-right: 2px solid #FFFFFF;
+}
+
+.basico-tabs-item.basico-tabs-divider {
+  margin-top: 4px;
+  margin-bottom: 4px;
+  height: 22px;
+  padding: 0;
+  border-left: 1px solid #999999;
+}
+
+.basico-tabs-group-right {
+  position: absolute;
+  right: 0px;
+  display: flex;
 }
 
 /* Elevation of elements */
@@ -869,6 +887,17 @@
 .basico-input:focus {
   background-color: #434043;
   border-bottom: 2px solid #bb86fc;
+}
+
+.basico-tabs-item .basico-form-field {
+  padding-top: 4px;
+  padding-bottom: 4px;
+  height: 22px;
+  margin: 0;
+}
+
+.basico-tabs-item .basico-input {
+  height: 22px;
 }
 
 html, body {

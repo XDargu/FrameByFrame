@@ -103,7 +103,9 @@ export default class Renderer {
         );
 
         var controlTabs = new BASICO.TabControl(
-            <HTMLElement[]><any>document.getElementById("console-tabs").children,
+            [
+                document.getElementById("console-tabs").children[0] as HTMLElement
+            ],
             [
                 document.getElementById("default-console")
             ]
@@ -126,6 +128,9 @@ export default class Renderer {
         document.getElementById("control-bar-open").onclick = this.onOpenFile.bind(this);
         document.getElementById("control-bar-save").onclick = this.onSaveFile.bind(this);
         document.getElementById("control-bar-clear").onclick = this.onClearFile.bind(this);
+
+        // Console callbacks
+        document.getElementById("console-clear").onclick = () => { this.consoleWindow.clear(); };
     }
 
     loadData(data: string)
