@@ -108,6 +108,41 @@ class UniversalCameraCustomKeyboardInput implements BABYLON.ICameraInput<BABYLON
     }
 }
 
+class MaterialPool
+{
+    private pool: Map<string, BABYLON.StandardMaterial>;
+    private scene: BABYLON.Scene;
+
+    constructor(scene: BABYLON.Scene)
+    {
+        this.pool = new Map<string, BABYLON.StandardMaterial>();
+        this.scene = scene;
+    }
+
+    getMaterialByColor(color: RECORDING.IColor): BABYLON.StandardMaterial
+    {
+        return this.getMaterial(color.r, color.g, color.b, color.a);
+    }
+
+    getMaterial(r: number, g: number, b:number, a:number) : BABYLON.StandardMaterial
+    {
+        // TODO: Do a proper hash not string based
+        const hash: string = r.toString() + g.toString() + b.toString() + a.toString();
+        const cachedMaterial = this.pool.get(hash);
+        if (cachedMaterial != undefined)
+        {
+            return cachedMaterial;
+        }
+
+        let material = new BABYLON.StandardMaterial("cachedMaterial", this.scene);
+        material.diffuseColor = new BABYLON.Color3(r, g, b);
+        material.alpha = a;
+
+        this.pool.set(hash, material);
+        return material;
+    }
+}
+
 export default class SceneController
 {
     private _canvas: HTMLCanvasElement;
@@ -130,6 +165,8 @@ export default class SceneController
     private hoveredMaterial: BABYLON.StandardMaterial;
 
     public onEntitySelected: IEntitySelectedCallback;
+
+    private materialPool: MaterialPool;
 
     removeAllProperties()
     {
@@ -171,10 +208,7 @@ export default class SceneController
 
                     sphere.position.set(sphereProperty.position.x, sphereProperty.position.y, sphereProperty.position.z);
 
-                    let material = new BABYLON.StandardMaterial("entityMaterial", this._scene);
-                    material.diffuseColor = new BABYLON.Color3(sphereProperty.color.r, sphereProperty.color.g, sphereProperty.color.b);
-                    material.alpha = sphereProperty.color.a;
-                    sphere.material = material;
+                    sphere.material = this.materialPool.getMaterialByColor(sphereProperty.color);
 
                     entityData.properties.set(sphereProperty.id, sphere);
                 }
@@ -189,10 +223,7 @@ export default class SceneController
 
                     aabb.position.set(aabbProperty.position.x, aabbProperty.position.y, aabbProperty.position.z);
 
-                    let material = new BABYLON.StandardMaterial("entityMaterial", this._scene);
-                    material.diffuseColor = new BABYLON.Color3(aabbProperty.color.r, aabbProperty.color.g, aabbProperty.color.b);
-                    material.alpha = aabbProperty.color.a;
-                    aabb.material = material;
+                    aabb.material = this.materialPool.getMaterialByColor(aabbProperty.color);
 
                     entityData.properties.set(aabbProperty.id, aabb);
                 }
@@ -217,10 +248,7 @@ export default class SceneController
                     oobb.rotationQuaternion = new Quaternion();
                     oobb.rotationQuaternion.fromRotationMatrix(rotationMatrix);
 
-                    let material = new BABYLON.StandardMaterial("entityMaterial", this._scene);
-                    material.diffuseColor = new BABYLON.Color3(oobbProperty.color.r, oobbProperty.color.g, oobbProperty.color.b);
-                    material.alpha = oobbProperty.color.a;
-                    oobb.material = material;
+                    oobb.material = this.materialPool.getMaterialByColor(oobbProperty.color);
 
                     entityData.properties.set(oobbProperty.id, oobb);
                 }
@@ -242,10 +270,7 @@ export default class SceneController
                     let angle = BABYLON.Vector3.GetAngleBetweenVectors(plane.forward, up, plane.up);
                     plane.rotate(plane.up, angle, BABYLON.Space.WORLD);
 
-                    let material = new BABYLON.StandardMaterial("entityMaterial", this._scene);
-                    material.diffuseColor = new BABYLON.Color3(planeProperty.color.r, planeProperty.color.g, planeProperty.color.b);
-                    material.alpha = planeProperty.color.a;
-                    plane.material = material;
+                    plane.material = this.materialPool.getMaterialByColor(planeProperty.color);
 
                     entityData.properties.set(planeProperty.id, plane);
                 }
@@ -385,7 +410,8 @@ export default class SceneController
         const scene = new BABYLON.Scene(engine);
         this._scene = scene;
 
-        
+        this.materialPool = new MaterialPool(this._scene);
+
         // This creates and positions a free camera (non-mesh)
         //const camera = new BABYLON.ArcRotateCamera("Camera", 3 * Math.PI / 2, Math.PI / 8, 50, BABYLON.Vector3.Zero(), scene);
         const camera = new BABYLON.UniversalCamera("UniversalCamera", new BABYLON.Vector3(10, 10, -10), scene);
@@ -401,7 +427,6 @@ export default class SceneController
         keyboardInputs.keysRight.push(68);
 
         // Move forward with mouse wheel
-
         let zoomCallback = function(evt: WheelEvent) {
             const delta = Math.max(-1, Math.min(1,(evt.deltaY)));
             camera.position = BABYLON.Vector3.Lerp(camera.position, camera.getFrontPosition(-delta), 0.5);
