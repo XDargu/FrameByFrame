@@ -15,7 +15,7 @@
 
 .basico-tabs.basico-vertical-tabs {
     flex-direction: column;
-    height: auto;
+    height: 100%;
     overflow-x: hidden;
     overflow-y: auto;
     z-index: 50;
@@ -39,7 +39,11 @@
     @include surface-elevation-no-shadow($tabs-elevation + 2);
 }
 
-.basico-tabs-item:hover {
+.basico-tabs-item.basico-no-hover {
+    cursor: inherit;
+}
+
+.basico-tabs-item:hover:not(.basico-no-hover) {
     @include text-highlight-high($on-surface-color);
     @include surface-hovered($tabs-elevation);
 }
@@ -65,4 +69,27 @@
 .basico-vertical-tabs .basico-tabs-selected {
     @include text-highlight-high($on-surface-color);
     @include surface-active($nav-bar-elevation);
+}
+
+.basico-vertical-tabs .basico-tabs-selected.basico-border-left {
+    border-left: 2px solid $on-surface-color;
+}
+
+.basico-vertical-tabs .basico-tabs-selected.basico-border-right {
+    border-right: 2px solid $on-surface-color;
+}
+
+.basico-tabs-item.basico-tabs-divider {
+    margin-top: 4px;
+    margin-bottom: 4px;
+    height: 22px;
+    padding: 0;
+
+    border-left: 1px solid highlight-medium($on-surface-color);
+}
+
+.basico-tabs-group-right {
+    position: absolute;
+    right: 0px;
+    display: flex;
 }

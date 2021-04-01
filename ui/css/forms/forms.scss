@@ -50,8 +50,18 @@
     @include surface-elevation($form-elevation);
 }
 
-.basico-input:focus
-{
+.basico-input:focus {
     @include surface-hovered($form-elevation);
     border-bottom: 2px solid $primary-color;
+}
+
+.basico-tabs-item .basico-form-field {
+    padding-top: 4px;
+    padding-bottom: 4px;
+    height: 22px;
+    margin: 0;
+}
+
+.basico-tabs-item .basico-input {
+    height: 22px;
 }
