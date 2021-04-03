@@ -1,0 +1,66 @@
+@import "../variables.scss";
+
+.basico-toggle {
+    position: relative;
+    display: inline-block;
+    width: 36px;
+    height: 18px;
+}
+
+.basico-toggle input { 
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.basico-toggle .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #aaa;
+    transition: all 0.3s ease;
+}
+
+.basico-toggle .slider:before {
+    position: absolute;
+    content: "";
+    height: 12px;
+    width: 12px;
+    left: 4px;
+    bottom: 3px;
+    background-color: white;
+    transition: all 0.15s ease;
+}
+
+.basico-toggle input:checked + .slider:before {
+    background-color: highlight-high($primary-color);
+}
+
+.basico-toggle input:checked + .slider {
+    @include surface-elevation($toggle-elevation, $primary-color);
+}
+
+.basico-toggle input:focus + .slider {
+    box-shadow: 0 0 1px $primary-color
+}
+
+.basico-toggle input:checked + .slider:before {
+    -webkit-transform: translateX(16px);
+    -ms-transform: translateX(16px);
+    transform: translateX(16px);
+}
+
+.basico-toggle .slider.round {
+    border-radius: 18px;
+}
+
+.basico-toggle .slider.round:before {
+    border-radius: 50%;
+}
+
+.basico-list-item .basico-toggle {
+    float: right;
+}

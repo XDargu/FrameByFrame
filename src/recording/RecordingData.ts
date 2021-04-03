@@ -346,9 +346,11 @@ export class FrameTable {
 
 export class NaiveRecordedData {
 	frameData: IFrameData[];
+	layers: string[];
 
 	constructor() {
 		this.frameData = [];
+		this.layers = [];
 	}
 
 	static getEntityName(entity: IEntity) : string
@@ -366,16 +368,31 @@ export class NaiveRecordedData {
 	loadFromString(data: string)
 	{
 		this.frameData = JSON.parse(data).frameData;
+		this.layers = JSON.parse(data).layers;
+		if (this.layers == undefined)
+		{
+			this.layers = [];
+		}
+
+		for (let frame of this.frameData)
+		{
+			this.updateLayersOfFrame(frame);
+		}
+
+		console.log(this);
 	}
 
 	clear()
 	{
 		this.frameData = [];
+		this.layers = [];
 	}
 
 	pushFrame(frame: IFrameData)
 	{
 		this.frameData.push(frame);
+
+		this.updateLayersOfFrame(frame);
 	}
 
 	visitEntityProperties(entity: IEntity, callback: IPropertyVisitorCallback)
@@ -479,6 +496,35 @@ export class NaiveRecordedData {
 			}
 
 			this.pushFrame(frameData);
+		}
+	}
+
+	private updateLayersOfFrame(frame: IFrameData) {
+		// TODO: Optimize this. Decide how to handle layers, should it be responsability of the sender to group them?
+		let layerMap: Map<string, boolean> = new Map<string, boolean>();
+
+		for (let id in frame.entities) {
+			let visitor = (property: IProperty) => {
+				const layer: string = (property as any).layer;
+				if (layer != undefined) {
+					layerMap.set(layer, true);
+				}
+			};
+			this.visitProperties(frame.entities[id].properties, visitor);
+			this.visitEvents(frame.entities[id].events, (event: IEvent) => {
+				this.visitProperties([event.properties], visitor);
+			});
+		}
+
+		for (let layer of layerMap) {
+			this.addLayer(layer[0]);
+		}
+	}
+
+	private addLayer(name: string) {
+		// TODO: Optimize this
+		if (!this.layers.includes(name)) {
+			this.layers.push(name);
 		}
 	}
 }

@@ -143,6 +143,45 @@ class MaterialPool
     }
 }
 
+class LayerManager
+{
+    private layers: Map<string, number>;
+
+    constructor()
+    {
+        this.layers = new Map<string, number>();
+    }
+
+    getLayerMask(layer: string)
+    {
+        const mask = this.layers.get(layer);
+        if (mask != undefined)
+        {
+            return mask;
+        }
+
+        const newMask = 1 << this.layers.size;
+        this.layers.set(layer, newMask);
+        return newMask;
+    }
+
+    getLayerMaskCombination(layers: string[]) : number
+    {
+        let mask = 0x10000000;
+        for (const layer of layers)
+        {
+            mask = mask | this.getLayerMask(layer);
+        }
+
+        return mask;
+    }
+
+    clear()
+    {
+        this.layers.clear();
+    }
+}
+
 export default class SceneController
 {
     private _canvas: HTMLCanvasElement;
@@ -167,6 +206,7 @@ export default class SceneController
     public onEntitySelected: IEntitySelectedCallback;
 
     private materialPool: MaterialPool;
+    private layerManager: LayerManager;
 
     removeAllProperties()
     {
@@ -181,6 +221,7 @@ export default class SceneController
                 }
             }
             data.properties.clear();
+            this.layerManager.clear();
         }
     }
 
@@ -205,6 +246,7 @@ export default class SceneController
                     let sphere = BABYLON.Mesh.CreateSphere(sphereProperty.name, 8.0, sphereProperty.radius * 2, this._scene);
                     sphere.isPickable = false;
                     sphere.id = sphereProperty.id.toString();
+                    sphere.layerMask = this.layerManager.getLayerMask(sphereProperty.layer);
 
                     sphere.position.set(sphereProperty.position.x, sphereProperty.position.y, sphereProperty.position.z);
 
@@ -220,6 +262,7 @@ export default class SceneController
                     let aabb = BABYLON.MeshBuilder.CreateBox(aabbProperty.name, {height: aabbProperty.size.x, width: aabbProperty.size.y, depth: aabbProperty.size.z}, this._scene)
                     aabb.isPickable = false;
                     aabb.id = aabbProperty.id.toString();
+                    aabb.layerMask = this.layerManager.getLayerMask(aabbProperty.layer);
 
                     aabb.position.set(aabbProperty.position.x, aabbProperty.position.y, aabbProperty.position.z);
 
@@ -235,6 +278,8 @@ export default class SceneController
                     let oobb = BABYLON.MeshBuilder.CreateBox(oobbProperty.name, {height: oobbProperty.size.y, width: oobbProperty.size.x, depth: oobbProperty.size.z}, this._scene)
                     oobb.isPickable = false;
                     oobb.id = oobbProperty.id.toString();
+                    oobb.layerMask = this.layerManager.getLayerMask(oobbProperty.layer);
+
 
                     oobb.position.set(oobbProperty.position.x, oobbProperty.position.y, oobbProperty.position.z);
                     let up = new BABYLON.Vector3(oobbProperty.up.x, oobbProperty.up.y, oobbProperty.up.z);
@@ -262,6 +307,7 @@ export default class SceneController
                     let plane = BABYLON.MeshBuilder.CreatePlane("plane", {height: planeProperty.length, width: planeProperty.width, sourcePlane: sourcePlane, sideOrientation: BABYLON.Mesh.DOUBLESIDE}, this._scene);
                     plane.isPickable = false;
                     plane.id = planeProperty.id.toString();
+                    plane.layerMask = this.layerManager.getLayerMask(planeProperty.layer);
 
                     plane.position.set(planeProperty.position.x, planeProperty.position.y, planeProperty.position.z);
                     
@@ -291,6 +337,7 @@ export default class SceneController
                     let lines = BABYLON.MeshBuilder.CreateLines("lines", {points: linePoints, colors: lineColors}, this._scene);
                     lines.isPickable = false;
                     lines.id = lineProperty.id.toString();
+                    lines.layerMask = this.layerManager.getLayerMask(lineProperty.layer);
 
                     entityData.properties.set(lineProperty.id, lines);
                 }
@@ -304,6 +351,7 @@ export default class SceneController
         sphere.material = this.entityMaterial;
         sphere.isPickable = true;
         sphere.id = entity.id.toString();
+        sphere.layerMask = 0x10000000;
         let entityData: IEntityData = { mesh: sphere, properties: new Map<number, BABYLON.Mesh>() };
         this.entities.set(entity.id, entityData);
         return entityData;
@@ -338,11 +386,16 @@ export default class SceneController
             // Restore previous entity material
             if (this.selectedEntity)
             {
-                this.selectedEntity.mesh.material = this.entityMaterial;
+                //this.selectedEntity.mesh.material = this.entityMaterial;
+                this.selectedEntity.mesh.renderOutline = false;
             }
 
-            storedMesh.mesh.material = this.selectedMaterial;
+            //storedMesh.mesh.material = this.selectedMaterial;
             this.selectedEntity = storedMesh;
+
+            this.selectedEntity.mesh.outlineColor = new BABYLON.Color3(1, 0, 0);
+            this.selectedEntity.mesh.outlineWidth = 0.2;
+            this.selectedEntity.mesh.renderOutline = true;
         }
     }
 
@@ -352,42 +405,39 @@ export default class SceneController
         if (storedMesh)
         {
             // Restore previous entity material
-            if (this.hoveredEntity)
+            if (this.hoveredEntity && this.hoveredEntity != this.selectedEntity)
             {
-                if (this.hoveredEntity == this.selectedEntity)
-                {
-                    this.hoveredEntity.mesh.material = this.selectedMaterial;
-                }
-                else
-                {
-                    this.hoveredEntity.mesh.material = this.entityMaterial;
-                }
+                this.hoveredEntity.mesh.renderOutline = false;
+                //this.hoveredEntity.mesh.material = this.entityMaterial;
             }
 
-            storedMesh.mesh.material = this.hoveredMaterial;
+            //storedMesh.mesh.material = this.hoveredMaterial;
             this.hoveredEntity = storedMesh;
+
+            this.hoveredEntity.mesh.outlineColor = new BABYLON.Color3(0, 1, 0);
+            this.hoveredEntity.mesh.outlineWidth = 0.2;
+            this.hoveredEntity.mesh.renderOutline = true;
         }
     }
 
     onEntityStopHovered()
     {
         // Restore previous entity material
-        if (this.hoveredEntity)
+        if (this.hoveredEntity && this.hoveredEntity != this.selectedEntity)
         {
-            if (this.hoveredEntity == this.selectedEntity)
-            {
-                this.hoveredEntity.mesh.material = this.selectedMaterial;
-            }
-            else
-            {
-                this.hoveredEntity.mesh.material = this.entityMaterial;
-            }
+            this.hoveredEntity.mesh.renderOutline = false;
+            //this.hoveredEntity.mesh.material = this.entityMaterial;
         }
         this.hoveredEntity = null;
     }
 
+    updateCameraLayers(layers: string[])
+    {
+        this._scene.cameras[0].layerMask = this.layerManager.getLayerMaskCombination(layers);
+    }
+
     initialize(canvas: HTMLCanvasElement) {
-        const engine = new BABYLON.Engine(canvas, true);
+        const engine = new BABYLON.Engine(canvas, true, { stencil: true });
         this.createScene(canvas, engine);
 
         engine.runRenderLoop(() => {
@@ -411,6 +461,8 @@ export default class SceneController
         this._scene = scene;
 
         this.materialPool = new MaterialPool(this._scene);
+        this.layerManager = new LayerManager();
+        
 
         // This creates and positions a free camera (non-mesh)
         //const camera = new BABYLON.ArcRotateCamera("Camera", 3 * Math.PI / 2, Math.PI / 8, 50, BABYLON.Vector3.Zero(), scene);
@@ -461,6 +513,7 @@ export default class SceneController
         groundMaterial.opacity = 0.5;
 
         grid.material = groundMaterial;
+        grid.layerMask = 0x10000000;
 
         this.entityMaterial = new BABYLON.StandardMaterial("entityMaterial", scene);
         this.entityMaterial.diffuseColor = new BABYLON.Color3(1, 1, 1);
@@ -495,11 +548,16 @@ export default class SceneController
 
         scene.onPointerMove = function (evt, pickInfo) {
             if (pickInfo.hit) {
-                control.onEntityHovered(parseInt(pickInfo.pickedMesh.id));
+                if (!control.selectedEntity || control.selectedEntity.mesh.id != pickInfo.pickedMesh.id) {
+                    control.onEntityHovered(parseInt(pickInfo.pickedMesh.id));
+                }
                 canvas.style.cursor = "pointer";
             }
             else {
-                control.onEntityStopHovered();
+                if (control.selectedEntity != control.hoveredEntity)
+                {
+                    control.onEntityStopHovered();
+                }
             }
         };
 

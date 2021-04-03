@@ -11,6 +11,7 @@ import { _TypeStore } from "babylonjs";
 import { PlaybackController } from "./timeline/PlaybackController";
 import { PropertyTreeController } from "./frontend/PropertyTreeController";
 import { ConsoleWindow } from "./frontend/ConsoleController";
+import { LayerController } from "./frontend/LayersController";
 
 export default class Renderer {
     private sceneController: SceneController;
@@ -24,6 +25,7 @@ export default class Renderer {
     // UI Elements
     private propertyTree: BASICO.TreeControl;
     private entityList: BASICO.ListControl;
+    private layerController: LayerController;
     private selectedEntityId: number;
     private propertyTreeController: PropertyTreeController;
 
@@ -131,6 +133,9 @@ export default class Renderer {
 
         // Console callbacks
         document.getElementById("console-clear").onclick = () => { this.consoleWindow.clear(); };
+
+        // Create layer controls
+        this.layerController = new LayerController(document.getElementById("layer-selection"), this.onLayerChanged.bind(this));
     }
 
     loadData(data: string)
@@ -200,6 +205,8 @@ export default class Renderer {
 
         this.timeline.currentFrame = frame;
         this.playbackController.updateUI();
+
+        this.layerController.setLayers(this.recordedData.layers);
 
         //console.log(this.frameData);
         //console.log(this.recordedData);
@@ -289,6 +296,7 @@ export default class Renderer {
                 sceneController.addProperty(entity, property);
             });
         }
+
         /*if (this.selectedEntityId != null)
         {
             const selectedEntity = this.frameData.entities[this.selectedEntityId];
@@ -371,6 +379,12 @@ export default class Renderer {
     onRecentFileClicked(path: string)
     {
         ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.Load, path));
+    }
+
+    // Layer callbacks
+    onLayerChanged(name: string, active: boolean)
+    {
+        this.sceneController.updateCameraLayers(this.layerController.getActiveLayers());
     }
 
     // Logging
