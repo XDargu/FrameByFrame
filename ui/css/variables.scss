@@ -158,12 +158,12 @@ $mdc-elevation-ambient-map: (
         $penumbra-color: rgba($mdc-elevation-baseline-color, $mdc-elevation-penumbra-opacity);
         $ambient-color: rgba($mdc-elevation-baseline-color, $mdc-elevation-ambient-opacity);
 
-        box-shadow:
+        /*box-shadow:
         #{"#{$umbra-z-value} #{$umbra-color}"},
         #{"#{$penumbra-z-value} #{$penumbra-color}"},
         #{$ambient-z-value} $ambient-color;
 
-        transition: box-shadow 0.25s cubic-bezier(.4, 0, .2, 1);
+        transition: box-shadow 0.25s cubic-bezier(.4, 0, .2, 1);*/
     }
 
     z-index: $elevation;
@@ -214,6 +214,7 @@ $tabs-elevation: 1;
 $title-elevation: 19;
 $tree-elevation: 6;
 $form-elevation: 16;
+$toggle-elevation: 1;
 
 :root {
     --primary-color-rgb: 187, 134, 252;

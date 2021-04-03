@@ -183,7 +183,7 @@ export class ListControl {
         }
     }
 
-    appendElement(textContent : string, onItemSelectedCallback : IListCallback = null, value : string = null)
+    appendElement(textContent : string, onItemSelectedCallback : IListCallback = null, value : string = null): HTMLDivElement
     {
         let listItem = document.createElement("div");
         listItem.classList.add("basico-list-item");
@@ -191,6 +191,7 @@ export class ListControl {
         this.listWrapper.appendChild(listItem);
 
         this.addElementToList(listItem, onItemSelectedCallback, value)
+        return listItem;
     }
 
     private addElementToList(element : HTMLElement, onItemSelectedCallback : IListCallback, value : string = null)
