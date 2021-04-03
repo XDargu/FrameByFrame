@@ -405,7 +405,7 @@ export default class SceneController
         if (storedMesh)
         {
             // Restore previous entity material
-            if (this.hoveredEntity)
+            if (this.hoveredEntity && this.hoveredEntity != this.selectedEntity)
             {
                 this.hoveredEntity.mesh.renderOutline = false;
                 //this.hoveredEntity.mesh.material = this.entityMaterial;
@@ -423,7 +423,7 @@ export default class SceneController
     onEntityStopHovered()
     {
         // Restore previous entity material
-        if (this.hoveredEntity)
+        if (this.hoveredEntity && this.hoveredEntity != this.selectedEntity)
         {
             this.hoveredEntity.mesh.renderOutline = false;
             //this.hoveredEntity.mesh.material = this.entityMaterial;
@@ -548,13 +548,16 @@ export default class SceneController
 
         scene.onPointerMove = function (evt, pickInfo) {
             if (pickInfo.hit) {
-                if (control.selectedEntity.mesh.id != pickInfo.pickedMesh.id) {
+                if (!control.selectedEntity || control.selectedEntity.mesh.id != pickInfo.pickedMesh.id) {
                     control.onEntityHovered(parseInt(pickInfo.pickedMesh.id));
                 }
                 canvas.style.cursor = "pointer";
             }
             else {
-                control.onEntityStopHovered();
+                if (control.selectedEntity != control.hoveredEntity)
+                {
+                    control.onEntityStopHovered();
+                }
             }
         };
 
