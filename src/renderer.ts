@@ -1,17 +1,16 @@
 import { ipcRenderer } from "electron";
-import * as RECORDING from './recording/RecordingData';
-import Timeline from './timeline/timeline';
 import ConnectionsList from './frontend/ConnectionsList';
-import FileListController from "./frontend/FileListController";
-import * as BASICO from './ui/ui';
-import * as NET_TYPES from './network/types';
-import SceneController from './render/sceneController';
-import * as Messaging from "./messaging/MessageDefinitions";
-import { _TypeStore } from "babylonjs";
-import { PlaybackController } from "./timeline/PlaybackController";
-import { PropertyTreeController } from "./frontend/PropertyTreeController";
 import { ConsoleWindow } from "./frontend/ConsoleController";
+import FileListController from "./frontend/FileListController";
 import { LayerController } from "./frontend/LayersController";
+import { PropertyTreeController } from "./frontend/PropertyTreeController";
+import * as Messaging from "./messaging/MessageDefinitions";
+import * as NET_TYPES from './network/types';
+import * as RECORDING from './recording/RecordingData';
+import SceneController from './render/sceneController';
+import { PlaybackController } from "./timeline/PlaybackController";
+import Timeline from './timeline/timeline';
+import * as BASICO from './ui/ui';
 
 export default class Renderer {
     private sceneController: SceneController;
@@ -384,7 +383,9 @@ export default class Renderer {
     // Layer callbacks
     onLayerChanged(name: string, active: boolean)
     {
-        this.sceneController.updateCameraLayers(this.layerController.getActiveLayers());
+        this.sceneController.updateLayerStatus(name, active);
+        this.applyFrame(this.timeline.currentFrame);
+        this.logToConsole(`Layer ${name} status changed to: ${active}`);
     }
 
     // Logging

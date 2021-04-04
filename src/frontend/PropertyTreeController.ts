@@ -121,6 +121,15 @@ export class PropertyTreeController {
                 this.addVec3(addedItem, "Position", sphere.position);
                 this.addNumber(addedItem, "Radius", sphere.radius);
             }
+            else if (property.type == "capsule") {
+                const capsule = property as RECORDING.IPropertyCapsule;
+
+                let addedItem = this.propertyTree.addItem(parent, property.name, false, property.id.toString());
+                this.addVec3(addedItem, "Position", capsule.position);
+                this.addVec3(addedItem, "Direction", capsule.direction);
+                this.addNumber(addedItem, "Radius", capsule.radius);
+                this.addNumber(addedItem, "Height", capsule.height);
+            }
             else if (property.type == "aabb") {
                 const aabb = property as RECORDING.IPropertyAABB;
 
