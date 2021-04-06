@@ -1003,7 +1003,10 @@ export default class SceneController
 
     moveCameraToSelection()
     {
-        this.moveCameraToPosition(this.selectedEntity.mesh.position);
+        if (this.selectedEntity)
+        {
+            this.moveCameraToPosition(this.selectedEntity.mesh.position);
+        }
     }
 
     private moveCameraToPosition(targetPosition: BABYLON.Vector3)

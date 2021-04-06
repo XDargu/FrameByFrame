@@ -193,6 +193,9 @@ export class ListControl {
     {
         let listItem = document.createElement("div");
         listItem.classList.add("basico-list-item");
+        if (callbacks == null) {
+            listItem.classList.add("basico-no-hover");
+        }
         listItem.innerText = textContent;
         this.listWrapper.appendChild(listItem);
 
@@ -203,17 +206,19 @@ export class ListControl {
     private addElementToList(element : HTMLElement, callbacks : IListCallbacks, value : string = null)
     {
         var listWrapper = this.listWrapper;
-        element.addEventListener("click", function() {
-            listWrapper.querySelectorAll(".basico-list-item").forEach(function(node){
-                node.classList.remove("basico-list-item-active");
-            });
-            this.classList.add("basico-list-item-active");
+        if (callbacks) {
+            element.addEventListener("click", function() {
+                listWrapper.querySelectorAll(".basico-list-item").forEach(function(node){
+                    node.classList.remove("basico-list-item-active");
+                });
+                this.classList.add("basico-list-item-active");
 
-            if (callbacks && callbacks.onItemSelected != null)
-            {
-                callbacks.onItemSelected(this);
-            }
-        });
+                if (callbacks && callbacks.onItemSelected != null)
+                {
+                    callbacks.onItemSelected(this);
+                }
+            });
+        }
 
         if (callbacks && callbacks.onItemMouseOver != null)
         {
