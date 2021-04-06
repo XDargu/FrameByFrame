@@ -168,33 +168,39 @@ interface IListCallback {
     (item: HTMLElement) : void;
 }
 
+interface IListCallbacks {
+    onItemSelected: IListCallback;
+    onItemMouseOver: IListCallback;
+    onItemMouseOut: IListCallback;
+}
+
 export class ListControl {
 
     listWrapper: HTMLElement;
 
-    constructor(listWrapper : HTMLElement, onItemSelectedCallback : IListCallback = null, value : string = null) {
+    constructor(listWrapper : HTMLElement, callbacks : IListCallbacks = null, value : string = null) {
         this.listWrapper = listWrapper;
         let listItems = this.listWrapper.querySelectorAll(".basico-list-item");
         let i = 0;
         const length = listItems.length;
         for (; i < length; i++) {
             let item = <HTMLElement>listItems[i];
-            this.addElementToList(item, onItemSelectedCallback, value);
+            this.addElementToList(item, callbacks, value);
         }
     }
 
-    appendElement(textContent : string, onItemSelectedCallback : IListCallback = null, value : string = null): HTMLDivElement
+    appendElement(textContent : string, callbacks : IListCallbacks = null, value : string = null): HTMLDivElement
     {
         let listItem = document.createElement("div");
         listItem.classList.add("basico-list-item");
         listItem.innerText = textContent;
         this.listWrapper.appendChild(listItem);
 
-        this.addElementToList(listItem, onItemSelectedCallback, value)
+        this.addElementToList(listItem, callbacks, value)
         return listItem;
     }
 
-    private addElementToList(element : HTMLElement, onItemSelectedCallback : IListCallback, value : string = null)
+    private addElementToList(element : HTMLElement, callbacks : IListCallbacks, value : string = null)
     {
         var listWrapper = this.listWrapper;
         element.addEventListener("click", function() {
@@ -203,11 +209,26 @@ export class ListControl {
             });
             this.classList.add("basico-list-item-active");
 
-            if (onItemSelectedCallback != null)
+            if (callbacks && callbacks.onItemSelected != null)
             {
-                onItemSelectedCallback(this);
+                callbacks.onItemSelected(this);
             }
         });
+
+        if (callbacks && callbacks.onItemMouseOver != null)
+        {
+            element.addEventListener("mouseover", function() {
+                console.log("Mouse over");
+                callbacks.onItemMouseOver(this);
+            });
+        }
+
+        if (callbacks && callbacks.onItemMouseOut != null)
+        {
+            element.addEventListener("mouseout", function() {
+                callbacks.onItemMouseOut(this);
+            });
+        }
 
         if (value != null)
         {

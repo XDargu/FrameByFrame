@@ -233,9 +233,18 @@ export default class Renderer {
                 this.entityList.setValueOfItem(element, entityID);
             }
             else {
-                this.entityList.appendElement(entityName, function(element) {
-                    renderer.onEntitySelected(parseInt(renderer.entityList.getValueOfItem(element)));
-                }, entityID);
+                const callbacks = {
+                    onItemSelected: function(element: HTMLDivElement) {
+                        renderer.onEntitySelected(parseInt(renderer.entityList.getValueOfItem(element)));
+                    },
+                    onItemMouseOver: function(element: HTMLDivElement) {
+                        renderer.onEntityHovered(parseInt(renderer.entityList.getValueOfItem(element)));
+                    },
+                    onItemMouseOut: function(element: HTMLDivElement) {
+                        renderer.onEntityStoppedHovering(parseInt(renderer.entityList.getValueOfItem(element)));
+                    }
+                }
+                this.entityList.appendElement(entityName, callbacks, entityID);
             }
             counter++;
         }
@@ -253,6 +262,17 @@ export default class Renderer {
 
         // Rebuild property tree
         this.buildPropertyTree();
+    }
+
+    onEntityHovered(entityId: number)
+    {
+        console.log("Hovered: " + entityId);
+        this.sceneController.markEntityAsHovered(entityId);
+    }
+
+    onEntityStoppedHovering(entityId: number)
+    {
+        this.sceneController.unmarkEntityAsHovered(entityId);
     }
 
     onEntitySelected(entityId: number)

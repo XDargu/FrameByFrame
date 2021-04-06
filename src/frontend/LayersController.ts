@@ -61,7 +61,7 @@ export class LayerController
                 this.layerList.setValueOfItem(element, layer);
             }
             else {
-                let listItem = this.layerList.appendElement('', () => {/* Do nothing on click */}, layer);
+                let listItem = this.layerList.appendElement('', null, layer);
                 const name = this.createNameElement(layerData.name);
                 let toggle = this.createToggle(layerData.name, layerData.active)
                 listItem.appendChild(toggle);

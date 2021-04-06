@@ -434,6 +434,7 @@ class MeshPool
                 {
                     pooledMesh.mesh.setEnabled(false);
                     pooledMesh.used = false;
+                    pooledMesh.mesh.isPickable = false;
                     return true;
                 }
             }
@@ -579,6 +580,7 @@ export default class SceneController
     */
 
     private entities: Map<number, IEntityData>;
+    private propertyToEntity: Map<number, number>;
 
     private selectedEntity: IEntityData;
     private hoveredEntity: IEntityData;
@@ -626,14 +628,17 @@ export default class SceneController
             data.properties.clear();
         }
 
+        //this.entities.clear();
+        //this.propertyToEntity.clear();
+
         /*console.log("Capsule pools:")
         this.capsulePool.logDebugData();
         console.log("Sphere pools:")
         this.spherePool.logDebugData();
         console.log("Box pools:")
-        this.boxPool.logDebugData();*/
+        this.boxPool.logDebugData();
         console.log("Plane pools:")
-        this.planePool.logDebugData();
+        this.planePool.logDebugData();*/
     }
 
     private isPropertyShape(property: RECORDING.IProperty)
@@ -657,7 +662,7 @@ export default class SceneController
 
             // #TODO: This should be in a mesh/material pool
             let sphere = this.spherePool.getSphere(sphereProperty.radius);
-            sphere.isPickable = false;
+            sphere.isPickable = true;
             sphere.id = sphereProperty.id.toString();
 
             sphere.position.set(sphereProperty.position.x, sphereProperty.position.y, sphereProperty.position.z);
@@ -665,23 +670,14 @@ export default class SceneController
             sphere.material = this.materialPool.getMaterialByColor(sphereProperty.color);
 
             entityData.properties.set(sphereProperty.id, sphere);
+            this.propertyToEntity.set(sphereProperty.id, entity.id);
         }
         else if (property.type == "capsule")
         {
             let capsuleProperty = property as RECORDING.IPropertyCapsule;
 
-            // #TODO: This should be in a mesh/material pool
             let capsule = this.capsulePool.getCapsule(capsuleProperty.height, capsuleProperty.radius);
-            /*let capsule = CreateCapsule(capsuleProperty.name, {
-                height: capsuleProperty.height - (capsuleProperty.radius * 2),
-                radius: capsuleProperty.radius,
-                tessellation : 9,
-                capDetail : 5,
-            }, this._scene);*/
-
-            //let capsule = BABYLON.Mesh.CreateSphere(capsuleProperty.name, 8.0, capsuleProperty.radius * 2, this._scene);
-
-            capsule.isPickable = false;
+            capsule.isPickable = true;
             capsule.id = capsuleProperty.id.toString();
 
             capsule.position.set(capsuleProperty.position.x, capsuleProperty.position.y, capsuleProperty.position.z);
@@ -703,15 +699,14 @@ export default class SceneController
             capsule.material = this.materialPool.getMaterialByColor(capsuleProperty.color);
 
             entityData.properties.set(capsuleProperty.id, capsule);
+            this.propertyToEntity.set(capsuleProperty.id, entity.id);
         }
         else if (property.type == "aabb")
         {
             let aabbProperty = property as RECORDING.IPropertyAABB;
 
-            // #TODO: This should be in a mesh/material pool
-            //let aabb = BABYLON.MeshBuilder.CreateBox(aabbProperty.name, {height: aabbProperty.size.x, width: aabbProperty.size.y, depth: aabbProperty.size.z}, this._scene)
             let aabb = this.boxPool.getBox(aabbProperty.size);
-            aabb.isPickable = false;
+            aabb.isPickable = true;
             aabb.id = aabbProperty.id.toString();
 
             aabb.position.set(aabbProperty.position.x, aabbProperty.position.y, aabbProperty.position.z);
@@ -719,15 +714,14 @@ export default class SceneController
             aabb.material = this.materialPool.getMaterialByColor(aabbProperty.color);
 
             entityData.properties.set(aabbProperty.id, aabb);
+            this.propertyToEntity.set(aabbProperty.id, entity.id);
         }
         else if (property.type == "oobb")
         {
             let oobbProperty = property as RECORDING.IPropertyOOBB;
 
-            // #TODO: This should be in a mesh/material pool
             let oobb = this.boxPool.getBox(oobbProperty.size);
-            //let oobb = BABYLON.MeshBuilder.CreateBox(oobbProperty.name, {height: oobbProperty.size.y, width: oobbProperty.size.x, depth: oobbProperty.size.z}, this._scene)
-            oobb.isPickable = false;
+            oobb.isPickable = true;
             oobb.id = oobbProperty.id.toString();
 
             oobb.position.set(oobbProperty.position.x, oobbProperty.position.y, oobbProperty.position.z);
@@ -745,13 +739,14 @@ export default class SceneController
             oobb.material = this.materialPool.getMaterialByColor(oobbProperty.color);
 
             entityData.properties.set(oobbProperty.id, oobb);
+            this.propertyToEntity.set(oobbProperty.id, entity.id);
         }
         else if (property.type == "plane")
         {
             const planeProperty = property as RECORDING.IPropertyPlane;
             
             let plane = this.planePool.getPlane(planeProperty.normal, planeProperty.length, planeProperty.width);
-            plane.isPickable = false;
+            plane.isPickable = true;
             plane.id = planeProperty.id.toString();
 
             plane.position.set(planeProperty.position.x, planeProperty.position.y, planeProperty.position.z);
@@ -770,6 +765,7 @@ export default class SceneController
             plane.material = this.materialPool.getMaterialByColor(planeProperty.color);
 
             entityData.properties.set(planeProperty.id, plane);
+            this.propertyToEntity.set(planeProperty.id, entity.id);
         }
         else if (property.type == "line")
         {
@@ -795,12 +791,13 @@ export default class SceneController
 
     createEntity(entity: RECORDING.IEntity) : IEntityData
     {
-        let sphere = BABYLON.Mesh.CreateSphere("sphere", 10.0, 1.0, this._scene);
+        let sphere = BABYLON.Mesh.CreateSphere("sphere", 10.0, 0.1, this._scene);
         sphere.material = this.entityMaterial;
         sphere.isPickable = true;
         sphere.id = entity.id.toString();
         let entityData: IEntityData = { mesh: sphere, properties: new Map<number, BABYLON.Mesh>() };
         this.entities.set(entity.id, entityData);
+        this.propertyToEntity.set(entity.id, entity.id);
         return entityData;
     }
 
@@ -825,6 +822,54 @@ export default class SceneController
         }
     }
 
+    private applySelectionMaterial(entity: IEntityData)
+    {
+        entity.mesh.outlineColor = new BABYLON.Color3(1, 0, 0);
+        entity.mesh.outlineWidth = 0.03;
+        entity.mesh.renderOutline = true;
+
+        // Apply on all meshes of the entity
+        entity.properties.forEach((mesh: BABYLON.Mesh) => {
+            mesh.outlineColor = new BABYLON.Color3(1, 0, 0);
+            mesh.outlineWidth = 0.03;
+            mesh.renderOutline = true;
+        });
+    }
+
+    private applyHoverMaterial(entity: IEntityData)
+    {
+        entity.mesh.outlineColor = new BABYLON.Color3(0, 1, 0);
+        entity.mesh.outlineWidth = 0.03;
+        entity.mesh.renderOutline = true;
+
+        // Apply on all meshes of the entity
+        entity.properties.forEach((mesh: BABYLON.Mesh) => {
+            mesh.outlineColor = new BABYLON.Color3(0, 1, 0);
+            mesh.outlineWidth = 0.03;
+            mesh.renderOutline = true;
+        });
+    }
+
+    private restoreEntityMaterial(entity: IEntityData)
+    {
+        entity.mesh.renderOutline = false;
+
+        // Apply on all meshes of the entity
+        entity.properties.forEach((mesh: BABYLON.Mesh) => {
+            mesh.renderOutline = false;
+        });
+    }
+
+    markEntityAsHovered(id: number)
+    {
+        this.onEntityHovered(id);
+    }
+
+    unmarkEntityAsHovered(id: number)
+    {
+        this.onEntityStopHovered();
+    }
+
     markEntityAsSelected(id: number)
     {
         let storedMesh = this.entities.get(id);
@@ -833,20 +878,15 @@ export default class SceneController
             // Restore previous entity material
             if (this.selectedEntity)
             {
-                //this.selectedEntity.mesh.material = this.entityMaterial;
-                this.selectedEntity.mesh.renderOutline = false;
+                this.restoreEntityMaterial(this.selectedEntity);
             }
 
-            //storedMesh.mesh.material = this.selectedMaterial;
             this.selectedEntity = storedMesh;
-
-            this.selectedEntity.mesh.outlineColor = new BABYLON.Color3(1, 0, 0);
-            this.selectedEntity.mesh.outlineWidth = 0.2;
-            this.selectedEntity.mesh.renderOutline = true;
+            this.applySelectionMaterial(this.selectedEntity);
         }
     }
 
-    onEntityHovered(id: number)
+    private onEntityHovered(id: number)
     {
         let storedMesh = this.entities.get(id);
         if (storedMesh)
@@ -854,26 +894,20 @@ export default class SceneController
             // Restore previous entity material
             if (this.hoveredEntity && this.hoveredEntity != this.selectedEntity)
             {
-                this.hoveredEntity.mesh.renderOutline = false;
-                //this.hoveredEntity.mesh.material = this.entityMaterial;
+                this.restoreEntityMaterial(this.hoveredEntity);
             }
 
-            //storedMesh.mesh.material = this.hoveredMaterial;
             this.hoveredEntity = storedMesh;
-
-            this.hoveredEntity.mesh.outlineColor = new BABYLON.Color3(0, 1, 0);
-            this.hoveredEntity.mesh.outlineWidth = 0.2;
-            this.hoveredEntity.mesh.renderOutline = true;
+            this.applyHoverMaterial(this.hoveredEntity);
         }
     }
 
-    onEntityStopHovered()
+    private onEntityStopHovered()
     {
         // Restore previous entity material
         if (this.hoveredEntity && this.hoveredEntity != this.selectedEntity)
         {
-            this.hoveredEntity.mesh.renderOutline = false;
-            //this.hoveredEntity.mesh.material = this.entityMaterial;
+            this.restoreEntityMaterial(this.hoveredEntity);
         }
         this.hoveredEntity = null;
     }
@@ -896,6 +930,7 @@ export default class SceneController
         });
 
         this.entities = new Map<number, IEntityData>();
+        this.propertyToEntity = new Map<number, number>();
     }
 
     createScene(canvas: HTMLCanvasElement, engine: BABYLON.Engine) {
@@ -967,7 +1002,7 @@ export default class SceneController
 
         this.entityMaterial = new BABYLON.StandardMaterial("entityMaterial", scene);
         this.entityMaterial.diffuseColor = new BABYLON.Color3(1, 1, 1);
-        this.entityMaterial.alpha = 0.0;
+        this.entityMaterial.alpha = 0.8;
 
         this.selectedMaterial = new BABYLON.StandardMaterial("entityMaterial", scene);
         this.selectedMaterial.diffuseColor = new BABYLON.Color3(1, 1, 0);
@@ -992,14 +1027,16 @@ export default class SceneController
         scene.onPointerDown = function (evt, pickResult) {
             // if the click hits the ground object, we change the impact position
             if (pickResult.hit) {
-                control.onEntitySelected(parseInt(pickResult.pickedMesh.id));
+                const entityId: number = control.propertyToEntity.get(parseInt(pickResult.pickedMesh.id));
+                control.onEntitySelected(entityId);
             }
         };
 
         scene.onPointerMove = function (evt, pickInfo) {
             if (pickInfo.hit) {
-                if (!control.selectedEntity || control.selectedEntity.mesh.id != pickInfo.pickedMesh.id) {
-                    control.onEntityHovered(parseInt(pickInfo.pickedMesh.id));
+                const entityId: number = control.propertyToEntity.get(parseInt(pickInfo.pickedMesh.id));
+                if (!control.selectedEntity || parseInt(control.selectedEntity.mesh.id) != entityId) {
+                    control.onEntityHovered(entityId);
                 }
                 canvas.style.cursor = "pointer";
             }
