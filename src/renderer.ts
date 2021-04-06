@@ -46,7 +46,7 @@ export default class Renderer {
 
         this.sceneController = new SceneController();
         this.sceneController.initialize(canvas);
-        this.sceneController.onEntitySelected = this.onEntitySelected.bind(this);
+        this.sceneController.onEntitySelected = this.onEntitySelectedOnScene.bind(this);
 
         this.selectedEntityId = null;
 
@@ -277,10 +277,17 @@ export default class Renderer {
 
     onEntitySelected(entityId: number)
     {
-        console.log("Selected: " + entityId);
+        this.onEntitySelectedOnScene(entityId);
+        this.logToConsole(`Moving camera to entity: ${entityId}`);
+        this.sceneController.moveCameraToSelection();
+    }
+
+    onEntitySelectedOnScene(entityId: number)
+    {
+        this.logToConsole(`Selected entity: ${entityId}`);
         this.selectedEntityId = entityId;
         this.buildPropertyTree();
-        this.entityList.selectElementOfValue(entityId.toString());
+        this.entityList.selectElementOfValue(entityId.toString(), true);
         this.sceneController.markEntityAsSelected(entityId);
         this.renderProperties();
     }

@@ -236,9 +236,9 @@ export class ListControl {
         }
     }
 
-    public selectElementOfValue(value : string) {
+    public selectElementOfValue(value : string, preventCallback: boolean = false) {
         let element = this.getItemWithValue(value) as HTMLElement;
-        if (element)
+        if (element && !preventCallback)
         {
             element.click();
         }
