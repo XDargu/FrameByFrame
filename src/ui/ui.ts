@@ -168,46 +168,72 @@ interface IListCallback {
     (item: HTMLElement) : void;
 }
 
+interface IListCallbacks {
+    onItemSelected: IListCallback;
+    onItemMouseOver: IListCallback;
+    onItemMouseOut: IListCallback;
+}
+
 export class ListControl {
 
     listWrapper: HTMLElement;
 
-    constructor(listWrapper : HTMLElement, onItemSelectedCallback : IListCallback = null, value : string = null) {
+    constructor(listWrapper : HTMLElement, callbacks : IListCallbacks = null, value : string = null) {
         this.listWrapper = listWrapper;
         let listItems = this.listWrapper.querySelectorAll(".basico-list-item");
         let i = 0;
         const length = listItems.length;
         for (; i < length; i++) {
             let item = <HTMLElement>listItems[i];
-            this.addElementToList(item, onItemSelectedCallback, value);
+            this.addElementToList(item, callbacks, value);
         }
     }
 
-    appendElement(textContent : string, onItemSelectedCallback : IListCallback = null, value : string = null): HTMLDivElement
+    appendElement(textContent : string, callbacks : IListCallbacks = null, value : string = null): HTMLDivElement
     {
         let listItem = document.createElement("div");
         listItem.classList.add("basico-list-item");
+        if (callbacks == null) {
+            listItem.classList.add("basico-no-hover");
+        }
         listItem.innerText = textContent;
         this.listWrapper.appendChild(listItem);
 
-        this.addElementToList(listItem, onItemSelectedCallback, value)
+        this.addElementToList(listItem, callbacks, value)
         return listItem;
     }
 
-    private addElementToList(element : HTMLElement, onItemSelectedCallback : IListCallback, value : string = null)
+    private addElementToList(element : HTMLElement, callbacks : IListCallbacks, value : string = null)
     {
         var listWrapper = this.listWrapper;
-        element.addEventListener("click", function() {
-            listWrapper.querySelectorAll(".basico-list-item").forEach(function(node){
-                node.classList.remove("basico-list-item-active");
-            });
-            this.classList.add("basico-list-item-active");
+        if (callbacks) {
+            element.addEventListener("click", function() {
+                listWrapper.querySelectorAll(".basico-list-item").forEach(function(node){
+                    node.classList.remove("basico-list-item-active");
+                });
+                this.classList.add("basico-list-item-active");
 
-            if (onItemSelectedCallback != null)
-            {
-                onItemSelectedCallback(this);
-            }
-        });
+                if (callbacks && callbacks.onItemSelected != null)
+                {
+                    callbacks.onItemSelected(this);
+                }
+            });
+        }
+
+        if (callbacks && callbacks.onItemMouseOver != null)
+        {
+            element.addEventListener("mouseover", function() {
+                console.log("Mouse over");
+                callbacks.onItemMouseOver(this);
+            });
+        }
+
+        if (callbacks && callbacks.onItemMouseOut != null)
+        {
+            element.addEventListener("mouseout", function() {
+                callbacks.onItemMouseOut(this);
+            });
+        }
 
         if (value != null)
         {
@@ -215,9 +241,9 @@ export class ListControl {
         }
     }
 
-    public selectElementOfValue(value : string) {
+    public selectElementOfValue(value : string, preventCallback: boolean = false) {
         let element = this.getItemWithValue(value) as HTMLElement;
-        if (element)
+        if (element && !preventCallback)
         {
             element.click();
         }

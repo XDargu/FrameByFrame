@@ -1,17 +1,16 @@
 import { ipcRenderer } from "electron";
-import * as RECORDING from './recording/RecordingData';
-import Timeline from './timeline/timeline';
 import ConnectionsList from './frontend/ConnectionsList';
-import FileListController from "./frontend/FileListController";
-import * as BASICO from './ui/ui';
-import * as NET_TYPES from './network/types';
-import SceneController from './render/sceneController';
-import * as Messaging from "./messaging/MessageDefinitions";
-import { _TypeStore } from "babylonjs";
-import { PlaybackController } from "./timeline/PlaybackController";
-import { PropertyTreeController } from "./frontend/PropertyTreeController";
 import { ConsoleWindow } from "./frontend/ConsoleController";
+import FileListController from "./frontend/FileListController";
 import { LayerController } from "./frontend/LayersController";
+import { PropertyTreeController } from "./frontend/PropertyTreeController";
+import * as Messaging from "./messaging/MessageDefinitions";
+import * as NET_TYPES from './network/types';
+import * as RECORDING from './recording/RecordingData';
+import SceneController from './render/sceneController';
+import { PlaybackController } from "./timeline/PlaybackController";
+import Timeline from './timeline/timeline';
+import * as BASICO from './ui/ui';
 
 export default class Renderer {
     private sceneController: SceneController;
@@ -47,7 +46,7 @@ export default class Renderer {
 
         this.sceneController = new SceneController();
         this.sceneController.initialize(canvas);
-        this.sceneController.onEntitySelected = this.onEntitySelected.bind(this);
+        this.sceneController.onEntitySelected = this.onEntitySelectedOnScene.bind(this);
 
         this.selectedEntityId = null;
 
@@ -234,9 +233,18 @@ export default class Renderer {
                 this.entityList.setValueOfItem(element, entityID);
             }
             else {
-                this.entityList.appendElement(entityName, function(element) {
-                    renderer.onEntitySelected(parseInt(renderer.entityList.getValueOfItem(element)));
-                }, entityID);
+                const callbacks = {
+                    onItemSelected: function(element: HTMLDivElement) {
+                        renderer.onEntitySelected(parseInt(renderer.entityList.getValueOfItem(element)));
+                    },
+                    onItemMouseOver: function(element: HTMLDivElement) {
+                        renderer.onEntityHovered(parseInt(renderer.entityList.getValueOfItem(element)));
+                    },
+                    onItemMouseOut: function(element: HTMLDivElement) {
+                        renderer.onEntityStoppedHovering(parseInt(renderer.entityList.getValueOfItem(element)));
+                    }
+                }
+                this.entityList.appendElement(entityName, callbacks, entityID);
             }
             counter++;
         }
@@ -256,12 +264,30 @@ export default class Renderer {
         this.buildPropertyTree();
     }
 
+    onEntityHovered(entityId: number)
+    {
+        console.log("Hovered: " + entityId);
+        this.sceneController.markEntityAsHovered(entityId);
+    }
+
+    onEntityStoppedHovering(entityId: number)
+    {
+        this.sceneController.unmarkEntityAsHovered(entityId);
+    }
+
     onEntitySelected(entityId: number)
     {
-        console.log("Selected: " + entityId);
+        this.onEntitySelectedOnScene(entityId);
+        this.logToConsole(`Moving camera to entity: ${entityId}`);
+        this.sceneController.moveCameraToSelection();
+    }
+
+    onEntitySelectedOnScene(entityId: number)
+    {
+        this.logToConsole(`Selected entity: ${entityId}`);
         this.selectedEntityId = entityId;
         this.buildPropertyTree();
-        this.entityList.selectElementOfValue(entityId.toString());
+        this.entityList.selectElementOfValue(entityId.toString(), true);
         this.sceneController.markEntityAsSelected(entityId);
         this.renderProperties();
     }
@@ -384,7 +410,9 @@ export default class Renderer {
     // Layer callbacks
     onLayerChanged(name: string, active: boolean)
     {
-        this.sceneController.updateCameraLayers(this.layerController.getActiveLayers());
+        this.sceneController.updateLayerStatus(name, active);
+        this.applyFrame(this.timeline.currentFrame);
+        this.logToConsole(`Layer ${name} status changed to: ${active}`);
     }
 
     // Logging

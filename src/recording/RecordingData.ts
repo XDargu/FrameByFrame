@@ -22,49 +22,52 @@ export interface IProperty {
 	id?: number;
 }
 
-export interface IPropertySphere extends IProperty {
+export interface IProperyShape extends IProperty {
+	layer: string;
+	color: IColor;
+}
+
+export interface IPropertySphere extends IProperyShape {
 	position: IVec3;
 	radius: number;
 	value: string;
-	color: IColor;
-	layer: string;
 }
 
-export interface IPropertyAABB extends IProperty {
+export interface IPropertyCapsule extends IProperyShape {
+	position: IVec3;
+	direction: IVec3;
+	radius: number;
+	height: number;
+	value: string;
+}
+
+export interface IPropertyAABB extends IProperyShape {
 	position: IVec3;
 	size: IVec3;
 	value: string;
-	color: IColor;
-	layer: string;
 }
 
-export interface IPropertyOOBB extends IProperty {
+export interface IPropertyOOBB extends IProperyShape {
 	position: IVec3;
 	size: IVec3;
 	up: IVec3;
 	forward: IVec3;
 	value: string;
-	color: IColor;
-	layer: string;
 }
 
-export interface IPropertyPlane extends IProperty {
+export interface IPropertyPlane extends IProperyShape {
 	position: IVec3;
 	normal: IVec3;
 	up: IVec3;
 	width: number;
 	length: number;
 	value: string;
-	color: IColor;
-	layer: string;
 }
 
-export interface IPropertyLine extends IProperty {
+export interface IPropertyLine extends IProperyShape {
 	origin: IVec3;
 	destination: IVec3;
 	value: string;
-	color: IColor;
-	layer: string;
 }
 
 export interface IPropertyGroup {

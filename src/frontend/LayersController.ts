@@ -52,6 +52,7 @@ export class LayerController
                 if (toggleElement)
                 {
                     toggleElement.checked = layerData.active;
+                    toggleElement.setAttribute('data-layer-name', layerData.name);
                 }
                 let nameElement: HTMLInputElement = element.querySelector('.basico-text-oneline');
                 if (nameElement)
@@ -61,7 +62,7 @@ export class LayerController
                 this.layerList.setValueOfItem(element, layer);
             }
             else {
-                let listItem = this.layerList.appendElement('', () => {/* Do nothing on click */}, layer);
+                let listItem = this.layerList.appendElement('', null, layer);
                 const name = this.createNameElement(layerData.name);
                 let toggle = this.createToggle(layerData.name, layerData.active)
                 listItem.appendChild(toggle);
@@ -88,9 +89,11 @@ export class LayerController
         let input: HTMLInputElement = document.createElement("input");
         input.type = "checkbox";
         input.checked = active;
+        input.setAttribute('data-layer-name', name);
         input.addEventListener("change", (event) => {
+            const layerName = input.getAttribute('data-layer-name');
             const checkbox = (event.target as HTMLInputElement);
-            this.onLayerToggled(name, checkbox.checked);
+            this.onLayerToggled(layerName, checkbox.checked);
         });
 
         let span: HTMLSpanElement = document.createElement("span");
