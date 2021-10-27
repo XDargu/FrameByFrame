@@ -278,18 +278,24 @@ export default class Renderer {
     onEntitySelected(entityId: number)
     {
         this.onEntitySelectedOnScene(entityId);
-        this.logToConsole(`Moving camera to entity: ${entityId}`);
+        this.logEntity(`Moving camera to entity:`, entityId);
+
         this.sceneController.moveCameraToSelection();
     }
 
     onEntitySelectedOnScene(entityId: number)
     {
-        this.logToConsole(`Selected entity: ${entityId}`);
+        this.logEntity(`Selected entity:`, entityId);
         this.selectedEntityId = entityId;
         this.buildPropertyTree();
         this.entityList.selectElementOfValue(entityId.toString(), true);
         this.sceneController.markEntityAsSelected(entityId);
         this.renderProperties();
+    }
+
+    selectEntity(entityId: number)
+    {
+        this.onEntitySelected(entityId);
     }
 
     buildPropertyTree()
@@ -418,12 +424,38 @@ export default class Renderer {
     // Logging
     logToConsole(message: string)
     {
-        this.consoleWindow.logMessage(message);
+        this.consoleWindow.log(message);
     }
 
     logErrorToConsole(message: string)
     {
         this.consoleWindow.logError(message);
+    }
+
+    logEntity(message: string, entityId: number)
+    {
+        this.consoleWindow.log(`${message} `, {text: `${this.findEntityName(entityId)} (id: ${entityId.toString()})`, callback: () => {
+            this.selectEntity(entityId);
+        }});
+    }
+
+    logFrame(message: string, frame: number)
+    {
+        this.consoleWindow.log(`${message} `, {text: frame.toString(), callback: () => {
+            this.applyFrame(frame);
+        }});
+    }
+
+    // Utils
+    findEntityName(entityId: number) : string
+    {
+        const entity = this.frameData.entities[entityId];
+        if (entity)
+        {
+            return RECORDING.NaiveRecordedData.getEntityName(entity);
+        }
+
+        return "";
     }
 }
 

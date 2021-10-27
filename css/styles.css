@@ -123,7 +123,7 @@
 
 .basico-navbar {
   display: block;
-  max-width: calc(100% - 2 * 20px);
+  max-width: calc(100% - 40px);
   height: 36px;
   padding-top: 7px;
   padding-bottom: 7px;
@@ -142,7 +142,7 @@
 }
 
 .basico-navbar.basico-navbar-compact {
-  max-width: calc(100% - 2 * 10px);
+  max-width: calc(100% - 20px);
   height: 25px;
   padding-top: 1px;
   padding-bottom: 1px;
