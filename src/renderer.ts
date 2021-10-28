@@ -15,6 +15,12 @@ import * as BASICO from './ui/ui';
 
 const { shell } = require('electron');
 
+interface PropertyTreeGroup
+{
+    propertyTree: BASICO.TreeControl;
+    propertyTreeController: PropertyTreeController;
+}
+
 export default class Renderer {
     private sceneController: SceneController;
     private recordedData: RECORDING.NaiveRecordedData;
@@ -25,11 +31,10 @@ export default class Renderer {
     private frameData: RECORDING.IFrameData;
 
     // UI Elements
-    private propertyTree: BASICO.TreeControl;
     private entityList: BASICO.ListControl;
     private layerController: LayerController;
     private selectedEntityId: number;
-    private propertyTreeController: PropertyTreeController;
+    private propertyGroups: PropertyTreeGroup[];
 
     // Networking
     private connectionsList: ConnectionsList;
@@ -68,7 +73,7 @@ export default class Renderer {
         let recentFilesListElement: HTMLElement = document.getElementById(`recentFilesList`);
         this.recentFilesController = new FileListController(recentFilesListElement, this.onRecentFileClicked.bind(this))
 
-        this.propertyTreeController = new PropertyTreeController(this.propertyTree);
+        this.propertyGroups = [];
 
         this.applyFrame(0);
     }
@@ -76,18 +81,17 @@ export default class Renderer {
     initializeUI()
     {
         // Create tree
-        let treeParent = document.getElementById('property-tree');
-        this.propertyTree = new BASICO.TreeControl(treeParent);
+        let treeParent = document.getElementById('properties');
 
         this.currentPropertyId = 0;
         
-        var trans = this.propertyTree.addItem(this.propertyTree.root, "Transform", false, this.getNextPropertyId());
+        /*var trans = this.propertyTree.addItem(this.propertyTree.root, "Transform", false, this.getNextPropertyId());
         this.propertyTree.addItem(trans, "Position: 12 56 32", true, this.getNextPropertyId());
 
         var nav = this.propertyTree.addItem(this.propertyTree.root, "Navigation", false, this.getNextPropertyId());
         var targetData = this.propertyTree.addItem(nav, "Target Data", true, this.getNextPropertyId());
         this.propertyTree.addItem(targetData, "Position: 50 150 32", true, this.getNextPropertyId());
-        this.propertyTree.addItem(targetData, "Distance: 12", true, this.getNextPropertyId());
+        this.propertyTree.addItem(targetData, "Distance: 12", true, this.getNextPropertyId());*/
 
         const entityListElement = <HTMLElement>document.getElementById('entity-list').querySelector('.basico-list');
 
@@ -301,19 +305,57 @@ export default class Renderer {
         this.onEntitySelected(entityId);
     }
 
+    buildSinglePropertyTree(propertyGroup: RECORDING.IPropertyGroup, depth: number)
+    {
+        let treeParent = document.getElementById('properties');
+
+        let titleElement = document.createElement("div");
+        titleElement.innerText = propertyGroup.name;
+        titleElement.classList.add("basico-title");
+
+        let treeElement = document.createElement("div");
+        treeElement.classList.add("basico-tree");
+        let ul = document.createElement("ul");
+        treeElement.appendChild(ul);
+
+        treeParent.appendChild(titleElement);
+        treeParent.appendChild(treeElement);
+
+        let propertyTree = new BASICO.TreeControl(treeElement);
+        let propertyTreeController = new PropertyTreeController(propertyTree);
+
+        this.propertyGroups.push({propertyTree: propertyTree, propertyTreeController: propertyTreeController});
+
+        for (let i=0; i<propertyGroup.value.length; ++i)
+        {
+            const property = propertyGroup.value[i];
+            if (property.type == "group" && depth < 2)
+            {
+                this.buildSinglePropertyTree(property as RECORDING.IPropertyGroup, depth + 1);
+            }
+            else
+            {
+                propertyTreeController.addToPropertyTree(propertyTree.root, property);
+            }
+        }
+    }
+
     buildPropertyTree()
     {
-        this.propertyTree.clear();
+        // TODO: Instead of destroying everything, reuse/pool the already existing ones!
+        let treeParent = document.getElementById('properties');
+        treeParent.innerHTML = "";
+        this.propertyGroups = [];
 
         if (this.selectedEntityId != null)
         {
             const selectedEntity = this.frameData.entities[this.selectedEntityId];
-
             if (selectedEntity)
             {
                 for (let i=0; i<selectedEntity.properties.length; ++i)
                 {
-                    this.propertyTreeController.addToPropertyTree(this.propertyTree.root, selectedEntity.properties[i]);
+                    const propertyGroup = selectedEntity.properties[i] as RECORDING.IPropertyGroup;
+                    this.buildSinglePropertyTree(propertyGroup, 0);
                 }
             }
         }
