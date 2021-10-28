@@ -3,8 +3,8 @@ import * as path from "path";
 import * as url from "url";
 import MenuBuilder from "./components/Menu";
 import FileManager from './files/FileManager';
+import { LogChannel, LogLevel, ILogAction } from "./frontend/ConsoleController";
 import * as Messaging from "./messaging/MessageDefinitions";
-
 let mainWindow: Electron.BrowserWindow;
 
 // File Manager
@@ -69,8 +69,8 @@ function onFileHistoryChanged(paths: string[])
 
 function onOpenFileClicked()
 {
-  fileManager.openFile((path: string, content: string) => {
-    mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LogToConsole, `Loading file ${path}`));
+  fileManager.openFile((pathName: string, content: string) => {
+    mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.FileOpened, pathName));
     mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
   });
 }
@@ -80,13 +80,28 @@ function onExportFileClicked()
   mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.RequestSave, ""));
 }
 
-function onOpenRecentFileClicked(path : string)
+function onOpenRecentFileClicked(pathName : string)
 {
-  fileManager.loadFile(path, (path: string, content: string) => {
-    mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LogToConsole, `Loading file ${path}`));
+  fileManager.loadFile(pathName, (pathName: string, content: string) => {
+    mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.FileOpened, pathName));
     mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
   });
 }
+
+// Message helpers
+function createLogMessage(level: LogLevel, channel: LogChannel, ...message: (string | ILogAction)[]) : Messaging.Message
+{
+  return new Messaging.Message(Messaging.MessageType.LogToConsole, {
+    message: message,
+    level: level,
+    channel: channel
+ });
+}
+
+function logToConsole(level: LogLevel, channel: LogChannel, ...message: (string | ILogAction)[])
+{
+  mainWindow.webContents.send('asynchronous-reply', createLogMessage(level, channel, ...message));
+};
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -119,6 +134,11 @@ class SessionOptions {
 let sessionOptions: SessionOptions = new SessionOptions();
 
 ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
+
+  const logToConsole = (level: LogLevel, channel: LogChannel, ...message: (string | ILogAction)[]) => {
+    event.reply('asynchronous-reply', createLogMessage(level, channel, ...message));
+  };
+
   switch(arg.type)
   {
     case Messaging.MessageType.Save:
@@ -129,20 +149,16 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
     case Messaging.MessageType.Load:
     {
       const filePath = arg.data as string;
-      fileManager.loadFile(filePath, (path: string, content: string) => {
-        console.log('Returning! ');
-        console.log(event);
-        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LogToConsole, `Loading file ${path}`));
+      fileManager.loadFile(filePath, (pathName: string, content: string) => {
+        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.FileOpened, pathName));
         event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
       });
       break;
     }
     case Messaging.MessageType.Open:
     {
-      fileManager.openFile((path: string, content: string) => {
-        console.log('Returning! ');
-        console.log(event);
-        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LogToConsole, `Loading file ${path}`));
+      fileManager.openFile((pathName: string, content: string) => {
+        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.FileOpened, pathName));
         event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
       });
       break;

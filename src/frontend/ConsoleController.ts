@@ -10,25 +10,68 @@ export interface ILogAction
     color?: string;
 }
 
+export enum LogLevel
+{
+    Verbose = 0,
+    Information,
+    Warning,
+    Error
+}
+
+export enum LogChannel
+{
+    Default = 0,
+    Layers,
+    Selection,
+    Files,
+
+    Count
+}
+
 export class ConsoleWindow
 {
     private console: HTMLElement;
+    logLevel: LogLevel;
+    openChannels: Array<boolean>;
 
-    constructor(console: HTMLElement)
+    constructor(console: HTMLElement, logLevel: LogLevel)
     {
         this.console = console;
+        this.logLevel = logLevel;
+        this.openChannels = new Array<boolean>(LogChannel.Count);
+        this.openChannels.fill(true, 0, LogChannel.Count);
     }
 
-    log(...message: (string | ILogAction)[])
+    openChannel(channel: LogChannel)
     {
-        let line = this.addMessage();
-        this.addToLine(line, ...message);
+        this.openChannels[channel] = true;
     }
 
-    logError(...message: (string | ILogAction)[])
+    closeChannel(channel: LogChannel)
     {
-        let line = this.addError();
-        this.addToLine(line, ...message);
+        this.openChannels[channel] = false;
+    }
+
+    isChannelOpen(channel: LogChannel) : boolean
+    {
+        return this.openChannels[channel];
+    }
+
+    log(logLevel: LogLevel, channel: LogChannel, ...message: (string | ILogAction)[])
+    {
+        if (logLevel >= this.logLevel && this.isChannelOpen(channel))
+        {
+            if (logLevel == LogLevel.Error)
+            {
+                let line = this.addError();
+                this.addToLine(line, ...message);
+            }
+            else
+            {
+                let line = this.addMessage();
+                this.addToLine(line, ...message);
+            }
+        }
     }
 
     clear()
@@ -44,7 +87,8 @@ export class ConsoleWindow
 
             if (typeof data === 'string')
             {
-                line.innerText += message[i];
+                let text = document.createTextNode(message[i] as string);
+                line.appendChild(text);
             }
             else if (typeof data === 'object')
             {
@@ -78,12 +122,12 @@ export class ConsoleWindow
 
         let line = document.createElement("div");
         line.classList.add("basico-console-line");
-        outerWrapper.appendChild(line);
 
-        let iconElement = document.createElement("div");
+        let iconElement = document.createElement("i");
         iconElement.classList.add("basico-console-icon", "fas", icon);
         line.appendChild(iconElement);
 
+        outerWrapper.appendChild(line);
         this.console.appendChild(outerWrapper);
 
         return line;

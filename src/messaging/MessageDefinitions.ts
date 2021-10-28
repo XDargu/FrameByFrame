@@ -1,3 +1,5 @@
+import { ConsoleWindow, LogLevel, ILogAction, LogChannel } from "../frontend/ConsoleController";
+
 export enum MessageType { // TODO: Maybe rename these to make clear the direction of the messge (main->render or render->main)
     RequestSave,
     Save,
@@ -8,7 +10,7 @@ export enum MessageType { // TODO: Maybe rename these to make clear the directio
     ClearResult,
     UpdateRecentFiles,
     LogToConsole,
-    LogErrorToConsole
+    FileOpened
 }
 
 export interface IClearResultData
@@ -17,12 +19,19 @@ export interface IClearResultData
     remember: boolean;
 }
 
+export interface ILogData
+{
+    message: (string | ILogAction)[];
+    level: LogLevel;
+    channel: LogChannel;
+}
+
 export class Message
 {
     public type: MessageType;
-    public data: string | IClearResultData;
+    public data: string | IClearResultData | ILogData;
 
-    constructor(type: MessageType, data: string | IClearResultData)
+    constructor(type: MessageType, data: string | IClearResultData | ILogData)
     {
         this.type = type;
         this.data = data;

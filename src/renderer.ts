@@ -1,6 +1,7 @@
 import { ipcRenderer } from "electron";
+import * as path from "path";
 import ConnectionsList from './frontend/ConnectionsList';
-import { ConsoleWindow } from "./frontend/ConsoleController";
+import { ConsoleWindow, ILogAction, LogChannel, LogLevel } from "./frontend/ConsoleController";
 import FileListController from "./frontend/FileListController";
 import { LayerController } from "./frontend/LayersController";
 import { PropertyTreeController } from "./frontend/PropertyTreeController";
@@ -11,6 +12,8 @@ import SceneController from './render/sceneController';
 import { PlaybackController } from "./timeline/PlaybackController";
 import Timeline from './timeline/timeline';
 import * as BASICO from './ui/ui';
+
+const { shell } = require('electron');
 
 export default class Renderer {
     private sceneController: SceneController;
@@ -115,8 +118,8 @@ export default class Renderer {
 
         const consoleElement = document.getElementById("default-console").children[0] as HTMLElement;
         console.log(consoleElement);
-        this.consoleWindow = new ConsoleWindow(consoleElement);
-        this.consoleWindow.logError("Error: test");
+        this.consoleWindow = new ConsoleWindow(consoleElement, LogLevel.Verbose);
+        this.consoleWindow.log(LogLevel.Error, LogChannel.Default, "Error: test");
 
         // Create timeline callbacks
         document.getElementById("timeline-play").onclick = this.playbackController.onTimelinePlayClicked.bind(this.playbackController);
@@ -278,14 +281,14 @@ export default class Renderer {
     onEntitySelected(entityId: number)
     {
         this.onEntitySelectedOnScene(entityId);
-        this.logEntity(`Moving camera to entity:`, entityId);
+        this.logEntity(LogLevel.Verbose, LogChannel.Selection, `Moving camera to entity:`, this.frameData.frameId, entityId);
 
         this.sceneController.moveCameraToSelection();
     }
 
     onEntitySelectedOnScene(entityId: number)
     {
-        this.logEntity(`Selected entity:`, entityId);
+        this.logEntity(LogLevel.Verbose, LogChannel.Selection, `Selected entity:`, this.frameData.frameId, entityId);
         this.selectedEntityId = entityId;
         this.buildPropertyTree();
         this.entityList.selectElementOfValue(entityId.toString(), true);
@@ -418,32 +421,37 @@ export default class Renderer {
     {
         this.sceneController.updateLayerStatus(name, active);
         this.applyFrame(this.timeline.currentFrame);
-        this.logToConsole(`Layer ${name} status changed to: ${active}`);
+        this.logToConsole(LogLevel.Verbose, LogChannel.Layers, `Layer ${name} status changed to: ${active}`);
     }
 
-    // Logging
-    logToConsole(message: string)
+    // Logging wrappers
+    logToConsole(level: LogLevel, channel: LogChannel, ...message: (string | ILogAction)[])
     {
-        this.consoleWindow.log(message);
+        this.consoleWindow.log(level, channel, ...message);
     }
 
     logErrorToConsole(message: string)
     {
-        this.consoleWindow.logError(message);
+        this.consoleWindow.log(LogLevel.Error, LogChannel.Default, message);
     }
 
-    logEntity(message: string, entityId: number)
+    logEntity(level: LogLevel, channel: LogChannel, message: string, frame: number, entityId: number)
     {
-        this.consoleWindow.log(`${message} `, {text: `${this.findEntityName(entityId)} (id: ${entityId.toString()})`, callback: () => {
-            this.selectEntity(entityId);
-        }});
+        this.consoleWindow.log(level, channel, `${message} `, {
+            text: `${this.findEntityName(entityId)} (id: ${entityId.toString()}) (frame: ${frame.toString()})`, 
+            callback: () => {
+                this.applyFrame(frame);
+                this.selectEntity(entityId);
+            }
+        });
     }
 
-    logFrame(message: string, frame: number)
+    logFrame(level: LogLevel, channel: LogChannel, message: string, frame: number)
     {
-        this.consoleWindow.log(`${message} `, {text: frame.toString(), callback: () => {
-            this.applyFrame(frame);
-        }});
+        this.consoleWindow.log(level, channel, `${message} `, {
+            text: `(frame: ${frame.toString()})`,
+            callback: () => { this.applyFrame(frame); }
+        });
     }
 
     // Utils
@@ -494,12 +502,17 @@ ipcRenderer.on('asynchronous-reply', (event: any, arg: Messaging.Message) => {
         }
         case Messaging.MessageType.LogToConsole:
         {
-            renderer.logToConsole(arg.data as string);
+            const result = arg.data as Messaging.ILogData;
+            renderer.logToConsole(result.level, result.channel, ...result.message);
             break;
         }
-        case Messaging.MessageType.LogErrorToConsole:
+        case Messaging.MessageType.FileOpened:
         {
-            renderer.logErrorToConsole(arg.data as string);
+            const pathName = arg.data as string;
+            renderer.logToConsole(LogLevel.Information, LogChannel.Files, `Loading file `, {
+                text: pathName,
+                callback: () => { shell.showItemInFolder(path.resolve(pathName)); }
+            });
             break;
         }
     }
