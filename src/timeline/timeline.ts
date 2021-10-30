@@ -28,6 +28,7 @@ export default class Timeline {
     ctx : CanvasRenderingContext2D;
     height : number;
     width : number;
+    ratio : number;
 
     // Timeline information
     currentFrame : number;
@@ -59,9 +60,10 @@ export default class Timeline {
         this.ctx = this.canvas.getContext("2d");
 
         window.requestAnimationFrame(this.render.bind(this));
+        this.ratio = window.devicePixelRatio;
 
-        this.width = this.canvas.width;
-        this.height = this.canvas.height;
+        this.width = this.canvas.width / this.ratio;
+        this.height = this.canvas.height / this.ratio;
 
         this.zoom = 1;
         this.translation = 0;
@@ -85,8 +87,8 @@ export default class Timeline {
         canvas.addEventListener('selectstart', this.disableEvent);
 
         var resizeObserver = new ResizeObserver(entries => {
-            canvas.width = entries[0].contentRect.width;
-            canvas.height = entries[0].contentRect.height;
+            canvas.width = entries[0].contentRect.width * this.ratio;
+            canvas.height = entries[0].contentRect.height * this.ratio;
             //canvas.style.left = entries[0].target.offsetLeft + "px";
             this.onResize();
         });
@@ -184,7 +186,7 @@ export default class Timeline {
         }
     }
 
-    private onMouseWheel(event : MouseWheelEvent)
+    private onMouseWheel(event : any)
     {
         const canvasPosition : number = event.offsetX;
         const frame : number = this.canvas2frame(canvasPosition);
@@ -331,8 +333,13 @@ export default class Timeline {
 
     onResize()
     {
-        this.width = this.canvas.width;
-        this.height = this.canvas.height;
+        this.width = this.canvas.width / this.ratio;
+        this.height = this.canvas.height / this.ratio;
+
+        this.ctx.scale(this.ratio, this.ratio);
+
+        this.canvas.style.width = this.width + "px";
+        this.canvas.style.height = this.height + "px";
 
         this.calculateRenderingConstants();
         //this.render();
