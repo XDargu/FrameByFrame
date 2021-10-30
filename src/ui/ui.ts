@@ -1,3 +1,67 @@
+export class Splitter
+{
+    constructor(splitter: HTMLElement, panes: HTMLElement[], direction: string)
+    {
+        this.dragElement(splitter, panes, direction);
+    }
+
+    dragElement(splitter: HTMLElement, otherPanes: HTMLElement[], direction: string)
+    {
+        var md: any; // remember mouse down info
+
+        splitter.onmousedown = onMouseDown;
+
+        function getActivePane()
+        {
+            for (let i=0; i<otherPanes.length; ++i)
+            {
+                if (otherPanes[i].style.display != "none")
+                    return otherPanes[i];
+            }
+        }
+
+        function onMouseDown(e: MouseEvent)
+        {
+            console.log("mouse down: " + e.clientX);
+            md = {e,
+                offsetLeft:  splitter.offsetLeft,
+                offsetTop:   splitter.offsetTop,
+                firstWidth:  getActivePane().offsetWidth
+                };
+
+            document.onmousemove = onMouseMove;
+            document.onmouseup = () => {
+                console.log("mouse up");
+                document.onmousemove = document.onmouseup = null;
+            }
+        }
+
+        function onMouseMove(e: MouseEvent)
+        {
+            console.log("mouse move: " + e.clientX);
+            var delta = {x: e.clientX - md.e.clientX,
+                        y: e.clientY - md.e.clientY};
+
+            console.log(direction);
+            console.log(md);
+            console.log(delta);
+            if (direction === "H" ) // Horizontal
+            {
+                // Prevent negative-sized elements
+                /*delta.x = Math.min(Math.max(delta.x, -md.firstWidth),
+                        md.secondWidth);*/
+
+                const size = md.firstWidth + delta.x;
+                
+                for (let i=0; i<otherPanes.length; ++i)
+                {
+                    otherPanes[i].style.flex = "0 0 " + (size) + "px";
+                }
+            }
+        }
+    }
+}
+
 /*export class Splitter {
 
     dividers: HTMLCollectionOf<Element>;

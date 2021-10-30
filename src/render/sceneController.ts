@@ -1069,7 +1069,7 @@ export default class SceneController
             this._scene.render();
         });
 
-        window.addEventListener('resize', function () {
+        window.addEventListener('resize', () => {
             engine.resize();
         });
 

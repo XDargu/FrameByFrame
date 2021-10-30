@@ -15,6 +15,59 @@ import * as BASICO from './ui/ui';
 
 const { shell } = require('electron');
 
+
+// Window controls
+
+const remote = require('electron').remote;
+
+const win = remote.getCurrentWindow(); /* Note this is different to the html global `window` variable */
+
+// When document has loaded, initialise
+document.onreadystatechange = (event) => {
+    if (document.readyState == "complete") {
+        handleWindowControls();
+    }
+};
+
+window.onbeforeunload = (event) => {
+    /* If window is reloaded, remove win event listeners
+    (DOM element listeners get auto garbage collected but not
+    Electron win listeners as the win is not dereferenced unless closed) */
+    win.removeAllListeners();
+}
+
+function handleWindowControls() {
+    // Make minimise/maximise/restore/close buttons work when they are clicked
+    document.getElementById('min-button').addEventListener("click", event => {
+        win.minimize();
+    });
+
+    document.getElementById('max-button').addEventListener("click", event => {
+        win.maximize();
+    });
+
+    document.getElementById('restore-button').addEventListener("click", event => {
+        win.unmaximize();
+    });
+
+    document.getElementById('close-button').addEventListener("click", event => {
+        win.close();
+    });
+
+    // Toggle maximise/restore buttons when maximisation/unmaximisation occurs
+    toggleMaxRestoreButtons();
+    win.on('maximize', toggleMaxRestoreButtons);
+    win.on('unmaximize', toggleMaxRestoreButtons);
+
+    function toggleMaxRestoreButtons() {
+        if (win.isMaximized()) {
+            document.body.classList.add('maximized');
+        } else {
+            document.body.classList.remove('maximized');
+        }
+    }
+}
+
 interface PropertyTreeGroup
 {
     propertyTree: BASICO.TreeControl;
@@ -35,6 +88,7 @@ export default class Renderer {
     private layerController: LayerController;
     private selectedEntityId: number;
     private propertyGroups: PropertyTreeGroup[];
+    private leftPaneSplitter: BASICO.Splitter;
 
     // Networking
     private connectionsList: ConnectionsList;
@@ -80,33 +134,23 @@ export default class Renderer {
 
     initializeUI()
     {
-        // Create tree
-        let treeParent = document.getElementById('properties');
-
         this.currentPropertyId = 0;
-        
-        /*var trans = this.propertyTree.addItem(this.propertyTree.root, "Transform", false, this.getNextPropertyId());
-        this.propertyTree.addItem(trans, "Position: 12 56 32", true, this.getNextPropertyId());
-
-        var nav = this.propertyTree.addItem(this.propertyTree.root, "Navigation", false, this.getNextPropertyId());
-        var targetData = this.propertyTree.addItem(nav, "Target Data", true, this.getNextPropertyId());
-        this.propertyTree.addItem(targetData, "Position: 50 150 32", true, this.getNextPropertyId());
-        this.propertyTree.addItem(targetData, "Distance: 12", true, this.getNextPropertyId());*/
 
         const entityListElement = <HTMLElement>document.getElementById('entity-list').querySelector('.basico-list');
 
         this.entityList = new BASICO.ListControl(entityListElement);
 
         // Create tab control
+        const controlTabElements: HTMLElement[] = [
+            document.getElementById("entity-list"), 
+            document.getElementById("var-list"),
+            document.getElementById("connection-list"),
+            document.getElementById("recent-list"),
+            document.getElementById("setting-list")
+        ];
         var controlTabs = new BASICO.TabControl(
             <HTMLElement[]><any>document.getElementById("control-tabs").children,
-            [
-                document.getElementById("entity-list"), 
-                document.getElementById("var-list"),
-                document.getElementById("connection-list"),
-                document.getElementById("recent-list"),
-                document.getElementById("setting-list")
-            ]
+            controlTabElements
             , 0, BASICO.TabBorder.Left
         );
 
@@ -133,15 +177,18 @@ export default class Renderer {
         document.getElementById("timeline-last").onclick = this.playbackController.onTimelineLastClicked.bind(this.playbackController);
 
         // Create control bar callbacks
-        document.getElementById("control-bar-open").onclick = this.onOpenFile.bind(this);
-        document.getElementById("control-bar-save").onclick = this.onSaveFile.bind(this);
-        document.getElementById("control-bar-clear").onclick = this.onClearFile.bind(this);
+        document.getElementById("title-bar-open").onclick = this.onOpenFile.bind(this);
+        document.getElementById("title-bar-save").onclick = this.onSaveFile.bind(this);
+        document.getElementById("title-bar-clear").onclick = this.onClearFile.bind(this);
 
         // Console callbacks
         document.getElementById("console-clear").onclick = () => { this.consoleWindow.clear(); };
 
         // Create layer controls
         this.layerController = new LayerController(document.getElementById("layer-selection"), this.onLayerChanged.bind(this));
+
+        // Create splitters
+        this.leftPaneSplitter = new BASICO.Splitter(document.getElementById("left-pane-splitter"), controlTabElements, "H");
     }
 
     loadData(data: string)
@@ -555,6 +602,8 @@ ipcRenderer.on('asynchronous-reply', (event: any, arg: Messaging.Message) => {
                 text: pathName,
                 callback: () => { shell.showItemInFolder(path.resolve(pathName)); }
             });
+            
+            document.getElementById("window-title-text").innerText = path.basename(pathName) + " - Frame by Frame";
             break;
         }
     }

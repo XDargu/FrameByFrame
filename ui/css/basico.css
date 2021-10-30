@@ -14,63 +14,12 @@
 }
 
 .splitter {
-  display: flex;
-  flex-wrap: nowrap;
-  flex-direction: row;
-  justify-content: space-between;
-  height: 100%;
-}
-
-.splitter.vertical {
-  flex-direction: column;
-}
-
-.split-panel {
-  position: relative;
-  flex-grow: 1;
-  overflow: hidden;
-}
-
-.divider {
-  position: relative;
-  /*flex-shrink: 0;
-  flex-grow: 0;*/
-  border: 1px solid #f8f8f8;
-  background-color: #f8f8f8;
+  flex: 0 0 6px;
+  width: 6px;
+  margin-left: -3px;
   cursor: col-resize;
-  z-index: 1;
-}
-
-.splitter.horizontal > .divider {
-  width: 4px;
-}
-
-.splitter.vertical > .divider {
-  height: 4px;
-  cursor: row-resize;
-}
-
-.divider::before {
-  box-sizing: border-box;
-  content: "";
-  z-index: 1;
-  display: block;
-  position: absolute;
-  left: 0;
-  width: 100%;
-  top: 50%;
-  height: 24px;
-  margin-top: -12px;
-  background-color: #bebebe;
-}
-
-.splitter.vertical > .divider::before {
-  height: 100%;
-  width: 24px;
-  top: 0;
-  left: 50%;
-  margin-left: -12px;
-  margin-top: 0;
+  background: red;
+  z-index: 1000;
 }
 
 /* Elevation of elements */
@@ -123,7 +72,7 @@
 
 .basico-navbar {
   display: block;
-  max-width: calc(100% - 2 * 20px);
+  max-width: calc(100% - 40px);
   height: 36px;
   padding-top: 7px;
   padding-bottom: 7px;
@@ -142,7 +91,7 @@
 }
 
 .basico-navbar.basico-navbar-compact {
-  max-width: calc(100% - 2 * 10px);
+  max-width: calc(100% - 20px);
   height: 25px;
   padding-top: 1px;
   padding-bottom: 1px;

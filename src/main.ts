@@ -14,17 +14,18 @@ let menuBuilder: MenuBuilder;
 function createWindow() {
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    height: 1080,
-    width: 1920,
-    /*fullscreen: true,*/
-    /*frame: false,*/
+    height: 1024,
+    width: 768,
+    backgroundColor: '#FFF',
+    fullscreen: false,
+    frame: false,
     webPreferences: {
         nodeIntegration: true,
         nodeIntegrationInWorker: true
     }
   });
 
-  mainWindow.maximize();
+  //mainWindow.maximize();
 
   // and load the index.html of the app.
   mainWindow.loadURL(url.format({
