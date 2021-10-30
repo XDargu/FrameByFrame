@@ -13,6 +13,10 @@ export class PlaybackController {
     }
 
     update(elapsedSeconds: number) {
+        if (this.isPlaying && this.renderer.getFrameCount() == 0) {
+            this.stopPlayback();
+        }
+
         if (this.isPlaying) {
             this.elapsedTime += elapsedSeconds;
 
@@ -36,6 +40,15 @@ export class PlaybackController {
     }
 
     updateUI() {
+        console.log("Current frame: ");
+        console.log(this.renderer.getCurrentFrame());
+        console.log("Frame count: ");
+        console.log(this.renderer.getFrameCount());
+
+        const recordingEmpty = this.renderer.getFrameCount() == 0;
+        const isLastFrame = recordingEmpty || (this.renderer.getCurrentFrame() == this.renderer.getFrameCount() - 1);
+        const isFirstFrame = recordingEmpty || (this.renderer.getCurrentFrame() == 0);
+
         if (this.isPlaying) {
             document.getElementById("timeline-play-icon").classList.remove("fa-play");
             document.getElementById("timeline-play-icon").classList.add("fa-stop");
@@ -43,9 +56,14 @@ export class PlaybackController {
         else {
             document.getElementById("timeline-play-icon").classList.remove("fa-stop");
             document.getElementById("timeline-play-icon").classList.add("fa-play");
+
+            if (isLastFrame)
+                document.getElementById("timeline-play").classList.add("basico-disabled");
+            else
+                document.getElementById("timeline-play").classList.remove("basico-disabled");
         }
 
-        if (this.renderer.getCurrentFrame() == 0) {
+        if (isFirstFrame) {
             document.getElementById("timeline-first").classList.add("basico-disabled");
             document.getElementById("timeline-prev").classList.add("basico-disabled");
         }
@@ -54,7 +72,7 @@ export class PlaybackController {
             document.getElementById("timeline-prev").classList.remove("basico-disabled");
         }
 
-        if (this.renderer.getCurrentFrame() == this.renderer.getFrameCount() - 1) {
+        if (isLastFrame) {
             document.getElementById("timeline-last").classList.add("basico-disabled");
             document.getElementById("timeline-next").classList.add("basico-disabled");
         }
@@ -65,7 +83,9 @@ export class PlaybackController {
     }
 
     startPlayback() {
-        this.isPlaying = true;
+        if (this.renderer.getFrameCount() > 0) {
+            this.isPlaying = true;
+        }
         this.updateUI();
     }
 
