@@ -14,8 +14,10 @@ let menuBuilder: MenuBuilder;
 function createWindow() {
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    height: 1024,
-    width: 768,
+    height: 768,
+    width: 1280,
+    minWidth: 650,
+    minHeight: 550, 
     backgroundColor: '#FFF',
     fullscreen: false,
     frame: false,
