@@ -281,7 +281,9 @@ export default class Renderer {
         //console.log(this.recordedData);
 
         // Update frame counter
-        document.getElementById("timeline-frame-counter").textContent = `Frame: ${frame + 1} / ${this.getFrameCount()}`;
+        const frameText = (this.getFrameCount() > 0) ? (`Frame: ${frame + 1} / ${this.getFrameCount()}`) : "No frames";
+
+        document.getElementById("timeline-frame-counter").textContent = frameText;
 
         // Update entity list
         let listElement = this.entityList.listWrapper;
