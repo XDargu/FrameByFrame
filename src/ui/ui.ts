@@ -1,22 +1,32 @@
+export interface SplitterSettings
+{
+    splitter: HTMLElement;
+    panes: HTMLElement[];
+    direction: string;
+    minSizePane: number;
+    minPane: HTMLElement;
+    minSize: number;
+}
+
 export class Splitter
 {
-    constructor(splitter: HTMLElement, panes: HTMLElement[], direction: string)
+    constructor(settings: SplitterSettings)
     {
-        this.dragElement(splitter, panes, direction);
+        this.dragElement(settings);
     }
 
-    dragElement(splitter: HTMLElement, otherPanes: HTMLElement[], direction: string)
+    dragElement(settings: SplitterSettings)
     {
         var md: any; // remember mouse down info
 
-        splitter.onmousedown = onMouseDown;
+        settings.splitter.onmousedown = onMouseDown;
 
         function getActivePane()
         {
-            for (let i=0; i<otherPanes.length; ++i)
+            for (let i=0; i<settings.panes.length; ++i)
             {
-                if (otherPanes[i].style.display != "none")
-                    return otherPanes[i];
+                if (settings.panes[i].style.display != "none")
+                    return settings.panes[i];
             }
         }
 
@@ -24,8 +34,8 @@ export class Splitter
         {
             console.log("mouse down: " + e.clientX);
             md = {e,
-                offsetLeft:  splitter.offsetLeft,
-                offsetTop:   splitter.offsetTop,
+                offsetLeft:  settings.splitter.offsetLeft,
+                offsetTop:   settings.splitter.offsetTop,
                 firstWidth:  getActivePane().offsetWidth
                 };
 
@@ -38,25 +48,33 @@ export class Splitter
 
         function onMouseMove(e: MouseEvent)
         {
-            console.log("mouse move: " + e.clientX);
             var delta = {x: e.clientX - md.e.clientX,
                         y: e.clientY - md.e.clientY};
 
-            console.log(direction);
-            console.log(md);
-            console.log(delta);
-            if (direction === "H" ) // Horizontal
+            if (settings.direction === "L" ) // Left
             {
                 // Prevent negative-sized elements
                 /*delta.x = Math.min(Math.max(delta.x, -md.firstWidth),
                         md.secondWidth);*/
 
-                const size = md.firstWidth + delta.x;
-                
-                for (let i=0; i<otherPanes.length; ++i)
-                {
-                    otherPanes[i].style.flex = "0 0 " + (size) + "px";
-                }
+                // TODO: Maxmium should be windows half width - 100px or someting like that
+                // Alternative: half of the parent pane?
+
+                const size = Math.max(settings.minSize, md.firstWidth + delta.x);
+                applySizeToPane(size);
+            }
+            else if (settings.direction === "R" ) // Right
+            {
+                const size = Math.max(settings.minSize, md.firstWidth - delta.x);
+                applySizeToPane(size);
+            }
+        }
+
+        function applySizeToPane(size: number)
+        {
+            for (let i=0; i<settings.panes.length; ++i)
+            {
+                settings.panes[i].style.flex = "0 0 " + (size) + "px";
             }
         }
     }

@@ -89,6 +89,7 @@ export default class Renderer {
     private selectedEntityId: number;
     private propertyGroups: PropertyTreeGroup[];
     private leftPaneSplitter: BASICO.Splitter;
+    private rightPaneSplitter: BASICO.Splitter;
 
     // Networking
     private connectionsList: ConnectionsList;
@@ -188,7 +189,22 @@ export default class Renderer {
         this.layerController = new LayerController(document.getElementById("layer-selection"), this.onLayerChanged.bind(this));
 
         // Create splitters
-        this.leftPaneSplitter = new BASICO.Splitter(document.getElementById("left-pane-splitter"), controlTabElements, "H");
+        this.leftPaneSplitter = new BASICO.Splitter({
+            splitter: document.getElementById("left-pane-splitter"),
+            panes: controlTabElements,
+            minSize: 100,
+            direction: "L",
+            minPane: null,
+            minSizePane: null
+        });
+        this.rightPaneSplitter = new BASICO.Splitter({
+            splitter: document.getElementById("right-pane-splitter"),
+            panes: [document.getElementById("detail-pane")],
+            minSize: 100,
+            direction: "R",
+            minPane: null,
+            minSizePane: null
+        });
     }
 
     loadData(data: string)
