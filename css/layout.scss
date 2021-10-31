@@ -123,3 +123,27 @@ body {
 #button-record:not(.basico-disabled) {
     color: #DE0000;
 }
+
+#entity-list .basico-form-field {
+    display: block;
+    margin-bottom: 6px;
+    margin-top: 3px;
+}
+
+#connection-buttons {
+    position: absolute;
+    right: 150px;
+    top: 10px;
+}
+
+#connection-buttons .basico-button
+{
+    font-size: 14px;
+    font-weight: bold;
+    margin-left: 10px;
+}
+
+#connection-buttons .connection-button-complex i
+{
+    padding-right: 5px;
+}

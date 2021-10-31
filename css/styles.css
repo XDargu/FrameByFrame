@@ -963,8 +963,8 @@
 .basico-input {
   display: inline-block;
   width: 100%;
-  height: 32px;
-  line-height: 32px;
+  height: 30px;
+  line-height: 30px;
   font-size: 12px;
   font-weight: 400;
   color: #546778;
@@ -1138,6 +1138,28 @@ body {
   color: #DE0000;
 }
 
+#entity-list .basico-form-field {
+  display: block;
+  margin-bottom: 6px;
+  margin-top: 3px;
+}
+
+#connection-buttons {
+  position: absolute;
+  right: 150px;
+  top: 10px;
+}
+
+#connection-buttons .basico-button {
+  font-size: 14px;
+  font-weight: bold;
+  margin-left: 10px;
+}
+
+#connection-buttons .connection-button-complex i {
+  padding-right: 5px;
+}
+
 #title-bar-wrapper {
   min-height: 48px;
   height: 48px;
@@ -1155,7 +1177,7 @@ body {
 }
 
 #title-bar i {
-  font-size: 23px;
+  font-size: 20px;
 }
 
 #title-bar .basico-tabs-item {
@@ -1389,6 +1411,30 @@ body {
 #console .basico-tabs-item .basico-tabs-selected {
   background: none;
   color: #eee;
+}
+
+#connection-buttons .basico-button {
+  background: #6DE080;
+}
+
+#connection-buttons .basico-button.connection-button-disabled {
+  background: #C4C4C4;
+}
+
+#connection-buttons .basico-button:not(.connection-button-disabled) {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(109, 224, 128, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(109, 224, 128, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(109, 224, 128, 0);
+  }
 }
 
 /*# sourceMappingURL=styles.css.map */

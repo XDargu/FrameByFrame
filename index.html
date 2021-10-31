@@ -21,6 +21,11 @@
                         <span id="window-title-text">Frame by Frame</span>
                     </div>
                 </div>
+                <div class="basico-button-group" id="connection-buttons">
+                    <button class="basico-button basico-small connection-button-disabled"><i class="fas fa-network-wired"></i></button>
+                    <button class="basico-button basico-small connection-button-complex"><i class="fas fa-network-wired"></i>2</button>
+                    <button class="basico-button basico-small connection-button-complex"><i class="fas fa-network-wired"></i>3</button>
+                </div>
                 <div id="window-controls">
                     <div class="button" id="min-button">
                         <img class="icon" srcset="icons/min-w-10.png 1x, icons/min-w-12.png 1.25x, icons/min-w-15.png 1.5x, icons/min-w-15.png 1.75x, icons/min-w-20.png 2x, icons/min-w-20.png 2.25x, icons/min-w-24.png 2.5x, icons/min-w-30.png 3x, icons/min-w-30.png 3.5x" draggable="false" />
@@ -66,6 +71,9 @@
             <div class="sidebar basico-container basico-container-compact" id="entity-list">
                 <div class="basico-title basico-title-compact">Entities</div>
                 <div class="basico-container">
+                    <div class="basico-form-field">
+                        <input type="text" id="entity-search" placeholder="Type here to filter..." class="basico-input" value="">
+                    </div>
                     <div class="basico-list basico-list-compact"></div>
                 </div>
                 <div class="basico-title basico-title-compact">Layers</div>
