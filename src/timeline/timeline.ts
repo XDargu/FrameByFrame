@@ -249,23 +249,30 @@ export default class Timeline {
         for (; i < lastFrame; i+= smallStep)
         {
             const position : number = this.frame2canvas(i);
+            const baseOneFrame = i + 1;
 
-            if ((i % frameStep == 0) || (i == lastFrame - 1))
+            const isFirstFrame = (i == 0);
+            const isLastFrame = (i == lastFrame - 1);
+            const isMiddleStep = (baseOneFrame % frameStep == 0);
+
+            if (isFirstFrame || isMiddleStep || isLastFrame)
             {
+                const frameNumber = baseOneFrame.toString();
+
                 this.ctx.moveTo(position, Timeline.headerHeight);
                 this.ctx.lineTo(position, Timeline.headerHeight - Timeline.markerHeight);
 
                 let offset = 0;
-                if (i == 0)
+                if (isFirstFrame)
                 {
-                    offset = this.ctx.measureText(i + "").width;
+                    offset = this.ctx.measureText(frameNumber).width;
                 }
-                else if (i == lastFrame - 1)
+                else if (isLastFrame)
                 {
-                    offset = -this.ctx.measureText(i + "").width * 0.6;
+                    offset = -this.ctx.measureText(frameNumber).width * 0.6;
                 }
 
-                this.ctx.fillText(i + "", position + offset, Timeline.textHeight);
+                this.ctx.fillText(frameNumber, position + offset, Timeline.textHeight);
             }
             else
             {
@@ -294,6 +301,24 @@ export default class Timeline {
     private renderMarker()
     {
         const position : number = this.frame2canvas(this.currentFrame);
+
+        const frameNumber = (this.currentFrame + 1).toString();
+        const frameTextWidth = this.ctx.measureText(frameNumber).width;
+        const textPadding = 4;
+        const rectPadding = 1;
+        const rectHeight = Timeline.headerHeight - rectPadding * 2;
+        const rectWidth = frameTextWidth + textPadding * 2;
+        const rectInvert = (rectWidth + position < this.width) ? 1  : -1;
+
+        // Rectangle with frame
+        this.ctx.fillStyle = "#2B2530";
+        this.ctx.fillRect(position, rectPadding, rectWidth * rectInvert, rectHeight);
+
+        this.ctx.textAlign = "center";
+        this.ctx.font = "8px Arial";
+        this.ctx.fillStyle = "#C4C4C4";
+        this.ctx.textBaseline = "middle";
+        this.ctx.fillText(frameNumber, position + rectWidth * 0.5 * rectInvert, rectPadding + rectHeight * 0.5);
 
         this.ctx.lineWidth = 1;
         this.ctx.strokeStyle = "#C4C4C4";

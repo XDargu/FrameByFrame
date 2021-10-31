@@ -108,8 +108,8 @@ export class Splitter
             return (settings.direction === "U" || settings.direction == "D");
         }
 
-        var resizeObserver = new ResizeObserver(entries => {
-
+        function onResize()
+        {
             function ApplyCorrection(paneSize: number, minPaneSize: number)
             {
                 const totalSize = paneSize + minPaneSize;
@@ -133,7 +133,9 @@ export class Splitter
                 const minPaneWidth = settings.minPane.offsetWidth;
                 ApplyCorrection(paneWith, minPaneWidth);
             }
-        });
+        }
+
+        var resizeObserver = new ResizeObserver(entries => { onResize(); });
         resizeObserver.observe(settings.minPane);
     }
 }
