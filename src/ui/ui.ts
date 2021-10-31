@@ -38,25 +38,42 @@ export class Splitter
                 offsetLeft:  settings.splitter.offsetLeft,
                 offsetTop:   settings.splitter.offsetTop,
                 firstWidth:  getActivePane().offsetWidth,
-                minPaneWidth: settings.minPane.offsetWidth
+                firstHeight: getActivePane().offsetHeight,
+                minPaneWidth: settings.minPane.offsetWidth,
+                minPaneHeight: settings.minPane.offsetHeight
                 };
+
+            settings.splitter.classList.add("selected");
 
             document.onmousemove = onMouseMove;
             document.onmouseup = () => {
+                settings.splitter.classList.remove("selected");
                 document.onmousemove = document.onmouseup = null;
             }
         }
 
         function onMouseMove(e: MouseEvent)
         {
-            const paneWidth = getPaneWidth(e);
-            const initialTotalWidth = md.minPaneWidth + md.firstWidth;
-            const maxSize = initialTotalWidth - settings.minSizePane;
-            const size = Math.min(Math.max(settings.minSize, paneWidth), maxSize);
-            applySizeToPane(size);
+            function ApplySize(minPaneSize: number, firstSize: number)
+            {
+                const paneSize = getPaneSize(e);
+                const initialTotalSize = minPaneSize + firstSize;
+                const maxSize = initialTotalSize - settings.minSizePane;
+                const size = Math.min(Math.max(settings.minSize, paneSize), maxSize);
+                applySizeToPane(size);
+            }
+
+            if (isVertical())
+            {
+                ApplySize(md.minPaneHeight, md.firstHeight);
+            }
+            else
+            {
+                ApplySize(md.minPaneWidth, md.firstWidth);
+            }
         }
 
-        function getPaneWidth(e: MouseEvent) : number
+        function getPaneSize(e: MouseEvent) : number
         {
             var delta = {
                 x: e.clientX - md.e.clientX,
@@ -67,6 +84,10 @@ export class Splitter
                 return md.firstWidth + delta.x;
             else if (settings.direction === "R" ) // Right
                 return md.firstWidth - delta.x;
+            else if (settings.direction === "U" ) // Up
+                return md.firstHeight + delta.y;
+            else if (settings.direction === "D" ) // Down
+                return md.firstHeight - delta.y;
         }
 
         function applySizeToPane(size: number)
@@ -74,24 +95,44 @@ export class Splitter
             for (let i=0; i<settings.panes.length; ++i)
             {
                 settings.panes[i].style.flex = "0 0 " + (size) + "px";
+
+                if (isVertical())
+                    settings.panes[i].style.maxHeight = size + "px";
+                else
+                    settings.panes[i].style.maxWidth = size + "px";
             }
+        }
+
+        function isVertical() : boolean
+        {
+            return (settings.direction === "U" || settings.direction == "D");
         }
 
         var resizeObserver = new ResizeObserver(entries => {
 
-            const paneWith = getActivePane().offsetWidth;
-            const minPaneWidth = settings.minPane.offsetWidth;
-
-            const totalWidth = paneWith + minPaneWidth;
-            const maxAvailableWidth = totalWidth - settings.minSizePane;
-
-            if (paneWith > maxAvailableWidth)
+            function ApplyCorrection(paneSize: number, minPaneSize: number)
             {
-                applySizeToPane(Math.max(settings.minSize, maxAvailableWidth));
+                const totalSize = paneSize + minPaneSize;
+                const maxAvailableSize = totalSize - settings.minSizePane;
+
+                if (paneSize > maxAvailableSize)
+                {
+                    applySizeToPane(Math.max(settings.minSize, maxAvailableSize));
+                }
             }
 
-            entries[0].contentRect.width;
-            entries[0].contentRect.height;
+            if (isVertical())
+            {
+                const paneHeight = getActivePane().offsetHeight;
+                const minPaneHeight = settings.minPane.offsetHeight;
+                ApplyCorrection(paneHeight, minPaneHeight);
+            }
+            else
+            {
+                const paneWith = getActivePane().offsetWidth;
+                const minPaneWidth = settings.minPane.offsetWidth;
+                ApplyCorrection(paneWith, minPaneWidth);
+            }
         });
         resizeObserver.observe(settings.minPane);
     }

@@ -76,10 +76,20 @@ body {
 
 #console {
     flex: 0 0 250px;
+    display: flex;
+    flex-direction: column;
 }
 
-#default-console .basico-container {
-    max-height: 250px;
+#console-tabs {
+    flex: 0 0 30px;
+}
+
+#default-console {
+    overflow: auto;
+}
+
+#default-console > div {
+    overflow-x: hidden;
 }
 
 #render-canvas {

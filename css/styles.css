@@ -16,14 +16,25 @@
 .splitter {
   flex: 0 0 4px;
   margin-left: -4px;
-  cursor: col-resize;
+  cursor: ew-resize;
   z-index: 1000;
   user-select: none;
   transition: 0.2s;
   transition-delay: 0.2s;
 }
 
-.splitter:hover {
+.splitter.vertical {
+  margin-left: 0;
+  margin-bottom: -4px;
+  cursor: ns-resize;
+}
+
+.splitter.right {
+  margin-left: 0;
+  margin-right: -4px;
+}
+
+.splitter:hover, .splitter.selected {
   background: #dabdfd;
 }
 
@@ -1079,10 +1090,20 @@ body {
 
 #console {
   flex: 0 0 250px;
+  display: flex;
+  flex-direction: column;
 }
 
-#default-console .basico-container {
-  max-height: 250px;
+#console-tabs {
+  flex: 0 0 30px;
+}
+
+#default-console {
+  overflow: auto;
+}
+
+#default-console > div {
+  overflow-x: hidden;
 }
 
 #render-canvas {
@@ -1098,6 +1119,11 @@ body {
   position: absolute;
   left: 50%;
   transform: translate(-50%, -10%);
+}
+
+#title-bar-wrapper {
+  min-height: 48px;
+  height: 48px;
 }
 
 #title-bar #drag-region {

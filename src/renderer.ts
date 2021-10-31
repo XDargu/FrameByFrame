@@ -39,6 +39,7 @@ export default class Renderer {
     private propertyGroups: PropertyTreeGroup[];
     private leftPaneSplitter: BASICO.Splitter;
     private rightPaneSplitter: BASICO.Splitter;
+    private consoleSplitter: BASICO.Splitter;
 
     // Networking
     private connectionsList: ConnectionsList;
@@ -151,6 +152,14 @@ export default class Renderer {
             panes: [document.getElementById("detail-pane")],
             minSize: 150,
             direction: "R",
+            minPane: document.getElementById("viewport"),
+            minSizePane: 300
+        });
+        this.consoleSplitter = new BASICO.Splitter({
+            splitter: document.getElementById("bottom-pane-splitter"),
+            panes: [document.getElementById("console")],
+            minSize: 150,
+            direction: "D",
             minPane: document.getElementById("viewport"),
             minSizePane: 300
         });

@@ -11,7 +11,7 @@
 
 <body>
     <div class="full-page page-wrapper">
-        <div class="basico-container basico-container-compact">
+        <div class="basico-container basico-container-compact" id="title-bar-wrapper">
             <div class="basico-tabs" id="title-bar">
                 <div class="basico-tabs-item" id="title-bar-open"><i class="fas fa-folder-open"></i></div>
                 <div class="basico-tabs-item" id="title-bar-save"><i class="fas fa-save"></i></div>
@@ -122,6 +122,7 @@
                 <div id="viewport">
                     <canvas id="render-canvas"></canvas>
                 </div>
+                <div class="splitter vertical" id="bottom-pane-splitter"></div>
                 <div id="console" class="basico-footer">
                     <div class="basico-tabs" id="console-tabs">
                         <div class="basico-tabs-item">Console</div>
@@ -139,7 +140,7 @@
                     </div>
                 </div>
             </div>
-            <div class="splitter" id="right-pane-splitter"></div>
+            <div class="splitter right" id="right-pane-splitter"></div>
             <div class="sidebar basico-container basico-container-compact" id="detail-pane">
                 <div class="basico-title basico-title-compact">Properties</div>
                 <div class="basico-container" id="properties">
