@@ -52,6 +52,13 @@ body {
     flex: 0 0 320px;
 }
 
+/* Recent files */
+#recent-list .basico-list-item{
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
 /* Property tree view */
 .property-name {
     width: 50%;
@@ -104,5 +111,15 @@ body {
 #step-controls {
     position: absolute;
     left: 50%;
-    transform: translate(-50%, -10%);
+    transform: translate(-50%, -1px);
+}
+
+#record-control {
+    position: absolute;
+    left: 60%;
+    transform: translate(-50%, -1px);
+}
+
+#button-record:not(.basico-disabled) {
+    color: #DE0000;
 }

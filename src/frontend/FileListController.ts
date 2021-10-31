@@ -17,7 +17,7 @@ export default class FileListController
     updateRecentFiles(paths: string[])
     {
         this.connectionsList.innerHTML = paths.reduce((accumulator, currentValue) => { 
-            return accumulator + `<div class="basico-list-item">${currentValue}</div>`;
+            return accumulator + `<div class="basico-list-item" title="${currentValue}">${currentValue}</div>`;
         }, "");
 
         let control = this;

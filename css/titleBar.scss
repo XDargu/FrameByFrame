@@ -11,6 +11,7 @@
 
 #title-bar {
     height: 48px;
+    background: #252028;
 }
 
 #title-bar i {
@@ -22,6 +23,12 @@
     line-height: 48px;
     padding: 0px 10px;
     font-size: 23px;
+    background: none;
+    color: #C4C4C4;
+}
+
+#title-bar .basico-tabs-item:hover {
+    background: #5F516A;
 }
 
 #titlebar {

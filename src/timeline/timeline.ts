@@ -211,7 +211,7 @@ export default class Timeline {
             this.ontimelineUpdated(secondsPassed);
         }
 
-        this.ctx.fillStyle = "#444";
+        this.ctx.fillStyle = "#473D4F";
         this.ctx.fillRect(0,0,this.width,this.height);
 
         this.renderHeader();
@@ -223,7 +223,7 @@ export default class Timeline {
 
     private renderHeader()
     {
-        this.ctx.fillStyle = "#666";
+        this.ctx.fillStyle = "#574D5F";
         this.ctx.fillRect(0, 0, this.width, Timeline.headerHeight);
 
         // Figure out the first and last frame to render
@@ -237,11 +237,11 @@ export default class Timeline {
 
         this.ctx.textAlign = "center";
         this.ctx.font = "8px Arial";
-        this.ctx.fillStyle = "#FFF";
+        this.ctx.fillStyle = "#C4C4C4";
         this.ctx.textBaseline = "top";
 
         this.ctx.lineWidth = 1;
-        this.ctx.strokeStyle = "#FFF";
+        this.ctx.strokeStyle = "#C4C4C4";
 
         this.ctx.beginPath();
 
@@ -296,8 +296,8 @@ export default class Timeline {
         const position : number = this.frame2canvas(this.currentFrame);
 
         this.ctx.lineWidth = 1;
-        this.ctx.strokeStyle = "#FFF";
-        this.ctx.fillStyle = "#FFF";
+        this.ctx.strokeStyle = "#C4C4C4";
+        this.ctx.fillStyle = "#C4C4C4";
 
         // Triangle on top
         this.ctx.beginPath();
