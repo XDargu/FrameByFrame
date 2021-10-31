@@ -192,7 +192,8 @@ export default class Timeline {
         const frame : number = this.canvas2frame(canvasPosition);
         const oldFrameSize : number = this.frameSize;
 
-        this.zoom = Math.min(Math.max(this.zoom - event.deltaY * 0.001, 1), 100);
+        const zoomRatio : number = 0.001 * this.frameSize;
+        this.zoom = Math.min(Math.max(this.zoom - event.deltaY * zoomRatio, 1), 100);
         this.calculateRenderingConstants();
 
         const newFrameSize : number = this.frameSize;
@@ -246,7 +247,7 @@ export default class Timeline {
         this.ctx.beginPath();
 
         let i : number = firstFrame;
-        for (; i < lastFrame; i+= smallStep)
+        for (; i < lastFrame; )
         {
             const position : number = this.frame2canvas(i);
             const baseOneFrame = i + 1;
@@ -279,6 +280,11 @@ export default class Timeline {
                 this.ctx.moveTo(position, Timeline.headerHeight);
                 this.ctx.lineTo(position, Timeline.headerHeight - Timeline.smallMarkerHeight);
             }
+
+            if (i == 0)
+                i+= Math.max(1, smallStep - 1);
+            else
+                i+= smallStep
         }
 
         this.ctx.stroke();
@@ -321,8 +327,8 @@ export default class Timeline {
         this.ctx.fillText(frameNumber, position + rectWidth * 0.5 * rectInvert, rectPadding + rectHeight * 0.5);
 
         this.ctx.lineWidth = 1;
-        this.ctx.strokeStyle = "#C4C4C4";
-        this.ctx.fillStyle = "#C4C4C4";
+        this.ctx.strokeStyle = "#6DE080";
+        this.ctx.fillStyle = "#6DE080";
 
         // Triangle on top
         this.ctx.beginPath();
