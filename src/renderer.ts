@@ -349,8 +349,14 @@ export default class Renderer {
     {
         let treeParent = document.getElementById('properties');
 
+        const isSpecialProperties = propertyGroup.name == "special" && depth == 0;
+        const isDefaultProperties = propertyGroup.name == "properties" && depth == 0;
+        const name = isSpecialProperties ? "Basic Information"
+            : isDefaultProperties ? "Uncategorized"
+            : propertyGroup.name;
+
         let titleElement = document.createElement("div");
-        titleElement.innerText = propertyGroup.name;
+        titleElement.innerText = name;
         titleElement.classList.add("basico-title");
 
         let treeElement = document.createElement("div");

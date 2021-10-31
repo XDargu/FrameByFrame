@@ -109,6 +109,13 @@ $light-text: #eee;
     border-radius: 0px;
 }
 
+#properties .basico-title,
+#events .basico-title
+{
+    text-align: left;
+    padding-left: 10px;
+}
+
 #properties .basico-tag
 {
     background: $form-background;

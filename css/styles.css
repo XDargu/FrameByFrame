@@ -1095,6 +1095,7 @@ body {
   flex: 1 1 auto;
 }
 
+/* console */
 #console {
   flex: 0 0 250px;
   max-height: 250px;
@@ -1139,12 +1140,14 @@ body {
   color: #DE0000;
 }
 
-#entity-list .basico-form-field {
+#entity-list .basico-form-field,
+#var-list .basico-form-field {
   display: block;
   margin-bottom: 6px;
   margin-top: 3px;
 }
 
+/* Connection buttons */
 #connection-buttons {
   position: absolute;
   right: 150px;
@@ -1165,6 +1168,11 @@ body {
 .connection-card-buttons .basico-button {
   margin-right: 3px;
   margin-left: 3px;
+}
+
+/* Misc */
+.uppercase {
+  text-transform: uppercase;
 }
 
 #title-bar-wrapper {
@@ -1385,6 +1393,12 @@ body {
 #properties .basico-title {
   background: #2B2530;
   border-radius: 0px;
+}
+
+#properties .basico-title,
+#events .basico-title {
+  text-align: left;
+  padding-left: 10px;
 }
 
 #properties .basico-tag {

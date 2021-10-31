@@ -66,26 +66,29 @@
                 </div>
             </div>
             <div class="sidebar basico-container basico-container-compact" id="entity-list">
-                <div class="basico-title basico-title-compact">Entities</div>
+                <div class="basico-title basico-title-compact uppercase">Entities</div>
                 <div class="basico-container">
                     <div class="basico-form-field">
                         <input type="text" id="entity-search" placeholder="Type here to filter..." class="basico-input" value="">
                     </div>
                     <div class="basico-list basico-list-compact"></div>
                 </div>
-                <div class="basico-title basico-title-compact">Layers</div>
+                <div class="basico-title basico-title-compact uppercase">Layers</div>
                 <div class="basico-container">
                     <div class="basico-list" id="layer-selection"></div>
                 </div>
             </div>
             <div class="sidebar basico-container basico-container-compact" id="var-list">
-                <div class="basico-title basico-title-compact">Vars</div>
+                <div class="basico-title basico-title-compact uppercase">Recording options</div>
                 <div class="basico-container">
+                    <div class="basico-form-field">
+                        <input type="text" id="var-search" placeholder="Type here to filter..." class="basico-input" value="">
+                    </div>
                     <div class="basico-list">
                         <div class="basico-list-item">Ragdolls</div>
                         <div class="basico-list-item">Colliders</div>
                         <div class="basico-list-item">
-                            <div class="basico-tag">Basico Tag</div>
+                            <label class="basico-toggle"><input type="checkbox"><span class="slider round"></span></label>
                             <div class="basico-text-oneline">Navigation</div>
                         </div>
                         <div class="basico-list-item">Damage Handling</div>
@@ -93,7 +96,7 @@
                 </div>
             </div>
             <div class="sidebar basico-container basico-container-compact" id="connection-list">
-                <div class="basico-title basico-title-compact">Connections</div>
+                <div class="basico-title basico-title-compact uppercase">Connections</div>
                 <div class="basico-container">
                     <div class="basico-card">
                         <div class="basico-card-element">
@@ -119,13 +122,13 @@
                 </div>
             </div>
             <div class="sidebar basico-container basico-container-compact" id="recent-list">
-                <div class="basico-title basico-title-compact">Recent Files</div>
+                <div class="basico-title basico-title-compact uppercase">Recent Files</div>
                 <div class="basico-container">
                     <div class="basico-list" id="recentFilesList"></div>
                 </div>
             </div>
             <div class="sidebar basico-container basico-container-compact" id="setting-list">
-                <div class="basico-title basico-title-compact">Settings</div>
+                <div class="basico-title basico-title-compact uppercase">Settings</div>
                 <div class="basico-container">
                     <div class="basico-list">
                         <div class="basico-list-item">Setting 1</div>
@@ -142,7 +145,7 @@
                 <div class="splitter vertical" id="bottom-pane-splitter"></div>
                 <div id="console" class="basico-footer">
                     <div class="basico-tabs" id="console-tabs">
-                        <div class="basico-tabs-item">Console</div>
+                        <div class="basico-tabs-item uppercase">Console</div>
                         <div class="basico-tabs-group-right">
                             <div class="basico-tabs-item basico-no-hover">
                                 <div class="basico-form-field">
@@ -159,13 +162,13 @@
             </div>
             <div class="splitter right" id="right-pane-splitter"></div>
             <div class="sidebar basico-container basico-container-compact" id="detail-pane">
-                <div class="basico-title basico-title-compact">Properties</div>
+                <div class="basico-title basico-title-compact uppercase">Properties</div>
                 <div class="basico-container" id="properties">
                     <div class="basico-tree" id="property-tree">
                         <ul></ul>
                     </div>
                 </div>
-                <div class="basico-title basico-title-compact">Events</div>
+                <div class="basico-title basico-title-compact uppercase">Events</div>
                 <div class="basico-container" id="events">
                 </div>
             </div>
