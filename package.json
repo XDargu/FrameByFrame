@@ -3,6 +3,14 @@
   "version": "1.0.0",
   "description": "Tool Test",
   "main": "./app/main.js",
+  "fileAssociations": [
+    {
+      "ext": "fbf",
+      "name": "FRame y Frame File",
+      "role": "Viewer",
+      "perMachine": true
+    }
+  ],
   "scripts": {
     "build": "tsc",
     "start": "electron ./app/main.js",
