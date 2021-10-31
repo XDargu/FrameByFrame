@@ -1,6 +1,7 @@
 import ConnectionsManager from '../network/conectionsManager';
 import ConnectionId from '../network/conectionsManager';
 import Connection from '../network/simpleClient';
+import { Console, LogChannel, LogLevel } from './ConsoleController';
 
 export interface IMessageCallback
 {
@@ -32,6 +33,8 @@ export default class ConnectionsList
 
     addConnection(address: string, port: string)
     {
+        Console.log(LogLevel.Verbose, LogChannel.Connections, `Creating new connection to: ${address}:${port} and trying to connect.`);
+
         const id: ConnectionId = this.connectionsManager.addConnection(address, port) as any as ConnectionId;
 
         // Add new element to list
@@ -72,15 +75,17 @@ export default class ConnectionsList
             callback(openEvent.data);
         };
         connection.onConnected = function(openEvent : Event) {
+            Console.log(LogLevel.Verbose, LogChannel.Connections, `Connection established to: ${address}:${port}`);
             connectionStatus.textContent = "Connected";
             connectButton.textContent = "Disconnect";
         };
         connection.onDisconnected = function(closeEvent : CloseEvent) {
+            Console.log(LogLevel.Verbose, LogChannel.Connections, (connection.isConnected() ? "Connection lost" : "Can't connect") + ` to: ${address}:${port}`);
             connectionStatus.textContent = "Disconnected";
             connectButton.textContent = "Connect";
         };
         connection.onError = function(errorEvent : Event) {
-            // TODO: Output the error somewhere?
+            Console.log(LogLevel.Error, LogChannel.Connections, `Connection error in: ${address}:${port}`);
         };
     }
 
@@ -100,12 +105,14 @@ export default class ConnectionsList
 
         if (connection.isConnected())
         {
+            Console.log(LogLevel.Verbose, LogChannel.Connections, `Disconnecting from: ${connection.hostname}:${connection.port}`);
             connection.disconnect();
             connectionStatus.textContent = "Disconnecting...";
             connectButton.textContent = "Connect";
         }
         else
         {
+            Console.log(LogLevel.Verbose, LogChannel.Connections, `Connecting to: ${connection.hostname}:${connection.port}`);
             connectionStatus.textContent = "Connecting...";
             connectButton.textContent = "Disconnect";
             connection.connect();

@@ -35,7 +35,7 @@
 }
 
 .splitter:hover, .splitter.selected {
-  background: #dabdfd;
+  background: #f3eefa;
 }
 
 /* Elevation of elements */
@@ -1407,6 +1407,10 @@ body {
 #console .basico-tabs-item {
   background: none;
   color: #C4C4C4;
+}
+
+#console .basico-console-link {
+  color: #6DE080;
 }
 
 #console .basico-tabs-item .basico-tabs-selected {

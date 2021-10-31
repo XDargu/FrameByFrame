@@ -1,7 +1,7 @@
-import { ipcRenderer } from "electron";
+import { ipcRenderer, TouchBarScrubber } from "electron";
 import * as path from "path";
 import ConnectionsList from './frontend/ConnectionsList';
-import { ConsoleWindow, ILogAction, LogChannel, LogLevel } from "./frontend/ConsoleController";
+import { Console, ConsoleWindow, ILogAction, LogChannel, LogLevel } from "./frontend/ConsoleController";
 import FileListController from "./frontend/FileListController";
 import { LayerController } from "./frontend/LayersController";
 import { PropertyTreeController } from "./frontend/PropertyTreeController";
@@ -118,7 +118,7 @@ export default class Renderer {
         const consoleElement = document.getElementById("default-console").children[0] as HTMLElement;
         console.log(consoleElement);
         this.consoleWindow = new ConsoleWindow(consoleElement, LogLevel.Verbose);
-        this.consoleWindow.log(LogLevel.Error, LogChannel.Default, "Error: test");
+        Console.setCallbacks((logLevel: LogLevel, channel: LogChannel, ...message: (string | ILogAction)[]) => {this.consoleWindow.log(logLevel, channel, ...message)});
 
         // Create timeline callbacks
         document.getElementById("timeline-play").onclick = this.playbackController.onTimelinePlayClicked.bind(this.playbackController);
@@ -486,23 +486,18 @@ export default class Renderer {
     {
         this.sceneController.updateLayerStatus(name, active);
         this.applyFrame(this.timeline.currentFrame);
-        this.logToConsole(LogLevel.Verbose, LogChannel.Layers, `Layer ${name} status changed to: ${active}`);
+        Console.log(LogLevel.Verbose, LogChannel.Layers, `Layer ${name} status changed to: ${active}`);
     }
 
     // Logging wrappers
-    logToConsole(level: LogLevel, channel: LogChannel, ...message: (string | ILogAction)[])
-    {
-        this.consoleWindow.log(level, channel, ...message);
-    }
-
     logErrorToConsole(message: string)
     {
-        this.consoleWindow.log(LogLevel.Error, LogChannel.Default, message);
+        Console.log(LogLevel.Error, LogChannel.Default, message);
     }
 
     logEntity(level: LogLevel, channel: LogChannel, message: string, frame: number, entityId: number)
     {
-        this.consoleWindow.log(level, channel, `${message} `, {
+        Console.log(level, channel, `${message} `, {
             text: `${this.findEntityName(entityId)} (id: ${entityId.toString()}) (frame: ${frame.toString()})`, 
             callback: () => {
                 this.applyFrame(frame);
@@ -513,7 +508,7 @@ export default class Renderer {
 
     logFrame(level: LogLevel, channel: LogChannel, message: string, frame: number)
     {
-        this.consoleWindow.log(level, channel, `${message} `, {
+        Console.log(level, channel, `${message} `, {
             text: `(frame: ${frame.toString()})`,
             callback: () => { this.applyFrame(frame); }
         });
@@ -569,13 +564,13 @@ ipcRenderer.on('asynchronous-reply', (event: any, arg: Messaging.Message) => {
         case Messaging.MessageType.LogToConsole:
         {
             const result = arg.data as Messaging.ILogData;
-            renderer.logToConsole(result.level, result.channel, ...result.message);
+            Console.log(result.level, result.channel, ...result.message);
             break;
         }
         case Messaging.MessageType.FileOpened:
         {
             const pathName = arg.data as string;
-            renderer.logToConsole(LogLevel.Information, LogChannel.Files, `Loading file `, {
+            Console.log(LogLevel.Information, LogChannel.Files, `Loading file `, {
                 text: pathName,
                 callback: () => { shell.showItemInFolder(path.resolve(pathName)); }
             });

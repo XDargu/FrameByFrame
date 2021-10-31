@@ -355,21 +355,13 @@ export class TabControl {
     }
 
     initialize() {
-        let control = this;
-
         for (let i = 0; i < this.tabElements.length; i++) {
 
             let currentTab = this.tabElements[i];
             let currentContent = this.tabContentElements[i];
 
-            currentTab.onclick = function() {
-                control.activeTab.classList.remove("basico-tabs-selected");
-                currentTab.classList.add("basico-tabs-selected");
-                control.activeTab = currentTab;
-
-                control.activeContent.style.display = "none";
-                currentContent.style.display = "block";
-                control.activeContent = currentContent;
+            currentTab.onclick = () => {
+                this.activateTab(currentTab, currentContent);
             }
 
             currentTab.classList.remove("basico-tabs-selected");
@@ -381,5 +373,38 @@ export class TabControl {
 
         this.activeTab.classList.add("basico-tabs-selected");
         this.activeContent.style.display = "block";
+    }
+
+    openTabByElement(tab: HTMLElement)
+    {
+        for (let i = 0; i < this.tabElements.length; i++) {
+
+            let currentTab = this.tabElements[i];
+            let currentContent = this.tabContentElements[i];
+
+            if (currentTab == tab)
+                this.activateTab(currentTab, currentContent);
+        }
+    }
+
+    openTabByIndex(tabIndex: number)
+    {
+        if (tabIndex < this.tabElements.length) {
+            let currentTab = this.tabElements[tabIndex];
+            let currentContent = this.tabContentElements[tabIndex];
+
+            this.activateTab(currentTab, currentContent);
+        }
+    }
+
+    private activateTab(tab: HTMLElement, content: HTMLElement)
+    {
+        this.activeTab.classList.remove("basico-tabs-selected");
+        tab.classList.add("basico-tabs-selected");
+        this.activeTab = tab;
+
+        this.activeContent.style.display = "none";
+        content.style.display = "block";
+        this.activeContent = content;
     }
 }

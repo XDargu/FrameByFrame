@@ -937,13 +937,13 @@ export default class SceneController
 
     private applySelectionMaterial(entity: IEntityData)
     {
-        entity.mesh.outlineColor = new BABYLON.Color3(1, 0, 0);
+        entity.mesh.outlineColor = BABYLON.Color3.FromHexString("#6DE080");
         entity.mesh.outlineWidth = 0.03;
         entity.mesh.renderOutline = true;
 
         // Apply on all meshes of the entity
         entity.properties.forEach((mesh: BABYLON.Mesh) => {
-            mesh.outlineColor = new BABYLON.Color3(1, 0, 0);
+            mesh.outlineColor = BABYLON.Color3.FromHexString("#6DE080");
             mesh.outlineWidth = 0.03;
             mesh.renderOutline = true;
         });
@@ -953,13 +953,13 @@ export default class SceneController
 
     private applyHoverMaterial(entity: IEntityData)
     {
-        entity.mesh.outlineColor = new BABYLON.Color3(0, 1, 0);
+        entity.mesh.outlineColor = BABYLON.Color3.FromHexString("#8442B9");
         entity.mesh.outlineWidth = 0.03;
         entity.mesh.renderOutline = true;
 
         // Apply on all meshes of the entity
         entity.properties.forEach((mesh: BABYLON.Mesh) => {
-            mesh.outlineColor = new BABYLON.Color3(0, 1, 0);
+            mesh.outlineColor = BABYLON.Color3.FromHexString("#8442B9");
             mesh.outlineWidth = 0.03;
             mesh.renderOutline = true;
         });

@@ -3,6 +3,11 @@ export interface IActionCallback
     () : void
 }
 
+export interface ILogCallback
+{
+    (logLevel: LogLevel, channel: LogChannel, ...message: (string | ILogAction)[]) : void
+}
+
 export interface ILogAction
 {
     text: string;
@@ -24,8 +29,26 @@ export enum LogChannel
     Layers,
     Selection,
     Files,
+    Connections,
 
     Count
+}
+
+export class Console
+{
+    private static logCallback : ILogCallback = null;
+
+    static log(logLevel: LogLevel, channel: LogChannel, ...message: (string | ILogAction)[])
+    {
+        console.log(message);
+        console.log(Console.logCallback);
+        Console.logCallback(logLevel, channel, ...message);
+    }
+
+    static setCallbacks(logCallback : ILogCallback)
+    {
+        Console.logCallback = logCallback;
+    }
 }
 
 export class ConsoleWindow
