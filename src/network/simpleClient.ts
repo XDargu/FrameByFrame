@@ -99,6 +99,6 @@ export default class Connection {
 
 	isConnected(): boolean
 	{
-		return this.webSocket.readyState == 0 || this.webSocket.readyState == 1;
+		return this.webSocket && (this.webSocket.readyState == 0 || this.webSocket.readyState == 1);
 	}
 }

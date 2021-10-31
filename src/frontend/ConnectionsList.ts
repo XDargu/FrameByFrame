@@ -8,11 +8,39 @@ export interface IMessageCallback
     (data: string) : void
 }
 
+export interface IConnectonCallback
+{
+    (id: ConnectionId) : void
+}
+
+export interface ConnectionListener
+{
+    onConnectionAdded: IConnectonCallback;
+    onConnectionRemoved: IConnectonCallback;
+    onConnectionConnected: IConnectonCallback;
+    onConnectionDisconnected: IConnectonCallback;
+    onConnectionConnecting:  IConnectonCallback;
+    onConnectionDisconnecting:  IConnectonCallback;
+}
+
+interface ConnectionCardData
+{
+    connectionElement: HTMLElement;
+    connectionStatus: HTMLElement;
+    card: HTMLElement;
+    connectButton: HTMLElement;
+    removeButton: HTMLElement;
+}
+
+export type ListenerId = number;
+
 export default class ConnectionsList
 {
     private connectionsManager: ConnectionsManager;
     private connectionsMap: Map<ConnectionId, HTMLElement>;
     private connectionsList: HTMLElement;
+    private listeners: Map<number, ConnectionListener>
+    private lastListenerId: ListenerId;
     
     private onMessageCallback: IMessageCallback;
 
@@ -22,6 +50,21 @@ export default class ConnectionsList
         this.connectionsMap = new Map<ConnectionId, HTMLElement>();
         this.connectionsList = connectionsList;
         this.onMessageCallback = onMessageCallback;
+
+        this.listeners = new Map<ListenerId, ConnectionListener>();
+        this.lastListenerId = 0;
+    }
+
+    addListener(listener: ConnectionListener) : ListenerId
+    {
+        this.lastListenerId++;
+        this.listeners.set(this.lastListenerId, listener);
+        return this.lastListenerId;
+    }
+
+    removeListener(id: ListenerId)
+    {
+        this.listeners.delete(id);
     }
 
     initialize()
@@ -31,61 +74,121 @@ export default class ConnectionsList
         addConnectionButton.onclick = this.addConnectionCallback.bind(this);
     }
 
-    addConnection(address: string, port: string)
+    addConnection(address: string, port: string, shouldAutoConnect: boolean)
     {
         Console.log(LogLevel.Verbose, LogChannel.Connections, `Creating new connection to: ${address}:${port} and trying to connect.`);
-
         const id: ConnectionId = this.connectionsManager.addConnection(address, port) as any as ConnectionId;
 
-        // Add new element to list
-        let html:string = `<div class="basico-title basico-title-compact" id="connection-${id}">${address}:${port}</div>
-                    <div class="basico-card">
-                        <div class="basico-list basico-list-compact">
-                            <div class="basico-list-item">Status<div class="basico-tag" id="connection-${id}-status">Connecting...</div></div>
-                        </div>
-                        <div class="basico-card-footer">
-                            <div class="basico-button-group">
-                                <div class="basico-button basico-small" id="connection-${id}-connect">Disconnect</div>
-                                <div class="basico-button basico-small" id="connection-${id}-remove">Remove connection</div>
-                            </div>
-                        </div>
-                    </div>`;
+        this.listeners.forEach((value: ConnectionListener) => {
+            value.onConnectionAdded(id);
+        });
 
-        this.connectionsList.innerHTML += html;
+        const elementData = ConnectionsList.createConnectionElement(address, port, id);
 
-        let connectionElement: HTMLElement = document.getElementById(`connection-${id}`);
-        this.connectionsMap.set(id, connectionElement);
+        this.connectionsList.appendChild(elementData.connectionElement);
+        this.connectionsList.appendChild(elementData.card);
 
-        let connectButton: HTMLElement = document.getElementById(`connection-${id}-connect`);
-        let removeButton: HTMLElement = document.getElementById(`connection-${id}-remove`);
-        let connectionStatus: HTMLElement = document.getElementById(`connection-${id}-status`);
+        this.connectionsMap.set(id, elementData.connectionElement);
         
-        let control = this;
-        connectButton.onclick = function() {
-            control.connectButtonCallback(id);
+        elementData.connectButton.onclick = () => {
+            console.log("Hello");
+            this.connectButtonCallback(id);
         };
-        removeButton.onclick = function() {
-            control.removeButtonCallback(id);
+        elementData.removeButton.onclick = () => {
+            this.removeButtonCallback(id);
         };
 
         let callback = this.onMessageCallback;
 
         let connection: Connection = this.connectionsManager.getConnection(id as any as number);
-        connection.onMessage = function(openEvent : MessageEvent) {
+
+        connection.onMessage = (openEvent : MessageEvent) => {
             callback(openEvent.data);
         };
-        connection.onConnected = function(openEvent : Event) {
+        connection.onConnected = (openEvent : Event) => {
             Console.log(LogLevel.Verbose, LogChannel.Connections, `Connection established to: ${address}:${port}`);
-            connectionStatus.textContent = "Connected";
-            connectButton.textContent = "Disconnect";
+            elementData.connectionStatus.textContent = "Connected";
+            elementData.connectButton.textContent = "Disconnect";
+
+            this.listeners.forEach((value: ConnectionListener) => {
+                value.onConnectionConnected(id);
+            });
         };
-        connection.onDisconnected = function(closeEvent : CloseEvent) {
+        connection.onDisconnected = (closeEvent : CloseEvent) => {
             Console.log(LogLevel.Verbose, LogChannel.Connections, (connection.isConnected() ? "Connection lost" : "Can't connect") + ` to: ${address}:${port}`);
-            connectionStatus.textContent = "Disconnected";
-            connectButton.textContent = "Connect";
+            elementData.connectionStatus.textContent = "Disconnected";
+            elementData.connectButton.textContent = "Connect";
+
+            this.listeners.forEach((value: ConnectionListener) => {
+                value.onConnectionDisconnected(id);
+            });
         };
-        connection.onError = function(errorEvent : Event) {
+        connection.onError = (errorEvent : Event) => {
             Console.log(LogLevel.Error, LogChannel.Connections, `Connection error in: ${address}:${port}`);
+        };
+
+        if (shouldAutoConnect)
+        {
+            this.toggleConnection(id);
+        }
+    }
+
+    toggleConnection(id: ConnectionId)
+    {
+        this.connectButtonCallback(id);
+    }
+
+    private static createConnectionElement(address: string, port: string, id: ConnectionId) : ConnectionCardData
+    {
+        let connectionElement = document.createElement("div");
+        connectionElement.className = "basico-title basico-title-compact";
+        connectionElement.id = `connection-${id}`;
+        connectionElement.innerText = `${address}:${port}`;
+
+        let card = document.createElement("div");
+        card.className = "basico-card";
+
+        let list = document.createElement("div");
+        list.className = "basico-list basico-list-compact";
+        card.appendChild(list);
+
+        let status = document.createElement("div");
+        status.className = "basico-list-item";
+        status.innerText = "Status";
+        list.appendChild(status);
+
+        let connectionStatus = document.createElement("div");
+        connectionStatus.className = "basico-tag";
+        connectionStatus.id = `connection-${id}-status`;
+        connectionStatus.innerText = "Disconnected";
+        status.appendChild(connectionStatus);
+
+        let footer = document.createElement("div");
+        footer.className = "basico-card-footer";
+        card.appendChild(footer);
+
+        let buttonGroup = document.createElement("div");
+        buttonGroup.className = "basico-button-group connection-card-buttons";
+        footer.appendChild(buttonGroup);
+
+        let connectButton = document.createElement("div");
+        connectButton.className = "basico-button basico-small";
+        connectButton.id = `connection-${id}-connect`;
+        connectButton.innerText = "Connect";
+        buttonGroup.appendChild(connectButton);
+
+        let removeButton = document.createElement("div");
+        removeButton.className = "basico-button basico-small";
+        removeButton.id = `connection-${id}-remove`;
+        removeButton.innerText = "Remove connection";
+        buttonGroup.appendChild(removeButton);
+
+        return {
+            connectionElement: connectionElement,
+            connectionStatus: connectionStatus,
+            card: card,
+            connectButton: connectButton,
+            removeButton: removeButton
         };
     }
 
@@ -94,14 +197,17 @@ export default class ConnectionsList
         let addressElement: HTMLInputElement = document.getElementById("addConnectionAddress") as HTMLInputElement;
         let portElement: HTMLInputElement = document.getElementById("addConnectionPort") as HTMLInputElement;
 
-        this.addConnection(addressElement.value, portElement.value);
+        this.addConnection(addressElement.value, portElement.value, true);
     }
 
     private connectButtonCallback(id: ConnectionId)
     {
+        console.log("on click " + id);
+
         let connectionStatus: HTMLElement = document.getElementById(`connection-${id}-status`);
         let connectButton: HTMLElement = document.getElementById(`connection-${id}-connect`);
         let connection: Connection = this.connectionsManager.getConnection(id as any as number);
+
 
         if (connection.isConnected())
         {
@@ -109,6 +215,10 @@ export default class ConnectionsList
             connection.disconnect();
             connectionStatus.textContent = "Disconnecting...";
             connectButton.textContent = "Connect";
+
+            this.listeners.forEach((value: ConnectionListener) => {
+                value.onConnectionDisconnecting(id);
+            });
         }
         else
         {
@@ -116,6 +226,10 @@ export default class ConnectionsList
             connectionStatus.textContent = "Connecting...";
             connectButton.textContent = "Disconnect";
             connection.connect();
+
+            this.listeners.forEach((value: ConnectionListener) => {
+                value.onConnectionConnecting(id);
+            });
         }
     }
 
@@ -129,5 +243,9 @@ export default class ConnectionsList
 
         this.connectionsManager.removeConnection(<number><unknown>id);
         this.connectionsMap.delete(id);
+
+        this.listeners.forEach((value: ConnectionListener) => {
+            value.onConnectionRemoved(id);
+        });
     }
 }

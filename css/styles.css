@@ -1155,10 +1155,16 @@ body {
   font-size: 14px;
   font-weight: bold;
   margin-left: 10px;
+  -webkit-app-region: no-drag;
 }
 
 #connection-buttons .connection-button-complex i {
   padding-right: 5px;
+}
+
+.connection-card-buttons .basico-button {
+  margin-right: 3px;
+  margin-left: 3px;
 }
 
 #title-bar-wrapper {

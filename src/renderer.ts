@@ -1,8 +1,10 @@
 import { ipcRenderer, TouchBarScrubber } from "electron";
 import * as path from "path";
 import ConnectionsList from './frontend/ConnectionsList';
+import ConnectionButtons from "./frontend/ConnectionButtons";
 import { Console, ConsoleWindow, ILogAction, LogChannel, LogLevel } from "./frontend/ConsoleController";
 import FileListController from "./frontend/FileListController";
+import ConnectionId from './network/conectionsManager';
 import { LayerController } from "./frontend/LayersController";
 import { PropertyTreeController } from "./frontend/PropertyTreeController";
 import * as Messaging from "./messaging/MessageDefinitions";
@@ -43,6 +45,7 @@ export default class Renderer {
 
     // Networking
     private connectionsList: ConnectionsList;
+    private connectionButtons: ConnectionButtons;
 
     // Recent files
     private recentFilesController: FileListController;
@@ -74,6 +77,20 @@ export default class Renderer {
         let connectionsListElement: HTMLElement = document.getElementById(`connectionsList`);
         this.connectionsList = new ConnectionsList(connectionsListElement, this.onMessageArrived.bind(this));
         this.connectionsList.initialize();
+
+        this.connectionButtons = new ConnectionButtons(document.getElementById(`connection-buttons`), (id: ConnectionId) => {
+            this.connectionsList.toggleConnection(id);
+        });
+        this.connectionsList.addListener({
+            onConnectionAdded: this.connectionButtons.onConnectionCreated.bind(this.connectionButtons),
+            onConnectionRemoved: this.connectionButtons.onConnectionRemoved.bind(this.connectionButtons),
+            onConnectionConnected: this.connectionButtons.onConnectionConnected.bind(this.connectionButtons),
+            onConnectionDisconnected: this.connectionButtons.onConnectionDisconnected.bind(this.connectionButtons),
+            onConnectionConnecting: this.connectionButtons.onConnectionConnecting.bind(this.connectionButtons),
+            onConnectionDisconnecting: this.connectionButtons.onConnectionDisconnecting.bind(this.connectionButtons)
+        });
+
+        this.connectionsList.addConnection("localhost", "23001", false);
 
         let recentFilesListElement: HTMLElement = document.getElementById(`recentFilesList`);
         this.recentFilesController = new FileListController(recentFilesListElement, this.onRecentFileClicked.bind(this))

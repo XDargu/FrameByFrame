@@ -20,8 +20,6 @@ export default class ConnectionsManager {
 
         this.connections.set(id, connection);
 
-        connection.connect();
-
         return id;
     }
 
