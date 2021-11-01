@@ -138,19 +138,19 @@ export default class Renderer {
         Console.setCallbacks((logLevel: LogLevel, channel: LogChannel, ...message: (string | ILogAction)[]) => {this.consoleWindow.log(logLevel, channel, ...message)});
 
         // Create timeline callbacks
-        document.getElementById("timeline-play").onclick = this.playbackController.onTimelinePlayClicked.bind(this.playbackController);
-        document.getElementById("timeline-next").onclick = this.playbackController.onTimelineNextClicked.bind(this.playbackController);
-        document.getElementById("timeline-prev").onclick = this.playbackController.onTimelinePrevClicked.bind(this.playbackController);
-        document.getElementById("timeline-first").onclick = this.playbackController.onTimelineFirstClicked.bind(this.playbackController);
-        document.getElementById("timeline-last").onclick = this.playbackController.onTimelineLastClicked.bind(this.playbackController);
+        document.getElementById("timeline-play").onmousedown = (e) => { this.playbackController.onTimelinePlayClicked(); e.preventDefault(); }
+        document.getElementById("timeline-next").onmousedown = (e) => { this.playbackController.onTimelineNextClicked(); e.preventDefault(); }
+        document.getElementById("timeline-prev").onmousedown = (e) => { this.playbackController.onTimelinePrevClicked(); e.preventDefault(); }
+        document.getElementById("timeline-first").onmousedown = (e) => { this.playbackController.onTimelineFirstClicked(); e.preventDefault(); }
+        document.getElementById("timeline-last").onmousedown = (e) => { this.playbackController.onTimelineLastClicked(); e.preventDefault(); }
 
         // Create control bar callbacks
-        document.getElementById("title-bar-open").onclick = this.onOpenFile.bind(this);
-        document.getElementById("title-bar-save").onclick = this.onSaveFile.bind(this);
-        document.getElementById("title-bar-clear").onclick = this.onClearFile.bind(this);
+        document.getElementById("title-bar-open").onmousedown = (e) => { this.onOpenFile(); e.preventDefault(); }
+        document.getElementById("title-bar-save").onmousedown = (e) => { this.onSaveFile(); e.preventDefault(); }
+        document.getElementById("title-bar-clear").onmousedown = (e) => { this.onClearFile(); e.preventDefault(); }
 
         // Console callbacks
-        document.getElementById("console-clear").onclick = () => { this.consoleWindow.clear(); };
+        document.getElementById("console-clear").onmousedown = (e) => { this.consoleWindow.clear(); e.preventDefault(); };
 
         // Create layer controls
         this.layerController = new LayerController(document.getElementById("layer-selection"), this.onLayerChanged.bind(this));
@@ -180,6 +180,31 @@ export default class Renderer {
             minPane: document.getElementById("viewport"),
             minSizePane: 300
         });
+
+        // Shortcuts TODO: Move somewhere else
+        document.onkeydown = (e : KeyboardEvent) => {
+
+            const activeElement = document.activeElement;
+            const inputs = ['input', 'select', 'textarea'];
+
+            if (activeElement && inputs.indexOf(activeElement.tagName.toLowerCase()) !== -1) {
+                return false;
+            }
+
+            if (e.key === "ArrowLeft") {
+                if (e.ctrlKey)
+                    this.playbackController.onTimelineFirstClicked();
+                else
+                    this.playbackController.onTimelinePrevClicked();
+            } else if (e.key === "ArrowRight") {
+                if (e.ctrlKey)
+                    this.playbackController.onTimelineLastClicked();
+                else
+                    this.playbackController.onTimelineNextClicked();
+            } else if (e.key === " ") {
+                this.playbackController.onTimelinePlayClicked();
+            }
+        };
     }
 
     loadData(data: string)

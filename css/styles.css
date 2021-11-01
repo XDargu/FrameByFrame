@@ -1175,6 +1175,10 @@ body {
   text-transform: uppercase;
 }
 
+.basico-button {
+  user-select: none;
+}
+
 #title-bar-wrapper {
   min-height: 48px;
   height: 48px;

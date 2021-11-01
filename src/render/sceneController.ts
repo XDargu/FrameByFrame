@@ -1107,10 +1107,10 @@ export default class SceneController
 
         // Manually add inputs here for WASD
         let keyboardInputs: any = this._camera.inputs.attached['keyboard'];
-        keyboardInputs.keysDown.push(83);
-        keyboardInputs.keysUp.push(87);
-        keyboardInputs.keysLeft.push(65);
-        keyboardInputs.keysRight.push(68);
+        keyboardInputs.keysDown = [83];
+        keyboardInputs.keysUp = [87];
+        keyboardInputs.keysLeft = [65];
+        keyboardInputs.keysRight = [68];
 
         // Move forward with mouse wheel
         let zoomCallback = (evt: WheelEvent) => {
