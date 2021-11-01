@@ -1,6 +1,7 @@
 import * as BABYLON from 'babylonjs';
 import * as RECORDING from '../recording/RecordingData';
 import { GridMaterial } from 'babylonjs-materials';
+import { LinesMesh } from 'babylonjs/Meshes/linesMesh';
 
 export interface IEntitySelectedCallback
 {
@@ -389,10 +390,10 @@ class MeshPool
 
     protected findMesh(hash: string, args: any)
     {
-        const cachedMesh = this.pool.get(hash);
-        if (cachedMesh != undefined)
+        const cachedMeshes = this.pool.get(hash);
+        if (cachedMeshes != undefined)
         {
-            return this.findOrAddMesh(hash, args, cachedMesh);
+            return this.findOrAddMesh(hash, args, cachedMeshes);
         }
 
         let meshes: IPooledMesh[] = [];
@@ -429,7 +430,7 @@ class MeshPool
         {
             for (let pooledMesh of cachedMesh)
             {
-                if (pooledMesh.mesh === mesh)
+                if (pooledMesh.mesh.uniqueId == mesh.uniqueId)
                 {
                     pooledMesh.mesh.setEnabled(false);
                     pooledMesh.used = false;
@@ -536,6 +537,48 @@ class PlanePool extends MeshPool
         let sourcePlane = new BABYLON.Plane(args.normal.x, args.normal.y, args.normal.z, 0);
         console.log(args)
         return BABYLON.MeshBuilder.CreatePlane(hash, {height: args.length, width: args.width, sourcePlane: sourcePlane, sideOrientation: BABYLON.Mesh.DOUBLESIDE}, this.scene);
+    }
+}
+
+class LinePool extends MeshPool
+{
+    constructor(scene: BABYLON.Scene)
+    {
+        super(scene);
+    }
+
+    getLine(origin: RECORDING.IVec3, end: RECORDING.IVec3, color: RECORDING.IColor): BABYLON.Mesh
+    {
+        const hash: string = "line";
+        let mesh = this.findMesh(hash, { origin: origin, end: end, color: color });
+
+        let linePoints = [
+            new BABYLON.Vector3(origin.x, origin.y, origin.z),
+            new BABYLON.Vector3(end.x, end.y, end.z),
+        ];
+
+        let lineColors = [
+            new BABYLON.Color4(color.r, color.g, color.b, color.a),
+            new BABYLON.Color4(color.r, color.g, color.b, color.a),
+        ];
+
+        mesh = BABYLON.MeshBuilder.CreateLines(hash, {points: linePoints, colors: lineColors, instance: mesh as LinesMesh, updatable: true} );
+        return mesh;
+    }
+
+    protected buildMesh(hash: string, args: any) : BABYLON.Mesh
+    {
+        let linePoints = [
+            new BABYLON.Vector3(args.origin.x, args.origin.y, args.origin.z),
+            new BABYLON.Vector3(args.end.x, args.end.y, args.end.z),
+        ];
+
+        let lineColors = [
+            new BABYLON.Color4(args.color.r, args.color.g, args.color.b, args.color.a),
+            new BABYLON.Color4(args.color.r, args.color.g, args.color.b, args.color.a),
+        ];
+
+        return BABYLON.MeshBuilder.CreateLines(hash, {points: linePoints, colors: lineColors, updatable: true} );
     }
 }
 
@@ -709,6 +752,7 @@ export default class SceneController
     private spherePool: SpherePool;
     private boxPool: BoxPool;
     private planePool: PlanePool;
+    private linePool: LinePool;
 
     // Gizmos
     private axisGizmo: AxisGizmo;
@@ -727,7 +771,10 @@ export default class SceneController
                         {
                             if (!this.planePool.freeMesh(propertyMesh))
                             {
-                                this._scene.removeMesh(propertyMesh, true);
+                                if (!this.linePool.freeMesh(propertyMesh))
+                                {
+                                    this._scene.removeMesh(propertyMesh, true);
+                                }
                             }
                         }
                     }
@@ -894,7 +941,8 @@ export default class SceneController
                 new BABYLON.Color4(lineProperty.color.r, lineProperty.color.g, lineProperty.color.b, lineProperty.color.a),
             ];
 
-            let lines = BABYLON.MeshBuilder.CreateLines("lines", {points: linePoints, colors: lineColors}, this._scene);
+            let lines = this.linePool.getLine(lineProperty.origin, lineProperty.destination, lineProperty.color);
+
             lines.isPickable = false;
             lines.id = lineProperty.id.toString();
 
@@ -1091,6 +1139,7 @@ export default class SceneController
         this.spherePool = new SpherePool(this._scene);
         this.boxPool = new BoxPool(this._scene);
         this.planePool = new PlanePool(this._scene);
+        this.linePool = new LinePool(this._scene);
         this.layerManager = new LayerManager();
 
         // Gizmos
