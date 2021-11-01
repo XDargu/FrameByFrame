@@ -187,22 +187,20 @@ export default class Renderer {
             const activeElement = document.activeElement;
             const inputs = ['input', 'select', 'textarea'];
 
-            if (activeElement && inputs.indexOf(activeElement.tagName.toLowerCase()) !== -1) {
-                return false;
-            }
-
-            if (e.key === "ArrowLeft") {
-                if (e.ctrlKey)
-                    this.playbackController.onTimelineFirstClicked();
-                else
-                    this.playbackController.onTimelinePrevClicked();
-            } else if (e.key === "ArrowRight") {
-                if (e.ctrlKey)
-                    this.playbackController.onTimelineLastClicked();
-                else
-                    this.playbackController.onTimelineNextClicked();
-            } else if (e.key === " ") {
-                this.playbackController.onTimelinePlayClicked();
+            if (activeElement && inputs.indexOf(activeElement.tagName.toLowerCase()) === -1) {
+                if (e.key === "ArrowLeft") {
+                    if (e.ctrlKey)
+                        this.playbackController.onTimelineFirstClicked();
+                    else
+                        this.playbackController.onTimelinePrevClicked();
+                } else if (e.key === "ArrowRight") {
+                    if (e.ctrlKey)
+                        this.playbackController.onTimelineLastClicked();
+                    else
+                        this.playbackController.onTimelineNextClicked();
+                } else if (e.key === " ") {
+                    this.playbackController.onTimelinePlayClicked();
+                }
             }
         };
     }

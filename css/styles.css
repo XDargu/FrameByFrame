@@ -1403,6 +1403,7 @@ body {
 #events .basico-title {
   text-align: left;
   padding-left: 10px;
+  box-sizing: border-box;
 }
 
 #properties .basico-tag {

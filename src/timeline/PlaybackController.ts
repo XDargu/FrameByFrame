@@ -40,11 +40,6 @@ export class PlaybackController {
     }
 
     updateUI() {
-        console.log("Current frame: ");
-        console.log(this.renderer.getCurrentFrame());
-        console.log("Frame count: ");
-        console.log(this.renderer.getFrameCount());
-
         const recordingEmpty = this.renderer.getFrameCount() == 0;
         const isLastFrame = recordingEmpty || (this.renderer.getCurrentFrame() == this.renderer.getFrameCount() - 1);
         const isFirstFrame = recordingEmpty || (this.renderer.getCurrentFrame() == 0);
