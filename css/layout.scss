@@ -118,7 +118,7 @@ body {
 
 #record-control {
     position: absolute;
-    left: 60%;
+    left: calc(50% + 150px);
     transform: translate(-50%, -1px);
 }
 

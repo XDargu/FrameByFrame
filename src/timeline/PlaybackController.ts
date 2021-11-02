@@ -1,3 +1,6 @@
+import { LogLevel } from "../frontend/ConsoleController";
+import { LogChannel } from "../frontend/ConsoleController";
+import { Console } from "../frontend/ConsoleController";
 import Renderer from "../renderer";
 
 export class PlaybackController {
@@ -5,11 +8,28 @@ export class PlaybackController {
     private renderer: Renderer;
     private isPlaying: boolean;
     private elapsedTime: number;
+    private playbackSpeedFactor: number;
 
     constructor(renderer: Renderer) {
         this.isPlaying = false;
         this.elapsedTime = 0;
         this.renderer = renderer;
+        this.playbackSpeedFactor = 1;
+
+        this.initialize();
+    }
+
+    initialize()
+    {
+        const speeds = [0.1, 0.2, 0.5, 0.75, 1, 1.5, 2, 5, 10];
+        let playBackSlider: HTMLInputElement = document.getElementById("playback-speed") as HTMLInputElement;
+        let playbackDisplay: HTMLElement = document.getElementById("playback-display");
+        playBackSlider.oninput = () => {
+            const playbackSpeed = speeds[Number.parseInt(playBackSlider.value)];
+            Console.log(LogLevel.Verbose, LogChannel.Default, "Playback speed changed to: " + playbackSpeed);
+            this.playbackSpeedFactor = playbackSpeed;
+            playbackDisplay.innerText = "x" + playbackSpeed;
+        };
     }
 
     update(elapsedSeconds: number) {
@@ -18,7 +38,7 @@ export class PlaybackController {
         }
 
         if (this.isPlaying) {
-            this.elapsedTime += elapsedSeconds;
+            this.elapsedTime += elapsedSeconds * this.playbackSpeedFactor;
 
             // Check how many frames we have to skip
             let currentFrame = this.renderer.getCurrentFrame();
