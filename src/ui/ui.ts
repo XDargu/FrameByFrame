@@ -251,7 +251,7 @@ export class TreeControl {
         this.root = treeElement;
     }
 
-    addItem(parentListItem : HTMLElement, contentData : string, hidden = false, value : string = null) {
+    addItem(parentListItem : HTMLElement, content : HTMLElement[], text : string = null, hidden = false, value : string = null) {
 
         let parentList = parentListItem.querySelector("ul");
 
@@ -267,10 +267,16 @@ export class TreeControl {
         toggle.classList.add("basico-tree-item-toggle");
         wrapper.appendChild(toggle);
 
-        let content = document.createElement("span");
-        content.classList.add("basico-tree-item-content");
-        content.innerHTML = contentData;
-        wrapper.appendChild(content);
+        let contentWrapper = document.createElement("span");
+        contentWrapper.classList.add("basico-tree-item-content");
+        if (text)
+        {
+            contentWrapper.innerText = text;
+        }
+        for (let i=0; i<content.length; ++i) {
+            contentWrapper.appendChild(content[i]);
+        }
+        wrapper.appendChild(contentWrapper);
 
         let children = document.createElement("ul");
         listItem.appendChild(children);
