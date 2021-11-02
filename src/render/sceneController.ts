@@ -820,7 +820,6 @@ export default class SceneController
         {
             let sphereProperty = property as RECORDING.IPropertySphere;
 
-            // #TODO: This should be in a mesh/material pool
             let sphere = this.spherePool.getSphere(sphereProperty.radius);
             sphere.isPickable = true;
             sphere.id = sphereProperty.id.toString();

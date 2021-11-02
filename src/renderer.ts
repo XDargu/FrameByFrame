@@ -368,14 +368,13 @@ export default class Renderer {
         this.onEntitySelected(entityId);
     }
 
-    buildSinglePropertyTree(propertyGroup: RECORDING.IPropertyGroup, depth: number)
+    buildSinglePropertyTree(treeParent: HTMLElement, propertyGroup: RECORDING.IPropertyGroup, depth: number, nameOverride: string = undefined)
     {
-        let treeParent = document.getElementById('properties');
-
         const isSpecialProperties = propertyGroup.name == "special" && depth == 0;
         const isDefaultProperties = propertyGroup.name == "properties" && depth == 0;
         const name = isSpecialProperties ? "Basic Information"
             : isDefaultProperties ? "Uncategorized"
+            : nameOverride != undefined ? nameOverride
             : propertyGroup.name;
 
         let titleElement = document.createElement("div");
@@ -395,12 +394,13 @@ export default class Renderer {
 
         this.propertyGroups.push({propertyTree: propertyTree, propertyTreeController: propertyTreeController});
 
+        console.log(propertyGroup);
         for (let i=0; i<propertyGroup.value.length; ++i)
         {
             const property = propertyGroup.value[i];
             if (property.type == "group" && depth < 2)
             {
-                this.buildSinglePropertyTree(property as RECORDING.IPropertyGroup, depth + 1);
+                this.buildSinglePropertyTree(treeParent, property as RECORDING.IPropertyGroup, depth + 1);
             }
             else
             {
@@ -412,8 +412,11 @@ export default class Renderer {
     buildPropertyTree()
     {
         // TODO: Instead of destroying everything, reuse/pool the already existing ones!
-        let treeParent = document.getElementById('properties');
-        treeParent.innerHTML = "";
+        let propertyTree = document.getElementById('properties');
+        let eventTree = document.getElementById('events');
+
+        propertyTree.innerHTML = "";
+        eventTree.innerHTML = "";
         this.propertyGroups = [];
 
         if (this.selectedEntityId != null)
@@ -421,10 +424,17 @@ export default class Renderer {
             const selectedEntity = this.frameData.entities[this.selectedEntityId];
             if (selectedEntity)
             {
+
                 for (let i=0; i<selectedEntity.properties.length; ++i)
                 {
                     const propertyGroup = selectedEntity.properties[i] as RECORDING.IPropertyGroup;
-                    this.buildSinglePropertyTree(propertyGroup, 0);
+                    this.buildSinglePropertyTree(propertyTree, propertyGroup, 0);
+                }
+
+                for (let i=0; i<selectedEntity.events.length; ++i)
+                {
+                    const propertyGroup = selectedEntity.events[i].properties;
+                    this.buildSinglePropertyTree(eventTree, propertyGroup, 1, selectedEntity.events[i].name);
                 }
             }
         }
@@ -438,8 +448,14 @@ export default class Renderer {
         for (let entityID in this.frameData.entities) {
             const entity = this.frameData.entities[entityID];
 
-            this.recordedData.visitEntityProperties(entity, function(property: RECORDING.IProperty) {
+            this.recordedData.visitEntityProperties(entity, (property: RECORDING.IProperty) => {
                 sceneController.addProperty(entity, property);
+            });
+
+            this.recordedData.visitEvents(entity.events, (event: RECORDING.IEvent) => {
+                this.recordedData.visitProperties([event.properties], (eventProperty: RECORDING.IProperty) => {
+                    sceneController.addProperty(entity, eventProperty);
+                });
             });
         }
 

@@ -105,7 +105,8 @@ $light-text: #eee;
     color: $text-color;
 }
 
-#properties .basico-title
+#properties .basico-title,
+#events .basico-title
 {
     background: $dark-heading;
     border-radius: 0px;
@@ -119,7 +120,8 @@ $light-text: #eee;
     box-sizing: border-box;
 }
 
-#properties .basico-tag
+#properties .basico-tag,
+#events .basico-tag
 {
     background: $form-background;
     color: $darker-background;

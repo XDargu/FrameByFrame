@@ -1394,7 +1394,8 @@ body {
   color: #C4C4C4;
 }
 
-#properties .basico-title {
+#properties .basico-title,
+#events .basico-title {
   background: #2B2530;
   border-radius: 0px;
 }
@@ -1406,7 +1407,8 @@ body {
   box-sizing: border-box;
 }
 
-#properties .basico-tag {
+#properties .basico-tag,
+#events .basico-tag {
   background: #D2C7DB;
   color: #302935;
 }
@@ -1569,7 +1571,8 @@ body {
   color: #C4C4C4;
 }
 
-#properties .basico-title {
+#properties .basico-title,
+#events .basico-title {
   background: #2B2530;
   border-radius: 0px;
 }
@@ -1581,7 +1584,8 @@ body {
   box-sizing: border-box;
 }
 
-#properties .basico-tag {
+#properties .basico-tag,
+#events .basico-tag {
   background: #D2C7DB;
   color: #302935;
 }

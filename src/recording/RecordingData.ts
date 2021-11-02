@@ -447,11 +447,15 @@ export class NaiveRecordedData {
 		
 		for (let id in frameData.entities)
 		{
-			this.visitProperties(frameData.entities[id].properties, function(property: IProperty){
+			this.visitProperties(frameData.entities[id].properties, (property: IProperty) => {
 				property.id = propId++;
 			});
-			this.visitEvents(frameData.entities[id].events, function(event: IEvent){
+			this.visitEvents(frameData.entities[id].events, (event: IEvent) => {
 				event.id = eventId++;
+
+				this.visitProperties([event.properties], (property: IProperty) => {
+					property.id = propId++;
+				});
 			});
 		}
 		
