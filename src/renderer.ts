@@ -1,5 +1,6 @@
 import { ipcRenderer, TouchBarScrubber } from "electron";
 import * as path from "path";
+import * as Utils from "./utils/utils";
 import ConnectionsList from './frontend/ConnectionsList';
 import ConnectionButtons from "./frontend/ConnectionButtons";
 import { Console, ConsoleWindow, ILogAction, LogChannel, LogLevel } from "./frontend/ConsoleController";
@@ -268,6 +269,7 @@ export default class Renderer {
     }
 
     applyFrame(frame : number) {
+
         this.frameData = this.recordedData.buildFrameData(frame);
 
         this.timeline.currentFrame = frame;
@@ -329,6 +331,9 @@ export default class Renderer {
 
         // Draw properties
         this.renderProperties();
+
+        // Update events
+        this.updateTimelineEvents();
 
         // Rebuild property tree
         this.buildPropertyTree();
@@ -394,7 +399,6 @@ export default class Renderer {
 
         this.propertyGroups.push({propertyTree: propertyTree, propertyTreeController: propertyTreeController});
 
-        console.log(propertyGroup);
         for (let i=0; i<propertyGroup.value.length; ++i)
         {
             const property = propertyGroup.value[i];
@@ -440,6 +444,24 @@ export default class Renderer {
         }
     }
 
+    updateTimelineEvents()
+    {
+        this.timeline.clearEvents();
+
+        for (let i=0; i<this.recordedData.frameData.length; ++i)
+        {
+            const frameData = this.recordedData.frameData[i];
+
+            for (let entityID in frameData.entities) {
+                const entity = frameData.entities[entityID];
+    
+                this.recordedData.visitEvents(entity.events, (event: RECORDING.IEvent) => {
+                    this.timeline.addEvent(event.id, entityID, i, "#D6A3FF", 0);
+                });
+            }
+        }
+    }
+
     renderProperties()
     {
         let sceneController = this.sceneController;
@@ -480,6 +502,7 @@ export default class Renderer {
         let timelineWrapper: HTMLElement = document.getElementById('timeline-wrapper');
         this.timeline = new Timeline(timelineElement, timelineWrapper);
         this.timeline.setFrameClickedCallback(this.onTimelineClicked.bind(this));
+        this.timeline.setEventClickedCallback(this.onTimelineEventClicked.bind(this));
         this.timeline.setTimelineUpdatedCallback(this.onTimelineUpdated.bind(this));
     }
 
@@ -514,6 +537,12 @@ export default class Renderer {
     onTimelineClicked(frame: number)
     {
         this.applyFrame(frame);
+    }
+
+    onTimelineEventClicked(entityId: string, frame: number)
+    {
+        this.applyFrame(frame);
+        this.selectEntity(Number.parseInt(entityId));
     }
 
     onTimelineUpdated(elapsedSeconds: number)
