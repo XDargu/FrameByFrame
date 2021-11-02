@@ -280,8 +280,6 @@ export default class Timeline {
 
         const cursorStyle = this.hoveredEvent ? "pointer" : "auto";
         this.canvas.style.cursor = cursorStyle;
-        if (this.hoveredEvent != prevHoveredEvent)
-            this.render(this.timeStampLastUpdate);
     }
 
     private onMouseWheel(event : any)
@@ -628,7 +626,6 @@ export default class Timeline {
         this.canvas.style.height = this.height + "px";
 
         this.calculateRenderingConstants();
-        //this.render();
     }
 
     updateLength(length: number)

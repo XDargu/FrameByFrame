@@ -42,6 +42,8 @@ export default class Renderer {
     private propertyGroups: PropertyTreeGroup[];
     private leftPaneSplitter: BASICO.Splitter;
     private rightPaneSplitter: BASICO.Splitter;
+    private detailPaneSplitter: BASICO.Splitter;
+    private entitiesPaneSplitter: BASICO.Splitter;
     private consoleSplitter: BASICO.Splitter;
 
     // Networking
@@ -180,6 +182,24 @@ export default class Renderer {
             direction: "D",
             minPane: document.getElementById("viewport"),
             minSizePane: 300
+        });
+
+        this.detailPaneSplitter = new BASICO.Splitter({
+            splitter: document.getElementById("detail-pane-splitter"),
+            panes: [document.getElementById("events-container")],
+            minSize: 100,
+            direction: "D",
+            minPane: document.getElementById("properties-container"),
+            minSizePane: 100
+        });
+
+        this.entitiesPaneSplitter = new BASICO.Splitter({
+            splitter: document.getElementById("entity-pane-splitter"),
+            panes: [document.getElementById("layers-container")],
+            minSize: 100,
+            direction: "D",
+            minPane: document.getElementById("entities-container"),
+            minSizePane: 100
         });
 
         // Shortcuts TODO: Move somewhere else

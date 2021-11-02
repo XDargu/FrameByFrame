@@ -1111,6 +1111,28 @@ body {
   overflow: auto;
 }
 
+/* Detail pane */
+#properties-container {
+  flex: 1 1 auto;
+}
+
+#events-container {
+  flex: 0 0 250px;
+}
+
+/* Entities pane */
+#entities-container {
+  flex: 1 1 auto;
+}
+
+#layers-container {
+  flex: 0 0 250px;
+}
+
+#search-container {
+  flex: 0 0 auto;
+}
+
 #default-console > div {
   overflow-x: hidden;
 }
@@ -1177,6 +1199,10 @@ body {
 
 .basico-button {
   user-select: none;
+}
+
+*:focus {
+  outline: none;
 }
 
 #title-bar-wrapper {
@@ -1413,6 +1439,11 @@ body {
   color: #302935;
 }
 
+.title-darker {
+  border-top: 2px solid #5f516a;
+  background: #2b2530;
+}
+
 #entity-list .basico-title,
 #var-list .basico-title,
 #connection-list .basico-title,
@@ -1588,6 +1619,11 @@ body {
 #events .basico-tag {
   background: #D2C7DB;
   color: #302935;
+}
+
+.title-darker {
+  border-top: 2px solid #5f516a;
+  background: #2b2530;
 }
 
 #entity-list .basico-title,

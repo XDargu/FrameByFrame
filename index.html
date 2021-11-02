@@ -70,16 +70,21 @@
                 </div>
             </div>
             <div class="sidebar basico-container basico-container-compact" id="entity-list">
-                <div class="basico-title basico-title-compact uppercase">Entities</div>
-                <div class="basico-container">
-                    <div class="basico-form-field">
-                        <input type="text" id="entity-search" placeholder="Type here to filter..." class="basico-input" value="">
+                <div class="content vertical-wrapper">
+                    <div class="basico-title basico-title-compact uppercase">Entities</div>
+                    <div class="basico-container" id="search-container">
+                        <div class="basico-form-field">
+                            <input type="text" id="entity-search" placeholder="Type here to filter..." class="basico-input" value="">
+                        </div>
                     </div>
-                    <div class="basico-list basico-list-compact"></div>
-                </div>
-                <div class="basico-title basico-title-compact uppercase">Layers</div>
-                <div class="basico-container">
-                    <div class="basico-list" id="layer-selection"></div>
+                    <div class="basico-container" id="entities-container">
+                        <div class="basico-list basico-list-compact"></div>
+                    </div>
+                    <div class="splitter vertical" id="entity-pane-splitter"></div>
+                    <div class="basico-title basico-title-compact uppercase title-darker">Layers</div>
+                    <div class="basico-container" id="layers-container">
+                        <div class="basico-list" id="layer-selection"></div>
+                    </div>
                 </div>
             </div>
             <div class="sidebar basico-container basico-container-compact" id="var-list">
@@ -166,14 +171,16 @@
             </div>
             <div class="splitter right" id="right-pane-splitter"></div>
             <div class="sidebar basico-container basico-container-compact" id="detail-pane">
-                <div class="basico-title basico-title-compact uppercase">Properties</div>
-                <div class="basico-container" id="properties">
-                    <div class="basico-tree" id="property-tree">
-                        <ul></ul>
+                <div class="content vertical-wrapper">
+                    <div class="basico-title basico-title-compact uppercase">Properties</div>
+                    <div class="basico-container basico-container-compact" id="properties-container">
+                        <div class="basico-container" id="properties"></div>
                     </div>
-                </div>
-                <div class="basico-title basico-title-compact uppercase">Events</div>
-                <div class="basico-container" id="events">
+                    <div class="splitter vertical" id="detail-pane-splitter"></div>
+                    <div class="basico-title basico-title-compact uppercase title-darker">Events</div>
+                    <div class="basico-container basico-container-compact" id="events-container">
+                        <div class="basico-container" id="events"></div>
+                    </div>
                 </div>
             </div>
         </div>

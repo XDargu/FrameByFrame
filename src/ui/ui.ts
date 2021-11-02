@@ -110,6 +110,11 @@ export class Splitter
 
         function onResize()
         {
+            if (settings.splitter.offsetParent === null) // Visibility check
+            {
+                return;
+            }
+
             function ApplyCorrection(paneSize: number, minPaneSize: number)
             {
                 const totalSize = paneSize + minPaneSize;
