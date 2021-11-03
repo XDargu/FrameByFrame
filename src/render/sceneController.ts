@@ -803,7 +803,13 @@ export default class SceneController
 
     private isPropertyShape(property: RECORDING.IProperty)
     {
-        return property.type == "sphere" || property.type == "line"|| property.type == "plane" || property.type == "aabb" || property.type == "oobb" || property.type == "capsule";
+        return property.type == "sphere" || 
+            property.type == "line"||
+            property.type == "plane" ||
+            property.type == "aabb" ||
+            property.type == "oobb" ||
+            property.type == "capsule" ||
+            property.type == "mesh";
     }
 
     addProperty(entity: RECORDING.IEntity, property: RECORDING.IProperty)
@@ -930,22 +936,37 @@ export default class SceneController
         {
             let lineProperty = property as RECORDING.IPropertyLine;
 
-            let linePoints = [
-                new BABYLON.Vector3(lineProperty.origin.x, lineProperty.origin.y, lineProperty.origin.z),
-                new BABYLON.Vector3(lineProperty.destination.x, lineProperty.destination.y, lineProperty.destination.z),
-            ];
-
-            let lineColors = [
-                new BABYLON.Color4(lineProperty.color.r, lineProperty.color.g, lineProperty.color.b, lineProperty.color.a),
-                new BABYLON.Color4(lineProperty.color.r, lineProperty.color.g, lineProperty.color.b, lineProperty.color.a),
-            ];
-
             let lines = this.linePool.getLine(lineProperty.origin, lineProperty.destination, lineProperty.color);
 
             lines.isPickable = false;
             lines.id = lineProperty.id.toString();
 
             entityData.properties.set(lineProperty.id, lines);
+        }
+        else if (property.type == "mesh")
+        {
+            const meshProperty = property as RECORDING.IPropertyMesh;
+
+            let customMesh = new BABYLON.Mesh("custom", this._scene);
+            //customMesh.isPickable = true;
+            customMesh.id = customMesh.id.toString();
+
+            let vertexData = new BABYLON.VertexData();
+            let normals: any[] = [];
+            BABYLON.VertexData.ComputeNormals(meshProperty.vertices, meshProperty.indices, normals);
+
+            vertexData.positions = meshProperty.vertices;
+            vertexData.indices = meshProperty.indices; 
+            vertexData.normals = normals;
+
+            vertexData.applyToMesh(customMesh);
+
+            customMesh.material = this.materialPool.getMaterialByColor(meshProperty.color);
+            customMesh.material.backFaceCulling = true;
+            customMesh.material.wireframe = true;
+
+            entityData.properties.set(meshProperty.id, customMesh);
+            this.propertyToEntity.set(meshProperty.id, entity.id);
         }
     }
 

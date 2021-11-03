@@ -1158,10 +1158,6 @@ body {
   transform: translate(-50%, -1px);
 }
 
-#button-record:not(.basico-disabled) {
-  color: #DE0000;
-}
-
 #entity-list .basico-form-field,
 #var-list .basico-form-field {
   display: block;
@@ -1488,6 +1484,14 @@ body {
   animation: pulse 2s infinite;
 }
 
+#button-record:not(.basico-disabled) {
+  color: #DE0000;
+}
+
+#button-record.recording {
+  animation: recording-pulse 1.5s infinite;
+}
+
 @keyframes pulse {
   0% {
     box-shadow: 0 0 0 0 rgba(109, 224, 128, 0.4);
@@ -1497,6 +1501,17 @@ body {
   }
   100% {
     box-shadow: 0 0 0 0 rgba(109, 224, 128, 0);
+  }
+}
+@keyframes recording-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(222, 0, 0, 0.4);
+  }
+  60% {
+    box-shadow: 0 0 0 8px rgba(222, 0, 0, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(222, 0, 0, 0);
   }
 }
 #playback-controls {
@@ -1670,6 +1685,14 @@ body {
   animation: pulse 2s infinite;
 }
 
+#button-record:not(.basico-disabled) {
+  color: #DE0000;
+}
+
+#button-record.recording {
+  animation: recording-pulse 1.5s infinite;
+}
+
 @keyframes pulse {
   0% {
     box-shadow: 0 0 0 0 rgba(109, 224, 128, 0.4);
@@ -1679,6 +1702,17 @@ body {
   }
   100% {
     box-shadow: 0 0 0 0 rgba(109, 224, 128, 0);
+  }
+}
+@keyframes recording-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(222, 0, 0, 0.4);
+  }
+  60% {
+    box-shadow: 0 0 0 8px rgba(222, 0, 0, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(222, 0, 0, 0);
   }
 }
 

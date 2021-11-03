@@ -70,6 +70,12 @@ export interface IPropertyLine extends IProperyShape {
 	value: string;
 }
 
+export interface IPropertyMesh extends IProperyShape {
+	vertices: number[];
+	indices?: number[];
+	value: string;
+}
+
 export interface IPropertyGroup {
 	type: string;
 	name: string;

@@ -22,6 +22,8 @@ $form-accent: #BA92D9;
 
 $light-text: #eee;
 
+$recording-button: #DE0000;
+
 .full-page
 {
     background: $default-background;
@@ -184,6 +186,14 @@ $light-text: #eee;
     animation: pulse 2s infinite;
 }
 
+#button-record:not(.basico-disabled) {
+    color: $recording-button;
+}
+
+#button-record.recording {
+    animation: recording-pulse 1.5s infinite;
+}
+
 @keyframes pulse {
     0% {
       box-shadow: 0 0 0 0 rgba($strong-secondary, .4);
@@ -194,4 +204,16 @@ $light-text: #eee;
     100% {
         box-shadow: 0 0 0 0 rgba($strong-secondary, 0);
     }
-  }
+}
+
+@keyframes recording-pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba($recording-button, .4);
+    }
+    60% {
+        box-shadow: 0 0 0 8px rgba($recording-button, .0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba($recording-button, 0);
+    }
+}
