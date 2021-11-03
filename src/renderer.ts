@@ -19,6 +19,8 @@ import { TreeControl } from "./ui/tree";
 import { ListControl } from "./ui/list";
 import { Splitter } from "./ui/splitter";
 import { TabBorder, TabControl } from "./ui/tabs";
+import * as Shortcuts from "./frontend/Shortcuts";
+import * as RecordingButton from "./frontend/RecordingButton";
 
 const { shell } = require('electron');
 
@@ -88,12 +90,24 @@ export default class Renderer {
             this.connectionsList.toggleConnection(id);
         });
         this.connectionsList.addListener({
-            onConnectionAdded: this.connectionButtons.onConnectionCreated.bind(this.connectionButtons),
-            onConnectionRemoved: this.connectionButtons.onConnectionRemoved.bind(this.connectionButtons),
-            onConnectionConnected: this.connectionButtons.onConnectionConnected.bind(this.connectionButtons),
-            onConnectionDisconnected: this.connectionButtons.onConnectionDisconnected.bind(this.connectionButtons),
-            onConnectionConnecting: this.connectionButtons.onConnectionConnecting.bind(this.connectionButtons),
-            onConnectionDisconnecting: this.connectionButtons.onConnectionDisconnecting.bind(this.connectionButtons)
+            onConnectionAdded: (id) => {
+                this.connectionButtons.onConnectionCreated(id);
+            },
+            onConnectionRemoved: (id) => {
+                this.connectionButtons.onConnectionRemoved(id);
+            },
+            onConnectionConnected: (id) => {
+                this.connectionButtons.onConnectionConnected(id);
+            },
+            onConnectionDisconnected: (id) => {
+                this.connectionButtons.onConnectionDisconnected(id);
+            },
+            onConnectionConnecting: (id) => {
+                this.connectionButtons.onConnectionConnecting(id);
+            },
+            onConnectionDisconnecting: (id) => {
+                this.connectionButtons.onConnectionDisconnecting(id);
+            },
         });
 
         this.connectionsList.addConnection("localhost", "23001", false);
@@ -205,28 +219,8 @@ export default class Renderer {
             minSizePane: 100
         });
 
-        // Shortcuts TODO: Move somewhere else
-        document.onkeydown = (e : KeyboardEvent) => {
-
-            const activeElement = document.activeElement;
-            const inputs = ['input', 'select', 'textarea'];
-
-            if (activeElement && inputs.indexOf(activeElement.tagName.toLowerCase()) === -1) {
-                if (e.key === "ArrowLeft") {
-                    if (e.ctrlKey)
-                        this.playbackController.onTimelineFirstClicked();
-                    else
-                        this.playbackController.onTimelinePrevClicked();
-                } else if (e.key === "ArrowRight") {
-                    if (e.ctrlKey)
-                        this.playbackController.onTimelineLastClicked();
-                    else
-                        this.playbackController.onTimelineNextClicked();
-                } else if (e.key === " ") {
-                    this.playbackController.onTimelinePlayClicked();
-                }
-            }
-        };
+        Shortcuts.registerShortcuts(this.playbackController);
+        RecordingButton.initializeRecordingButton();
     }
 
     loadData(data: string)
@@ -245,10 +239,12 @@ export default class Renderer {
 
     onMessageArrived(data: string) : void
     {
+        if (!RecordingButton.isRecordingActive()) { return; }
+        
         let message: NET_TYPES.IMessage = JSON.parse(data) as NET_TYPES.IMessage;
 
-        console.log("Received: " + data);
-        console.log(message);
+        //console.log("Received: " + data);
+        //console.log(message);
 
         // TODO: Make message types: frame data, command, etc. In an enum.
         // Also, move to a helper class
@@ -503,20 +499,6 @@ export default class Renderer {
                 });
             });
         }
-
-        /*if (this.selectedEntityId != null)
-        {
-            const selectedEntity = this.frameData.entities[this.selectedEntityId];
-            if (selectedEntity)
-            {
-                let sceneController = this.sceneController;
-                sceneController.removeAllProperties();
-
-                this.recordedData.visitEntityProperties(selectedEntity, function(property: RECORDING.IProperty) {
-                    sceneController.addProperty(selectedEntity, property);
-                });
-            }
-        }*/
     }
 
     initializeTimeline()
