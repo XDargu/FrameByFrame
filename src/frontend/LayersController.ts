@@ -1,4 +1,4 @@
-import * as BASICO from '../ui/ui';
+import { ListControl } from "../ui/list";
 
 interface ILayer
 {
@@ -13,13 +13,13 @@ export interface ILayerChanged
 
 export class LayerController
 {
-    private layerList: BASICO.ListControl;
+    private layerList: ListControl;
     private layers: Map<string, ILayer>;
     private layerChangedCallback: ILayerChanged;
 
     constructor(layerList: HTMLElement, layerChangedCallback: ILayerChanged)
     {
-        this.layerList = new BASICO.ListControl(layerList);
+        this.layerList = new ListControl(layerList);
         this.layers = new Map<string, ILayer>();
         this.layerChangedCallback = layerChangedCallback;
     }

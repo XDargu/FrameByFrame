@@ -1,12 +1,12 @@
 import * as RECORDING from '../recording/RecordingData';
-import * as BASICO from '../ui/ui';
+import * as TREE from '../ui/tree';
 import * as TypeSystem from "../types/typeRegistry";
 
 export class PropertyTreeController {
-    propertyTree: BASICO.TreeControl;
+    propertyTree: TREE.TreeControl;
     typeRegistry: TypeSystem.TypeRegistry;
 
-    constructor(propertyTree: BASICO.TreeControl) {
+    constructor(propertyTree: TREE.TreeControl) {
         this.propertyTree = propertyTree;
         this.typeRegistry = TypeSystem.TypeRegistry.getInstance();
     }

@@ -14,15 +14,18 @@ import * as RECORDING from './recording/RecordingData';
 import SceneController from './render/sceneController';
 import { PlaybackController } from "./timeline/PlaybackController";
 import Timeline from './timeline/timeline';
-import * as BASICO from './ui/ui';
 import { initWindowControls } from "./frontend/WindowControls";
+import { TreeControl } from "./ui/tree";
+import { ListControl } from "./ui/list";
+import { Splitter } from "./ui/splitter";
+import { TabBorder, TabControl } from "./ui/tabs";
 
 const { shell } = require('electron');
 
 
 interface PropertyTreeGroup
 {
-    propertyTree: BASICO.TreeControl;
+    propertyTree: TreeControl;
     propertyTreeController: PropertyTreeController;
 }
 
@@ -36,15 +39,15 @@ export default class Renderer {
     private frameData: RECORDING.IFrameData;
 
     // UI Elements
-    private entityList: BASICO.ListControl;
+    private entityList: ListControl;
     private layerController: LayerController;
     private selectedEntityId: number;
     private propertyGroups: PropertyTreeGroup[];
-    private leftPaneSplitter: BASICO.Splitter;
-    private rightPaneSplitter: BASICO.Splitter;
-    private detailPaneSplitter: BASICO.Splitter;
-    private entitiesPaneSplitter: BASICO.Splitter;
-    private consoleSplitter: BASICO.Splitter;
+    private leftPaneSplitter: Splitter;
+    private rightPaneSplitter: Splitter;
+    private detailPaneSplitter: Splitter;
+    private entitiesPaneSplitter: Splitter;
+    private consoleSplitter: Splitter;
 
     // Networking
     private connectionsList: ConnectionsList;
@@ -109,7 +112,7 @@ export default class Renderer {
 
         const entityListElement = <HTMLElement>document.getElementById('entity-list').querySelector('.basico-list');
 
-        this.entityList = new BASICO.ListControl(entityListElement);
+        this.entityList = new ListControl(entityListElement);
 
         // Create tab control
         const controlTabElements: HTMLElement[] = [
@@ -119,20 +122,20 @@ export default class Renderer {
             document.getElementById("recent-list"),
             document.getElementById("setting-list")
         ];
-        var controlTabs = new BASICO.TabControl(
+        var controlTabs = new TabControl(
             <HTMLElement[]><any>document.getElementById("control-tabs").children,
             controlTabElements
-            , 0, BASICO.TabBorder.Left
+            , 0, TabBorder.Left
         );
 
-        var controlTabs = new BASICO.TabControl(
+        var controlTabs = new TabControl(
             [
                 document.getElementById("console-tabs").children[0] as HTMLElement
             ],
             [
                 document.getElementById("default-console")
             ]
-            , 0, BASICO.TabBorder.Left
+            , 0, TabBorder.Left
         );
 
         const consoleElement = document.getElementById("default-console").children[0] as HTMLElement;
@@ -159,7 +162,7 @@ export default class Renderer {
         this.layerController = new LayerController(document.getElementById("layer-selection"), this.onLayerChanged.bind(this));
 
         // Create splitters
-        this.leftPaneSplitter = new BASICO.Splitter({
+        this.leftPaneSplitter = new Splitter({
             splitter: document.getElementById("left-pane-splitter"),
             panes: controlTabElements,
             minSize: 150,
@@ -167,7 +170,7 @@ export default class Renderer {
             minPane: document.getElementById("viewport"),
             minSizePane: 300
         });
-        this.rightPaneSplitter = new BASICO.Splitter({
+        this.rightPaneSplitter = new Splitter({
             splitter: document.getElementById("right-pane-splitter"),
             panes: [document.getElementById("detail-pane")],
             minSize: 150,
@@ -175,7 +178,7 @@ export default class Renderer {
             minPane: document.getElementById("viewport"),
             minSizePane: 300
         });
-        this.consoleSplitter = new BASICO.Splitter({
+        this.consoleSplitter = new Splitter({
             splitter: document.getElementById("bottom-pane-splitter"),
             panes: [document.getElementById("console")],
             minSize: 150,
@@ -184,7 +187,7 @@ export default class Renderer {
             minSizePane: 300
         });
 
-        this.detailPaneSplitter = new BASICO.Splitter({
+        this.detailPaneSplitter = new Splitter({
             splitter: document.getElementById("detail-pane-splitter"),
             panes: [document.getElementById("events-container")],
             minSize: 100,
@@ -193,7 +196,7 @@ export default class Renderer {
             minSizePane: 100
         });
 
-        this.entitiesPaneSplitter = new BASICO.Splitter({
+        this.entitiesPaneSplitter = new Splitter({
             splitter: document.getElementById("entity-pane-splitter"),
             panes: [document.getElementById("layers-container")],
             minSize: 100,
@@ -414,7 +417,7 @@ export default class Renderer {
         treeParent.appendChild(titleElement);
         treeParent.appendChild(treeElement);
 
-        let propertyTree = new BASICO.TreeControl(treeElement);
+        let propertyTree = new TreeControl(treeElement);
         let propertyTreeController = new PropertyTreeController(propertyTree);
 
         this.propertyGroups.push({propertyTree: propertyTree, propertyTreeController: propertyTreeController});
