@@ -235,6 +235,7 @@ export default class Renderer {
 
     loadData(data: string)
     {
+        this.clear();
         this.recordedData.loadFromString(data);
         this.timeline.updateLength(this.recordedData.getSize());
         for (let i=0; i<this.recordedData.frameData.length; ++i)

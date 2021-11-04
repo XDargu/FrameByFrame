@@ -234,7 +234,7 @@ export default class Timeline {
 
         for (let i=firstFrame; i<lastFrame; ++i)
         {
-            const eventList = this.eventsPerFrame.get(frame);
+            const eventList = this.eventsPerFrame.get(i);
             if (eventList)
             {
                 const event = eventList[0];
