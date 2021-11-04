@@ -57,6 +57,7 @@ export default class Connection {
 		if (this.webSocket.readyState != WebSocket.OPEN) {
 			console.error("WebSocket is not open, it is: " + this.webSocket.readyState);
 		}
+		console.log("Sending");
 		this.webSocket.send(data);
 	}
 	
@@ -86,7 +87,7 @@ export default class Connection {
 	
 	onMessageReceived(messageEvent : MessageEvent) {
 		let message = messageEvent.data;
-		console.log("WebSocket MESSAGE: " + message);
+		//console.log("WebSocket MESSAGE: " + message);
 		
 		if (this.onMessage) {
 			this.onMessage(messageEvent);

@@ -5,7 +5,7 @@ import ConnectionsList from './frontend/ConnectionsList';
 import ConnectionButtons from "./frontend/ConnectionButtons";
 import { Console, ConsoleWindow, ILogAction, LogChannel, LogLevel } from "./frontend/ConsoleController";
 import FileListController from "./frontend/FileListController";
-import ConnectionId from './network/conectionsManager';
+import { ConnectionId } from './network/conectionsManager';
 import { LayerController } from "./frontend/LayersController";
 import { PropertyTreeController } from "./frontend/PropertyTreeController";
 import * as Messaging from "./messaging/MessageDefinitions";
@@ -22,6 +22,7 @@ import { TabBorder, TabControl } from "./ui/tabs";
 import * as Shortcuts from "./frontend/Shortcuts";
 import * as RecordingButton from "./frontend/RecordingButton";
 import { NaiveRecordedData } from "./recording/RecordingData";
+import { RecordingOptions } from "./frontend/RecordingOptions";
 
 const { shell } = require('electron');
 
@@ -44,6 +45,7 @@ export default class Renderer {
     // UI Elements
     private entityList: ListControl;
     private layerController: LayerController;
+    private recordingOptions: RecordingOptions;
     private selectedEntityId: number;
     private propertyGroups: PropertyTreeGroup[];
     private leftPaneSplitter: Splitter;
@@ -64,6 +66,8 @@ export default class Renderer {
 
     // Playback
     private playbackController: PlaybackController;
+
+    private unprocessedFrames: number[];
 
     initialize(canvas: HTMLCanvasElement) {
 
@@ -113,10 +117,13 @@ export default class Renderer {
 
         this.connectionsList.addConnection("localhost", "23001", false);
 
+        Shortcuts.registerShortcuts(this.playbackController, this.connectionsList);
+
         let recentFilesListElement: HTMLElement = document.getElementById(`recentFilesList`);
         this.recentFilesController = new FileListController(recentFilesListElement, this.onRecentFileClicked.bind(this))
 
         this.propertyGroups = [];
+        this.unprocessedFrames = [];
 
         this.applyFrame(0);
     }
@@ -176,6 +183,9 @@ export default class Renderer {
         // Create layer controls
         this.layerController = new LayerController(document.getElementById("layer-selection"), this.onLayerChanged.bind(this));
 
+        // Recording controls
+        this.recordingOptions = new RecordingOptions(document.getElementById("recording-option-selection"), this.onRecordingOptionChanged.bind(this));
+
         // Create splitters
         this.leftPaneSplitter = new Splitter({
             splitter: document.getElementById("left-pane-splitter"),
@@ -220,7 +230,6 @@ export default class Renderer {
             minSizePane: 100
         });
 
-        Shortcuts.registerShortcuts(this.playbackController);
         RecordingButton.initializeRecordingButton();
     }
 
@@ -228,6 +237,10 @@ export default class Renderer {
     {
         this.recordedData.loadFromString(data);
         this.timeline.updateLength(this.recordedData.getSize());
+        for (let i=0; i<this.recordedData.frameData.length; ++i)
+        {
+            this.unprocessedFrames.push(i);
+        }
         this.applyFrame(0);
     }
 
@@ -235,6 +248,9 @@ export default class Renderer {
     {
         this.recordedData.clear();
         this.timeline.updateLength(this.recordedData.getSize());
+        this.timeline.clearEvents();
+        this.recordingOptions.setOptions([]);
+        this.layerController.setLayers([]);
         this.applyFrame(0);
     }
 
@@ -255,7 +271,7 @@ export default class Renderer {
             {
                 case NET_TYPES.MessageType.FrameData:
                 {
-                    let frame: NET_TYPES.IMessageFrameData = message.data;
+                    let frame: NET_TYPES.IMessageFrameData = message.data as NET_TYPES.IMessageFrameData;
 
                     // Build frame
                     let frameToBuild: RECORDING.IFrameData = {
@@ -275,9 +291,14 @@ export default class Renderer {
 
                     this.recordedData.pushFrame(frameToBuild);
                     this.timeline.updateLength(this.recordedData.getSize());
-
-
+                    this.unprocessedFrames.push(this.recordedData.getSize() - 1);
+                    
                     //console.log(frameToBuild);
+                }
+                case NET_TYPES.MessageType.RecordingOptions:
+                {
+                    const recordingOptions: NET_TYPES.IMessageRecordingOption[] = message.data as NET_TYPES.IMessageRecordingOption[];
+                    this.recordingOptions.setOptions(recordingOptions);
                 }
                 break;
             }
@@ -467,9 +488,30 @@ export default class Renderer {
 
     updateTimelineEvents()
     {
-        this.timeline.clearEvents();
+        // TODO: This can be optimized. Instead of visiting ALL events of ALL entities in the entire timeline,
+        // only do it from new "unprocessed" frames.
+        //this.timeline.clearEvents();
 
-        for (let i=0; i<this.recordedData.frameData.length; ++i)
+        for (let i=0; i<this.unprocessedFrames.length; ++i)
+        {
+            const frameIdx = this.unprocessedFrames[i];
+            const frameData = this.recordedData.frameData[frameIdx];
+
+            for (let entityID in frameData.entities) {
+                const entity = frameData.entities[entityID];
+    
+                NaiveRecordedData.visitEvents(entity.events, (event: RECORDING.IEvent) => {
+                    this.timeline.addEvent(event.id, entityID, i, "#D6A3FF", 0);
+                });
+            }
+        }
+
+        this.unprocessedFrames = [];
+
+
+        
+
+        /*for (let i=0; i<this.recordedData.frameData.length; ++i)
         {
             const frameData = this.recordedData.frameData[i];
 
@@ -480,7 +522,7 @@ export default class Renderer {
                     this.timeline.addEvent(event.id, entityID, i, "#D6A3FF", 0);
                 });
             }
-        }
+        }*/
     }
 
     renderProperties()
@@ -585,6 +627,18 @@ export default class Renderer {
         this.sceneController.updateLayerStatus(name, active);
         this.applyFrame(this.timeline.currentFrame);
         Console.log(LogLevel.Verbose, LogChannel.Layers, `Layer ${name} status changed to: ${active}`);
+    }
+
+    // Recording option callbacks
+    onRecordingOptionChanged(name: string, enabled: boolean)
+    {
+        this.connectionsList.sendToAllConnections({ 
+            type: NET_TYPES.MessageType.RecordingOptionChanged,
+            data: {
+                name: name,
+                enabled: enabled
+            }
+        });
     }
 
     // Logging wrappers

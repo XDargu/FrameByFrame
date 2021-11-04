@@ -1,5 +1,4 @@
-import ConnectionsManager from '../network/conectionsManager';
-import ConnectionId from '../network/conectionsManager';
+import { ConnectionsManager, ConnectionId} from '../network/conectionsManager';
 import Connection from '../network/simpleClient';
 import { Console, LogChannel, LogLevel } from './ConsoleController';
 

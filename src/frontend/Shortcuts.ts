@@ -1,4 +1,5 @@
 import { PlaybackController } from "../timeline/PlaybackController";
+import ConnectionsList from "./ConnectionsList";
 
 enum ShortcutActions
 {
@@ -9,7 +10,8 @@ enum ShortcutActions
     TogglePlayback,
     ToggleRecording,
     OpenFile,
-    SaveFile
+    SaveFile,
+    SendTestMesage
 }
 
 interface ShortcutActionMap
@@ -29,7 +31,8 @@ const shortcuts : ShortcutTable = {
         "ArrowRight": ShortcutActions.LastFrame,
         "s": ShortcutActions.SaveFile,
         "o": ShortcutActions.OpenFile,
-        "r": ShortcutActions.ToggleRecording
+        "r": ShortcutActions.ToggleRecording,
+        "t": ShortcutActions.SendTestMesage
     },
     normal: {
         "ArrowLeft": ShortcutActions.PrevFrame,
@@ -52,7 +55,7 @@ function canRunShortcut()
     return activeElement && inputs.indexOf(activeElement.tagName.toLowerCase()) === -1;
 }
 
-function executeShortcut(action: ShortcutActions, playbackController: PlaybackController)
+function executeShortcut(action: ShortcutActions, playbackController: PlaybackController, connectionList: ConnectionsList)
 {
     switch(action)
     {
@@ -64,10 +67,22 @@ function executeShortcut(action: ShortcutActions, playbackController: PlaybackCo
         case ShortcutActions.ToggleRecording: playbackController.onTimelinePlayClicked(); break;
         case ShortcutActions.OpenFile: break;
         case ShortcutActions.SaveFile: break;
+        case ShortcutActions.SendTestMesage: 
+        {
+            console.log("Send data");
+            connectionList.sendToAllConnections({ 
+                type: 2,
+                data: {
+                    name: "2",
+                    enabled: true
+                }
+            });
+        }
+        break;
     }
 }
 
-export function registerShortcuts(playbackController: PlaybackController)
+export function registerShortcuts(playbackController: PlaybackController, connectionList: ConnectionsList)
 {
     document.onkeydown = (e : KeyboardEvent) => {
 
@@ -77,7 +92,7 @@ export function registerShortcuts(playbackController: PlaybackController)
             const action = actionMap[e.key];
             if (action)
             {
-                executeShortcut(action, playbackController);
+                executeShortcut(action, playbackController, connectionList);
             }
         }
     };

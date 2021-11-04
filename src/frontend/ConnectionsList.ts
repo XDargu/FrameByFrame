@@ -1,5 +1,4 @@
-import ConnectionsManager from '../network/conectionsManager';
-import ConnectionId from '../network/conectionsManager';
+import { ConnectionId, ConnectionsManager } from '../network/conectionsManager';
 import Connection from '../network/simpleClient';
 import { Console, LogChannel, LogLevel } from './ConsoleController';
 
@@ -131,6 +130,18 @@ export default class ConnectionsList
         {
             this.toggleConnection(id);
         }
+    }
+
+    sendToAllConnections(message: any)
+    {
+        const stringMessage = JSON.stringify(message);
+        this.connectionsList
+        this.connectionsMap.forEach((value: HTMLElement, id: ConnectionId) => {
+            let connection = this.connectionsManager.getConnection(id);
+            if (connection){
+                connection.send(stringMessage)
+            }
+        });
     }
 
     toggleConnection(id: ConnectionId)

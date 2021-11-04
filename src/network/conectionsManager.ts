@@ -2,7 +2,7 @@ import Connection from './simpleClient';
 
 export type ConnectionId = number;
 
-export default class ConnectionsManager {
+export class ConnectionsManager {
 
     private lastConnectionId : ConnectionId;
     private connections : Map<ConnectionId, Connection>
