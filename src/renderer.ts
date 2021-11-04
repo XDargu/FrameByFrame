@@ -21,6 +21,7 @@ import { Splitter } from "./ui/splitter";
 import { TabBorder, TabControl } from "./ui/tabs";
 import * as Shortcuts from "./frontend/Shortcuts";
 import * as RecordingButton from "./frontend/RecordingButton";
+import { NaiveRecordedData } from "./recording/RecordingData";
 
 const { shell } = require('electron');
 
@@ -275,7 +276,8 @@ export default class Renderer {
                     this.recordedData.pushFrame(frameToBuild);
                     this.timeline.updateLength(this.recordedData.getSize());
 
-                    console.log(frameToBuild);
+
+                    //console.log(frameToBuild);
                 }
                 break;
             }
@@ -474,7 +476,7 @@ export default class Renderer {
             for (let entityID in frameData.entities) {
                 const entity = frameData.entities[entityID];
     
-                this.recordedData.visitEvents(entity.events, (event: RECORDING.IEvent) => {
+                NaiveRecordedData.visitEvents(entity.events, (event: RECORDING.IEvent) => {
                     this.timeline.addEvent(event.id, entityID, i, "#D6A3FF", 0);
                 });
             }
@@ -489,12 +491,12 @@ export default class Renderer {
         for (let entityID in this.frameData.entities) {
             const entity = this.frameData.entities[entityID];
 
-            this.recordedData.visitEntityProperties(entity, (property: RECORDING.IProperty) => {
+            NaiveRecordedData.visitEntityProperties(entity, (property: RECORDING.IProperty) => {
                 sceneController.addProperty(entity, property);
             });
 
-            this.recordedData.visitEvents(entity.events, (event: RECORDING.IEvent) => {
-                this.recordedData.visitProperties([event.properties], (eventProperty: RECORDING.IProperty) => {
+            NaiveRecordedData.visitEvents(entity.events, (event: RECORDING.IEvent) => {
+                NaiveRecordedData.visitProperties([event.properties], (eventProperty: RECORDING.IProperty) => {
                     sceneController.addProperty(entity, eventProperty);
                 });
             });

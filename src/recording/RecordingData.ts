@@ -404,12 +404,12 @@ export class NaiveRecordedData {
 		this.updateLayersOfFrame(frame);
 	}
 
-	visitEntityProperties(entity: IEntity, callback: IPropertyVisitorCallback)
+	static visitEntityProperties(entity: IEntity, callback: IPropertyVisitorCallback)
 	{
-		this.visitProperties(entity.properties, callback);
+		NaiveRecordedData.visitProperties(entity.properties, callback);
 	}
 
-	visitProperties(properties: IProperty[], callback: IPropertyVisitorCallback)
+	static visitProperties(properties: IProperty[], callback: IPropertyVisitorCallback)
 	{
 		const propertyCount = properties.length;
 		for (let i=0; i<propertyCount; ++i)
@@ -417,7 +417,7 @@ export class NaiveRecordedData {
 			if (properties[i].type == 'group')
 			{
 				callback(properties[i]);
-				this.visitProperties((properties[i] as IPropertyGroup).value, callback);
+				NaiveRecordedData.visitProperties((properties[i] as IPropertyGroup).value, callback);
 			}
 			else
 			{
@@ -426,7 +426,7 @@ export class NaiveRecordedData {
 		}
 	}
 
-	visitEvents(events: IEvent[], callback: IEventVisitorCallback)
+	static visitEvents(events: IEvent[], callback: IEventVisitorCallback)
 	{
 		const eventCount = events.length;
 		for (let i=0; i<eventCount; ++i)
@@ -453,13 +453,13 @@ export class NaiveRecordedData {
 		
 		for (let id in frameData.entities)
 		{
-			this.visitProperties(frameData.entities[id].properties, (property: IProperty) => {
+			NaiveRecordedData.visitProperties(frameData.entities[id].properties, (property: IProperty) => {
 				property.id = propId++;
 			});
-			this.visitEvents(frameData.entities[id].events, (event: IEvent) => {
+			NaiveRecordedData.visitEvents(frameData.entities[id].events, (event: IEvent) => {
 				event.id = eventId++;
 
-				this.visitProperties([event.properties], (property: IProperty) => {
+				NaiveRecordedData.visitProperties([event.properties], (property: IProperty) => {
 					property.id = propId++;
 				});
 			});
@@ -523,9 +523,9 @@ export class NaiveRecordedData {
 					layerMap.set(layer, true);
 				}
 			};
-			this.visitProperties(frame.entities[id].properties, visitor);
-			this.visitEvents(frame.entities[id].events, (event: IEvent) => {
-				this.visitProperties([event.properties], visitor);
+			NaiveRecordedData.visitProperties(frame.entities[id].properties, visitor);
+			NaiveRecordedData.visitEvents(frame.entities[id].events, (event: IEvent) => {
+				NaiveRecordedData.visitProperties([event.properties], visitor);
 			});
 		}
 
