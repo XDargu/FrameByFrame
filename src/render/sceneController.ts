@@ -948,22 +948,22 @@ export default class SceneController
             const meshProperty = property as RECORDING.IPropertyMesh;
 
             let customMesh = new BABYLON.Mesh("custom", this._scene);
-            //customMesh.isPickable = true;
-            customMesh.id = customMesh.id.toString();
+            customMesh.isPickable = true;
+            customMesh.id = meshProperty.id.toString();
 
             let vertexData = new BABYLON.VertexData();
             let normals: any[] = [];
-            BABYLON.VertexData.ComputeNormals(meshProperty.vertices, meshProperty.indices, normals);
+            BABYLON.VertexData.ComputeNormals(meshProperty.vertices, meshProperty.indices, normals, {
+                useRightHandedSystem: false
+            });
 
             vertexData.positions = meshProperty.vertices;
-            vertexData.indices = meshProperty.indices; 
+            vertexData.indices = meshProperty.indices;
             vertexData.normals = normals;
 
             vertexData.applyToMesh(customMesh);
 
             customMesh.material = this.materialPool.getMaterialByColor(meshProperty.color);
-            customMesh.material.backFaceCulling = true;
-            customMesh.material.wireframe = true;
 
             entityData.properties.set(meshProperty.id, customMesh);
             this.propertyToEntity.set(meshProperty.id, entity.id);
@@ -1243,7 +1243,7 @@ export default class SceneController
         //When pointer down event is raised
         scene.onPointerDown = function (evt, pickResult) {
             // if the click hits the ground object, we change the impact position
-            if (pickResult.hit) {
+            if (pickResult.hit && evt.button == 0) {
                 const entityId: number = control.propertyToEntity.get(parseInt(pickResult.pickedMesh.id));
                 control.onEntitySelected(entityId);
             }
