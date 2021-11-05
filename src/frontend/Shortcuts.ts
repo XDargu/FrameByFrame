@@ -73,7 +73,7 @@ function executeShortcut(action: ShortcutActions, playbackController: PlaybackCo
             connectionList.sendToAllConnections({ 
                 type: 2,
                 data: {
-                    name: "2",
+                    name: "NavMesh",
                     enabled: true
                 }
             });

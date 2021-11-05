@@ -16,13 +16,11 @@ export class RecordingOptions
     private optionsList: ListControl;
     private options: Map<string, IRecordingOption>;
     private recordingOptionChangedCallback: IRecordingOptionChanged;
-    private lastUpdate: number;
 
     constructor(optionsList: HTMLElement, recordingOptionChangedCallback: IRecordingOptionChanged)
     {
         this.optionsList = new ListControl(optionsList);
         this.options = new Map<string, IRecordingOption>();
-        this.lastUpdate = Date.now();
         this.recordingOptionChangedCallback = recordingOptionChangedCallback;
     }
 
@@ -40,23 +38,14 @@ export class RecordingOptions
 
     setOptions(options: IRecordingOption[])
     {
-        if (Date.now() - this.lastUpdate < 300) {return; }
-        // Update entity list
         let listElement = this.optionsList.listWrapper;
 
-        console.log("Length 1: " + listElement.children.length);
-
-        console.log(listElement);
         let counter = 0;
         for (let i=0; i<options.length; ++i)
         {
             const option = options[i];
             const optionData: IRecordingOption = this.getOrCreateOption(option.name, option.enabled);
             let element = <HTMLElement>listElement.children[counter];
-            console.log("Length checking: " + listElement.children.length);
-
-            console.log("Checking element " + counter);
-            console.log(element);
 
             if (element != undefined) {
                 let toggleElement: HTMLInputElement = element.querySelector('input[type=checkbox]');
@@ -66,13 +55,10 @@ export class RecordingOptions
                 {
                     if (toggleElement.checked != optionData.enabled)
                     {
-                        console.log("Updating checked");
                         toggleElement.checked = optionData.enabled;
                     }
                     if (nameElement.innerText != optionData.name)
                     {
-                        console.log("Updating name");
-
                         nameElement.innerText = optionData.name;
                         toggleElement.setAttribute('data-layer-name', optionData.name);
                         this.optionsList.setValueOfItem(element, option.name);
@@ -80,24 +66,19 @@ export class RecordingOptions
                 }
             }
             else {
-                console.log("Creating new one");
-
                 let listItem = this.optionsList.appendElement('', null, option.name);
                 const name = this.createNameElement(option.name);
                 let toggle = this.createToggle(option.name, option.enabled)
                 listItem.appendChild(toggle);
                 listItem.appendChild(name);
-                //this.recordingOptionChangedCallback(optionData.name, optionData.enabled);
             }
             counter++;
         }
 
         // Remove remaining elements
         const remainingElements = listElement.childElementCount;
-        console.log("Length before removal: " + listElement.children.length);
         for (let i=counter; i<remainingElements; i++)
         {
-            console.log("Removing element " + i);
             let element = <HTMLElement>listElement.children[counter];
             listElement.removeChild(element);
         }

@@ -295,11 +295,14 @@ export default class Renderer {
                     this.unprocessedFrames.push(this.recordedData.getSize() - 1);
                     
                     //console.log(frameToBuild);
+                    break;
                 }
                 case NET_TYPES.MessageType.RecordingOptions:
                 {
                     const recordingOptions: NET_TYPES.IMessageRecordingOption[] = message.data as NET_TYPES.IMessageRecordingOption[];
                     this.recordingOptions.setOptions(recordingOptions);
+                    break;
+                    
                 }
                 break;
             }
@@ -312,7 +315,6 @@ export default class Renderer {
     }
 
     applyFrame(frame : number) {
-
         this.frameData = this.recordedData.buildFrameData(frame);
 
         this.timeline.currentFrame = frame;
