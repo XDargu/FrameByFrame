@@ -63,8 +63,8 @@ function executeShortcut(action: ShortcutActions, playbackController: PlaybackCo
         case ShortcutActions.LastFrame: playbackController.onTimelineLastClicked(); break;
         case ShortcutActions.NextFrame: playbackController.onTimelineNextClicked(); break;
         case ShortcutActions.PrevFrame: playbackController.onTimelinePrevClicked(); break;
-        case ShortcutActions.TogglePlayback: break;
-        case ShortcutActions.ToggleRecording: playbackController.onTimelinePlayClicked(); break;
+        case ShortcutActions.TogglePlayback: playbackController.onTimelinePlayClicked(); break;
+        case ShortcutActions.ToggleRecording: break;
         case ShortcutActions.OpenFile: break;
         case ShortcutActions.SaveFile: break;
         case ShortcutActions.SendTestMesage: 

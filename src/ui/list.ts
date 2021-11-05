@@ -1,9 +1,9 @@
 // Select from list
-interface IListCallback {
+export interface IListCallback {
     (item: HTMLElement) : void;
 }
 
-interface IListCallbacks {
+export interface IListCallbacks {
     onItemSelected: IListCallback;
     onItemMouseOver: IListCallback;
     onItemMouseOut: IListCallback;

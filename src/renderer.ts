@@ -23,6 +23,7 @@ import * as Shortcuts from "./frontend/Shortcuts";
 import * as RecordingButton from "./frontend/RecordingButton";
 import { NaiveRecordedData } from "./recording/RecordingData";
 import { RecordingOptions } from "./frontend/RecordingOptions";
+import { EntityList } from "./frontend/EntityList";
 
 const { shell } = require('electron');
 
@@ -43,7 +44,7 @@ export default class Renderer {
     private frameData: RECORDING.IFrameData;
 
     // UI Elements
-    private entityList: ListControl;
+    private entityList: EntityList;
     private layerController: LayerController;
     private recordingOptions: RecordingOptions;
     private selectedEntityId: number;
@@ -133,8 +134,17 @@ export default class Renderer {
         this.currentPropertyId = 0;
 
         const entityListElement = <HTMLElement>document.getElementById('entity-list').querySelector('.basico-list');
+        const callbacks = {
+            onEntitySelected: (entityId: number) => { this.onEntitySelected(entityId); },
+            onEntityMouseOver: (entityId: number) => { this.onEntityHovered(entityId); },
+            onEntityMouseOut: (entityId: number) => { this.onEntityStoppedHovering(entityId); }
+        }
 
-        this.entityList = new ListControl(entityListElement);
+        this.entityList = new EntityList(
+            entityListElement,
+            document.getElementById('entity-search') as HTMLInputElement,
+            callbacks
+        );
 
         // Create tab control
         const controlTabElements: HTMLElement[] = [
@@ -184,7 +194,10 @@ export default class Renderer {
         this.layerController = new LayerController(document.getElementById("layer-selection"), this.onLayerChanged.bind(this));
 
         // Recording controls
-        this.recordingOptions = new RecordingOptions(document.getElementById("recording-option-selection"), this.onRecordingOptionChanged.bind(this));
+        this.recordingOptions = new RecordingOptions(
+            document.getElementById("recording-option-selection"),
+            document.getElementById("recording-option-search") as HTMLInputElement,
+            this.onRecordingOptionChanged.bind(this));
 
         // Create splitters
         this.leftPaneSplitter = new Splitter({
@@ -322,56 +335,22 @@ export default class Renderer {
 
         this.layerController.setLayers(this.recordedData.layers);
 
-        //console.log(this.frameData);
-        //console.log(this.recordedData);
-
         // Update frame counter
         const frameText = (this.getFrameCount() > 0) ? (`Frame: ${frame + 1} / ${this.getFrameCount()}`) : "No frames";
-
         document.getElementById("timeline-frame-counter").textContent = frameText;
 
         // Update entity list
-        let listElement = this.entityList.listWrapper;
+        this.entityList.setEntities(this.frameData.entities);
 
+        // Update renderer
         this.sceneController.hideAllEntities();
 
-        let counter = 0;
         for (let entityID in this.frameData.entities) {
-            let element = <HTMLElement>listElement.children[counter];
 
             const entity = this.frameData.entities[entityID];
-            const entityName = RECORDING.NaiveRecordedData.getEntityName(entity);
-            
+
             // Set in the scene renderer
             this.sceneController.setEntity(entity);
-
-            if (element) {
-                element.innerText = entityName;
-                this.entityList.setValueOfItem(element, entityID);
-            }
-            else {
-                const callbacks = {
-                    onItemSelected: function(element: HTMLDivElement) {
-                        renderer.onEntitySelected(parseInt(renderer.entityList.getValueOfItem(element)));
-                    },
-                    onItemMouseOver: function(element: HTMLDivElement) {
-                        renderer.onEntityHovered(parseInt(renderer.entityList.getValueOfItem(element)));
-                    },
-                    onItemMouseOut: function(element: HTMLDivElement) {
-                        renderer.onEntityStoppedHovering(parseInt(renderer.entityList.getValueOfItem(element)));
-                    }
-                }
-                this.entityList.appendElement(entityName, callbacks, entityID);
-            }
-            counter++;
-        }
-
-        // Remove remaining elements
-        const remainingElements = listElement.childElementCount;
-        for (let i=counter; i<remainingElements; i++)
-        {
-            let element = <HTMLElement>listElement.children[counter];
-            listElement.removeChild(element);
         }
 
         // Draw properties
@@ -408,7 +387,7 @@ export default class Renderer {
         this.logEntity(LogLevel.Verbose, LogChannel.Selection, `Selected entity:`, this.frameData.frameId, entityId);
         this.selectedEntityId = entityId;
         this.buildPropertyTree();
-        this.entityList.selectElementOfValue(entityId.toString(), true);
+        this.entityList.selectEntity(entityId);
         this.sceneController.markEntityAsSelected(entityId);
         this.renderProperties();
     }
@@ -491,10 +470,6 @@ export default class Renderer {
 
     updateTimelineEvents()
     {
-        // TODO: This can be optimized. Instead of visiting ALL events of ALL entities in the entire timeline,
-        // only do it from new "unprocessed" frames.
-        //this.timeline.clearEvents();
-
         for (let i=0; i<this.unprocessedFrames.length; ++i)
         {
             const frameIdx = this.unprocessedFrames[i];
@@ -510,22 +485,6 @@ export default class Renderer {
         }
 
         this.unprocessedFrames = [];
-
-
-        
-
-        /*for (let i=0; i<this.recordedData.frameData.length; ++i)
-        {
-            const frameData = this.recordedData.frameData[i];
-
-            for (let entityID in frameData.entities) {
-                const entity = frameData.entities[entityID];
-    
-                NaiveRecordedData.visitEvents(entity.events, (event: RECORDING.IEvent) => {
-                    this.timeline.addEvent(event.id, entityID, i, "#D6A3FF", 0);
-                });
-            }
-        }*/
     }
 
     renderProperties()

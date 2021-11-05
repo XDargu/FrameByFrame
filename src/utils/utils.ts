@@ -18,3 +18,8 @@ export function swapClass(element: HTMLElement, classToRemove: string, classToAd
     element.classList.remove(classToRemove);
     element.classList.add(classToAdd);
 }
+
+export function filterText(filter: string, content: string)
+{
+    return content.indexOf(filter) > -1;
+}

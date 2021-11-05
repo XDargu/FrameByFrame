@@ -1,4 +1,5 @@
 import { ListControl } from "../ui/list";
+import { filterText } from "../utils/utils";
 
 interface IRecordingOption
 {
@@ -16,10 +17,15 @@ export class RecordingOptions
     private optionsList: ListControl;
     private options: Map<string, IRecordingOption>;
     private recordingOptionChangedCallback: IRecordingOptionChanged;
+    private searchFilter: HTMLInputElement;
+    private filter: string;
 
-    constructor(optionsList: HTMLElement, recordingOptionChangedCallback: IRecordingOptionChanged)
+    constructor(optionsList: HTMLElement, searchFilter: HTMLInputElement, recordingOptionChangedCallback: IRecordingOptionChanged)
     {
         this.optionsList = new ListControl(optionsList);
+        this.searchFilter = searchFilter;
+        this.searchFilter.onkeyup = () => { this.filterElements(); };
+        this.filter = "";
         this.options = new Map<string, IRecordingOption>();
         this.recordingOptionChangedCallback = recordingOptionChangedCallback;
     }
@@ -82,6 +88,8 @@ export class RecordingOptions
             let element = <HTMLElement>listElement.children[counter];
             listElement.removeChild(element);
         }
+
+        this.filterElements();
     }
 
     private createToggle(name: string, active: boolean): HTMLLabelElement
@@ -138,5 +146,24 @@ export class RecordingOptions
         }
 
         this.recordingOptionChangedCallback(name, enabled);
+    }
+
+    private filterElements()
+    {
+        this.filter = this.searchFilter.value.toLowerCase();
+
+        let listElement = this.optionsList.listWrapper;
+        const remainingElements = listElement.childElementCount;
+
+        for (let i=0; i<remainingElements; i++)
+        {
+            let element = <HTMLElement>listElement.children[i];
+            let nameElement: HTMLInputElement = element.querySelector('.basico-text-oneline');
+            if (nameElement)
+            {
+                const visible = this.filter == "" || filterText(this.filter, nameElement.innerText.toLowerCase());
+                element.style.display = visible ? "block" : "none";
+            }
+        }
     }
 }
