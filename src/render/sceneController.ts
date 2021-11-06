@@ -563,6 +563,7 @@ class LinePool extends MeshPool
         ];
 
         mesh = BABYLON.MeshBuilder.CreateLines(hash, {points: linePoints, colors: lineColors, instance: mesh as LinesMesh, updatable: true} );
+        mesh.alwaysSelectAsActiveMesh = true;
         return mesh;
     }
 
