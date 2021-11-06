@@ -1715,5 +1715,32 @@ body {
     box-shadow: 0 0 0 0 rgba(222, 0, 0, 0);
   }
 }
+/* Search icon */
+.search-form {
+  position: relative;
+}
+
+.search-form i {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  color: #424242;
+  font-size: 16px;
+}
+
+.search-form input {
+  padding-left: 30px;
+}
+
+#console-tabs .search-form i {
+  position: absolute;
+  top: 9px;
+  left: 6px;
+  font-size: 12px;
+}
+
+#console-tabs .search-form input {
+  padding-left: 23px;
+}
 
 /*# sourceMappingURL=styles.css.map */
