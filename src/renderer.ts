@@ -427,14 +427,22 @@ export default class Renderer {
         let ul = document.createElement("ul");
         treeElement.appendChild(ul);
 
-        treeParent.appendChild(titleElement);
-        treeParent.appendChild(treeElement);
+        if (isSpecialProperties)
+        {
+            treeParent.prepend(treeElement);
+            treeParent.prepend(titleElement);
+        }
+        else
+        {
+            treeParent.appendChild(titleElement);
+            treeParent.appendChild(treeElement);   
+        }
 
         let propertyTree = new TreeControl(treeElement);
         let propertyTreeController = new PropertyTreeController(propertyTree);
 
         this.propertyGroups.push({propertyTree: propertyTree, propertyTreeController: propertyTreeController});
-
+        
         for (let i=0; i<propertyGroup.value.length; ++i)
         {
             const property = propertyGroup.value[i];
@@ -464,7 +472,6 @@ export default class Renderer {
             const selectedEntity = this.frameData.entities[this.selectedEntityId];
             if (selectedEntity)
             {
-
                 for (let i=0; i<selectedEntity.properties.length; ++i)
                 {
                     const propertyGroup = selectedEntity.properties[i] as RECORDING.IPropertyGroup;
