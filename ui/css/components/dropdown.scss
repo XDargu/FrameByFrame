@@ -1,0 +1,42 @@
+@import "../variables.scss";
+
+.basico-dropdown-button {
+    color: white;
+    padding: 3px 10px;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+
+    color: $on-surface-color;
+    @include surface-elevation($button-elevation);
+}
+  
+.basico-dropdown {
+    position: relative;
+    display: inline-block;
+}
+  
+.basico-dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    @include surface-elevation($list-elevation);
+    min-width: 160px;
+    font-size: 16px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 15;
+}
+  
+.basico-dropdown-content a {
+    color: $on-surface-color;
+    padding: 8px 12px;
+    text-decoration: none;
+    display: block;
+}
+  
+.basico-dropdown-content a:hover { @include surface-hovered($list-elevation);}
+.basico-dropdown:hover .basico-dropdown-content {display: block;}
+.basico-dropdown:hover .basico-dropdown-button {
+    @include text-highlight-high($on-primary-color);
+    @include surface-elevation($button-elevation, $primary-color);
+}

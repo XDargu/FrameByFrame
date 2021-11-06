@@ -1,0 +1,79 @@
+#console {
+    flex: 0 0 250px;
+    max-height: 250px;
+    display: flex;
+    flex-direction: column;
+}
+
+#console-tabs {
+    flex: 0 0 30px;
+}
+
+#default-console {
+    overflow: auto;
+}
+
+#console .basico-dropdown-button {
+    font-size: 12px;
+}
+
+#console .basico-dropdown-content {
+    font-size: 12px;
+    left: 0;
+}
+
+#console-tabs {
+    overflow: unset;
+}
+
+#console
+{
+    background: $dark-background;
+    color: $light-text;
+}
+
+#console .basico-tabs
+{
+    background: $dark-heading;
+    color: $light-text;
+}
+
+#console .basico-tabs-item
+{
+    background: none;
+    color: $text-color;
+}
+
+#console .basico-console-link
+{
+    color:$strong-secondary;
+}
+
+#console .basico-tabs-item .basico-tabs-selected
+{
+    background: none;
+    color: $light-text;
+}
+
+#console-levels .basico-dropdown-content i
+{
+    margin-right: 10px;
+}
+
+#console-levels .basico-dropdown-content
+{
+    cursor: pointer;
+}
+
+#console .basico-console-block
+{
+    display: none;
+}
+
+#console .basico-container.Verbose .basico-console-block.Verbose,
+#console .basico-container.Information .basico-console-block.Information,
+#console .basico-container.Warning .basico-console-block.Warning,
+#console .basico-container.Error .basico-console-block.Error
+{
+    display: block;
+}

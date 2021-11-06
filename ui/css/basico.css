@@ -14,12 +14,28 @@
 }
 
 .splitter {
-  flex: 0 0 6px;
-  width: 6px;
-  margin-left: -3px;
-  cursor: col-resize;
-  background: red;
+  flex: 0 0 4px;
+  margin-left: -4px;
+  cursor: ew-resize;
   z-index: 1000;
+  user-select: none;
+  transition: 0.2s;
+  transition-delay: 0.2s;
+}
+
+.splitter.vertical {
+  margin-left: 0;
+  margin-bottom: -4px;
+  cursor: ns-resize;
+}
+
+.splitter.right {
+  margin-left: 0;
+  margin-right: -4px;
+}
+
+.splitter:hover, .splitter.selected {
+  background: #f3eefa;
 }
 
 /* Elevation of elements */
@@ -894,6 +910,49 @@
   color: text-highlight-low(#bb86fc);
 }
 
+.basico-dropdown-button {
+  background-color: #04AA6D;
+  color: white;
+  padding: 16px;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+}
+
+.basico-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.basico-dropdown-content {
+  display: none;
+  position: absolute;
+  right: 0;
+  background-color: #f9f9f9;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+}
+
+.basico-dropdown-content a {
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+}
+
+.basico-dropdown-content a:hover {
+  background-color: #f1f1f1;
+}
+
+.basico-dropdown:hover .basico-dropdown-content {
+  display: block;
+}
+
+.basico-dropdown:hover .basico-dropdown-button {
+  background-color: #3e8e41;
+}
+
 /* Elevation of elements */
 :root {
   --primary-color-rgb: 187, 134, 252;
@@ -947,8 +1006,8 @@
 .basico-input {
   display: inline-block;
   width: 100%;
-  height: 32px;
-  line-height: 32px;
+  height: 30px;
+  line-height: 30px;
   font-size: 12px;
   font-weight: 400;
   color: #546778;

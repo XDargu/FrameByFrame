@@ -85,22 +85,6 @@ body {
     height: 100%;
 }
 
-/* console */
-#console {
-    flex: 0 0 250px;
-    max-height: 250px;
-    display: flex;
-    flex-direction: column;
-}
-
-#console-tabs {
-    flex: 0 0 30px;
-}
-
-#default-console {
-    overflow: auto;
-}
-
 /* Detail pane */
 #properties-container {
     flex: 1 1 auto;

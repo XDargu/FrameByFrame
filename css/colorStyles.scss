@@ -144,35 +144,6 @@ $recording-button: #DE0000;
     border-radius: 0px;
 }
 
-#console
-{
-    background: $dark-background;
-    color: $light-text;
-}
-
-#console .basico-tabs
-{
-    background: $dark-heading;
-    color: $light-text;
-}
-
-#console .basico-tabs-item
-{
-    background: none;
-    color: $text-color;
-}
-
-#console .basico-console-link
-{
-    color:$strong-secondary;
-}
-
-#console .basico-tabs-item .basico-tabs-selected
-{
-    background: none;
-    color: $light-text;
-}
-
 #connection-buttons .basico-button {
     background: $strong-secondary;
 }

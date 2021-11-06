@@ -571,6 +571,7 @@ export default class Renderer {
 
     onTimelineEventClicked(entityId: string, frame: number)
     {
+        this.logEntity(LogLevel.Verbose, LogChannel.Timeline, "Event selected in timeline. ", frame, Number.parseInt(entityId));
         this.applyFrame(frame);
         this.selectEntity(Number.parseInt(entityId));
     }
