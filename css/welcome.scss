@@ -49,6 +49,8 @@
 {
     font-size: 16px;
     font-weight: 100;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 #welcome-box b
@@ -113,6 +115,7 @@
 {
     flex: 50%;
     padding-right: 30px;
+    max-width: 400px;
 }
 
 #welcome ul
@@ -125,4 +128,15 @@
 {
     display: flex;
     align-items: center;
+}
+
+#recent-files-welcome li b
+{
+    padding-right: 10px;
+}
+
+#recent-files-welcome li b
+{
+    cursor: pointer;
+    text-decoration: underline;
 }

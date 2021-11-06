@@ -1,3 +1,5 @@
+import * as path from "path";
+
 export interface IFileClicked
 {
     (path: string) : void
@@ -5,28 +7,42 @@ export interface IFileClicked
 
 export default class FileListController
 {
-    private connectionsList: HTMLElement;
+    private welcomeList: HTMLElement;
+    private recentFilesList: HTMLElement;
     private onFileClicked: IFileClicked;
 
-    constructor(connectionsList: HTMLElement, onFileClicked: IFileClicked)
+    constructor(recentFilesList: HTMLElement, welcomeList: HTMLElement, onFileClicked: IFileClicked)
     {
-        this.connectionsList = connectionsList;
+        this.recentFilesList = recentFilesList;
+        this.welcomeList = welcomeList;
         this.onFileClicked = onFileClicked;
     }
 
     updateRecentFiles(paths: string[])
     {
-        this.connectionsList.innerHTML = paths.reduce((accumulator, currentValue) => { 
-            return accumulator + `<div class="basico-list-item" title="${currentValue}">${currentValue}</div>`;
+        this.recentFilesList.innerHTML = paths.reduce((accumulator, currentValue) => { 
+            return accumulator + `<div data-path="${currentValue}" class="basico-list-item" title="${currentValue}">${currentValue}</div>`;
         }, "");
 
-        let control = this;
-        for (let child of this.connectionsList.children)
-        {
-            let recentFileElement = child as HTMLElement;
-            recentFileElement.onclick = function() {
-                control.onFileClicked(recentFileElement.textContent);
-            };
+        const maxRecentFiles = 4;
+        this.welcomeList.innerHTML = paths.slice(0, maxRecentFiles).reduce((accumulator, currentValue) => {
+            const name = path.basename(currentValue);
+            const dir = path.dirname(currentValue);
+            return accumulator + `<li data-path="${currentValue}"><p><b>${name}</b>${dir}</p></li>`;
+        }, "");
+
+        const applyCallback = (collection: HTMLCollection) => {
+            for (let child of collection)
+            {
+                let recentFileElement = child as HTMLElement;
+                recentFileElement.onclick = () => {
+                    this.onFileClicked(recentFileElement.getAttribute("data-path"));
+                };
+            }
         }
+
+        applyCallback(this.recentFilesList.children);
+        applyCallback(this.welcomeList.children);
+        
     }
 }

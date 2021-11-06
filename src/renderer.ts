@@ -95,8 +95,9 @@ export default class Renderer {
 
         Shortcuts.registerShortcuts(this.playbackController, this.connectionsList);
 
-        let recentFilesListElement: HTMLElement = document.getElementById(`recentFilesList`);
-        this.recentFilesController = new FileListController(recentFilesListElement, this.onRecentFileClicked.bind(this))
+        let recentFilesListElement = document.getElementById(`recentFilesList`);
+        let recentFilesWelcomeElement = document.getElementById("recent-files-welcome").querySelector("ul");
+        this.recentFilesController = new FileListController(recentFilesListElement, recentFilesWelcomeElement, this.onRecentFileClicked.bind(this))
 
         this.propertyGroups = [];
         this.unprocessedFrames = [];
@@ -561,6 +562,7 @@ export default class Renderer {
     updateRecentFiles(paths: string[])
     {
         this.recentFilesController.updateRecentFiles(paths);
+
     }
 
     // Timeline callbacks
