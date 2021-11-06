@@ -65,9 +65,14 @@ export class TabControl {
         if (tabIndex < this.tabElements.length) {
             let currentTab = this.tabElements[tabIndex];
             let currentContent = this.tabContentElements[tabIndex];
-
             this.activateTab(currentTab, currentContent);
         }
+    }
+
+    closeAllTabs()
+    {
+        this.activeTab.classList.remove("basico-tabs-selected");
+        this.activeContent.style.display = "none";
     }
 
     private activateTab(tab: HTMLElement, content: HTMLElement)

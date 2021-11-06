@@ -44,6 +44,7 @@ export default class Renderer {
     private frameData: RECORDING.IFrameData;
 
     // UI Elements
+    private controlTabs: TabControl;
     private entityList: EntityList;
     private layerController: LayerController;
     private recordingOptions: RecordingOptions;
@@ -80,6 +81,10 @@ export default class Renderer {
 
         this.selectedEntityId = null;
 
+        let connectionsListElement: HTMLElement = document.getElementById(`connectionsList`);
+        this.connectionsList = new ConnectionsList(connectionsListElement, this.onMessageArrived.bind(this));
+        this.connectionsList.initialize();
+
         this.initializeTimeline();
         this.initializeUI();
 
@@ -87,36 +92,6 @@ export default class Renderer {
         //this.recordedData.addTestData();
 
         this.timeline.updateLength(this.recordedData.getSize());
-
-        let connectionsListElement: HTMLElement = document.getElementById(`connectionsList`);
-        this.connectionsList = new ConnectionsList(connectionsListElement, this.onMessageArrived.bind(this));
-        this.connectionsList.initialize();
-
-        this.connectionButtons = new ConnectionButtons(document.getElementById(`connection-buttons`), (id: ConnectionId) => {
-            this.connectionsList.toggleConnection(id);
-        });
-        this.connectionsList.addListener({
-            onConnectionAdded: (id) => {
-                this.connectionButtons.onConnectionCreated(id);
-            },
-            onConnectionRemoved: (id) => {
-                this.connectionButtons.onConnectionRemoved(id);
-            },
-            onConnectionConnected: (id) => {
-                this.connectionButtons.onConnectionConnected(id);
-            },
-            onConnectionDisconnected: (id) => {
-                this.connectionButtons.onConnectionDisconnected(id);
-            },
-            onConnectionConnecting: (id) => {
-                this.connectionButtons.onConnectionConnecting(id);
-            },
-            onConnectionDisconnecting: (id) => {
-                this.connectionButtons.onConnectionDisconnecting(id);
-            },
-        });
-
-        this.connectionsList.addConnection("localhost", "23001", false);
 
         Shortcuts.registerShortcuts(this.playbackController, this.connectionsList);
 
@@ -154,13 +129,16 @@ export default class Renderer {
             document.getElementById("recent-list"),
             document.getElementById("setting-list")
         ];
-        var controlTabs = new TabControl(
+
+        this.controlTabs = new TabControl(
             <HTMLElement[]><any>document.getElementById("control-tabs").children,
             controlTabElements
             , 0, TabBorder.Left
         );
 
-        var controlTabs = new TabControl(
+        this.controlTabs.closeAllTabs();
+
+        var consoleTabs = new TabControl(
             [
                 document.getElementById("console-tabs").children[0] as HTMLElement
             ],
@@ -205,7 +183,7 @@ export default class Renderer {
             panes: controlTabElements,
             minSize: 150,
             direction: "L",
-            minPane: document.getElementById("viewport"),
+            minPane: document.getElementById("main-content"),
             minSizePane: 300
         });
         this.rightPaneSplitter = new Splitter({
@@ -213,7 +191,7 @@ export default class Renderer {
             panes: [document.getElementById("detail-pane")],
             minSize: 150,
             direction: "R",
-            minPane: document.getElementById("viewport"),
+            minPane: document.getElementById("central-content"),
             minSizePane: 300
         });
         this.consoleSplitter = new Splitter({
@@ -221,7 +199,7 @@ export default class Renderer {
             panes: [document.getElementById("console")],
             minSize: 150,
             direction: "D",
-            minPane: document.getElementById("viewport"),
+            minPane: document.getElementById("central-content"),
             minSizePane: 300
         });
 
@@ -244,6 +222,36 @@ export default class Renderer {
         });
 
         RecordingButton.initializeRecordingButton();
+
+        // Connection buttons
+        this.connectionButtons = new ConnectionButtons(document.getElementById(`connection-buttons`), (id: ConnectionId) => {
+            this.connectionsList.toggleConnection(id);
+            this.removeWelcomeMessage();
+        });
+
+        this.connectionsList.addListener({
+            onConnectionAdded: (id) => {
+                this.connectionButtons.onConnectionCreated(id);
+            },
+            onConnectionRemoved: (id) => {
+                this.connectionButtons.onConnectionRemoved(id);
+            },
+            onConnectionConnected: (id) => {
+                this.connectionButtons.onConnectionConnected(id);
+            },
+            onConnectionDisconnected: (id) => {
+                this.connectionButtons.onConnectionDisconnected(id);
+            },
+            onConnectionConnecting: (id) => {
+                this.connectionButtons.onConnectionConnecting(id);
+                this.removeWelcomeMessage();
+            },
+            onConnectionDisconnecting: (id) => {
+                this.connectionButtons.onConnectionDisconnecting(id);
+            },
+        });
+
+        this.connectionsList.addConnection("localhost", "23001", false);
     }
 
     loadData(data: string)
@@ -260,6 +268,7 @@ export default class Renderer {
 
     clear()
     {
+        this.unprocessedFrames = [];
         this.recordedData.clear();
         this.timeline.updateLength(this.recordedData.getSize());
         this.timeline.clearEvents();
@@ -269,10 +278,8 @@ export default class Renderer {
     }
 
     onMessageArrived(data: string) : void
-    {
-        if (!RecordingButton.isRecordingActive()) { return; }
-        
-        let message: NET_TYPES.IMessage = JSON.parse(data) as NET_TYPES.IMessage;
+    {        
+        const message: NET_TYPES.IMessage = JSON.parse(data) as NET_TYPES.IMessage;
 
         //console.log("Received: " + data);
         //console.log(message);
@@ -285,6 +292,7 @@ export default class Renderer {
             {
                 case NET_TYPES.MessageType.FrameData:
                 {
+                    if (!RecordingButton.isRecordingActive()) { return; }
                     let frame: NET_TYPES.IMessageFrameData = message.data as NET_TYPES.IMessageFrameData;
 
                     // Build frame
@@ -483,7 +491,7 @@ export default class Renderer {
                 const entity = frameData.entities[entityID];
     
                 NaiveRecordedData.visitEvents(entity.events, (event: RECORDING.IEvent) => {
-                    this.timeline.addEvent(event.id, entityID, i, "#D6A3FF", 0);
+                    this.timeline.addEvent(event.id, entityID, frameIdx, "#D6A3FF", 0);
                 });
             }
         }
@@ -643,6 +651,20 @@ export default class Renderer {
 
         return "";
     }
+
+    isWelcomeMessageActive()
+    {
+        return document.body.classList.contains("welcome-active");
+    }
+
+    removeWelcomeMessage()
+    {
+        if (this.isWelcomeMessageActive())
+        {
+            document.body.classList.remove("welcome-active");
+            this.controlTabs.openTabByIndex(1);
+        }
+    }
 }
 
 const renderer = new Renderer();
@@ -694,6 +716,7 @@ ipcRenderer.on('asynchronous-reply', (event: any, arg: Messaging.Message) => {
             });
             
             document.getElementById("window-title-text").innerText = path.basename(pathName) + " - Frame by Frame";
+            renderer.removeWelcomeMessage();
             break;
         }
     }

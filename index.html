@@ -9,7 +9,7 @@
     <link rel="stylesheet" type="text/css" href="css/all.min.css">
 </head>
 
-<body>
+<body class="welcome-active">
     <div class="full-page page-wrapper">
         <div class="basico-container basico-container-compact" id="title-bar-wrapper">
             <div class="basico-tabs" id="title-bar">
@@ -93,6 +93,7 @@
                 <div class="basico-container">
                     <div class="basico-form-field search-form">
                         <input type="text" id="recording-option-search" placeholder="Type here to filter..." class="basico-input" value="">
+                        <div class="simple-message" id="recording-option-hint">When connected, select here what you want to record</div>
                         <i class="fa fa-search"></i>
                     </div>
                     <div class="basico-list" id="recording-option-selection">
@@ -142,9 +143,46 @@
                 </div>
             </div>
             <div class="splitter" id="left-pane-splitter"></div>
-            <div class="content vertical-wrapper">
-                <div id="viewport">
-                    <canvas id="render-canvas"></canvas>
+            <div class="content vertical-wrapper" id="main-content">
+                <div id="central-content">
+                    <div id="welcome">
+                        <div id="welcome-box">
+                            <h1>Welcome to Frame by Frame</h1>
+                            <div class="row">
+                                <div class="column">
+                                    <h2>Quick Start Guide</h2>
+                                    <ul>
+                                        <li class="icon-list"><div class="icon" id="welcome-icon-connect">
+                                            <button class="basico-button connection-button-disabled"><i class="fas fa-network-wired"></i></button>
+                                        </div><p><b>Connect</b> to your game, engine or server</p></li>
+                                        <li class="icon-list"><div class="icon" id="welcome-icon-record">
+                                            <button class="basico-button basico-small"><i class="fas fa-circle"></i></button>
+                                        </div><p><b>Start</b> the recording</p></li>
+                                        <li class="icon-list"><div class="icon" id="welcome-icon-select">
+                                            <i class="fas fa-check-square"></i>
+                                        </div><p><b>Select</b> what you want to record</p></li>
+                                    </ul>
+                                    <h2>Recent</h2>
+                                    <div id="recent-files-welcome"></div>
+                                    <ul>
+                                        <li><p><b>Recording01</b>C:\Data\MyRecordings</p></li>
+                                        <li><p><b>Test01</b>C:\Data\MyRecordings\Old</p></li>
+                                        <li><p><b>BugHappening</b>C:\Bugs\Legacy</p></li>
+                                    </ul>
+                                </div>
+                                <div class="column">
+                                    <h2>Quick Start Guide</h2>
+                                    <ul>
+                                        <li><p>View the <b>online documentation</b></p></li>
+                                        <li><p>How to connect to <b>Unity</b>, <b>Unreal Engine</b> or <b>CryEngine</b></p></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="viewport">
+                        <canvas id="render-canvas"></canvas>
+                    </div>
                 </div>
                 <div class="splitter vertical" id="bottom-pane-splitter"></div>
                 <div id="console" class="basico-footer">

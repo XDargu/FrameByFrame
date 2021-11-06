@@ -40,8 +40,8 @@ export class Console
 
     static log(logLevel: LogLevel, channel: LogChannel, ...message: (string | ILogAction)[])
     {
-        console.log(message);
-        console.log(Console.logCallback);
+        //console.log(message);
+        //console.log(Console.logCallback);
         Console.logCallback(logLevel, channel, ...message);
     }
 

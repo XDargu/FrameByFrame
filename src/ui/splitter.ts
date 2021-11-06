@@ -126,17 +126,21 @@ export class Splitter
                 }
             }
 
-            if (isVertical())
+            const activePane = getActivePane();
+            if (activePane)
             {
-                const paneHeight = getActivePane().offsetHeight;
-                const minPaneHeight = settings.minPane.offsetHeight;
-                ApplyCorrection(paneHeight, minPaneHeight);
-            }
-            else
-            {
-                const paneWith = getActivePane().offsetWidth;
-                const minPaneWidth = settings.minPane.offsetWidth;
-                ApplyCorrection(paneWith, minPaneWidth);
+                if (isVertical())
+                {
+                    const paneHeight = activePane.offsetHeight;
+                    const minPaneHeight = settings.minPane.offsetHeight;
+                    ApplyCorrection(paneHeight, minPaneHeight);
+                }
+                else
+                {
+                    const paneWith = activePane.offsetWidth;
+                    const minPaneWidth = settings.minPane.offsetWidth;
+                    ApplyCorrection(paneWith, minPaneWidth);
+                }
             }
         }
 
