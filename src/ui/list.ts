@@ -40,14 +40,11 @@ export class ListControl {
 
     private addElementToList(element : HTMLElement, callbacks : IListCallbacks, value : string = null)
     {
-        var listWrapper = this.listWrapper;
+        let listWrapper = this.listWrapper;
+        let listControl = this;
         if (callbacks) {
             element.addEventListener("click", function() {
-                listWrapper.querySelectorAll(".basico-list-item").forEach(function(node){
-                    node.classList.remove("basico-list-item-active");
-                });
-                this.classList.add("basico-list-item-active");
-
+                listControl.markElementSelected(listWrapper, this);
                 if (callbacks && callbacks.onItemSelected != null)
                 {
                     callbacks.onItemSelected(this);
@@ -78,10 +75,23 @@ export class ListControl {
 
     public selectElementOfValue(value : string, preventCallback: boolean = false) {
         let element = this.getItemWithValue(value) as HTMLElement;
-        if (element && !preventCallback)
+        if (element)
         {
-            element.click();
+            if (preventCallback) {
+                this.markElementSelected(this.listWrapper, element);
+            }
+            else {
+                element.click();
+            }
         }
+    }
+
+    markElementSelected(listWrapper: HTMLElement, listItem : HTMLElement)
+    {
+        listWrapper.querySelectorAll(".basico-list-item").forEach(function(node){
+            node.classList.remove("basico-list-item-active");
+        });
+        listItem.classList.add("basico-list-item-active");
     }
 
     setValueOfItem(listItem : HTMLElement, value : string) {

@@ -353,6 +353,10 @@ export default class Renderer {
             this.sceneController.setEntity(entity);
         }
 
+        if (this.selectedEntityId) {
+            this.entityList.selectEntity(this.selectedEntityId);
+        }
+
         // Draw properties
         this.renderProperties();
 
