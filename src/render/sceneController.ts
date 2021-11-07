@@ -969,11 +969,14 @@ export default class SceneController
             entityData.properties.set(meshProperty.id, customMesh);
             this.propertyToEntity.set(meshProperty.id, entity.id);
 
-            /*let customMesh2 = new BABYLON.Mesh("custom", this._scene);
-            vertexData.applyToMesh(customMesh2);
-            customMesh2.material = this.materialPool.getMaterialByColor({r: 0, g: 0, b: 0, a: 1});
-            customMesh2.material.wireframe = true;
-            customMesh2.parent = customMesh;*/
+            if (meshProperty.wireframe == true)
+            {
+                let wireframeMesh = new BABYLON.Mesh("customwire", this._scene);
+                vertexData.applyToMesh(wireframeMesh);
+                wireframeMesh.material = this.materialPool.getMaterialByColor({r: 0, g: 0, b: 0, a: 1});
+                wireframeMesh.material.wireframe = true;
+                wireframeMesh.parent = customMesh;
+            }
 
         }
     }

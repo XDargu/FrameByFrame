@@ -73,6 +73,7 @@ export interface IPropertyLine extends IProperyShape {
 export interface IPropertyMesh extends IProperyShape {
 	vertices: number[];
 	indices?: number[];
+	wireframe?: boolean;
 	value: string;
 }
 
