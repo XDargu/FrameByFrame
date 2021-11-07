@@ -19,6 +19,7 @@ function createWindow() {
     minWidth: 650,
     minHeight: 550, 
     backgroundColor: '#FFF',
+    icon: __dirname + "../Icon.ico",
     fullscreen: false,
     frame: false,
     webPreferences: {
@@ -37,7 +38,10 @@ function createWindow() {
   }));
 
   // Open the DevTools.
-  mainWindow.webContents.openDevTools({mode: 'detach'});
+  if (!app.isPackaged)
+  {
+    mainWindow.webContents.openDevTools({mode: 'detach'});
+  }
 
   // Emitted when the window is closed.
   mainWindow.on("closed", () => {
@@ -60,6 +64,19 @@ function onRendererReady()
 {
   // We need to send the recent files here because the first time they load the renderer is not ready yet
   onFileHistoryChanged(fileManager.pathHistory.paths);
+
+  // Arguments
+  if (app.isPackaged)
+  {
+    process.argv.unshift(null);
+  }
+
+  // parameters is now an array containing any files/folders that your OS will pass to your application
+  const parameters = process.argv.slice(2);
+  if (parameters.length > 0)
+  {
+    onOpenRecentFileClicked(parameters[0]);
+  }
 }
 
 // File callbacks

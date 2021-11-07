@@ -32,6 +32,12 @@
             "dependsOrder": "sequence",
             "dependsOn": ["Sass Compile", "Npm build"],
             "group": "build"
-        }
+        },
+        {
+            "label": "Dist",
+            "type": "shell",
+            "command": "npm run dist",
+            "group": "build"
+         }
     ]
 }
