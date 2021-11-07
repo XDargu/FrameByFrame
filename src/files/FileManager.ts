@@ -26,7 +26,9 @@ export default class FileManager
 
     constructor()
     {
-        this.historyDir = "/.config/history";
+        const {app} = require('electron');
+
+        this.historyDir = app.getPath('userData') + "/config/history";
         this.historyFile = "info.json";
         this.pathHistory = { paths: [] };
     }
