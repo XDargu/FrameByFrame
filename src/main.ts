@@ -2,7 +2,7 @@ import { app, BrowserWindow, Menu, ipcMain, dialog, ipcRenderer } from "electron
 import * as path from "path";
 import * as url from "url";
 import MenuBuilder from "./components/Menu";
-import FileManager from './files/FileManager';
+import FileManager, { ISettings } from './files/FileManager';
 import { LogChannel, LogLevel, ILogAction } from "./frontend/ConsoleController";
 import * as Messaging from "./messaging/MessageDefinitions";
 let mainWindow: Electron.BrowserWindow;
@@ -55,15 +55,16 @@ function createWindow() {
   Menu.setApplicationMenu(menuBuilder.buildMenu(mainWindow));
 
   fileManager = new FileManager();
-  fileManager.initialize(onFileHistoryChanged);
+  fileManager.initialize(onFileHistoryChanged, onSettingsChanged);
 
   mainWindow.webContents.once('dom-ready', onRendererReady);
 }
 
 function onRendererReady()
 {
-  // We need to send the recent files here because the first time they load the renderer is not ready yet
+  // We need to send the config here because the first time they load the renderer is not ready yet
   onFileHistoryChanged(fileManager.pathHistory.paths);
+  onSettingsChanged(fileManager.settings);
 
   // Arguments
   if (app.isPackaged)
@@ -85,6 +86,11 @@ function onFileHistoryChanged(paths: string[])
   menuBuilder.updateRecentMenu(paths);
   Menu.setApplicationMenu(menuBuilder.buildMenu(mainWindow));
   mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.UpdateRecentFiles, paths.toString()));
+}
+
+function onSettingsChanged(settings: ISettings)
+{
+  mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.SettingsChanged, settings));
 }
 
 function onOpenFileClicked()

@@ -12,31 +12,143 @@ export interface IHistoryChangedCallback
     (paths: string[]) : void;
 }
 
+export interface ISettingsChangedCallback
+{
+    (settings: ISettings) : void;
+}
+
 interface IPathHistory
 {
     paths : string[];
+}
+
+export interface ISettings
+{
+    recordOnConnect: boolean,
+}
+
+interface ConfigFileError
+{
+    (error: NodeJS.ErrnoException) : void;
+}
+interface ConfigFileSuccess
+{
+    (data: IPathHistory | ISettings) : void;
+}
+
+interface LoadConfigFileParams
+{
+    dir: string;
+    file: string;
+    data: IPathHistory | ISettings;
+    onError: ConfigFileError;
+    onSuccess: ConfigFileSuccess;
+}
+
+interface UpdateConfigFileParams
+{
+    dir: string;
+    file: string;
+    data: IPathHistory | ISettings;
+    onError: ConfigFileError;
+    onSuccess: ConfigFileSuccess;
+}
+
+function loadConfigFile(params: LoadConfigFileParams)
+{
+    console.log('Loading history');
+    if (!fs.existsSync(params.dir))
+    {
+        console.log('Creating config dir');
+        fs.mkdirSync(params.dir, { recursive: true });
+    }
+
+    const path = params.dir + "/" + params.file;
+
+    if (!fs.existsSync(path))
+    {
+        console.log('Creating config file');
+        fs.writeFile(path, JSON.stringify(params.data), (err) => {
+            if(err){
+                console.log("An error ocurred creating the config file "+ err.message)
+            }
+        });
+    }
+    else
+    {
+        console.log('Loading config file');
+        fs.readFile(path, 'utf-8', (err, fileData) => {
+            if(err){
+                params.onError(err);
+                return; 
+            }
+            params.data = JSON.parse(fileData);
+            params.onSuccess(params.data);
+        });
+    }
+}
+
+function updateConfigFile(params: UpdateConfigFileParams)
+{
+    const path = params.dir + "/" + params.file;
+    
+    fs.writeFile(path, JSON.stringify(params.data), (err) => {
+        if(err){
+            params.onError(err);
+            return;
+        }
+
+        params.onSuccess(params.data);
+    });
+}
+
+function displayError(err: NodeJS.ErrnoException, title: string, message: string)
+{
+    const options = {
+        type: 'error',
+        buttons: ['OK'],
+        title: title,
+        message: message,
+        detail: err.message,
+        checkboxChecked: false,
+      };
+    dialog.showMessageBox(null, options);
 }
 
 export default class FileManager
 {
     historyDir : string;
     historyFile : string;
+
+    settingsDir : string;
+    settingsFile : string;
+
     pathHistory : IPathHistory;
+    settings : ISettings;
+
     onHistoryChangedCallback : IHistoryChangedCallback;
+    onSettingsChangedCallback: ISettingsChangedCallback;
 
     constructor()
     {
         const {app} = require('electron');
 
         this.historyDir = app.getPath('userData') + "/config/history";
+        this.settingsDir = app.getPath('userData') + "/config/settings";
         this.historyFile = "info.json";
+        this.settingsFile = "settings.json";
         this.pathHistory = { paths: [] };
+        this.settings = {
+            recordOnConnect: true
+        };
     }
 
-    initialize(onHistoryChangedCallback : IHistoryChangedCallback)
+    initialize(onHistoryChangedCallback : IHistoryChangedCallback, onSettingsChangedCallback: ISettingsChangedCallback)
     {
         this.onHistoryChangedCallback = onHistoryChangedCallback;
+        this.onSettingsChangedCallback = onSettingsChangedCallback;
         this.loadHistory();
+        this.loadSettings();
     }
 
     openFile(callback: IOpenFileCallback)
@@ -106,54 +218,63 @@ export default class FileManager
 
     loadHistory()
     {
-        console.log('Loading history');
-        if (!fs.existsSync(this.historyDir))
-        {
-            console.log('Creating history dir');
-            fs.mkdirSync(this.historyDir, { recursive: true });
-        }
-
-        const historyPath = this.getHistoryPath();
-
-        if (!fs.existsSync(historyPath))
-        {
-            console.log('Creating history file');
-            fs.writeFile(historyPath, JSON.stringify(this.pathHistory), (err) => {
-                if(err){
-                    console.log("An error ocurred creating the history file "+ err.message)
-                }
-            });
-        }
-        else
-        {
-            console.log('Loading history file');
-            fs.readFile(historyPath, 'utf-8', (err, data) => {
-                if(err){
-                    const options = {
-                        type: 'error',
-                        buttons: ['OK'],
-                        title: 'Error loading recent files',
-                        message: 'An error ocurred loading the list of recent files',
-                        detail: err.message,
-                        checkboxChecked: false,
-                      };
-                    dialog.showMessageBox(null, options);
-                    return; 
-                }
-
-                this.pathHistory = JSON.parse(data);
+        loadConfigFile({
+            dir: this.historyDir,
+            file: this.historyFile,
+            data: this.pathHistory,
+            onError: (err) => {
+                displayError(err, 'Error loading recent files', 'An error ocurred loading the list of recent files');
+            },
+            onSuccess: (data: IPathHistory) => {
                 if (this.onHistoryChangedCallback)
                 {
+                    this.pathHistory = data;
                     this.onHistoryChangedCallback(this.pathHistory.paths);
                 }
-            });
-        }
+            }
+        });
+    }
+
+    loadSettings()
+    {
+        loadConfigFile({
+            dir: this.settingsDir,
+            file: this.settingsFile,
+            data: this.settings,
+            onError: (err) => {
+                displayError(err, 'Error loading settings', 'An error ocurred loading the list of settings');
+            },
+            onSuccess: (data: ISettings) => {
+                if (this.onSettingsChangedCallback)
+                {
+                    this.settings = data;
+                    this.onSettingsChangedCallback(this.settings);
+                }
+            }
+        });
+    }
+
+    updateSettings()
+    {
+        updateConfigFile({
+            dir: this.settingsDir,
+            file: this.settingsFile,
+            data: this.settings,
+            onError: (err) => {
+                displayError(err, 'Error saving settings', 'An error ocurred saving the list of settings');
+            },
+            onSuccess: () => {
+                if (this.onSettingsChangedCallback)
+                {
+                    this.onSettingsChangedCallback(this.settings);
+                }
+            }
+        });
     }
 
     updateHistory(path : string)
     {
-        const historyPath = this.getHistoryPath();
-
+        // Limit recent paths to 15
         const index = this.pathHistory.paths.indexOf(path);
         if (index > -1)
         {
@@ -165,19 +286,20 @@ export default class FileManager
         {
             this.pathHistory.paths.pop();
         }
-        fs.writeFile(historyPath, JSON.stringify(this.pathHistory), (err) => {
-            if(err){
-                console.log("An error ocurred creating the history file "+ err.message)
-            }
 
-            if (this.onHistoryChangedCallback)
-            {
-                this.onHistoryChangedCallback(this.pathHistory.paths);
+        updateConfigFile({
+            dir: this.historyDir,
+            file: this.historyFile,
+            data: this.pathHistory,
+            onError: (err) => {
+                displayError(err, 'Error saving recent files', 'An error ocurred saving the list of recent files');
+            },
+            onSuccess: () => {
+                if (this.onHistoryChangedCallback)
+                {
+                    this.onHistoryChangedCallback(this.pathHistory.paths);
+                }
             }
         });
-    }
-
-    private getHistoryPath() : string {
-        return `${this.historyDir}/${this.historyFile}`;
     }
 }

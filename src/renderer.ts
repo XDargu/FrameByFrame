@@ -1,6 +1,4 @@
-import { ipcRenderer, TouchBarScrubber } from "electron";
-import * as path from "path";
-import * as Utils from "./utils/utils";
+import { ipcRenderer } from "electron";
 import ConnectionsList from './frontend/ConnectionsList';
 import ConnectionButtons from "./frontend/ConnectionButtons";
 import { Console, ConsoleWindow, ILogAction, LogChannel, LogLevel } from "./frontend/ConsoleController";
@@ -9,6 +7,7 @@ import { ConnectionId } from './network/conectionsManager';
 import { LayerController } from "./frontend/LayersController";
 import { PropertyTreeController } from "./frontend/PropertyTreeController";
 import * as Messaging from "./messaging/MessageDefinitions";
+import { initMessageHandling } from "./messaging/RendererMessageHandler";
 import * as NET_TYPES from './network/types';
 import * as RECORDING from './recording/RecordingData';
 import SceneController from './render/sceneController';
@@ -16,7 +15,6 @@ import { PlaybackController } from "./timeline/PlaybackController";
 import Timeline from './timeline/timeline';
 import { initWindowControls } from "./frontend/WindowControls";
 import { TreeControl } from "./ui/tree";
-import { ListControl } from "./ui/list";
 import { Splitter } from "./ui/splitter";
 import { TabBorder, TabControl } from "./ui/tabs";
 import * as Shortcuts from "./frontend/Shortcuts";
@@ -24,6 +22,7 @@ import * as RecordingButton from "./frontend/RecordingButton";
 import { NaiveRecordedData } from "./recording/RecordingData";
 import { RecordingOptions } from "./frontend/RecordingOptions";
 import { EntityList } from "./frontend/EntityList";
+import { ISettings } from "./files/FileManager";
 
 const { shell } = require('electron');
 
@@ -69,7 +68,11 @@ export default class Renderer {
     // Playback
     private playbackController: PlaybackController;
 
+    // Timeline optimization
     private unprocessedFrames: number[];
+
+    // Settings
+    private settings: ISettings;
 
     initialize(canvas: HTMLCanvasElement) {
 
@@ -150,7 +153,6 @@ export default class Renderer {
         );
 
         const consoleElement = document.getElementById("default-console").children[0] as HTMLElement;
-        console.log(consoleElement);
         this.consoleWindow = new ConsoleWindow(consoleElement, LogLevel.Verbose);
         Console.setCallbacks((logLevel: LogLevel, channel: LogChannel, ...message: (string | ILogAction)[]) => {this.consoleWindow.log(logLevel, channel, ...message)});
 
@@ -239,6 +241,10 @@ export default class Renderer {
             },
             onConnectionConnected: (id) => {
                 this.connectionButtons.onConnectionConnected(id);
+                if (this.settings.recordOnConnect)
+                {
+                    RecordingButton.record();
+                }
             },
             onConnectionDisconnected: (id) => {
                 this.connectionButtons.onConnectionDisconnected(id);
@@ -253,6 +259,11 @@ export default class Renderer {
         });
 
         this.connectionsList.addConnection("localhost", "23001", false);
+    }
+
+    updateSettings(settings: ISettings)
+    {
+        this.settings = settings;
     }
 
     loadData(data: string)
@@ -281,9 +292,6 @@ export default class Renderer {
     onMessageArrived(data: string) : void
     {        
         const message: NET_TYPES.IMessage = JSON.parse(data) as NET_TYPES.IMessage;
-
-        //console.log("Received: " + data);
-        //console.log(message);
 
         // TODO: Make message types: frame data, command, etc. In an enum.
         // Also, move to a helper class
@@ -316,7 +324,6 @@ export default class Renderer {
                     this.timeline.updateLength(this.recordedData.getSize());
                     this.unprocessedFrames.push(this.recordedData.getSize() - 1);
                     
-                    //console.log(frameToBuild);
                     break;
                 }
                 case NET_TYPES.MessageType.RecordingOptions:
@@ -378,7 +385,6 @@ export default class Renderer {
 
     onEntityHovered(entityId: number)
     {
-        console.log("Hovered: " + entityId);
         this.sceneController.markEntityAsHovered(entityId);
     }
 
@@ -680,54 +686,4 @@ export default class Renderer {
 const renderer = new Renderer();
 renderer.initialize(document.getElementById('render-canvas') as HTMLCanvasElement);
 initWindowControls();
-
-ipcRenderer.on('asynchronous-reply', (event: any, arg: Messaging.Message) => {
-    console.log(arg);
-    switch(arg.type)
-    {
-        case Messaging.MessageType.OpenResult:
-        {
-            renderer.loadData(arg.data as string)
-            break;
-        }
-        case Messaging.MessageType.ClearResult:
-        {
-            const result = arg.data as Messaging.IClearResultData;
-            if (result.clear)
-            {
-                renderer.clear();
-            }
-            break;
-        }
-        case Messaging.MessageType.RequestSave:
-        {
-            renderer.onSaveFile();
-            break;
-        }
-        case Messaging.MessageType.UpdateRecentFiles:
-        {
-            const recentFiles = (arg.data as string).split(",");
-            console.log(recentFiles);
-            renderer.updateRecentFiles(recentFiles);
-            break;
-        }
-        case Messaging.MessageType.LogToConsole:
-        {
-            const result = arg.data as Messaging.ILogData;
-            Console.log(result.level, result.channel, ...result.message);
-            break;
-        }
-        case Messaging.MessageType.FileOpened:
-        {
-            const pathName = arg.data as string;
-            Console.log(LogLevel.Information, LogChannel.Files, `Loading file `, {
-                text: pathName,
-                callback: () => { shell.showItemInFolder(path.resolve(pathName)); }
-            });
-            
-            document.getElementById("window-title-text").innerText = path.basename(pathName) + " - Frame by Frame";
-            renderer.removeWelcomeMessage();
-            break;
-        }
-    }
-});
+initMessageHandling(renderer);
