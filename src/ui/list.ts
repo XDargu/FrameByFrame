@@ -86,6 +86,11 @@ export class ListControl {
         }
     }
 
+    public isElementSelected(listItem: HTMLElement)
+    {
+        return listItem.classList.contains("basico-list-item-active");
+    }
+
     markElementSelected(listWrapper: HTMLElement, listItem : HTMLElement)
     {
         listWrapper.querySelectorAll(".basico-list-item").forEach(function(node){

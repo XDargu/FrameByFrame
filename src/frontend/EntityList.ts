@@ -82,7 +82,7 @@ export class EntityList
         for (let i=0; i<remainingElements; i++)
         {
             let element = <HTMLElement>listElement.children[i];
-            const visible = this.filter == "" || filterText(this.filter, element.innerText.toLowerCase());
+            const visible = this.filter == "" || filterText(this.filter, element.innerText.toLowerCase()) || this.entityList.isElementSelected(element);
             element.style.display = visible ? "block" : "none";
         }
     }

@@ -377,8 +377,9 @@ export class NaiveRecordedData {
 
 	loadFromString(data: string)
 	{
-		this.frameData = JSON.parse(data).frameData;
-		this.layers = JSON.parse(data).layers;
+		let dataJson = JSON.parse(data);
+		this.frameData = dataJson.frameData;
+		this.layers = dataJson.layers;
 		if (this.layers == undefined)
 		{
 			this.layers = [];

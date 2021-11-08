@@ -280,6 +280,7 @@ export default class Renderer {
                     this.unprocessedFrames.push(i);
                 }
                 this.applyFrame(0);
+                this.controlTabs.openTabByIndex(0);
             }
             catch (error)
             {
@@ -417,6 +418,7 @@ export default class Renderer {
         this.logEntity(LogLevel.Verbose, LogChannel.Selection, `Selected entity:`, this.frameData.frameId, entityId);
         this.selectedEntityId = entityId;
         this.buildPropertyTree();
+        this.controlTabs.openTabByIndex(0);
         this.entityList.selectEntity(entityId);
         this.sceneController.markEntityAsSelected(entityId);
         this.renderProperties();
