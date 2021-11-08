@@ -12,7 +12,8 @@ export enum MessageType { // TODO: Maybe rename these to make clear the directio
     UpdateRecentFiles,
     LogToConsole,
     FileOpened,
-    SettingsChanged
+    SettingsChanged,
+    LongOperationOngoing
 }
 
 export interface IClearResultData

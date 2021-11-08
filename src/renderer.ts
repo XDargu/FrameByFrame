@@ -268,14 +268,25 @@ export default class Renderer {
 
     loadData(data: string)
     {
-        this.clear();
-        this.recordedData.loadFromString(data);
-        this.timeline.updateLength(this.recordedData.getSize());
-        for (let i=0; i<this.recordedData.frameData.length; ++i)
-        {
-            this.unprocessedFrames.push(i);
-        }
-        this.applyFrame(0);
+        this.openModal("Processing data");
+        setTimeout(() => {
+            this.clear();
+
+            try {
+                this.recordedData.loadFromString(data);
+                this.timeline.updateLength(this.recordedData.getSize());
+                for (let i=0; i<this.recordedData.frameData.length; ++i)
+                {
+                    this.unprocessedFrames.push(i);
+                }
+                this.applyFrame(0);
+            }
+            catch (error)
+            {
+                Console.log(LogLevel.Error, LogChannel.Files, "Error loading file: " + error.message)
+            }
+            this.closeModal();
+        }, 1);
     }
 
     clear()
@@ -608,6 +619,7 @@ export default class Renderer {
     // Recent files callbacks
     onRecentFileClicked(path: string)
     {
+        this.openModal("Loading File");
         ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.Load, path));
     }
 
@@ -629,6 +641,18 @@ export default class Renderer {
                 enabled: enabled
             }
         });
+    }
+
+    // Modal
+    openModal(text: string)
+    {
+        document.getElementById("loadingModal").style.display = "block";
+        document.getElementById("modalText").innerText = text;
+    }
+
+    closeModal()
+    {
+        document.getElementById("loadingModal").style.display = "none";
     }
 
     // Logging wrappers

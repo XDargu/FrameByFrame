@@ -2,6 +2,11 @@ import { app, remote, dialog } from "electron";
 import * as fs from 'fs';
 import * as path from 'path';
 
+export interface IFileAcceptedCallback
+{
+    () : void
+}
+
 export interface IOpenFileCallback
 {
     (path: string, content: string) : void;
@@ -151,7 +156,7 @@ export default class FileManager
         this.loadSettings();
     }
 
-    openFile(callback: IOpenFileCallback)
+    openFile(callback: IOpenFileCallback, acceptedCallback: IFileAcceptedCallback)
     {
         const options = {
             filters: [
@@ -164,6 +169,8 @@ export default class FileManager
                 console.log("You didn't open a file");
                 return;
             }
+
+            acceptedCallback();
 
             this.loadFile(paths[0], callback);
         });

@@ -63,6 +63,11 @@ export function initMessageHandling(renderer: Renderer)
                 renderer.updateSettings(arg.data as ISettings);
                 break;
             }
+            case Messaging.MessageType.LongOperationOngoing:
+            {
+                renderer.openModal(arg.data as string);
+                break;
+            }
         }
     });
 }

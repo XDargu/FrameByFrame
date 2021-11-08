@@ -98,6 +98,8 @@ function onOpenFileClicked()
   fileManager.openFile((pathName: string, content: string) => {
     mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.FileOpened, pathName));
     mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
+  }, () => {
+    mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LongOperationOngoing, "Opening File"));
   });
 }
 
@@ -186,6 +188,8 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
       fileManager.openFile((pathName: string, content: string) => {
         event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.FileOpened, pathName));
         event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
+      }, () => {
+        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LongOperationOngoing, "Opening File"));
       });
       break;
     }
