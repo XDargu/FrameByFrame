@@ -364,7 +364,7 @@ export default class Renderer {
         this.layerController.setLayers(this.recordedData.layers);
 
         // Update frame counter
-        const frameText = (this.getFrameCount() > 0) ? (`Frame: ${frame + 1} / ${this.getFrameCount()}`) : "No frames";
+        const frameText = (this.getFrameCount() > 0) ? (`Frame: ${frame + 1} / ${this.getFrameCount()} (Frame ID: ${this.frameData.frameId})`) : "No frames";
         document.getElementById("timeline-frame-counter").textContent = frameText;
 
         // Update entity list
@@ -658,27 +658,50 @@ export default class Renderer {
     }
 
     // Logging wrappers
+    findFrameById(frameId: number) : number
+    {
+        // TODO: Make an index?
+        for (let i=0; i< this.recordedData.frameData.length; ++i)
+        {
+            if (this.recordedData.frameData[i].frameId === frameId)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     logErrorToConsole(message: string)
     {
         Console.log(LogLevel.Error, LogChannel.Default, message);
     }
 
-    logEntity(level: LogLevel, channel: LogChannel, message: string, frame: number, entityId: number)
+    logEntity(level: LogLevel, channel: LogChannel, message: string, frameId: number, entityId: number)
     {
         Console.log(level, channel, `${message} `, {
-            text: `${this.findEntityName(entityId)} (id: ${entityId.toString()}) (frame: ${frame.toString()})`, 
+            text: `${this.findEntityName(entityId)} (id: ${entityId.toString()}) (frameID: ${frameId.toString()})`, 
             callback: () => {
-                this.applyFrame(frame);
-                this.selectEntity(entityId);
+                const frame = this.findFrameById(frameId)
+                if (frame >= 0)
+                {
+                    this.applyFrame(frame);
+                    this.selectEntity(entityId);
+                }
             }
         });
     }
 
-    logFrame(level: LogLevel, channel: LogChannel, message: string, frame: number)
+    logFrame(level: LogLevel, channel: LogChannel, message: string, frameId: number)
     {
         Console.log(level, channel, `${message} `, {
-            text: `(frame: ${frame.toString()})`,
-            callback: () => { this.applyFrame(frame); }
+            text: `(frameId: ${frameId.toString()})`,
+            callback: () => {
+                const frame = this.findFrameById(frameId)
+                if (frame >= 0)
+                {
+                    this.applyFrame(frame);
+                }
+            }
         });
     }
 
