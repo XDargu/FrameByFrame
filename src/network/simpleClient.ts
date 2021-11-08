@@ -5,7 +5,7 @@ export interface IWebSocketOnOpenCallback
 
 export interface IWebSocketOnCloseCallback
 {
-	(ev: CloseEvent) : any | null;
+	(ev: CloseEvent, causedByUser: boolean) : any | null;
 }
 
 export interface IWebSocketOnErrorCallback
@@ -22,6 +22,7 @@ export default class Connection {
     port: string;
     protocol: string;
 	webSocket: WebSocket;
+	lastDisconnectionCausedByUser: boolean;
 	
     onMessage: IWebSocketOnMessageCallback;
     onConnected: IWebSocketOnOpenCallback;
@@ -37,6 +38,7 @@ export default class Connection {
 		this.onMessage = null;
 		this.onConnected = null;
 		this.onDisconnected = null;
+		this.lastDisconnectionCausedByUser = false;
 	}
 	
 	connect() {
@@ -73,7 +75,8 @@ export default class Connection {
 		console.log("WebSocket CLOSE: " + JSON.stringify(closeEvent, null, 4));
 		
 		if (this.onDisconnected) {
-			this.onDisconnected(closeEvent);
+			this.onDisconnected(closeEvent, this.lastDisconnectionCausedByUser);
+			this.lastDisconnectionCausedByUser = false;
 		}
 	}
 	
@@ -94,7 +97,8 @@ export default class Connection {
 		}
 	}
 	
-	disconnect() {
+	disconnect(causedByUser: boolean) {
+		this.lastDisconnectionCausedByUser = causedByUser;
 		this.webSocket.close();
 	}
 

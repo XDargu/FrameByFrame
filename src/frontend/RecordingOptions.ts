@@ -124,11 +124,12 @@ export class RecordingOptions
         return div;
     }
 
-    private getOrCreateOption(name: string, enabled: boolean = false) : IRecordingOption
+    private getOrCreateOption(name: string, enabled: boolean) : IRecordingOption
     {
         const option = this.options.get(name);
         if (option != undefined)
         {
+            option.enabled = enabled;
             return option;
         }
         

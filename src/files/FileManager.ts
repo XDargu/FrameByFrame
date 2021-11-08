@@ -30,6 +30,15 @@ interface IPathHistory
 export interface ISettings
 {
     recordOnConnect: boolean,
+    autoReconnect: boolean
+}
+
+function createDefaultSettings() : ISettings
+{
+    return {
+        recordOnConnect: true,
+        autoReconnect: true
+    };
 }
 
 interface ConfigFileError
@@ -143,9 +152,7 @@ export default class FileManager
         this.historyFile = "info.json";
         this.settingsFile = "settings.json";
         this.pathHistory = { paths: [] };
-        this.settings = {
-            recordOnConnect: true
-        };
+        this.settings = createDefaultSettings();
     }
 
     initialize(onHistoryChangedCallback : IHistoryChangedCallback, onSettingsChangedCallback: ISettingsChangedCallback)
@@ -254,7 +261,7 @@ export default class FileManager
             onSuccess: (data: ISettings) => {
                 if (this.onSettingsChangedCallback)
                 {
-                    this.settings = data;
+                    this.settings = Object.assign({}, createDefaultSettings(), data);
                     this.onSettingsChangedCallback(this.settings);
                 }
             }

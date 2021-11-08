@@ -7,19 +7,24 @@ export interface IMessageCallback
     (data: string) : void
 }
 
-export interface IConnectonCallback
+export interface IConnectionCallback
 {
     (id: ConnectionId) : void
 }
 
+export interface IConnectionClosedCallback
+{
+    (id: ConnectionId, causedByUser: boolean) : void
+}
+
 export interface ConnectionListener
 {
-    onConnectionAdded: IConnectonCallback;
-    onConnectionRemoved: IConnectonCallback;
-    onConnectionConnected: IConnectonCallback;
-    onConnectionDisconnected: IConnectonCallback;
-    onConnectionConnecting:  IConnectonCallback;
-    onConnectionDisconnecting:  IConnectonCallback;
+    onConnectionAdded: IConnectionCallback;
+    onConnectionRemoved: IConnectionCallback;
+    onConnectionConnected: IConnectionCallback;
+    onConnectionDisconnected: IConnectionClosedCallback;
+    onConnectionConnecting:  IConnectionCallback;
+    onConnectionDisconnecting:  IConnectionCallback;
 }
 
 interface ConnectionCardData
@@ -90,7 +95,6 @@ export default class ConnectionsList
         this.connectionsMap.set(id, elementData.connectionElement);
         
         elementData.connectButton.onclick = () => {
-            console.log("Hello");
             this.connectButtonCallback(id);
         };
         elementData.removeButton.onclick = () => {
@@ -113,13 +117,13 @@ export default class ConnectionsList
                 value.onConnectionConnected(id);
             });
         };
-        connection.onDisconnected = (closeEvent : CloseEvent) => {
+        connection.onDisconnected = (closeEvent : CloseEvent, causedByUser: boolean) => {
             Console.log(LogLevel.Verbose, LogChannel.Connections, (connection.isConnected() ? "Connection lost" : "Can't connect") + ` to: ${address}:${port}`);
             elementData.connectionStatus.textContent = "Disconnected";
             elementData.connectButton.textContent = "Connect";
 
             this.listeners.forEach((value: ConnectionListener) => {
-                value.onConnectionDisconnected(id);
+                value.onConnectionDisconnected(id, causedByUser);
             });
         };
         connection.onError = (errorEvent : Event) => {
@@ -223,7 +227,7 @@ export default class ConnectionsList
         if (connection.isConnected())
         {
             Console.log(LogLevel.Verbose, LogChannel.Connections, `Disconnecting from: ${connection.hostname}:${connection.port}`);
-            connection.disconnect();
+            connection.disconnect(true);
             connectionStatus.textContent = "Disconnecting...";
             connectButton.textContent = "Connect";
 

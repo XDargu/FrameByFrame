@@ -28,7 +28,7 @@ export class ConnectionsManager {
         let connection : Connection = this.connections.get(id);
         if (connection)
         {
-            connection.disconnect();
+            connection.disconnect(true);
         }
 
         return this.connections.delete(id);

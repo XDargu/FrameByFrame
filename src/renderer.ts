@@ -246,8 +246,15 @@ export default class Renderer {
                     RecordingButton.record();
                 }
             },
-            onConnectionDisconnected: (id) => {
+            onConnectionDisconnected: (id, causedByUser) => {
                 this.connectionButtons.onConnectionDisconnected(id);
+                if (!causedByUser && this.settings.autoReconnect)
+                {
+                    Console.log(LogLevel.Information, LogChannel.Connections, 
+                        "Trying to reconnect automatically. To change this, ",
+                        this.createLogSettingsLink("change the Auto Reconnect setting."));
+                    this.connectionsList.toggleConnection(id);
+                }
             },
             onConnectionConnecting: (id) => {
                 this.connectionButtons.onConnectionConnecting(id);
@@ -703,6 +710,16 @@ export default class Renderer {
                 }
             }
         });
+    }
+
+    createLogSettingsLink(text: string) : ILogAction
+    {
+        return {
+            text: text,
+            callback: () => {
+                this.controlTabs.openTabByIndex(4);
+            }
+        };
     }
 
     // Utils
