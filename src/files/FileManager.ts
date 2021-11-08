@@ -268,8 +268,9 @@ export default class FileManager
         });
     }
 
-    updateSettings()
+    updateSettings(settings: ISettings)
     {
+        this.settings = settings;
         updateConfigFile({
             dir: this.settingsDir,
             file: this.settingsFile,
@@ -278,10 +279,6 @@ export default class FileManager
                 displayError(err, 'Error saving settings', 'An error ocurred saving the list of settings');
             },
             onSuccess: () => {
-                if (this.onSettingsChangedCallback)
-                {
-                    this.onSettingsChangedCallback(this.settings);
-                }
             }
         });
     }

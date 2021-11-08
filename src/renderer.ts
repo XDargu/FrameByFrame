@@ -23,6 +23,7 @@ import { NaiveRecordedData } from "./recording/RecordingData";
 import { RecordingOptions } from "./frontend/RecordingOptions";
 import { EntityList } from "./frontend/EntityList";
 import { ISettings } from "./files/FileManager";
+import { SettingsList } from "./frontend/SettingsList";
 
 const { shell } = require('electron');
 
@@ -72,6 +73,7 @@ export default class Renderer {
     private unprocessedFrames: number[];
 
     // Settings
+    private settingsList: SettingsList;
     private settings: ISettings;
 
     initialize(canvas: HTMLCanvasElement) {
@@ -226,6 +228,11 @@ export default class Renderer {
 
         RecordingButton.initializeRecordingButton();
 
+        // Create settings
+        this.settingsList = new SettingsList(document.getElementById("settings"), 
+            document.getElementById("settings-search") as HTMLInputElement,
+            () => { this.saveSettings(); });
+
         // Connection buttons
         this.connectionButtons = new ConnectionButtons(document.getElementById(`connection-buttons`), (id: ConnectionId) => {
             this.connectionsList.toggleConnection(id);
@@ -271,6 +278,12 @@ export default class Renderer {
     updateSettings(settings: ISettings)
     {
         this.settings = settings;
+        this.settingsList.setSettings(this.settings);
+    }
+
+    saveSettings()
+    {
+        ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.SaveSettings, this.settings));
     }
 
     loadData(data: string)

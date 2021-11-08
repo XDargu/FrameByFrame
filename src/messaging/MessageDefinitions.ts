@@ -13,6 +13,7 @@ export enum MessageType { // TODO: Maybe rename these to make clear the directio
     LogToConsole,
     FileOpened,
     SettingsChanged,
+    SaveSettings,
     LongOperationOngoing
 }
 

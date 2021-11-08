@@ -222,5 +222,10 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
       });
       break;
     }
+    case Messaging.MessageType.SaveSettings:
+    {
+      fileManager.updateSettings(arg.data as ISettings);
+      break;
+    }
   }
 })
