@@ -390,95 +390,101 @@ export default class Timeline {
         this.ctx.closePath();
     }
 
+    private drawLeftHalf(position: number) { 
+        this.ctx.arc(position, Timeline.eventHeight, Timeline.eventRadius, Math.PI * 0.5, Math.PI * 1.5);
+    };
+    private drawRightHalf(position: number) { 
+        this.ctx.arc(position, Timeline.eventHeight, Timeline.eventRadius, Math.PI * -0.5, Math.PI * 0.5);
+    };
+    private drawCircle(position: number) { 
+        this.ctx.arc(position, Timeline.eventHeight, Timeline.eventRadius, 0, Math.PI * 2);
+    };
+
     private renderEvents()
     {
-        const drawLeftHalf = (position: number) => { 
-            this.ctx.arc(position, Timeline.eventHeight, Timeline.eventRadius, Math.PI * 0.5, Math.PI * 1.5);
-        };
-        const drawRightHalf = (position: number) => { 
-            this.ctx.arc(position, Timeline.eventHeight, Timeline.eventRadius, Math.PI * -0.5, Math.PI * 0.5);
-        };
-        const drawCircle = (position: number) => { 
-            this.ctx.arc(position, Timeline.eventHeight, Timeline.eventRadius, 0, Math.PI * 2);
-        };
-
-        for (const eventList of this.eventsPerFrame.values())
+        console.log(this.frameSize);
+        if (this.frameSize > 5.7)
         {
-            const event = eventList[0];
-            const position : number = this.frame2canvas(event.frame);
-
-            this.ctx.fillStyle = event.color;
-            this.ctx.beginPath();
-            drawCircle(position);
-            this.ctx.fill();
-        }
-
-        /*enum State
-        {
-            Initial = 0,
-            Drawing
-        }
-
-        // TODO: Figure out the first and last frame to render
-        const firstFrame : number = 0;
-        const lastFrame : number = this.length;
-
-        let state = State.Initial;
-
-        let i : number = firstFrame;
-        for (; i < lastFrame; )
-        {
-            const eventList = this.eventsPerFrame.get(i);
-            if (eventList)
+            for (const eventList of this.eventsPerFrame.values())
             {
                 const event = eventList[0];
-                const position : number = this.frame2canvas(i);
-
-                const nextFrameEvents = this.getEventsInFrame(i + 1);
-                const prevFrameEvents = this.getEventsInFrame(i - 1);
-                const hasNextFrameEvent = nextFrameEvents != undefined;
-                const hasPrevFrameEvent = prevFrameEvents != undefined;
+                const position : number = this.frame2canvas(event.frame);
 
                 this.ctx.fillStyle = event.color;
-
                 this.ctx.beginPath();
-
-                if (!hasNextFrameEvent || !hasPrevFrameEvent)
-                {
-                    drawCircle(position);
-                    i++;
-                }
-                else
-                {
-                    i++;
-                    let j = i + 1;
-                    while (j < lastFrame)
-                    {
-                        const peekEventList = this.eventsPerFrame.get(j);
-                        if (peekEventList)
-                        {
-                            j++
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    }
-
-                    const lastPosition : number = this.frame2canvas(j);
-
-                    drawLeftHalf(position);
-                    this.ctx.lineTo(lastPosition, Timeline.eventHeight - Timeline.eventRadius);
-                    drawRightHalf(lastPosition);
-                    this.ctx.lineTo(position, Timeline.eventHeight + Timeline.eventRadius);
-                    i = j;
-                }
-
+                this.drawCircle(position);
                 this.ctx.fill();
             }
+        }
+        else
+        {
+            enum State
+            {
+                Initial = 0,
+                Drawing
+            }
 
-            i++;
-        }*/
+            // TODO: Figure out the first and last frame to render
+            const firstFrame : number = 0;
+            const lastFrame : number = this.length;
+
+            let state = State.Initial;
+
+            let i : number = firstFrame;
+            for (; i < lastFrame; )
+            {
+                const eventList = this.eventsPerFrame.get(i);
+                if (eventList)
+                {
+                    const event = eventList[0];
+                    const position : number = this.frame2canvas(i);
+
+                    const nextFrameEvents = this.getEventsInFrame(i + 1);
+                    const prevFrameEvents = this.getEventsInFrame(i - 1);
+                    const hasNextFrameEvent = nextFrameEvents != undefined;
+                    const hasPrevFrameEvent = prevFrameEvents != undefined;
+
+                    this.ctx.fillStyle = event.color;
+
+                    this.ctx.beginPath();
+
+                    if (!hasNextFrameEvent && !hasPrevFrameEvent)
+                    {
+                        this.drawCircle(position);
+                        i++;
+                    }
+                    else
+                    {
+                        i++;
+                        let j = i + 1;
+                        while (j < lastFrame)
+                        {
+                            const peekEventList = this.eventsPerFrame.get(j);
+                            if (peekEventList)
+                            {
+                                j++
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
+
+                        const lastPosition : number = this.frame2canvas(j - 1);
+
+                        this.drawLeftHalf(position);
+                        this.ctx.lineTo(lastPosition, Timeline.eventHeight - Timeline.eventRadius);
+                        this.drawRightHalf(lastPosition);
+                        this.ctx.lineTo(position, Timeline.eventHeight + Timeline.eventRadius);
+                        i = j;
+                    }
+
+                    this.ctx.fill();
+                }
+
+                i++;
+            }
+        }
 
         if (this.hoveredEvent)
         {
@@ -486,7 +492,7 @@ export default class Timeline {
             this.ctx.strokeStyle = "#6DE080";
             this.ctx.beginPath();
             this.ctx.lineWidth = 3;
-            drawCircle(position);
+            this.drawCircle(position);
             this.ctx.stroke();
         }
 
