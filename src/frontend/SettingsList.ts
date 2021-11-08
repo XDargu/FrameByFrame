@@ -153,18 +153,46 @@ export class SettingsList
     {
         this.filter = this.searchFilter.value.toLowerCase();
 
-        /*let listElement = this.settingsList;
-        const remainingElements = listElement.childElementCount;
+        // basico-text-oneline
 
-        for (let i=0; i<remainingElements; i++)
+        let settingsWrapper = this.settingsList;
+        const remainingElements = settingsWrapper.childElementCount;
+
+        for (let i=0; i<remainingElements; i+=2)
         {
-            let element = <HTMLElement>listElement.children[i];
-            let nameElement: HTMLInputElement = element.querySelector('.basico-text-oneline');
-            if (nameElement)
+            let isTitleVisible: boolean = false;
+            let titleElement = <HTMLElement>settingsWrapper.children[i];
+            let listElement = <HTMLElement>settingsWrapper.children[i + 1];
+
+            if (titleElement && listElement)
             {
-                const visible = this.filter == "" || filterText(this.filter, nameElement.innerText.toLowerCase());
-                element.style.display = visible ? "block" : "none";
+                isTitleVisible = this.filter == "" || filterText(this.filter, titleElement.innerText.toLowerCase());
             }
-        }*/
+
+            for (let j=0; j<listElement.childElementCount; ++j)
+            {
+                let settingElement = <HTMLElement>listElement.children[j];
+                if (settingElement)
+                {
+                    if (isTitleVisible)
+                    {
+                        settingElement.style.display = "block";
+                    }
+                    else
+                    {
+                        let nameElement: HTMLInputElement = settingElement.querySelector('.basico-text-oneline');
+                        if (nameElement)
+                        {
+                            const isSettingVisible = this.filter == "" || filterText(this.filter, nameElement.innerText.toLowerCase());
+                            isTitleVisible = isTitleVisible || isSettingVisible;
+                            settingElement.style.display = isSettingVisible ? "block" : "none";
+                        }
+                    }
+                }
+            }
+
+            titleElement.style.display = isTitleVisible ? "block" : "none";
+            listElement.style.display = isTitleVisible ? "block" : "none";
+        }
     }
 }
