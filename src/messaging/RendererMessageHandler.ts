@@ -1,6 +1,6 @@
 import * as path from "path";
 import { ipcRenderer } from "electron";
-import { ISettings } from "../files/FileManager";
+import { ISettings } from "../files/Settings";
 import { LogChannel, LogLevel } from "../frontend/ConsoleController";
 import { Console } from "../frontend/ConsoleController";
 import * as Messaging from "../messaging/MessageDefinitions";

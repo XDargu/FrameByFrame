@@ -22,7 +22,7 @@ import * as RecordingButton from "./frontend/RecordingButton";
 import { NaiveRecordedData } from "./recording/RecordingData";
 import { RecordingOptions } from "./frontend/RecordingOptions";
 import { EntityList } from "./frontend/EntityList";
-import { ISettings } from "./files/FileManager";
+import { ISettings } from "./files/Settings";
 import { SettingsList } from "./frontend/SettingsList";
 
 const { shell } = require('electron');
@@ -32,6 +32,15 @@ interface PropertyTreeGroup
 {
     propertyTree: TreeControl;
     propertyTreeController: PropertyTreeController;
+}
+
+enum TabIndices
+{
+    EntityList = 0,
+    RecordingOptions,
+    Connections,
+    Recent,
+    Settings
 }
 
 export default class Renderer {
@@ -300,7 +309,7 @@ export default class Renderer {
                     this.unprocessedFrames.push(i);
                 }
                 this.applyFrame(0);
-                this.controlTabs.openTabByIndex(0);
+                this.controlTabs.openTabByIndex(TabIndices.EntityList);
             }
             catch (error)
             {
@@ -428,9 +437,12 @@ export default class Renderer {
     onEntitySelected(entityId: number)
     {
         this.onEntitySelectedOnScene(entityId);
-        this.logEntity(LogLevel.Verbose, LogChannel.Selection, `Moving camera to entity:`, this.frameData.frameId, entityId);
 
-        this.sceneController.moveCameraToSelection();
+        if (this.settings.moveToEntityOnSelection)
+        {
+            this.logEntity(LogLevel.Verbose, LogChannel.Selection, `Moving camera to entity:`, this.frameData.frameId, entityId);
+            this.sceneController.moveCameraToSelection();
+        }
     }
 
     onEntitySelectedOnScene(entityId: number)
@@ -438,7 +450,10 @@ export default class Renderer {
         this.logEntity(LogLevel.Verbose, LogChannel.Selection, `Selected entity:`, this.frameData.frameId, entityId);
         this.selectedEntityId = entityId;
         this.buildPropertyTree();
-        this.controlTabs.openTabByIndex(0);
+        if (this.settings.openEntityListOnSelection)
+        {
+            this.controlTabs.openTabByIndex(TabIndices.EntityList);
+        }
         this.entityList.selectEntity(entityId);
         this.sceneController.markEntityAsSelected(entityId);
         this.renderProperties();
@@ -730,7 +745,7 @@ export default class Renderer {
         return {
             text: text,
             callback: () => {
-                this.controlTabs.openTabByIndex(4);
+                this.controlTabs.openTabByIndex(TabIndices.Settings);
             }
         };
     }
@@ -757,7 +772,7 @@ export default class Renderer {
         if (this.isWelcomeMessageActive())
         {
             document.body.classList.remove("welcome-active");
-            this.controlTabs.openTabByIndex(1);
+            this.controlTabs.openTabByIndex(TabIndices.RecordingOptions);
         }
     }
 }

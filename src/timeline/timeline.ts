@@ -402,7 +402,6 @@ export default class Timeline {
 
     private renderEvents()
     {
-        console.log(this.frameSize);
         if (this.frameSize > 5.7)
         {
             for (const eventList of this.eventsPerFrame.values())

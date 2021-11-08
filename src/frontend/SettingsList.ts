@@ -1,4 +1,4 @@
-import { ISettings } from "../files/FileManager";
+import { ISettings } from "../files/Settings";
 import { ListControl } from "../ui/list";
 import { filterText } from "../utils/utils";
 
@@ -133,10 +133,18 @@ export class SettingsList
     setSettings(settings: ISettings)
     {
         this.settingsList.innerHTML = "";
-        let group = SettingsBuilder.createGroup("Connection");
-        SettingsBuilder.addBooleanSetting(group, "Record on connect", settings.recordOnConnect, (value) => {settings.recordOnConnect = value; this.onSettingsChanged(); })
-        SettingsBuilder.addBooleanSetting(group, "Auto re-connect", settings.autoReconnect, (value) => {settings.autoReconnect = value; this.onSettingsChanged(); })
-        this.settingsList.appendChild(group.fragment);
+        {
+            let group = SettingsBuilder.createGroup("Connection");
+            SettingsBuilder.addBooleanSetting(group, "Record on connect", settings.recordOnConnect, (value) => {settings.recordOnConnect = value; this.onSettingsChanged(); })
+            SettingsBuilder.addBooleanSetting(group, "Auto re-connect", settings.autoReconnect, (value) => {settings.autoReconnect = value; this.onSettingsChanged(); })
+            this.settingsList.appendChild(group.fragment);
+        }
+        {
+            let group = SettingsBuilder.createGroup("Viewer");
+            SettingsBuilder.addBooleanSetting(group, "Move camera on selection", settings.moveToEntityOnSelection, (value) => {settings.moveToEntityOnSelection = value; this.onSettingsChanged(); })
+            SettingsBuilder.addBooleanSetting(group, "Open entity list on selection", settings.openEntityListOnSelection, (value) => {settings.openEntityListOnSelection = value; this.onSettingsChanged(); })
+            this.settingsList.appendChild(group.fragment);
+        }
 
         this.filterElements();
     }

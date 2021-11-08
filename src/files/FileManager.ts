@@ -1,6 +1,6 @@
 import { app, remote, dialog } from "electron";
 import * as fs from 'fs';
-import * as path from 'path';
+import { createDefaultSettings, ISettings } from "./Settings";
 
 export interface IFileAcceptedCallback
 {
@@ -25,20 +25,6 @@ export interface ISettingsChangedCallback
 interface IPathHistory
 {
     paths : string[];
-}
-
-export interface ISettings
-{
-    recordOnConnect: boolean,
-    autoReconnect: boolean
-}
-
-function createDefaultSettings() : ISettings
-{
-    return {
-        recordOnConnect: true,
-        autoReconnect: true
-    };
 }
 
 interface ConfigFileError

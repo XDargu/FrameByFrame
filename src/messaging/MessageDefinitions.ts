@@ -1,4 +1,4 @@
-import { ISettings } from "../files/FileManager";
+import { ISettings } from "../files/Settings";
 import { ConsoleWindow, LogLevel, ILogAction, LogChannel } from "../frontend/ConsoleController";
 
 export enum MessageType { // TODO: Maybe rename these to make clear the direction of the messge (main->render or render->main)

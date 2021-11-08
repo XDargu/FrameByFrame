@@ -2,7 +2,8 @@ import { app, BrowserWindow, Menu, ipcMain, dialog, ipcRenderer } from "electron
 import * as path from "path";
 import * as url from "url";
 import MenuBuilder from "./components/Menu";
-import FileManager, { ISettings } from './files/FileManager';
+import FileManager from './files/FileManager';
+import { ISettings } from "./files/Settings";
 import { LogChannel, LogLevel, ILogAction } from "./frontend/ConsoleController";
 import * as Messaging from "./messaging/MessageDefinitions";
 let mainWindow: Electron.BrowserWindow;
