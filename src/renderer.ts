@@ -21,9 +21,9 @@ import * as Shortcuts from "./frontend/Shortcuts";
 import * as RecordingButton from "./frontend/RecordingButton";
 import { NaiveRecordedData } from "./recording/RecordingData";
 import { RecordingOptions } from "./frontend/RecordingOptions";
-import { EntityList } from "./frontend/EntityList";
 import { ISettings } from "./files/Settings";
 import { SettingsList } from "./frontend/SettingsList";
+import { EntityTree } from "./frontend/EntityTree";
 
 const { shell } = require('electron');
 
@@ -54,7 +54,7 @@ export default class Renderer {
 
     // UI Elements
     private controlTabs: TabControl;
-    private entityList: EntityList;
+    private entityTree: EntityTree;
     private layerController: LayerController;
     private recordingOptions: RecordingOptions;
     private selectedEntityId: number;
@@ -123,18 +123,16 @@ export default class Renderer {
     {
         this.currentPropertyId = 0;
 
-        const entityListElement = <HTMLElement>document.getElementById('entity-list').querySelector('.basico-list');
         const callbacks = {
             onEntitySelected: (entityId: number) => { this.onEntitySelected(entityId); },
             onEntityMouseOver: (entityId: number) => { this.onEntityHovered(entityId); },
             onEntityMouseOut: (entityId: number) => { this.onEntityStoppedHovering(entityId); }
         }
 
-        this.entityList = new EntityList(
-            entityListElement,
+        this.entityTree = new EntityTree(
+            document.getElementById("entity-tree"),
             document.getElementById('entity-search') as HTMLInputElement,
-            callbacks
-        );
+            callbacks);
 
         // Create tab control
         const controlTabElements: HTMLElement[] = [
@@ -397,7 +395,7 @@ export default class Renderer {
         document.getElementById("timeline-frame-counter").textContent = frameText;
 
         // Update entity list
-        this.entityList.setEntities(this.frameData.entities);
+        this.entityTree.setEntities(this.frameData.entities);
 
         // Update renderer
         this.sceneController.hideAllEntities();
@@ -411,7 +409,7 @@ export default class Renderer {
         }
 
         if (this.selectedEntityId) {
-            this.entityList.selectEntity(this.selectedEntityId);
+            this.entityTree.selectEntity(this.selectedEntityId);
         }
 
         // Draw properties
@@ -454,7 +452,7 @@ export default class Renderer {
         {
             this.controlTabs.openTabByIndex(TabIndices.EntityList);
         }
-        this.entityList.selectEntity(entityId);
+        this.entityTree.selectEntity(entityId);
         this.sceneController.markEntityAsSelected(entityId);
         this.renderProperties();
     }

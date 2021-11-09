@@ -804,6 +804,15 @@
   background-color: #393639;
 }
 
+.basico-tree .basico-tree-item-wrapper:hover:not(.basico-no-hover) {
+  background-color: #393639;
+  cursor: pointer;
+}
+
+.basico-tree .basico-tree-item-wrapper.basico-tree-item-active {
+  background-color: #605b60;
+}
+
 .basico-tree .basico-tree-closed .basico-tree-item-toggle {
   transform: rotate(-90deg);
 }
@@ -1456,6 +1465,10 @@ body {
   background: #5F516A;
 }
 
+.basico-tree .basico-tree-item-wrapper.basico-tree-item-active {
+  background: #8442B9;
+}
+
 .basico-list {
   background: #302935;
   color: #eee;
@@ -1637,6 +1650,10 @@ body {
   background: #5F516A;
 }
 
+.basico-tree .basico-tree-item-wrapper.basico-tree-item-active {
+  background: #8442B9;
+}
+
 .basico-list {
   background: #302935;
   color: #eee;
@@ -1782,6 +1799,10 @@ body {
 
 .basico-tree .basico-tree-item-wrapper:hover {
   background: #5F516A;
+}
+
+.basico-tree .basico-tree-item-wrapper.basico-tree-item-active {
+  background: #8442B9;
 }
 
 .basico-list {

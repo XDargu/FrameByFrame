@@ -1,3 +1,13 @@
+export interface ITreeCallback {
+    (item: HTMLElement) : void;
+}
+
+export interface ITreeCallbacks {
+    onItemSelected: ITreeCallback;
+    onItemMouseOver: ITreeCallback;
+    onItemMouseOut: ITreeCallback;
+}
+
 export class TreeControl {
 
     root: HTMLElement;
@@ -6,7 +16,7 @@ export class TreeControl {
         this.root = treeElement;
     }
 
-    addItem(parentListItem : HTMLElement, content : HTMLElement[], text : string = null, hidden = false, value : string = null) {
+    addItem(parentListItem : HTMLElement, content : HTMLElement[], text : string = null, hidden = false, value : string = null, callbacks: ITreeCallbacks = null) {
 
         let parentList = parentListItem.querySelector("ul");
 
@@ -46,7 +56,30 @@ export class TreeControl {
 
         if (value != null)
         {
+            console.log("Attribute: " + value)
             listItem.setAttribute('data-tree-value', value);
+        }
+
+        wrapper.onclick = () => {
+            this.markElementSelected(wrapper);
+            if (callbacks && callbacks.onItemSelected != null)
+            {
+                callbacks.onItemSelected(listItem);
+            }
+        };
+
+        if (callbacks && callbacks.onItemMouseOver != null)
+        {
+            wrapper.onmouseover = () => {
+                callbacks.onItemMouseOver(listItem);
+            };
+        }
+
+        if (callbacks && callbacks.onItemMouseOut != null)
+        {
+            wrapper.onmouseout = () => {
+                callbacks.onItemMouseOut(listItem);
+            };
         }
 
         return listItem;
@@ -83,5 +116,29 @@ export class TreeControl {
     {
         let rootList = this.root.querySelector("ul");
         rootList.innerHTML = "";
+    }
+
+    markElementSelected(treeItemWrapperElement : HTMLElement)
+    {
+        this.root.querySelectorAll(".basico-tree-item-wrapper").forEach(function(node){
+            node.classList.remove("basico-tree-item-active");
+        });
+        treeItemWrapperElement.classList.add("basico-tree-item-active");
+    }
+
+    public selectElementOfValue(value : string, preventCallback: boolean = false) {
+        let listItem = this.getItemWithValue(value) as HTMLElement;
+        if (listItem)
+        {
+            let wrapper = listItem.querySelector(".basico-tree-item-wrapper") as HTMLElement;
+            console.log("ListITem");
+            console.log(listItem);
+            if (preventCallback) {
+                this.markElementSelected(wrapper);
+            }
+            else {
+                wrapper.click();
+            }
+        }
     }
 }

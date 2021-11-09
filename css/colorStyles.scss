@@ -52,6 +52,11 @@ $recording-button: #DE0000;
     background: $light-selection;
 }
 
+.basico-tree .basico-tree-item-wrapper.basico-tree-item-active
+{
+    background: $strong-primary;
+}
+
 .basico-list
 {
     background: $darker-background;

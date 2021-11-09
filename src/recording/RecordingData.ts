@@ -93,6 +93,7 @@ export interface IEvent {
 
 export interface IEntity {
 	id: number;
+	parentId: number;
 	groupMap?: any;
 	properties: IPropertyGroup[];
 	events: IEvent[];
@@ -485,7 +486,7 @@ export class NaiveRecordedData {
 			{
 				const entityID = j + 1;
 
-				var entity : IEntity = { id: entityID, properties: [], events: [] };
+				var entity : IEntity = { id: entityID, parentId: 0, properties: [], events: [] };
 				
 				var propertyGroup = { type: "group", name: "properties", value: [
 					{ type: "int", name: "Target ID", value: 122 },
@@ -628,7 +629,7 @@ export class RecordedData {
 			
 			if (!entityData)
 			{
-				frameData.entities[currentEntityID] = { id: 35, properties: [], events:[], groupMap: {} };
+				frameData.entities[currentEntityID] = { id: 35, parentId: 0, properties: [], events:[], groupMap: {} };
 				entityData = frameData.entities[currentEntityID];
 			}
 			
@@ -684,7 +685,7 @@ export class RecordedData {
 			{
 				const entityID = j + 1;
 
-				var entity : IEntity = { id: entityID, properties: [], events: [] };
+				var entity : IEntity = { id: entityID, parentId: 0, properties: [], events: [] };
 				
 				var propertyGroup = { type: "group", name: "properties", value: [
 					{ type: "int", name: "Target ID", value: 122 },
