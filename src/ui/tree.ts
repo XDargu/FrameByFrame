@@ -56,7 +56,6 @@ export class TreeControl {
 
         if (value != null)
         {
-            console.log("Attribute: " + value)
             listItem.setAttribute('data-tree-value', value);
         }
 
@@ -131,8 +130,6 @@ export class TreeControl {
         if (listItem)
         {
             let wrapper = listItem.querySelector(".basico-tree-item-wrapper") as HTMLElement;
-            console.log("ListITem");
-            console.log(listItem);
             if (preventCallback) {
                 this.markElementSelected(wrapper);
             }

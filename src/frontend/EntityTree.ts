@@ -40,12 +40,34 @@ export class EntityTree {
     setEntities(entities: RECORDING.IFrameEntityData)
     {
         this.entityTree.clear();
+        let addedEntities = new Map<number, boolean>();
         for (const entityID in entities) {
             const entity = entities[entityID];
-            const entityName = RECORDING.NaiveRecordedData.getEntityName(entity);
-            
-            this.entityTree.addItem(this.findEntityRoot(entity) as HTMLElement, [], entityName, false, entityID, this.callbacks);
+            if (!addedEntities.has(entity.id))
+            {
+                // Add parents recursively
+                let parentId = entity.parentId;
+                while (parentId != 0)
+                {
+                    let parentEntity = entities[parentId];
+                    if (parentId && !addedEntities.has(parentId) && parentEntity != undefined)
+                    {
+                        this.addEntity(parentEntity);
+                        addedEntities.set(parentId, true);
+                    }
+                    parentId = parentEntity.parentId;
+                }
+                
+                this.addEntity(entity);
+                addedEntities.set(entity.id, true);
+            }
         }
+    }
+
+    addEntity(entity: RECORDING.IEntity)
+    {
+        const entityName = RECORDING.NaiveRecordedData.getEntityName(entity);            
+        this.entityTree.addItem(this.findEntityRoot(entity) as HTMLElement, [], entityName, false, entity.id.toString(), this.callbacks);
     }
 
     findElementById(entityID: number) : Element
@@ -74,7 +96,6 @@ export class EntityTree {
 
     public selectEntity(entityId: number)
     {
-        console.log("Selecting: " + entityId);
         this.entityTree.selectElementOfValue(entityId.toString(), true);
     }
 }
