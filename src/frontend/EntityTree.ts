@@ -55,7 +55,7 @@ export class EntityTree {
                         this.addEntity(parentEntity);
                         addedEntities.set(parentId, true);
                     }
-                    parentId = parentEntity.parentId;
+                    parentId = parentEntity != undefined ? parentEntity.parentId : 0;
                 }
                 
                 this.addEntity(entity);
