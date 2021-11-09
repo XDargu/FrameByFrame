@@ -1469,6 +1469,10 @@ body {
   background: #8442B9;
 }
 
+.basico-list-item:not(:last-child) {
+  border-bottom: 1px solid #424242;
+}
+
 .basico-card {
   background: #302935;
   color: #C4C4C4;
@@ -1646,6 +1650,10 @@ body {
   background: #8442B9;
 }
 
+.basico-list-item:not(:last-child) {
+  border-bottom: 1px solid #424242;
+}
+
 .basico-card {
   background: #302935;
   color: #C4C4C4;
@@ -1787,6 +1795,10 @@ body {
 
 .basico-list-item.basico-list-item-active {
   background: #8442B9;
+}
+
+.basico-list-item:not(:last-child) {
+  border-bottom: 1px solid #424242;
 }
 
 .basico-card {

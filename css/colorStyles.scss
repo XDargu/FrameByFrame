@@ -68,6 +68,11 @@ $recording-button: #DE0000;
     background: $strong-primary;
 }
 
+.basico-list-item:not(:last-child)
+{
+    border-bottom: 1px solid $text-color-darker;
+}
+
 .basico-card
 {
     background: $darker-background;
