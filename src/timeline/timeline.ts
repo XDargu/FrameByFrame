@@ -342,12 +342,8 @@ export default class Timeline {
         this.ctx.fillStyle = "#574D5F";
         this.ctx.fillRect(0, 0, this.width, Timeline.headerHeight);
 
-        // TODO: Figure out the first and last frame to render
         const firstFrameOnCanvas : number = Math.floor(this.getMinFrameOnCanvas());
         const lastFrameOnCanvas : number = Math.ceil(this.getMaxFrameOnCanvas());
-
-        //const firstFrame : number = 0;
-        //const lastFrame : number = this.length;
 
         // Numbers and marks
         // Numbers will be collapsed if they are below a certain threshold
@@ -430,22 +426,18 @@ export default class Timeline {
 
         if (this.frameSize > 5.7)
         {
-            for (const eventList of this.eventsPerFrame.values())
-            {
+            this.eventsPerFrame.forEach((eventList, frame) => {
                 const event = eventList[0];
-
-                if (event.frame >= firstFrame && event.frame <= lastFrame)
+                if (frame >= firstFrame && frame <= lastFrame)
                 {
                     const position : number = this.frame2canvas(event.frame);
 
                     this.ctx.fillStyle = event.color;
                     this.ctx.beginPath();
                     this.drawCircle(position);
-                    
+                    this.ctx.fill();
                 }
-            }
-
-            this.ctx.fill();
+            });
         }
         else
         {
