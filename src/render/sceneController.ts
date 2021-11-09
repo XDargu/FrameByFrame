@@ -1084,11 +1084,22 @@ export default class SceneController
     {
         if (this.selectedEntity)
         {
-            this.moveCameraToPosition(this.selectedEntity.mesh.position);
+            let radius = 4;
+            let position = this.selectedEntity.mesh.position;
+
+            for (let propertyMesh of this.selectedEntity.properties.values())
+            {
+                if (propertyMesh.getBoundingInfo().boundingSphere.radius > radius)
+                {
+                    //radius = propertyMesh.getBoundingInfo().boundingSphere.radius;
+                    //position = propertyMesh.getBoundingInfo().boundingSphere.centerWorld;
+                }
+            }
+            this.moveCameraToPosition(position, radius * 1.5);
         }
     }
 
-    private moveCameraToPosition(targetPosition: BABYLON.Vector3)
+    private moveCameraToPosition(targetPosition: BABYLON.Vector3, radius: number)
     {
         var ease = new BABYLON.CubicEase();
         ease.setEasingMode(BABYLON.EasingFunction.EASINGMODE_EASEINOUT);
@@ -1101,7 +1112,9 @@ export default class SceneController
         let meshToCamera = this._camera.position.subtract(targetPosition);
         meshToCamera.y = Math.max(0, meshToCamera.y);
         meshToCamera.normalize();
-        const targetPos = targetPosition.add(meshToCamera.scale(4));
+        let targetPos = targetPosition.add(meshToCamera.scale(radius));
+        const distMeshToTarget = targetPos.subtract(targetPosition).length();
+        targetPos.y = targetPosition.y + distMeshToTarget * 0.3;
 
         let moveTo = BABYLON.Animation.CreateAndStartAnimation('moveTo', this._camera, 'position', 60, 20,
             this._camera.position,
