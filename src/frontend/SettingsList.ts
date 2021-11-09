@@ -156,17 +156,19 @@ export class SettingsList
         // basico-text-oneline
 
         let settingsWrapper = this.settingsList;
-        const remainingElements = settingsWrapper.childElementCount;
 
-        for (let i=0; i<remainingElements; i+=2)
+        for (let i=0; i<settingsWrapper.childElementCount; i+=2)
         {
-            let isTitleVisible: boolean = false;
             let titleElement = <HTMLElement>settingsWrapper.children[i];
             let listElement = <HTMLElement>settingsWrapper.children[i + 1];
 
+            let foundInTitle: boolean = false;
+            let foundInGroup: boolean = false;
+
             if (titleElement && listElement)
             {
-                isTitleVisible = this.filter == "" || filterText(this.filter, titleElement.innerText.toLowerCase());
+                foundInTitle = this.filter == "" || filterText(this.filter, titleElement.innerText.toLowerCase());
+                foundInGroup = foundInTitle;
             }
 
             for (let j=0; j<listElement.childElementCount; ++j)
@@ -174,7 +176,7 @@ export class SettingsList
                 let settingElement = <HTMLElement>listElement.children[j];
                 if (settingElement)
                 {
-                    if (isTitleVisible)
+                    if (foundInTitle)
                     {
                         settingElement.style.display = "block";
                     }
@@ -183,16 +185,16 @@ export class SettingsList
                         let nameElement: HTMLInputElement = settingElement.querySelector('.basico-text-oneline');
                         if (nameElement)
                         {
-                            const isSettingVisible = this.filter == "" || filterText(this.filter, nameElement.innerText.toLowerCase());
-                            isTitleVisible = isTitleVisible || isSettingVisible;
-                            settingElement.style.display = isSettingVisible ? "block" : "none";
+                            const foundInSetting = this.filter == "" || filterText(this.filter, nameElement.innerText.toLowerCase());
+                            foundInGroup = foundInGroup || foundInSetting;
+                            settingElement.style.display = foundInSetting ? "block" : "none";
                         }
                     }
                 }
             }
 
-            titleElement.style.display = isTitleVisible ? "block" : "none";
-            listElement.style.display = isTitleVisible ? "block" : "none";
+            titleElement.style.display = foundInGroup ? "block" : "none";
+            listElement.style.display = foundInGroup ? "block" : "none";
         }
     }
 }
