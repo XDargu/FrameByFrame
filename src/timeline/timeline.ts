@@ -298,6 +298,22 @@ export default class Timeline {
         this.translation = Math.min(Math.max(this.translation + deltaTranslation, 0), this.totalSize - this.width);
     }
 
+    setCurrentFrame(frame: number)
+    {
+        this.currentFrame = frame;
+
+        if (this.currentFrame > this.getMaxFrameOnCanvas())
+        {
+            const canvasDist = this.frame2canvas(this.currentFrame) - this.width;
+            this.translation = this.translation + canvasDist;
+        }
+        if (this.currentFrame < this.getMinFrameOnCanvas())
+        {
+            const canvasDist = this.frame2canvas(this.currentFrame);
+            this.translation = this.translation + canvasDist;
+        }
+    }
+
     render(timeStamp : number)
     {
         if (this.timeStampLastUpdate != timeStamp)
@@ -327,8 +343,11 @@ export default class Timeline {
         this.ctx.fillRect(0, 0, this.width, Timeline.headerHeight);
 
         // TODO: Figure out the first and last frame to render
-        const firstFrame : number = 0;
-        const lastFrame : number = this.length;
+        const firstFrameOnCanvas : number = Math.floor(this.getMinFrameOnCanvas());
+        const lastFrameOnCanvas : number = Math.ceil(this.getMaxFrameOnCanvas());
+
+        //const firstFrame : number = 0;
+        //const lastFrame : number = this.length;
 
         // Numbers and marks
         // Numbers will be collapsed if they are below a certain threshold
@@ -344,6 +363,10 @@ export default class Timeline {
         this.ctx.strokeStyle = "#C4C4C4";
 
         this.ctx.beginPath();
+
+        // Adjust the first and last frame to the smallstep
+        const firstFrame : number = Math.max(0, firstFrameOnCanvas - firstFrameOnCanvas % smallStep - 1);
+        const lastFrame : number = Math.min(this.length, lastFrameOnCanvas + smallStep - (lastFrameOnCanvas % smallStep));
 
         let i : number = firstFrame;
         for (; i < lastFrame; )
@@ -402,18 +425,27 @@ export default class Timeline {
 
     private renderEvents()
     {
+        const firstFrame : number = Math.floor(this.getMinFrameOnCanvas());
+        const lastFrame : number = Math.ceil(this.getMaxFrameOnCanvas());
+
         if (this.frameSize > 5.7)
         {
             for (const eventList of this.eventsPerFrame.values())
             {
                 const event = eventList[0];
-                const position : number = this.frame2canvas(event.frame);
 
-                this.ctx.fillStyle = event.color;
-                this.ctx.beginPath();
-                this.drawCircle(position);
-                this.ctx.fill();
+                if (event.frame >= firstFrame && event.frame <= lastFrame)
+                {
+                    const position : number = this.frame2canvas(event.frame);
+
+                    this.ctx.fillStyle = event.color;
+                    this.ctx.beginPath();
+                    this.drawCircle(position);
+                    
+                }
             }
+
+            this.ctx.fill();
         }
         else
         {
@@ -422,10 +454,6 @@ export default class Timeline {
                 Initial = 0,
                 Drawing
             }
-
-            // TODO: Figure out the first and last frame to render
-            const firstFrame : number = 0;
-            const lastFrame : number = this.length;
 
             let state = State.Initial;
 
@@ -564,7 +592,7 @@ export default class Timeline {
 
     private renderMarker()
     {
-        const position : number = this.frame2canvas(this.currentFrame);
+        const position : number = this.frame2canvas(this.currentFrame);;
 
         const frameNumber = (this.currentFrame + 1).toString();
         const frameTextWidth = this.ctx.measureText(frameNumber).width;
@@ -612,6 +640,16 @@ export default class Timeline {
     canvas2frame(canvasPosition : number) : number
     {
         return (canvasPosition + this.translation) / this.frameSize;
+    }
+
+    private getMinFrameOnCanvas()
+    {
+        return this.canvas2frame(0);
+    }
+
+    private getMaxFrameOnCanvas()
+    {
+        return this.canvas2frame(this.width);
     }
 
     private calculateRenderingConstants()

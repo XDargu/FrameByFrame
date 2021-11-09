@@ -90,7 +90,7 @@ export function registerShortcuts(playbackController: PlaybackController, connec
         {
             const actionMap = getShortcutActionMap(e);
             const action = actionMap[e.key];
-            if (action)
+            if (action != undefined)
             {
                 executeShortcut(action, playbackController, connectionList);
             }

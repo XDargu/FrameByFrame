@@ -387,7 +387,7 @@ export default class Renderer {
     applyFrame(frame : number) {
         this.frameData = this.recordedData.buildFrameData(frame);
 
-        this.timeline.currentFrame = frame;
+        this.timeline.setCurrentFrame(frame);
         this.playbackController.updateUI();
 
         this.layerController.setLayers(this.recordedData.layers);
