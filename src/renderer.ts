@@ -238,7 +238,13 @@ export default class Renderer {
         // Create settings
         this.settingsList = new SettingsList(document.getElementById("settings"), 
             document.getElementById("settings-search") as HTMLInputElement,
-            () => { this.saveSettings(); });
+            () => { 
+                this.saveSettings();
+                if (this.settings && !this.settings.followCurrentSelection)
+                {
+                    this.sceneController.stopFollowEntity();
+                }
+            });
 
         // Connection buttons
         this.connectionButtons = new ConnectionButtons(document.getElementById(`connection-buttons`), (id: ConnectionId) => {

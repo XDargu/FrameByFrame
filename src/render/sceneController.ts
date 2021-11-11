@@ -1363,7 +1363,10 @@ export default class SceneController
 
     public stopFollowEntity()
     {
-        this.isFollowingEntity = false;
-        this._camera.lockedTarget = null;
+        if (this.isFollowingEntity)
+        {
+            this.isFollowingEntity = false;
+            this._camera.lockedTarget = null;
+        }
     }
 } 
