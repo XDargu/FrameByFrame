@@ -408,6 +408,11 @@ export default class Renderer {
             this.sceneController.setEntity(entity);
         }
 
+        if (this.settings && this.settings.followCurrentSelection)
+        {
+            this.sceneController.followEntity();
+        }
+
         if (this.selectedEntityId) {
             this.entityTree.selectEntity(this.selectedEntityId);
         }

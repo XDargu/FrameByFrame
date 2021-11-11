@@ -2,6 +2,7 @@ import * as BABYLON from 'babylonjs';
 import * as RECORDING from '../recording/RecordingData';
 import { GridMaterial } from 'babylonjs-materials';
 import { LinesMesh } from 'babylonjs/Meshes/linesMesh';
+import { Scalar } from 'babylonjs/Maths/math.scalar';
 
 export interface IEntitySelectedCallback
 {
@@ -535,7 +536,6 @@ class PlanePool extends MeshPool
     {
         // TODO: We can probably just rotate the plane, instead of having many copies
         let sourcePlane = new BABYLON.Plane(args.normal.x, args.normal.y, args.normal.z, 0);
-        console.log(args)
         return BABYLON.MeshBuilder.CreatePlane(hash, {height: args.length, width: args.width, sourcePlane: sourcePlane, sideOrientation: BABYLON.Mesh.DOUBLESIDE}, this.scene);
     }
 }
@@ -757,6 +757,8 @@ export default class SceneController
 
     // Gizmos
     private axisGizmo: AxisGizmo;
+
+    private isFollowingEntity: boolean;
 
     removeAllProperties()
     {
@@ -1080,22 +1082,44 @@ export default class SceneController
         }
     }
 
-    moveCameraToSelection()
+    getRadiusOfSelection()
     {
         if (this.selectedEntity)
         {
-            let radius = 4;
-            let position = this.selectedEntity.mesh.position;
+            let radius = 6;
 
-            for (let propertyMesh of this.selectedEntity.properties.values())
+            // Find a better way
+            /*for (let propertyMesh of this.selectedEntity.properties.values())
             {
                 if (propertyMesh.getBoundingInfo().boundingSphere.radius > radius)
                 {
                     //radius = propertyMesh.getBoundingInfo().boundingSphere.radius;
                     //position = propertyMesh.getBoundingInfo().boundingSphere.centerWorld;
                 }
-            }
-            this.moveCameraToPosition(position, radius * 1.5);
+            }*/
+
+            return radius;
+        }
+    }
+
+    getCameraPositionForTarget(targetPosition: BABYLON.Vector3, radius: number)
+    {
+        let meshToCamera = this._camera.position.subtract(targetPosition);
+        meshToCamera.y = Math.max(0, meshToCamera.y);
+        meshToCamera.normalize();
+        let targetPos = targetPosition.add(meshToCamera.scale(radius));
+        const distMeshToTarget = targetPos.subtract(targetPosition).length();
+        targetPos.y = targetPosition.y + distMeshToTarget * 0.3;
+
+        return targetPos;
+    }
+
+    moveCameraToSelection()
+    {
+        if (this.selectedEntity)
+        {
+            let position = this.selectedEntity.mesh.position;
+            this.moveCameraToPosition(position, this.getRadiusOfSelection());
         }
     }
 
@@ -1109,12 +1133,7 @@ export default class SceneController
             targetPosition, 0, ease, () => { this._camera.lockedTarget = null; });
         targetTo.disposeOnEnd = true;
 
-        let meshToCamera = this._camera.position.subtract(targetPosition);
-        meshToCamera.y = Math.max(0, meshToCamera.y);
-        meshToCamera.normalize();
-        let targetPos = targetPosition.add(meshToCamera.scale(radius));
-        const distMeshToTarget = targetPos.subtract(targetPosition).length();
-        targetPos.y = targetPosition.y + distMeshToTarget * 0.3;
+        const targetPos = this.getCameraPositionForTarget(targetPosition, radius);
 
         let moveTo = BABYLON.Animation.CreateAndStartAnimation('moveTo', this._camera, 'position', 60, 20,
             this._camera.position,
@@ -1211,7 +1230,24 @@ export default class SceneController
             this._camera.position = BABYLON.Vector3.Lerp(this._camera.position, this._camera.getFrontPosition(-delta), 0.5);
         }
 
+        let inputCallback = () => { this.stopFollowEntity(); };
+
         canvas.addEventListener("wheel", zoomCallback, false);
+
+        canvas.addEventListener("keydown", inputCallback, false);
+        canvas.addEventListener("keyup", inputCallback, false);
+        canvas.addEventListener("keyleft", inputCallback, false);
+        canvas.addEventListener("keyright", inputCallback, false);
+        canvas.addEventListener("wheel", inputCallback, false);
+
+        scene.onPointerObservable.add((pointerInfo) => {
+            if (pointerInfo.type == BABYLON.PointerEventTypes.POINTERDOWN)
+            {
+                inputCallback();
+            }
+        });
+
+        this._camera.onAfterCheckInputsObservable.add(this.updateCameraFollow.bind(this))
 
         // This targets the camera to scene origin
         this._camera.setTarget(BABYLON.Vector3.Zero());
@@ -1288,5 +1324,46 @@ export default class SceneController
                 }
             }
         };
+
+        
+        this.isFollowingEntity = false;
+    }
+
+    private updateCameraFollow()
+    {
+        if (this.selectedEntity && this._camera && this.selectedEntity.mesh && this.isFollowingEntity)
+        {
+            const targetPosition = this.selectedEntity.mesh.position;
+            const radius = this.getRadiusOfSelection();
+            const cameraPos = this.getCameraPositionForTarget(targetPosition, radius);
+
+            const meshToCamera = this._camera.position.subtract(targetPosition);
+
+            // TODO: This is super hacky, improve!
+            const lerpValTarget = 0.2;
+            const lerpValPos = 0.04;
+
+            let lerpedTarget = this._camera.lockedTarget == null ? targetPosition : BABYLON.Vector3.Lerp(this._camera.lockedTarget, targetPosition, lerpValTarget);
+            this._camera.position = BABYLON.Vector3.Lerp(this._camera.position, cameraPos, lerpValPos);
+            this._camera.lockedTarget = lerpedTarget;
+            
+            const dot = BABYLON.Vector3.Dot(this._camera.getForwardRay(3).direction, meshToCamera);
+
+            if ((this._camera.position.subtract(cameraPos).length() < 0.1) && Math.abs(dot) > 0.99 ) // Also, when trying to move the camera
+            {
+                this.stopFollowEntity();
+            }
+        }
+    }
+
+    public followEntity()
+    {
+        this.isFollowingEntity = true;
+    }
+
+    public stopFollowEntity()
+    {
+        this.isFollowingEntity = false;
+        this._camera.lockedTarget = null;
     }
 } 
