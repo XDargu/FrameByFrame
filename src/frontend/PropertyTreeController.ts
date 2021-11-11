@@ -63,7 +63,10 @@ export class PropertyTreeController {
     addValueToPropertyTree(parent: HTMLElement, name: string, content: HTMLElement[], propertyId: number = null)
     {
         const elements = [this.wrapPropertyName(name), this.wrapPropertyGroup(content)];
-        this.propertyTree.addItem(parent, elements, null, false, propertyId == null ? null : propertyId.toString());
+        this.propertyTree.addItem(parent, elements, {
+            value:  propertyId == null ? null : propertyId.toString(),
+            selectable: false,
+        });
     }
 
     addCustomTypeToPropertyTree(parent: HTMLElement, property: RECORDING.IProperty, type: TypeSystem.IType) {
@@ -111,16 +114,19 @@ export class PropertyTreeController {
 
     addToPropertyTree(parent: HTMLElement, property: RECORDING.IProperty)
     {
+        const treeItemOptions = {
+            text: property.name,
+            value:  property.id.toString(),
+            selectable: false,
+        };
         if (property.type == "group") {
-            let addedItem = this.propertyTree.addItem(parent, [], property.name, false, property.id.toString());
+            let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
             const propertyGroup = property as RECORDING.IPropertyGroup;
 
             for (let i = 0; i < propertyGroup.value.length; ++i) {
                 this.addToPropertyTree(addedItem, propertyGroup.value[i]);
             }
         }
-
-
         // Find type
         else {
             const type = this.typeRegistry.findType(property.type);
@@ -130,14 +136,14 @@ export class PropertyTreeController {
             else if (property.type == "sphere") {
                 const sphere = property as RECORDING.IPropertySphere;
 
-                let addedItem = this.propertyTree.addItem(parent, [], property.name, false, property.id.toString());
+                let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
                 this.addVec3(addedItem, "Position", sphere.position);
                 this.addNumber(addedItem, "Radius", sphere.radius);
             }
             else if (property.type == "capsule") {
                 const capsule = property as RECORDING.IPropertyCapsule;
 
-                let addedItem = this.propertyTree.addItem(parent, [], property.name, false, property.id.toString());
+                let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
                 this.addVec3(addedItem, "Position", capsule.position);
                 this.addVec3(addedItem, "Direction", capsule.direction);
                 this.addNumber(addedItem, "Radius", capsule.radius);
@@ -146,14 +152,14 @@ export class PropertyTreeController {
             else if (property.type == "aabb") {
                 const aabb = property as RECORDING.IPropertyAABB;
 
-                let addedItem = this.propertyTree.addItem(parent, [], property.name, false, property.id.toString());
+                let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
                 this.addVec3(addedItem, "Position", aabb.position);
                 this.addVec3(addedItem, "Size", aabb.size);
             }
             else if (property.type == "oobb") {
                 const oobb = property as RECORDING.IPropertyOOBB;
 
-                let addedItem = this.propertyTree.addItem(parent, [], property.name, false, property.id.toString());
+                let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
                 this.addVec3(addedItem, "Position", oobb.position);
                 this.addVec3(addedItem, "Size", oobb.size);
                 this.addVec3(addedItem, "Forward", oobb.forward);
@@ -162,7 +168,7 @@ export class PropertyTreeController {
             else if (property.type == "plane") {
                 const plane = property as RECORDING.IPropertyPlane;
 
-                let addedItem = this.propertyTree.addItem(parent, [], property.name, false, property.id.toString());
+                let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
                 this.addVec3(addedItem, "Position", plane.position);
                 this.addVec3(addedItem, "Normal", plane.normal);
                 this.addVec3(addedItem, "Up", plane.up);
@@ -172,7 +178,7 @@ export class PropertyTreeController {
             else if (property.type == "line") {
                 const line = property as RECORDING.IPropertyLine;
 
-                let addedItem = this.propertyTree.addItem(parent, [], property.name, false, property.id.toString());
+                let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
                 this.addVec3(addedItem, "Origin", line.origin);
                 this.addVec3(addedItem, "Destination", line.destination);
             }

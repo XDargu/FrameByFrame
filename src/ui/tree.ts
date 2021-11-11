@@ -8,6 +8,14 @@ export interface ITreeCallbacks {
     onItemMouseOut: ITreeCallback;
 }
 
+export interface ITreeItemOptions {
+    text?: string;
+    value?: string;
+    hidden?: boolean;
+    selectable?: boolean;
+    callbacks?: ITreeCallbacks;
+}
+
 export class TreeControl {
 
     root: HTMLElement;
@@ -16,7 +24,7 @@ export class TreeControl {
         this.root = treeElement;
     }
 
-    addItem(parentListItem : HTMLElement, content : HTMLElement[], text : string = null, hidden = false, value : string = null, callbacks: ITreeCallbacks = null) {
+    addItem(parentListItem : HTMLElement, content : HTMLElement[], options: ITreeItemOptions) {
 
         let parentList = parentListItem.querySelector("ul");
 
@@ -34,9 +42,9 @@ export class TreeControl {
 
         let contentWrapper = document.createElement("span");
         contentWrapper.classList.add("basico-tree-item-content");
-        if (text)
+        if (options.text)
         {
-            contentWrapper.innerText = text;
+            contentWrapper.innerText = options.text;
         }
         for (let i=0; i<content.length; ++i) {
             contentWrapper.appendChild(content[i]);
@@ -49,35 +57,38 @@ export class TreeControl {
         parentList.appendChild(listItem);
         parentListItem.classList.remove("basico-tree-leaf");
 
-        if (hidden)
+        if (options.hidden)
         {
             parentListItem.classList.add("basico-tree-closed");
         }
 
-        if (value != null)
+        if (options.value != null)
         {
-            listItem.setAttribute('data-tree-value', value);
+            listItem.setAttribute('data-tree-value', options.value);
         }
 
-        wrapper.onclick = () => {
-            this.markElementSelected(wrapper);
-            if (callbacks && callbacks.onItemSelected != null)
-            {
-                callbacks.onItemSelected(listItem);
-            }
-        };
-
-        if (callbacks && callbacks.onItemMouseOver != null)
+        if (options.selectable)
         {
-            wrapper.onmouseover = () => {
-                callbacks.onItemMouseOver(listItem);
+            wrapper.onclick = () => {
+                this.markElementSelected(wrapper);
+                if (options.callbacks && options.callbacks.onItemSelected != null)
+                {
+                    options.callbacks.onItemSelected(listItem);
+                }
             };
         }
 
-        if (callbacks && callbacks.onItemMouseOut != null)
+        if (options.callbacks && options.callbacks.onItemMouseOver != null)
+        {
+            wrapper.onmouseover = () => {
+                options.callbacks.onItemMouseOver(listItem);
+            };
+        }
+
+        if (options.callbacks && options.callbacks.onItemMouseOut != null)
         {
             wrapper.onmouseout = () => {
-                callbacks.onItemMouseOut(listItem);
+                options.callbacks.onItemMouseOut(listItem);
             };
         }
 

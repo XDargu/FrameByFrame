@@ -67,7 +67,13 @@ export class EntityTree {
     addEntity(entity: RECORDING.IEntity)
     {
         const entityName = RECORDING.NaiveRecordedData.getEntityName(entity);            
-        this.entityTree.addItem(this.findEntityRoot(entity) as HTMLElement, [], entityName, false, entity.id.toString(), this.callbacks);
+        this.entityTree.addItem(this.findEntityRoot(entity) as HTMLElement, [], {
+            text: entityName,
+            value:  entity.id.toString(),
+            hidden: false,
+            selectable: true,
+            callbacks: this.callbacks
+        });
     }
 
     findElementById(entityID: number) : Element
