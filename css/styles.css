@@ -2213,7 +2213,14 @@ body {
   padding-right: 10px;
 }
 
-/* TODO: Maybe make a generic style for this*/
+#all-layer-selection {
+  margin: 0;
+}
+
+#all-layer-selection .basico-list-item {
+  padding: 6px 18px;
+}
+
 .layer-list .basico-list-item .basico-text-oneline {
   flex: 1;
 }
