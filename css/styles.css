@@ -263,6 +263,25 @@
   display: inline-block;
 }
 
+.basico-button-group.basico-compact {
+  display: flex;
+}
+
+.basico-button-group.basico-compact .basico-button {
+  margin: 0px 1px;
+  border-radius: 0px;
+}
+
+.basico-button-group.basico-compact .basico-button:first-child {
+  margin: 0px;
+  border-radius: 2px 0px 0px 2px;
+}
+
+.basico-button-group.basico-compact .basico-button:last-child {
+  margin: 0px;
+  border-radius: 0px 2px 2px 0px;
+}
+
 .basico-spinner {
   border: 8px solid var(--on-surface-color);
   border-top: 8px solid var(--primary-color);
@@ -1214,6 +1233,14 @@ body {
   flex: 1 1 auto;
 }
 
+#entity-list .basico-tree ul {
+  padding-left: 10px;
+}
+
+#entity-list .basico-tree > ul {
+  padding-left: 0px;
+}
+
 #layers-container {
   flex: 0 0 250px;
 }
@@ -1461,7 +1488,8 @@ body {
   background: #362E3B;
 }
 
-.basico-tree .basico-tree-item-wrapper:hover {
+.basico-tree .basico-tree-item-wrapper:hover,
+.basico-tree .basico-tree-item-wrapper:hover:not(.basico-no-hover) {
   background: #5F516A;
 }
 
@@ -1646,7 +1674,8 @@ body {
   background: #362E3B;
 }
 
-.basico-tree .basico-tree-item-wrapper:hover {
+.basico-tree .basico-tree-item-wrapper:hover,
+.basico-tree .basico-tree-item-wrapper:hover:not(.basico-no-hover) {
   background: #5F516A;
 }
 
@@ -1797,7 +1826,8 @@ body {
   background: #362E3B;
 }
 
-.basico-tree .basico-tree-item-wrapper:hover {
+.basico-tree .basico-tree-item-wrapper:hover,
+.basico-tree .basico-tree-item-wrapper:hover:not(.basico-no-hover) {
   background: #5F516A;
 }
 
@@ -2181,6 +2211,32 @@ body {
 
 .modal-content span {
   padding-right: 10px;
+}
+
+/* TODO: Maybe make a generic style for this*/
+.layer-list .basico-list-item .basico-text-oneline {
+  flex: 1;
+}
+
+.layer-list .basico-list-item {
+  align-items: center;
+  display: flex;
+  padding: 6px 12px;
+}
+
+.layer-list .basico-button-group.basico-compact .basico-button {
+  color: white;
+  background-color: #424242;
+}
+
+.layer-list .basico-button-group.basico-compact .basico-button:hover {
+  color: black;
+  background-color: #cca4fd;
+}
+
+.layer-list .basico-button-group.basico-compact .basico-button.layer-active {
+  color: black;
+  background-color: #cca4fd;
 }
 
 /*# sourceMappingURL=styles.css.map */

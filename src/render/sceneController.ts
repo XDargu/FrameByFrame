@@ -3,6 +3,7 @@ import * as RECORDING from '../recording/RecordingData';
 import { GridMaterial } from 'babylonjs-materials';
 import { LinesMesh } from 'babylonjs/Meshes/linesMesh';
 import { Scalar } from 'babylonjs/Maths/math.scalar';
+import { LayerState } from '../frontend/LayersController';
 
 export interface IEntitySelectedCallback
 {
@@ -585,22 +586,22 @@ class LinePool extends MeshPool
 
 class LayerManager
 {
-    private layers: Map<string, boolean>;
+    private layers: Map<string, LayerState>;
 
     constructor()
     {
-        this.layers = new Map<string, boolean>();
+        this.layers = new Map<string, LayerState.Off>();
     }
 
-    setLayerActive(layer: string, active: boolean)
+    setLayerState(layer: string, state: LayerState)
     {
-        this.layers.set(layer, active);
+        this.layers.set(layer, state);
     }
 
-    isLayerActive(layer: string)
+    getLayerState(layer: string)
     {
-        const active = this.layers.get(layer);
-        return active != undefined ? active : false;
+        const state = this.layers.get(layer);
+        return state != undefined ? state : LayerState.Off;
     }
 
     clear()
@@ -736,6 +737,7 @@ export default class SceneController
     private entities: Map<number, IEntityData>;
     private propertyToEntity: Map<number, number>;
 
+    private selectedEntityId: number;
     private selectedEntity: IEntityData;
     private hoveredEntity: IEntityData;
 
@@ -820,7 +822,10 @@ export default class SceneController
         if (!this.isPropertyShape(property)) { return; }
 
         const shape = property as RECORDING.IProperyShape;
-        if (!this.layerManager.isLayerActive(shape.layer)) { return; }
+        const layerState = this.layerManager.getLayerState(shape.layer);
+        
+        if (layerState == LayerState.Off) { return; }
+        if (layerState == LayerState.Selected && this.selectedEntityId != entity.id) { return; }
         
         let entityData = this.entities.get(entity.id);
         if (!entityData) { return; }
@@ -1068,6 +1073,7 @@ export default class SceneController
 
     markEntityAsSelected(id: number)
     {
+        this.selectedEntityId = id;
         let storedMesh = this.entities.get(id);
         if (storedMesh)
         {
@@ -1167,9 +1173,9 @@ export default class SceneController
         this.hoveredEntity = null;
     }
 
-    updateLayerStatus(layer: string, active: boolean)
+    updateLayerStatus(layer: string, state: LayerState)
     {
-        this.layerManager.setLayerActive(layer, active);
+        this.layerManager.setLayerState(layer, state);
     }
 
     initialize(canvas: HTMLCanvasElement) {

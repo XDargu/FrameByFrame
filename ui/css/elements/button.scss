@@ -31,3 +31,22 @@
 .basico-button-group {
     display: inline-block;
 }
+
+.basico-button-group.basico-compact {
+    display: flex;
+}
+
+.basico-button-group.basico-compact .basico-button {
+    margin: 0px 1px;
+    border-radius: 0px;
+}
+
+.basico-button-group.basico-compact .basico-button:first-child {
+    margin: 0px;
+    border-radius: 2px 0px 0px 2px;
+}
+
+.basico-button-group.basico-compact .basico-button:last-child {
+    margin: 0px;
+    border-radius: 0px 2px 2px 0px;
+}

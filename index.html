@@ -90,8 +90,18 @@
                     </div>
                     <div class="splitter vertical" id="entity-pane-splitter"></div>
                     <div class="basico-title basico-title-compact uppercase title-darker">Layers</div>
+                    <div class="basico-list layer-list" id="all-layer-selection">
+                        <div class="basico-list-item basico-no-hover">
+                            <div class="basico-text-oneline">Apply to all layers</div>
+                            <div class="basico-button-group basico-compact">
+                                <button class="basico-button basico-small" data-button-type="off" id="timeline-first">Off</button>
+                                <button class="basico-button basico-small" data-button-type="sel" id="timeline-first">Selected</button>
+                                <button class="basico-button basico-small" data-button-type="all" id="timeline-first">All</button>
+                            </div>
+                        </div>
+                    </div>
                     <div class="basico-container" id="layers-container">
-                        <div class="basico-list" id="layer-selection"></div>
+                        <div class="basico-list layer-list" id="layer-selection"></div>
                     </div>
                 </div>
             </div>

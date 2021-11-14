@@ -47,7 +47,8 @@ $recording-button: #DE0000;
     background: $dark-background;
 }
 
-.basico-tree .basico-tree-item-wrapper:hover
+.basico-tree .basico-tree-item-wrapper:hover,
+.basico-tree .basico-tree-item-wrapper:hover:not(.basico-no-hover)
 {
     background: $light-selection;
 }

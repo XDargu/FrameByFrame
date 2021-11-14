@@ -1,73 +1,111 @@
 import { ListControl } from "../ui/list";
 
+export enum LayerState
+{
+    Off = 0,
+    Selected,
+    All
+}
+
+export function getLayerStateName(state: LayerState)
+{
+    switch (state)
+    {
+        case LayerState.Off: return "Off";
+        case LayerState.Selected: return "Selected";
+        case LayerState.All: return "All";
+    }
+}
+
 interface ILayer
 {
     name: string;
-    active: boolean;
+    state: LayerState;
 }
 
 export interface ILayerChanged
 {
-    (name: string, active: boolean) : void
+    (name: string, state: LayerState) : void
 }
 
 export class LayerController
 {
     private layerList: ListControl;
+    private allLayerList: HTMLElement;
     private layers: Map<string, ILayer>;
     private layerChangedCallback: ILayerChanged;
 
-    constructor(layerList: HTMLElement, layerChangedCallback: ILayerChanged)
+    constructor(layerList: HTMLElement, allLayerList: HTMLElement, layerChangedCallback: ILayerChanged)
     {
+        this.allLayerList = allLayerList;
         this.layerList = new ListControl(layerList);
         this.layers = new Map<string, ILayer>();
         this.layerChangedCallback = layerChangedCallback;
+
+        this.initButtonsAllLayers();
     }
 
-    getActiveLayers(): string[]
+    private initButtonsAllLayers()
     {
-        let layers: string[] = [];
+        let group: HTMLElement = this.allLayerList.querySelector(".basico-button-group");
 
-        this.layers.forEach((value: ILayer) => {
-            if (value.active)
-                layers.push(value.name);
-        });
+        const initButtonAll = (state: LayerState) =>
+        {
+            let button = this.getButtonInGroup(group, state);
+            button.addEventListener("click", (event) => {
+                this.layers.forEach((layer) => {
+                    this.onLayerStateChanged(layer.name, state);
+                });
+                this.updateLayers();
+            });
+        }
 
-        return layers;
+        initButtonAll(LayerState.Off);
+        initButtonAll(LayerState.Selected);
+        initButtonAll(LayerState.All);
     }
 
     setLayers(layers: string[])
     {
-        // Update entity list
+        for (let layer of layers)
+        {
+            this.getOrCreateLayer(layer);
+        }
+
+        this.updateLayers();
+    }
+
+    private updateLayers()
+    {
         let listElement = this.layerList.listWrapper;
 
         let counter = 0;
-        for (let layer of layers)
+        for (let [layerName, layerData] of this.layers)
         {
-            const layerData: ILayer = this.getLayer(layer);
             let element = <HTMLElement>listElement.children[counter];
 
             if (element) {
-                let toggleElement: HTMLInputElement = element.querySelector('input[type=checkbox]');
-                if (toggleElement)
-                {
-                    toggleElement.checked = layerData.active;
-                    toggleElement.setAttribute('data-layer-name', layerData.name);
-                }
                 let nameElement: HTMLInputElement = element.querySelector('.basico-text-oneline');
                 if (nameElement)
                 {
                     nameElement.innerText = layerData.name;
                 }
-                this.layerList.setValueOfItem(element, layer);
+                
+                let buttonGroupElement: HTMLInputElement = element.querySelector('.basico-button-group');
+                if (buttonGroupElement)
+                {
+                    this.selectStateInGroup(buttonGroupElement, layerData.state);
+                }
+                
+                this.layerList.setValueOfItem(element, layerName);
             }
             else {
-                let listItem = this.layerList.appendElement('', null, layer);
+                let listItem = this.layerList.appendElement('', null, layerName);
+                const buttons = this.createButtons(layerData.name, layerData.state);
                 const name = this.createNameElement(layerData.name);
-                let toggle = this.createToggle(layerData.name, layerData.active)
-                listItem.appendChild(toggle);
                 listItem.appendChild(name);
-                this.layerChangedCallback(layerData.name, layerData.active);
+                listItem.appendChild(buttons);
+                this.layerChangedCallback(layerData.name, layerData.state);
             }
             counter++;
         }
@@ -81,28 +119,60 @@ export class LayerController
         }
     }
 
-    private createToggle(name: string, active: boolean): HTMLLabelElement
+    private getButtonInGroup(group: HTMLElement, state: LayerState)
     {
-        let label: HTMLLabelElement = document.createElement("label");
-        label.classList.add("basico-toggle");
+        const types = ['off', 'sel', 'all'];
+        return group.querySelector('[data-button-type="' + types[state] + '"]');
+    }
 
-        let input: HTMLInputElement = document.createElement("input");
-        input.type = "checkbox";
-        input.checked = active;
-        input.setAttribute('data-layer-name', name);
-        input.addEventListener("change", (event) => {
-            const layerName = input.getAttribute('data-layer-name');
-            const checkbox = (event.target as HTMLInputElement);
-            this.onLayerToggled(layerName, checkbox.checked);
+    private selectStateInGroup(group: HTMLElement, state: LayerState)
+    {
+        group.querySelectorAll(".basico-button").forEach(function(node){
+            node.classList.remove("layer-active");
         });
 
-        let span: HTMLSpanElement = document.createElement("span");
-        span.classList.add("slider", "round");
+        let button = this.getButtonInGroup(group, state);
+        if (button)
+        {
+            button.classList.add("layer-active");
+        }
+    }
 
-        label.appendChild(input);
-        label.appendChild(span);
+    private createButtons(name: string, state: LayerState)
+    {
+        let group = document.createElement("div");
+        group.className = "basico-button-group basico-compact";
 
-        return label;
+        let offButton = document.createElement("button");
+        offButton.className = "basico-button basico-small layer-active";
+        offButton.setAttribute('data-button-type', 'off');
+        offButton.textContent = "Off";
+
+        let selButton = document.createElement("button");
+        selButton.className = "basico-button basico-small";
+        selButton.setAttribute('data-button-type', 'sel');
+        selButton.textContent = "Selected";
+
+        let allButton = document.createElement("button");
+        allButton.className = "basico-button basico-small";
+        allButton.setAttribute('data-button-type', 'all');
+        allButton.textContent = "All";
+
+        const onButtonClicked = (state: LayerState) =>
+        {
+            this.selectStateInGroup(group, state);
+            this.onLayerStateChanged(name, state);
+        }
+
+        offButton.addEventListener("click", (event) => { onButtonClicked(LayerState.Off); });
+        selButton.addEventListener("click", (event) => { onButtonClicked(LayerState.Selected); });
+        allButton.addEventListener("click", (event) => { onButtonClicked(LayerState.All); });
+
+        group.appendChild(offButton);
+        group.appendChild(selButton);
+        group.appendChild(allButton);
+
+        return group;
     }
 
     private createNameElement(name: string): HTMLDivElement
@@ -113,7 +183,7 @@ export class LayerController
         return div;
     }
 
-    private getLayer(name: string) : ILayer
+    private getOrCreateLayer(name: string) : ILayer
     {
         const layer = this.layers.get(name);
         if (layer != undefined)
@@ -121,19 +191,19 @@ export class LayerController
             return layer;
         }
         
-        const newLayer = { name: name, active: true};
+        const newLayer = { name: name, state: LayerState.Selected};
         this.layers.set(name, newLayer);
         return newLayer;
     }
 
-    private onLayerToggled(name: string, active: boolean)
+    private onLayerStateChanged(name: string, state: LayerState)
     {
         let layer = this.layers.get(name);
         if (layer)
         {
-            layer.active = active;
+            layer.state = state;
         }
 
-        this.layerChangedCallback(name, active);
+        this.layerChangedCallback(name, state);
     }
 }

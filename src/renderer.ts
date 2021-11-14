@@ -4,7 +4,7 @@ import ConnectionButtons from "./frontend/ConnectionButtons";
 import { Console, ConsoleWindow, ILogAction, LogChannel, LogLevel } from "./frontend/ConsoleController";
 import FileListController from "./frontend/FileListController";
 import { ConnectionId } from './network/conectionsManager';
-import { LayerController } from "./frontend/LayersController";
+import { getLayerStateName, LayerController, LayerState } from "./frontend/LayersController";
 import { PropertyTreeController } from "./frontend/PropertyTreeController";
 import * as Messaging from "./messaging/MessageDefinitions";
 import { initMessageHandling } from "./messaging/RendererMessageHandler";
@@ -181,7 +181,11 @@ export default class Renderer {
         document.getElementById("console-clear").onmousedown = (e) => { this.consoleWindow.clear(); e.preventDefault(); };
 
         // Create layer controls
-        this.layerController = new LayerController(document.getElementById("layer-selection"), this.onLayerChanged.bind(this));
+        this.layerController = new LayerController(
+            document.getElementById("layer-selection"),
+            document.getElementById("all-layer-selection"),
+            this.onLayerChanged.bind(this)
+        );
 
         // Recording controls
         this.recordingOptions = new RecordingOptions(
@@ -670,11 +674,11 @@ export default class Renderer {
     }
 
     // Layer callbacks
-    onLayerChanged(name: string, active: boolean)
+    onLayerChanged(name: string, state: LayerState)
     {
-        this.sceneController.updateLayerStatus(name, active);
+        this.sceneController.updateLayerStatus(name, state);
         this.applyFrame(this.timeline.currentFrame);
-        Console.log(LogLevel.Verbose, LogChannel.Layers, `Layer ${name} status changed to: ${active}`);
+        Console.log(LogLevel.Verbose, LogChannel.Layers, `Layer ${name} status changed to: ${getLayerStateName(state)}`);
     }
 
     // Recording option callbacks
