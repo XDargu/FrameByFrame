@@ -133,6 +133,15 @@ export class PropertyTreeController {
             if (type) {
                 this.addCustomTypeToPropertyTree(parent, property, type);
             }
+            else if (property.type == "comment") {
+                let comment = document.createElement("div");
+                comment.classList.add("property-comment");
+                comment.textContent = property.value as string;
+                let addedItem = this.propertyTree.addItem(parent, [comment], {
+                    value:  property.id.toString(),
+                    selectable: false,
+                });
+            }
             else if (property.type == "sphere") {
                 const sphere = property as RECORDING.IPropertySphere;
 

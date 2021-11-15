@@ -17,7 +17,7 @@ export interface IPropertyCustomType {
 
 export interface IProperty {
 	type: string;
-	name: string;
+	name?: string;
 	value: string | number | IVec3 | IPropertyCustomType | IProperty[];
 	id?: number;
 }

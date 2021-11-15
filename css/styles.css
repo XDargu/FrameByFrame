@@ -1198,6 +1198,13 @@ body {
   width: 50%;
 }
 
+.property-comment {
+  padding: 6px;
+  border: 1px solid #5f516a;
+  width: fit-content;
+  border-radius: 2px;
+}
+
 .property-group {
   display: flex;
   float: right;
