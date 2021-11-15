@@ -486,41 +486,58 @@ export default class Renderer {
             : nameOverride != undefined ? nameOverride
             : propertyGroup.name;
 
-        let titleElement = document.createElement("div");
-        titleElement.innerText = name;
-        titleElement.classList.add("basico-title");
+        let propsToBuild = [];
+        let propsToAdd = [];
 
-        let treeElement = document.createElement("div");
-        treeElement.classList.add("basico-tree");
-        let ul = document.createElement("ul");
-        treeElement.appendChild(ul);
-
-        if (isSpecialProperties)
-        {
-            treeParent.prepend(treeElement);
-            treeParent.prepend(titleElement);
-        }
-        else
-        {
-            treeParent.appendChild(titleElement);
-            treeParent.appendChild(treeElement);   
-        }
-
-        let propertyTree = new TreeControl(treeElement);
-        let propertyTreeController = new PropertyTreeController(propertyTree);
-
-        this.propertyGroups.push({propertyTree: propertyTree, propertyTreeController: propertyTreeController});
-        
         for (let i=0; i<propertyGroup.value.length; ++i)
         {
             const property = propertyGroup.value[i];
             if (property.type == "group" && depth < 2)
             {
-                this.buildSinglePropertyTree(treeParent, property as RECORDING.IPropertyGroup, depth + 1);
+                propsToBuild.push(property);
             }
             else
             {
-                propertyTreeController.addToPropertyTree(propertyTree.root, property);
+                propsToAdd.push(property);
+            }
+        }
+
+        for (let i=0; i<propsToBuild.length; ++i)
+        {
+            this.buildSinglePropertyTree(treeParent, propsToBuild[i] as RECORDING.IPropertyGroup, depth + 1);
+        }
+
+        if (propsToAdd.length > 0)
+        {
+            let titleElement = document.createElement("div");
+            titleElement.innerText = name;
+            titleElement.classList.add("basico-title");
+
+            let treeElement = document.createElement("div");
+            treeElement.classList.add("basico-tree");
+            let ul = document.createElement("ul");
+            treeElement.appendChild(ul);
+
+            if (isSpecialProperties)
+            {
+                treeParent.prepend(treeElement);
+                treeParent.prepend(titleElement);
+            }
+            else
+            {
+                treeParent.appendChild(titleElement);
+                treeParent.appendChild(treeElement);   
+            }
+
+            let propertyTree = new TreeControl(treeElement);
+            let propertyTreeController = new PropertyTreeController(propertyTree);
+
+            this.propertyGroups.push({propertyTree: propertyTree, propertyTreeController: propertyTreeController});
+
+
+            for (let i=0; i<propsToAdd.length; ++i)
+            {
+                propertyTreeController.addToPropertyTree(propertyTree.root, propsToAdd[i]);
             }
         }
     }
