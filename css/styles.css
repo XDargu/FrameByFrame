@@ -1201,7 +1201,6 @@ body {
 .property-comment {
   padding: 6px;
   border: 1px solid #5f516a;
-  width: fit-content;
   border-radius: 2px;
 }
 
@@ -1238,14 +1237,6 @@ body {
 /* Entities pane */
 #entities-container {
   flex: 1 1 auto;
-}
-
-#entity-list .basico-tree ul {
-  padding-left: 10px;
-}
-
-#entity-list .basico-tree > ul {
-  padding-left: 0px;
 }
 
 #layers-container {
@@ -2251,6 +2242,48 @@ body {
 .layer-list .basico-button-group.basico-compact .basico-button.layer-active {
   color: black;
   background-color: #cca4fd;
+}
+
+#entity-list .basico-tree ul {
+  padding-left: 10px;
+}
+
+#entity-list .basico-tree > ul {
+  padding-left: 0px;
+}
+
+#entity-list .basico-tree .basico-tree-item-wrapper {
+  display: flex;
+}
+
+#entity-list .basico-tree .basico-tree-item-toggle {
+  flex: 0 0 20px;
+}
+
+#entity-list .basico-tree .basico-tree-item-content {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#entity-list .basico-tree .basico-tree-leaf .basico-tree-item-toggle {
+  display: inline-block;
+  vertical-align: middle;
+  width: 20px;
+  height: 20px;
+  position: relative;
+}
+
+#entity-list .basico-tree .basico-tree-leaf .basico-tree-item-toggle:before {
+  border: 2px solid white;
+  border-radius: 2px;
+  top: 8px;
+  left: 8px;
+  transform: scale(1.3);
+}
+
+#entity-list .basico-tree .basico-tree-leaf .basico-tree-item-wrapper {
+  padding: 0;
 }
 
 /*# sourceMappingURL=styles.css.map */
