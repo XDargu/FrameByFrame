@@ -110,14 +110,20 @@ export interface IFrameData {
 	tag: string;
 }
 
+export enum VisitorResult
+{
+	Continue,
+	Stop
+}
+
 export interface IPropertyVisitorCallback
 {
-    (id: IProperty) : void
+    (id: IProperty) : VisitorResult | void
 }
 
 export interface IEventVisitorCallback
 {
-    (id: IEvent) : void
+    (id: IEvent) : VisitorResult | void
 }
 
 export class PropertyTable {
@@ -419,12 +425,14 @@ export class NaiveRecordedData {
 		{
 			if (properties[i].type == 'group')
 			{
-				callback(properties[i]);
+				const res = callback(properties[i]);
+				if (res == VisitorResult.Stop) { return; }
 				NaiveRecordedData.visitProperties((properties[i] as IPropertyGroup).value, callback);
 			}
 			else
 			{
-				callback(properties[i]);
+				const res = callback(properties[i]);
+				if (res == VisitorResult.Stop) { return; }
 			}
 		}
 	}
@@ -434,7 +442,8 @@ export class NaiveRecordedData {
 		const eventCount = events.length;
 		for (let i=0; i<eventCount; ++i)
 		{
-			callback(events[i]);
+			const res = callback(events[i]);
+			if (res == VisitorResult.Stop) { return; }
 		}
 	}
 
