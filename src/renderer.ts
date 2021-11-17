@@ -19,6 +19,7 @@ import { Splitter } from "./ui/splitter";
 import { TabBorder, TabControl } from "./ui/tabs";
 import * as Shortcuts from "./frontend/Shortcuts";
 import * as RecordingButton from "./frontend/RecordingButton";
+import * as Filters from "./filters/filters";
 import { NaiveRecordedData } from "./recording/RecordingData";
 import { RecordingOptions } from "./frontend/RecordingOptions";
 import { ISettings } from "./files/Settings";
@@ -469,6 +470,7 @@ export default class Renderer {
         }
         this.entityTree.selectEntity(entityId);
         this.sceneController.markEntityAsSelected(entityId);
+        this.timeline.setSelectedEntity(entityId);
         this.renderProperties();
     }
 

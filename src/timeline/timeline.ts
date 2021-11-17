@@ -1,4 +1,5 @@
 import { ResizeObserver } from 'resize-observer';
+import * as Utils from '../utils/utils';
 
 export type TimelineEventId = number;
 export type TimelineEventTypeId = number;
@@ -20,11 +21,23 @@ interface ITimelineEvent {
     typeId: TimelineEventTypeId;
     id: TimelineEventId;
     frame: number;
-    color: string;
+    color: Utils.RGBColor;
 }
 
 type TEventsPerFrame = Map<number, ITimelineEvent[]>;
 type TEventsPerType = Map<TimelineEventTypeId, TEventsPerFrame>;
+
+function findEventOfEntityId(eventList: ITimelineEvent[], entityId: string)
+{
+    for (let i=0; i<eventList.length; ++i)
+    {
+        if (eventList[i].entityId == entityId)
+        {
+            return eventList[i];
+        }
+    }
+    return undefined;
+}
 
 export default class Timeline {
     // Constants
@@ -36,6 +49,9 @@ export default class Timeline {
     static readonly frameGroupMinSize : number = 200;
     static readonly eventHeight : number = 33;
     static readonly eventRadius : number = 4;
+    
+    static readonly headerColor: Utils.RGBColor = Utils.hexToRgb("#574D5F");
+    static readonly bodyColor: Utils.RGBColor = Utils.hexToRgb("#473D4F");
 
     // Canvas information
     canvas : any;
@@ -47,6 +63,9 @@ export default class Timeline {
     // Timeline information
     currentFrame : number;
     length : number;
+
+    // Selection
+    selectedEntityId: number;
 
     // Camera control
     private zoom : number;
@@ -90,6 +109,8 @@ export default class Timeline {
         this.dragging = false;
         this.pressing = false;
 
+        this.selectedEntityId = -1;
+
         this.currentFrame = 0;
         this.length = 0;
 
@@ -127,11 +148,17 @@ export default class Timeline {
         this.translation = 0;
         this.dragging = false;
         this.pressing = false;
+        this.selectedEntityId = -1;
+    }
+
+    setSelectedEntity(entityId: number)
+    {
+        this.selectedEntityId = entityId;
     }
 
     addEvent(id: TimelineEventId, entityId: string, frame : number, color : string, type: TimelineEventTypeId)
     {
-        const event: ITimelineEvent = {id: id, entityId: entityId, frame: frame, color: color, typeId: type};
+        const event: ITimelineEvent = {id: id, entityId: entityId, frame: frame, color: Utils.hexToRgb(color), typeId: type};
         this.events.set(id, event);
 
         let events = this.eventsPerFrame.get(frame);
@@ -211,7 +238,32 @@ export default class Timeline {
         }
     }
 
-    private findEventAtPosition(mouseX: number, mouseY: number) : ITimelineEvent
+    private findHoveredEventInFrame(frame: number, mouseX: number, mouseY: number, entityIdFilter: string = undefined) : ITimelineEvent
+    {
+        const eventList = this.eventsPerFrame.get(frame);
+        if (eventList)
+        {
+            const firstEvent = eventList[0];
+            if (firstEvent)
+            {
+                if (this.isMouseHoveringEvent(firstEvent, mouseX, mouseY))
+                {
+                    if (entityIdFilter != undefined)
+                    {
+                        return findEventOfEntityId(eventList, entityIdFilter);
+                    }
+                    else
+                    {
+                        return firstEvent;
+                    }
+                }
+            }
+        }
+
+        return null;
+    };
+
+    private findHoveredEventAroundFrame(mouseX: number, mouseY: number, entityIdFilter: string = undefined) : ITimelineEvent
     {
         const frame = Math.round(this.canvas2frame(mouseX));
 
@@ -219,36 +271,35 @@ export default class Timeline {
         const lastFrame = Math.round(this.canvas2frame(mouseX + Timeline.eventRadius));
 
         // Check the current frame first
-        const eventList = this.eventsPerFrame.get(frame);
-        if (eventList)
+        const frameEvent = this.findHoveredEventInFrame(frame, mouseX, mouseY, entityIdFilter);
+        if (frameEvent)
         {
-            const event = eventList[0];
-            if (event)
-            {
-                if (this.isMouseHoveringEvent(event, mouseX, mouseY))
-                {
-                    return event;
-                }
-            }
+            return frameEvent;
         }
 
+        // Check frames around the event
         for (let i=firstFrame; i<lastFrame; ++i)
         {
-            const eventList = this.eventsPerFrame.get(i);
-            if (eventList)
+            const frameEvent = this.findHoveredEventInFrame(i, mouseX, mouseY, entityIdFilter);
+            if (frameEvent)
             {
-                const event = eventList[0];
-                if (event)
-                {
-                    if (this.isMouseHoveringEvent(event, mouseX, mouseY))
-                    {
-                        return event;
-                    }
-                }
+                return frameEvent;
             }
         }
 
         return null;
+    }
+
+    private findEventAtPosition(mouseX: number, mouseY: number) : ITimelineEvent
+    {
+        // Give priority to currently selected entity
+        const selectedEntityEvent = this.findHoveredEventAroundFrame(mouseX, mouseY, this.selectedEntityId.toString());
+        if (selectedEntityEvent)
+        {
+            return selectedEntityEvent;
+        }
+
+        return  this.findHoveredEventAroundFrame(mouseX, mouseY);
     }
 
     private onMouseUp(event : MouseEvent)
@@ -331,7 +382,8 @@ export default class Timeline {
         this.ctx.fillRect(0,0,this.width,this.height);
 
         this.renderHeader();
-        this.renderEvents();
+        this.renderEvents(false, 0.3);
+        this.renderEvents(true, 1);
         this.renderMarker();
 
         window.requestAnimationFrame(this.render.bind(this));
@@ -419,23 +471,36 @@ export default class Timeline {
         this.ctx.arc(position, Timeline.eventHeight, Timeline.eventRadius, 0, Math.PI * 2);
     };
 
-    private renderEvents()
+    private renderEvents(selectedOnly: boolean, opacity: number)
     {
         const firstFrame : number = Math.floor(this.getMinFrameOnCanvas());
         const lastFrame : number = Math.ceil(this.getMaxFrameOnCanvas());
 
-        if (this.frameSize > 5.7)
+        const selectionAsString = this.selectedEntityId.toString();
+
+        if (this.frameSize > Timeline.eventRadius * 2)
         {
             this.eventsPerFrame.forEach((eventList, frame) => {
-                const event = eventList[0];
-                if (frame >= firstFrame && frame <= lastFrame)
+                const event = selectedOnly ? findEventOfEntityId(eventList, selectionAsString) : eventList[0];
+                if (event)
                 {
-                    const position : number = this.frame2canvas(event.frame);
+                    if (frame >= firstFrame && frame <= lastFrame)
+                    {
+                        const position : number = this.frame2canvas(event.frame);
 
-                    this.ctx.fillStyle = event.color;
-                    this.ctx.beginPath();
-                    this.drawCircle(position);
-                    this.ctx.fill();
+                        const blend = Utils.blend(event.color, Timeline.bodyColor, opacity);
+                        this.ctx.fillStyle = Utils.rgbToHex(blend);
+                        this.ctx.beginPath();
+                        this.drawCircle(position);
+                        this.ctx.fill();
+
+                        if (selectedOnly)
+                        {
+                            this.ctx.strokeStyle = "#FFFFFF";
+                            this.ctx.lineWidth = 1;
+                            this.ctx.stroke();
+                        }
+                    }
                 }
             });
         }
@@ -455,50 +520,67 @@ export default class Timeline {
                 const eventList = this.eventsPerFrame.get(i);
                 if (eventList)
                 {
-                    const event = eventList[0];
-                    const position : number = this.frame2canvas(i);
-
-                    const nextFrameEvents = this.getEventsInFrame(i + 1);
-                    const prevFrameEvents = this.getEventsInFrame(i - 1);
-                    const hasNextFrameEvent = nextFrameEvents != undefined;
-                    const hasPrevFrameEvent = prevFrameEvents != undefined;
-
-                    this.ctx.fillStyle = event.color;
-
-                    this.ctx.beginPath();
-
-                    if (!hasNextFrameEvent && !hasPrevFrameEvent)
+                    const event = selectedOnly ? findEventOfEntityId(eventList, selectionAsString) : eventList[0];
+                    if (event)
                     {
-                        this.drawCircle(position);
-                        i++;
-                    }
-                    else
-                    {
-                        i++;
-                        let j = i + 1;
-                        while (j < lastFrame)
+                        const position : number = this.frame2canvas(i);
+
+                        const nextFrameEvents = this.getEventsInFrame(i + 1);
+                        const prevFrameEvents = this.getEventsInFrame(i - 1);
+                        const hasNextFrameEvent = selectedOnly ? nextFrameEvents && findEventOfEntityId(nextFrameEvents, selectionAsString) != undefined : nextFrameEvents != undefined;
+                        const hasPrevFrameEvent = selectedOnly ? prevFrameEvents && findEventOfEntityId(prevFrameEvents, selectionAsString) != undefined : prevFrameEvents != undefined;
+
+                        const blend = Utils.blend(event.color, Timeline.bodyColor, opacity);
+                        this.ctx.fillStyle = Utils.rgbToHex(blend);
+
+                        this.ctx.beginPath();
+
+                        if (!hasNextFrameEvent && !hasPrevFrameEvent)
                         {
-                            const peekEventList = this.eventsPerFrame.get(j);
-                            if (peekEventList)
+                            this.drawCircle(position);
+                            i++;
+                        }
+                        else
+                        {
+                            i++;
+                            let j = i + 1;
+                            while (j < lastFrame)
                             {
-                                j++
+                                const peekEventList = this.eventsPerFrame.get(j);
+                                if (peekEventList)
+                                {
+                                    const peekEvent = selectedOnly ? findEventOfEntityId(peekEventList, selectionAsString) : peekEventList[0];
+                                    if (peekEvent) {
+                                        j++
+                                    }
+                                    else
+                                    {
+                                        break;
+                                    }
+                                }
+                                else
+                                {
+                                    break;
+                                }
                             }
-                            else
-                            {
-                                break;
-                            }
+
+                            const lastPosition : number = this.frame2canvas(j - 1);
+
+                            this.drawLeftHalf(position);
+                            this.ctx.lineTo(lastPosition, Timeline.eventHeight - Timeline.eventRadius);
+                            this.drawRightHalf(lastPosition);
+                            this.ctx.lineTo(position, Timeline.eventHeight + Timeline.eventRadius);
+                            i = j;
                         }
 
-                        const lastPosition : number = this.frame2canvas(j - 1);
-
-                        this.drawLeftHalf(position);
-                        this.ctx.lineTo(lastPosition, Timeline.eventHeight - Timeline.eventRadius);
-                        this.drawRightHalf(lastPosition);
-                        this.ctx.lineTo(position, Timeline.eventHeight + Timeline.eventRadius);
-                        i = j;
+                        this.ctx.fill();
+                        if (selectedOnly)
+                        {
+                            this.ctx.strokeStyle = "#FFFFFF";
+                            this.ctx.lineWidth = 1;
+                            this.ctx.stroke();
+                        }
                     }
-
-                    this.ctx.fill();
                 }
 
                 i++;
@@ -508,12 +590,18 @@ export default class Timeline {
         if (this.hoveredEvent)
         {
             const position : number = this.frame2canvas(this.hoveredEvent.frame);
+            const lighten = Utils.blend(this.hoveredEvent.color, {r: 255, g: 255, b: 255}, 0.5);
+
             this.ctx.strokeStyle = "#6DE080";
+            this.ctx.fillStyle = Utils.rgbToHex(lighten);
+
             this.ctx.beginPath();
-            this.ctx.lineWidth = 3;
+            this.ctx.lineWidth = 2;
             this.drawCircle(position);
             this.ctx.stroke();
+            this.ctx.fill();
         }
+
 
         
         /* The way this could work:
