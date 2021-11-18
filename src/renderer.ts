@@ -140,6 +140,7 @@ export default class Renderer {
             document.getElementById("entity-list"), 
             document.getElementById("var-list"),
             document.getElementById("connection-list"),
+            document.getElementById("filters-list"),
             document.getElementById("recent-list"),
             document.getElementById("setting-list")
         ];
