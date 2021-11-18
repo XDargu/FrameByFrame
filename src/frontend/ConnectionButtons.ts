@@ -82,6 +82,7 @@ export default class ConnectionButtons
         let button = document.createElement("button");
         button.classList.add("basico-button");
         button.classList.add("connection-button-disabled");
+        button.title = "Connect";
 
         let icon = document.createElement("i");
         icon.classList.add("fas");
@@ -98,12 +99,14 @@ export default class ConnectionButtons
     private static setButtonConnected(button: HTMLElement)
     {
         button.classList.remove("connection-button-disabled");
+        button.title = "Connect";
     }
 
     private static setButtonDisconnected(button: HTMLElement)
     {
         if (!button.classList.contains("connection-button-disabled"))
             button.classList.add("connection-button-disabled");
+        button.title = "Disconnect";
     }
 
     private static setButtonId(button: HTMLElement, id: number)

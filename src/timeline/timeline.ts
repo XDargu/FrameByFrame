@@ -54,7 +54,7 @@ export default class Timeline {
     static readonly bodyColor: Utils.RGBColor = Utils.hexToRgb("#473D4F");
 
     // Canvas information
-    canvas : any;
+    canvas : HTMLCanvasElement;
     ctx : CanvasRenderingContext2D;
     height : number;
     width : number;

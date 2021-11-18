@@ -1585,6 +1585,10 @@ body {
   background: #C4C4C4;
 }
 
+#connection-buttons .basico-button.connection-button-disabled:hover {
+  background: #dddddd;
+}
+
 #connection-buttons .basico-button:not(.connection-button-disabled) {
   animation: pulse 2s infinite;
 }
@@ -1771,6 +1775,10 @@ body {
   background: #C4C4C4;
 }
 
+#connection-buttons .basico-button.connection-button-disabled:hover {
+  background: #dddddd;
+}
+
 #connection-buttons .basico-button:not(.connection-button-disabled) {
   animation: pulse 2s infinite;
 }
@@ -1921,6 +1929,10 @@ body {
 
 #connection-buttons .basico-button.connection-button-disabled {
   background: #C4C4C4;
+}
+
+#connection-buttons .basico-button.connection-button-disabled:hover {
+  background: #dddddd;
 }
 
 #connection-buttons .basico-button:not(.connection-button-disabled) {
@@ -2147,6 +2159,10 @@ body {
 #console .basico-container.Warning .basico-console-block.Warning,
 #console .basico-container.Error .basico-console-block.Error {
   display: block;
+}
+
+#console-clear:hover {
+  color: white;
 }
 
 .search-form {

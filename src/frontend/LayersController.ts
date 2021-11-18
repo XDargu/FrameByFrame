@@ -147,16 +147,19 @@ export class LayerController
         offButton.className = "basico-button basico-small layer-active";
         offButton.setAttribute('data-button-type', 'off');
         offButton.textContent = "Off";
+        offButton.title = "Disable layer";
 
         let selButton = document.createElement("button");
         selButton.className = "basico-button basico-small";
         selButton.setAttribute('data-button-type', 'sel');
         selButton.textContent = "Selected";
+        selButton.title = "Enable layer for selected entity";
 
         let allButton = document.createElement("button");
         allButton.className = "basico-button basico-small";
         allButton.setAttribute('data-button-type', 'all');
         allButton.textContent = "All";
+        allButton.title = "Enable layer for all entities";
 
         const onButtonClicked = (state: LayerState) =>
         {

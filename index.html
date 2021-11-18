@@ -18,9 +18,9 @@
     <div class="full-page page-wrapper">
         <div class="basico-container basico-container-compact" id="title-bar-wrapper">
             <div class="basico-tabs" id="title-bar">
-                <div class="basico-tabs-item" id="title-bar-open"><i class="fas fa-folder-open"></i></div>
-                <div class="basico-tabs-item" id="title-bar-save"><i class="fas fa-save"></i></div>
-                <div class="basico-tabs-item" id="title-bar-clear"><i class="fas fa-trash"></i></div>
+                <div title="Open a recording" class="basico-tabs-item" id="title-bar-open"><i class="fas fa-folder-open"></i></div>
+                <div title="Save current recording in a new file" class="basico-tabs-item" id="title-bar-save"><i class="fas fa-save"></i></div>
+                <div title="Remove current recording data" class="basico-tabs-item" id="title-bar-clear"><i class="fas fa-trash"></i></div>
                 <div id="drag-region">
                     <div id="window-title">
                         <span id="window-title-text">Frame by Frame</span>
@@ -47,18 +47,18 @@
         <div class="header basico-navbar basico-navbar-compact">
             <div class="basico-navbar-title" id="timeline-frame-counter">Frame: 1/100</div>
             <div class="basico-button-group" id="step-controls">
-                <button class="basico-button basico-small" id="timeline-first"><i class="fas fa-backward"></i></button>
-                <button class="basico-button basico-small" id="timeline-prev"><i class="fas fa-step-backward"></i></button>
-                <button class="basico-button basico-small" id="timeline-play"><i id="timeline-play-icon" class="fas fa-play"></i></button>
-                <button class="basico-button basico-small" id="timeline-next"><i class="fas fa-step-forward"></i></button>
-                <button class="basico-button basico-small" id="timeline-last"><i class="fas fa-forward"></i></button>
+                <button title="Go to first frame" class="basico-button basico-small" id="timeline-first"><i class="fas fa-backward"></i></button>
+                <button title="Go to previous frame" class="basico-button basico-small" id="timeline-prev"><i class="fas fa-step-backward"></i></button>
+                <button title="Start/Stop playback" class="basico-button basico-small" id="timeline-play"><i id="timeline-play-icon" class="fas fa-play"></i></button>
+                <button title="Go to next frame" class="basico-button basico-small" id="timeline-next"><i class="fas fa-step-forward"></i></button>
+                <button title="Go to last frame" class="basico-button basico-small" id="timeline-last"><i class="fas fa-forward"></i></button>
             </div>
             <div class="basico-button-group" id="record-control">
-                <button class="basico-button basico-small" id="button-record"><i class="fas fa-circle"></i></button>
+                <button title="Start/Stop recording" class="basico-button basico-small" id="button-record"><i class="fas fa-circle"></i></button>
             </div>
             <div id="playback-controls">
                 <div class="basico-navbar-title" id="playback-display">x1</div>
-                <input type="range" min="0" max="8" value="4" step="1" id="playback-speed">
+                <input title="Change playback speed" type="range" min="0" max="8" value="4" step="1" id="playback-speed">
             </div>
         </div>
         <div id="timeline-wrapper">
@@ -70,7 +70,7 @@
                     <div class="basico-tabs-item basico-tabs-selected" title="Entity list"><i class="fas fa-list"></i></div>
                     <div class="basico-tabs-item" title="Recording Options"><i class="fas fa-check-square"></i></div>
                     <div class="basico-tabs-item" title="Connections"><i class="fas fa-network-wired"></i></div>
-                    <div class="basico-tabs-item" title="Recent"><i class="fas fa-folder"></i></div>
+                    <div class="basico-tabs-item" title="Recent Files"><i class="fas fa-folder"></i></div>
                     <div class="basico-tabs-item" title="Settings"><i class="fas fa-cog"></i></div>
                 </div>
             </div>
@@ -94,9 +94,9 @@
                         <div class="basico-list-item basico-no-hover">
                             <div class="basico-text-oneline">Apply to all layers</div>
                             <div class="basico-button-group basico-compact">
-                                <button class="basico-button basico-small" data-button-type="off" id="timeline-first">Off</button>
-                                <button class="basico-button basico-small" data-button-type="sel" id="timeline-first">Selected</button>
-                                <button class="basico-button basico-small" data-button-type="all" id="timeline-first">All</button>
+                                <button title="Disable all layers" class="basico-button basico-small" data-button-type="off" id="timeline-first">Off</button>
+                                <button title="Enable all layers for selected entity" class="basico-button basico-small" data-button-type="sel" id="timeline-first">Selected</button>
+                                <button title="Enable all layers for all entities" class="basico-button basico-small" data-button-type="all" id="timeline-first">All</button>
                             </div>
                         </div>
                     </div>
@@ -178,7 +178,7 @@
                                         </div><p><b>Connect</b> to your game, engine or server</p></li>
                                         <li class="icon-list"><div class="icon" id="welcome-icon-record">
                                             <button class="basico-button basico-small"><i class="fas fa-circle"></i></button>
-                                        </div><p><b>Start</b> the recording</p></li>
+                                        </div><p>Make sure you are <b>recording</b></p></li>
                                         <li class="icon-list"><div class="icon" id="welcome-icon-select">
                                             <i class="fas fa-check-square"></i>
                                         </div><p><b>Select</b> what you want to record</p></li>
@@ -219,7 +219,7 @@
                                     <i class="fa fa-search"></i>
                                 </div>
                             </div>
-                            <div class="basico-tabs-item" id="console-clear"><i class="fas fa-ban"></i></div>
+                            <div title="Clear console" class="basico-tabs-item" id="console-clear"><i class="fas fa-ban"></i></div>
                         </div>
                     </div>
                     <div id="default-console">

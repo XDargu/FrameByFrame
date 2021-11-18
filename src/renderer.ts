@@ -746,7 +746,8 @@ export default class Renderer {
     logEntity(level: LogLevel, channel: LogChannel, message: string, frameId: number, entityId: number)
     {
         Console.log(level, channel, `${message} `, {
-            text: `${this.findEntityName(entityId)} (id: ${entityId.toString()}) (frameID: ${frameId.toString()})`, 
+            text: `${this.findEntityName(entityId)} (id: ${entityId.toString()}) (frameID: ${frameId.toString()})`,
+            tooltip: `Go to frame ${frameId.toString()} and select entity ${this.findEntityName(entityId)}`,
             callback: () => {
                 const frame = this.findFrameById(frameId)
                 if (frame >= 0)
@@ -762,6 +763,7 @@ export default class Renderer {
     {
         Console.log(level, channel, `${message} `, {
             text: `(frameId: ${frameId.toString()})`,
+            tooltip: "Go to frame " + frameId.toString(),
             callback: () => {
                 const frame = this.findFrameById(frameId)
                 if (frame >= 0)
@@ -776,6 +778,7 @@ export default class Renderer {
     {
         return {
             text: text,
+            tooltip: "Open Settings tab",
             callback: () => {
                 this.controlTabs.openTabByIndex(TabIndices.Settings);
             }

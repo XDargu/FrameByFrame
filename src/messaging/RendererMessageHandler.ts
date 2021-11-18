@@ -51,6 +51,7 @@ export function initMessageHandling(renderer: Renderer)
                 const pathName = arg.data as string;
                 Console.log(LogLevel.Information, LogChannel.Files, `Loading file `, {
                     text: pathName,
+                    tooltip: "Open file in explorer",
                     callback: () => { shell.showItemInFolder(path.resolve(pathName)); }
                 });
                 

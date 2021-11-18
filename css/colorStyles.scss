@@ -164,6 +164,11 @@ $recording-button: #DE0000;
     background: #C4C4C4;
 }
 
+#connection-buttons .basico-button.connection-button-disabled:hover
+{
+    background: #dddddd;
+}
+
 #connection-buttons .basico-button:not(.connection-button-disabled) {
     animation: pulse 2s infinite;
 }

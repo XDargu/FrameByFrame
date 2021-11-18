@@ -12,7 +12,7 @@ export interface ILogAction
 {
     text: string;
     callback: IActionCallback;
-    color?: string;
+    tooltip?: string;
 }
 
 export enum LogLevel
@@ -248,10 +248,15 @@ export class ConsoleWindow
             }
             else if (typeof data === 'object')
             {
+                const logAction = message[i] as ILogAction;
                 let link = document.createElement("span");
                 link.classList.add("basico-console-link");
-                link.innerText = (message[i] as ILogAction).text;
-                link.onclick = (message[i] as ILogAction).callback;
+                link.innerText = logAction.text;
+                link.onclick = logAction.callback;
+                if (logAction.tooltip)
+                {
+                    link.title = logAction.tooltip;
+                }
                 line.appendChild(link);
             }
         }
