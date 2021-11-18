@@ -184,6 +184,8 @@ export class ConsoleWindow
         const isVisible = this.isLevelEnabled(logLevel) && this.isChannelOpen(channel);
         if (isVisible)
         {
+            const consoleParent = this.console.parentElement;
+            const scrolledToBottom = Math.abs((consoleParent.scrollHeight - consoleParent.scrollTop) - consoleParent.clientHeight) < 1;
             if (logLevel == LogLevel.Error)
             {
                 let line = this.addError(logLevel, channel);
@@ -193,6 +195,11 @@ export class ConsoleWindow
             {
                 let line = this.addMessage(logLevel, channel);
                 this.addToLine(line, ...message);
+            }
+
+            if (scrolledToBottom)
+            {
+                consoleParent.scrollTop = consoleParent.scrollHeight;
             }
         }
     }
