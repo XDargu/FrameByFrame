@@ -204,3 +204,11 @@ $recording-button: #DE0000;
         box-shadow: 0 0 0 0 rgba($recording-button, 0);
     }
 }
+
+*:focus {
+    outline: none;
+}
+
+*:focus-visible {
+    border: 1px solid $strong-secondary;
+}

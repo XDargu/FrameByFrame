@@ -180,11 +180,11 @@ body {
     user-select: none;
 }
 
-*:focus {
-    outline: none;
-}
-
 .simple-message {
     font-size: 12px;
     padding: 8px;
+}
+
+.basico-input {
+    z-index: unset;
 }
