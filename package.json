@@ -29,7 +29,7 @@
     "@types/chai": "^4.2.22",
     "@types/mocha": "^9.0.0",
     "chai": "^4.3.4",
-    "electron": "^5.0.1",
+    "electron": "^11.5.0",
     "electron-builder": "^20.40.2",
     "electron-packager": "^15.4.0",
     "mocha": "^9.1.3",
