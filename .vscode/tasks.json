@@ -38,6 +38,12 @@
             "type": "shell",
             "command": "npm run dist",
             "group": "build"
+         },
+         {
+            "label": "Test",
+            "type": "shell",
+            "command": "npm test",
+            "group": "build"
          }
     ]
 }
