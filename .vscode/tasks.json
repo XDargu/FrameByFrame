@@ -7,6 +7,37 @@
             "type": "npm",
             "script": "build",
             "problemMatcher": []
-        }
+        },
+        {
+            "label": "UI Sass Compile",
+            "type": "shell",
+            "command": "sass ui/css/ui.scss ui/css/basico.css",
+            "group": "build"
+        },
+        {
+            "label": "Sass Compile",
+            "type": "shell",
+            "command": "sass css/styles.scss css/styles.css",
+            "group": "build"
+        },
+        {
+            "label": "Npm build",
+            "type": "shell",
+            "command": "npm run build",
+            "group": "build"
+        },
+        {
+            "label": "Build",
+            "type": "shell",
+            "dependsOrder": "sequence",
+            "dependsOn": ["Sass Compile", "Npm build"],
+            "group": "build"
+        },
+        {
+            "label": "Dist",
+            "type": "shell",
+            "command": "npm run dist",
+            "group": "build"
+         }
     ]
 }

@@ -1,0 +1,52 @@
+@import "../variables.scss";
+
+.basico-button {
+    display: inline-block;
+    cursor: pointer;
+    text-align: center;
+    font-size: 16px;
+    padding: 3px 10px;
+    border-radius: 2px;
+    border: 0;
+
+    @include text-highlight-high($on-primary-color);
+    @include surface-elevation($button-elevation, $primary-color);
+}
+
+.basico-button:hover {
+    @include surface-hovered($button-elevation, $primary-color);
+}
+
+.basico-button.basico-small {
+    padding: 3px 8px;
+    font-size: 12px;
+}
+
+.basico-button.basico-disabled {
+    cursor: not-allowed;
+    @include surface-disabled($button-elevation, $primary-color);
+    @include text-highlight-low($on-surface-color);
+}
+
+.basico-button-group {
+    display: inline-block;
+}
+
+.basico-button-group.basico-compact {
+    display: flex;
+}
+
+.basico-button-group.basico-compact .basico-button {
+    margin: 0px 1px;
+    border-radius: 0px;
+}
+
+.basico-button-group.basico-compact .basico-button:first-child {
+    margin: 0px;
+    border-radius: 2px 0px 0px 2px;
+}
+
+.basico-button-group.basico-compact .basico-button:last-child {
+    margin: 0px;
+    border-radius: 0px 2px 2px 0px;
+}

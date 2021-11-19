@@ -1,0 +1,24 @@
+.splitter {
+    flex: 0 0 4px;
+    margin-left: -4px;
+    cursor: ew-resize;
+    z-index: 1000;
+    user-select: none;
+    transition: 0.2s;
+    transition-delay: 0.2s;
+}
+
+.splitter.vertical {
+    margin-left: 0;
+    margin-bottom: -4px;
+    cursor: ns-resize;
+}
+
+.splitter.right {
+    margin-left: 0;
+    margin-right: -4px;
+}
+
+.splitter:hover, .splitter.selected {
+    background: #f3eefa;
+}

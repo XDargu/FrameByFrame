@@ -1,8 +1,17 @@
 {
-  "name": "test-dev",
-  "version": "1.0.0",
+  "name": "frame-by-frame",
+  "productName": "Frame By Frame",
+  "version": "0.1.0",
   "description": "Tool Test",
   "main": "./app/main.js",
+  "build": {
+    "appId": "com.danielarmesto.framebyframe",
+    "fileAssociations":
+    {
+      "ext": "fbf",
+      "name": "Frame by Frame File"
+    }
+  },
   "scripts": {
     "build": "tsc",
     "start": "electron ./app/main.js",
@@ -10,13 +19,17 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Daniel Armesto",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
-    "babylonjs": "^4.0.3"
+    "babylonjs": "^4.0.3",
+    "babylonjs-materials": "^4.0.3",
+    "resize-observer": "^1.0.0"
   },
   "devDependencies": {
+    "@fortawesome/fontawesome-free": "^5.10.2",
     "electron": "^5.0.1",
     "electron-builder": "^20.40.2",
+    "electron-packager": "^15.4.0",
     "typescript": "^3.4.5"
   }
 }

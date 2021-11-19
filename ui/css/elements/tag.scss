@@ -1,0 +1,29 @@
+@import "../variables.scss";
+
+.basico-tag {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: bold;
+    text-decoration: none;
+    border-radius: 2px;
+    padding: 2px 6px;
+
+    @include text-highlight-high($on-primary-color);
+    @include surface-elevation($tag-elevation, $primary-color);
+}
+
+.basico-tag.basico-big {
+    font-size: 11px;
+}
+
+.basico-card-header .basico-tag {
+    float: right;
+}
+
+.basico-list-item .basico-tag {
+    float: right;
+}
+
+.basico-console-line .basico-tag {
+    float: right;
+}
