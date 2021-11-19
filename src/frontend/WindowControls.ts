@@ -10,7 +10,7 @@ export function initWindowControls()
         }
     };
 
-    window.onbeforeunload = (event) => {
+    window.onbeforeunload = () => {
         /* If window is reloaded, remove win event listeners
         (DOM element listeners get auto garbage collected but not
         Electron win listeners as the win is not dereferenced unless closed) */
