@@ -246,7 +246,7 @@ function CreateCapsule(name: string, args: any, scene: BABYLON.Scene) : BABYLON.
 }
 
 // Unused for now, should be used later on
-class UniversalCameraCustomKeyboardInput implements BABYLON.ICameraInput<BABYLON.UniversalCamera>
+/*class UniversalCameraCustomKeyboardInput implements BABYLON.ICameraInput<BABYLON.UniversalCamera>
 {
     camera: BABYLON.UniversalCamera;
     
@@ -337,7 +337,7 @@ class UniversalCameraCustomKeyboardInput implements BABYLON.ICameraInput<BABYLON
             }
         }
     }
-}
+}*/
 
 class MaterialPool
 {

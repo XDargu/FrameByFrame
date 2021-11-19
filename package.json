@@ -6,8 +6,7 @@
   "main": "./app/main.js",
   "build": {
     "appId": "com.danielarmesto.framebyframe",
-    "fileAssociations":
-    {
+    "fileAssociations": {
       "ext": "fbf",
       "name": "Frame by Frame File"
     }
