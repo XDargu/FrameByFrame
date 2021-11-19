@@ -1,4 +1,6 @@
-# Project
+# Frame by Frame
+
+[![Node.js CI](https://github.com/XDargu/FrameByFrame/actions/workflows/node.js.yml/badge.svg?branch=master)](https://github.com/XDargu/FrameByFrame/actions/workflows/node.js.yml)
 
 How to start developing:
 
