@@ -16,7 +16,7 @@ interface IEventClickedCallback {
 	(entityId: string, frame: number) : void;
 }
 
-interface ITimelineEvent {
+export interface ITimelineEvent {
     entityId: string;
     typeId: TimelineEventTypeId;
     id: TimelineEventId;
@@ -27,7 +27,7 @@ interface ITimelineEvent {
 type TEventsPerFrame = Map<number, ITimelineEvent[]>;
 type TEventsPerType = Map<TimelineEventTypeId, TEventsPerFrame>;
 
-function findEventOfEntityId(eventList: ITimelineEvent[], entityId: string)
+export function findEventOfEntityId(eventList: ITimelineEvent[], entityId: string)
 {
     for (let i=0; i<eventList.length; ++i)
     {

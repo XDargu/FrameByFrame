@@ -88,8 +88,6 @@ export default class Renderer {
 
     initialize(canvas: HTMLCanvasElement) {
 
-        this.playbackController = new PlaybackController(this);
-
         this.sceneController = new SceneController();
         this.sceneController.initialize(canvas);
         this.sceneController.onEntitySelected = this.onEntitySelectedOnScene.bind(this);
@@ -102,6 +100,8 @@ export default class Renderer {
 
         this.initializeTimeline();
         this.initializeUI();
+
+        this.playbackController = new PlaybackController(this, this.timeline);
 
         this.recordedData = new RECORDING.NaiveRecordedData();
         //this.recordedData.addTestData();
@@ -173,6 +173,8 @@ export default class Renderer {
         document.getElementById("timeline-prev").onmousedown = (e) => { this.playbackController.onTimelinePrevClicked(); e.preventDefault(); }
         document.getElementById("timeline-first").onmousedown = (e) => { this.playbackController.onTimelineFirstClicked(); e.preventDefault(); }
         document.getElementById("timeline-last").onmousedown = (e) => { this.playbackController.onTimelineLastClicked(); e.preventDefault(); }
+        document.getElementById("timeline-event-prev").onmousedown = (e) => { this.playbackController.onTimelinePrevEventClicked(e); e.preventDefault(); }
+        document.getElementById("timeline-event-next").onmousedown = (e) => { this.playbackController.onTimelineNextEventClicked(e); e.preventDefault(); }
 
         // Create control bar callbacks
         document.getElementById("title-bar-open").onmousedown = (e) => { this.onOpenFile(); e.preventDefault(); }
