@@ -1,7 +1,7 @@
 {
   "name": "frame-by-frame",
   "productName": "Frame By Frame",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Tool Test",
   "main": "./app/main.js",
   "build": {
@@ -22,14 +22,15 @@
   "dependencies": {
     "babylonjs": "^4.0.3",
     "babylonjs-materials": "^4.0.3",
-    "resize-observer": "^1.0.0"
+    "resize-observer": "^1.0.0",
+    "@electron/remote": "^2.0.1"
   },
   "devDependencies": {
     "@fortawesome/fontawesome-free": "^5.10.2",
     "@types/chai": "^4.2.22",
     "@types/mocha": "^9.0.0",
     "chai": "^4.3.4",
-    "electron": "^11.5.0",
+    "electron": "^16.0.1",
     "electron-builder": "^20.40.2",
     "electron-packager": "^15.4.0",
     "mocha": "^9.1.3",

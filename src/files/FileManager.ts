@@ -1,4 +1,4 @@
-import { app, remote, dialog } from "electron";
+import { app, dialog } from "electron";
 import * as fs from 'fs';
 import { createDefaultSettings, ISettings } from "./Settings";
 

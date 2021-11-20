@@ -8,6 +8,8 @@ import { LogChannel, LogLevel, ILogAction } from "./frontend/ConsoleController";
 import * as Messaging from "./messaging/MessageDefinitions";
 let mainWindow: Electron.BrowserWindow;
 
+require('@electron/remote/main').initialize();
+
 // File Manager
 let fileManager: FileManager;
 let menuBuilder: MenuBuilder;
@@ -26,7 +28,7 @@ function createWindow() {
     webPreferences: {
         nodeIntegration: true,
         nodeIntegrationInWorker: true,
-        enableRemoteModule: true
+        contextIsolation: false
     }
   });
 
@@ -44,6 +46,8 @@ function createWindow() {
   {
     mainWindow.webContents.openDevTools({mode: 'detach'});
   }
+
+  require("@electron/remote/main").enable(mainWindow.webContents);
 
   // Emitted when the window is closed.
   mainWindow.on("closed", () => {
