@@ -20,7 +20,7 @@
   "author": "Daniel Armesto",
   "license": "MIT",
   "dependencies": {
-    "babylonjs": "^4.0.3",
+    "babylonjs": "^4.2.0",
     "babylonjs-materials": "^4.0.3",
     "resize-observer": "^1.0.0"
   },
