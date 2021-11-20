@@ -9,13 +9,6 @@ export function initWindowControls()
             handleWindowControls();
         }
     };
-
-    window.onbeforeunload = () => {
-        /* If window is reloaded, remove win event listeners
-        (DOM element listeners get auto garbage collected but not
-        Electron win listeners as the win is not dereferenced unless closed) */
-        win.removeAllListeners();
-    }
 }
 
 function handleWindowControls() {
@@ -40,6 +33,8 @@ function handleWindowControls() {
     toggleMaxRestoreButtons();
     win.on('maximize', toggleMaxRestoreButtons);
     win.on('unmaximize', toggleMaxRestoreButtons);
+    win.on('enter-full-screen', toggleMaxRestoreButtons);
+    win.on('leave-full-screen', toggleMaxRestoreButtons);
 
     function toggleMaxRestoreButtons() {
         if (win.isMaximized()) {
