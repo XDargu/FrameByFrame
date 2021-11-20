@@ -1,9 +1,11 @@
 import { filterText } from "../utils/utils";
 import * as RECORDING from "../recording/RecordingData";
 
-class Filter
+export enum FilterType
 {
-
+    Event,
+    Property,
+    PropertyChanged
 }
 
 export enum FilterMode
@@ -16,7 +18,7 @@ export enum FilterMode
 }
 
 // TODO: How to support complex/custom types?
-export enum FilterType
+export enum MemberFilterType
 {
     String,
     Number,
@@ -26,7 +28,7 @@ export enum FilterType
 export interface MemberFilter
 {
     name: string;
-    type: FilterType;
+    type: MemberFilterType;
     value: string | number | boolean;
     mode: FilterMode;
 }
@@ -172,8 +174,36 @@ function filterProperty(property: RECORDING.IProperty, filters: MemberFilter[]) 
     return false;
 }
 
+function filterPropertyGroup(propertyGroup: RECORDING.IPropertyGroup) : boolean
+{
+    let found = false;
+    RECORDING.NaiveRecordedData.visitProperties([propertyGroup], (property: RECORDING.IProperty) => {
+        if (filterProperty(property, this.members))
+        {
+            found = true;
+            return RECORDING.VisitorResult.Stop;
+        }
+    });
+    return found;
+}
+
+export class Filter
+{
+    readonly type: FilterType;
+
+    constructor(type: FilterType)
+    {
+        this.type = type;
+    }
+
+    public filter(recordedData: RECORDING.NaiveRecordedData) : FilteredResult[]
+    {
+        return [];
+    }
+}
+
 // Filter specific event happening
-export class EventFilter
+export class EventFilter extends Filter
 {
     name: string;
     tag: string;
@@ -181,6 +211,7 @@ export class EventFilter
 
     constructor(name: string, tag: string, members: MemberFilter[])
     {
+        super(FilterType.Event);
         this.name = name.toLowerCase();
         this.tag = tag.toLowerCase();
         for (let i=0; i<members.length; ++i)
@@ -190,7 +221,7 @@ export class EventFilter
         this.members = members;
     }
 
-    filter(recordedData: RECORDING.NaiveRecordedData) : FilteredResult[]
+    public filter(recordedData: RECORDING.NaiveRecordedData) : FilteredResult[]
     {
         let results: FilteredResult[] = [];
 
@@ -221,15 +252,7 @@ export class EventFilter
                 return true;
             }
 
-            let found = false;
-            RECORDING.NaiveRecordedData.visitProperties([event.properties], (property: RECORDING.IProperty) => {
-                if (filterProperty(property, this.members))
-                {
-                    found = true;
-                    return RECORDING.VisitorResult.Stop;
-                }
-            });
-            return found;
+            return filterPropertyGroup(event.properties);
         }
         return false;
     }
@@ -238,11 +261,26 @@ export class EventFilter
 // Filter specific property happening
 class PropertyFilter extends Filter
 {
-    
+    group: string;
+    members: MemberFilter[];
+
+    constructor(group: string, tag: string, members: MemberFilter[])
+    {
+        super(FilterType.Property);
+        this.group = group.toLowerCase();
+        for (let i=0; i<members.length; ++i)
+        {
+            members[i].name = members[i].name.toLowerCase();
+        }
+        this.members = members;
+    }
 }
 
 // Filter specific property changing from one frame to another
 class PropertyChangedFilter extends Filter
 {
-    
+    constructor()
+    {
+        super(FilterType.PropertyChanged);
+    }
 }

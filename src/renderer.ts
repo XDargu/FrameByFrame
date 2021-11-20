@@ -25,6 +25,7 @@ import { RecordingOptions } from "./frontend/RecordingOptions";
 import { ISettings } from "./files/Settings";
 import { SettingsList } from "./frontend/SettingsList";
 import { EntityTree } from "./frontend/EntityTree";
+import FiltersList from "./frontend/FiltersList";
 
 const { shell } = require('electron');
 
@@ -65,6 +66,7 @@ export default class Renderer {
     private detailPaneSplitter: Splitter;
     private entitiesPaneSplitter: Splitter;
     private consoleSplitter: Splitter;
+    private filterList: FiltersList;
 
     // Networking
     private connectionsList: ConnectionsList;
@@ -189,6 +191,12 @@ export default class Renderer {
             document.getElementById("layer-selection"),
             document.getElementById("all-layer-selection"),
             this.onLayerChanged.bind(this)
+        );
+
+        // Filter controls
+        this.filterList = new FiltersList(
+            document.getElementById("add-filter") as HTMLButtonElement,
+            document.getElementById("filter-editing-list")
         );
 
         // Recording controls

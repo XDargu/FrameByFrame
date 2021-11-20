@@ -1,8 +1,15 @@
+@import "colorStyles.scss";
+
 .filter-property-wrapper
 {
     display: flex;
     align-items: center;
     margin-bottom: 5px;
+}
+
+.filter-property-wrapper:last-child
+{
+    margin-bottom: 0;
 }
 
 .filter-property-wrapper .basico-dropdown-button
@@ -18,4 +25,54 @@
 {
     left: 0;
     right: unset;
+    font-size: 12px;
+}
+
+.filter-icon
+{
+    width: 14px;
+    height: 14px;
+    background: #6de080;
+    margin: 0 10px;
+}
+
+.filter-wrapper .basico-title
+{
+    display: inline-flex;
+    text-align: left;
+    align-items: center;
+}
+
+.button-add-filter-prop span
+{
+    padding-left: 10px;
+}
+
+.filter-property-control
+{
+    background-color: $default-background;
+    padding: 5px;
+    margin-bottom: 5px;
+    display: inline-flex;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.filter-property-control .remove-property
+{
+    font-size: 16px;
+    margin-left: 5px;
+    padding: 5px;
+    cursor: pointer;
+}
+
+.filter-property-control .remove-property:hover
+{
+    color: white;
+}
+
+.filter-property-control-form
+{
+    width: 100%;
 }
