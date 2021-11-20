@@ -1157,6 +1157,7 @@ body {
   display: flex;
   flex: 1 1 auto;
   flex-direction: row;
+  overflow: hidden;
 }
 
 .page-wrapper,
@@ -1239,7 +1240,7 @@ body {
 
 /* Entities pane */
 #entities-container {
-  flex: 1 1 0;
+  flex: 1 1 auto;
 }
 
 #layers-container {
