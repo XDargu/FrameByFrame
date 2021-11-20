@@ -486,12 +486,12 @@ export class NaiveRecordedData {
 		return this.frameData.length;
 	}
 
-	addTestData() {
-		for (let i=0; i<100; ++i)
+	addTestData(frames: number, entityAmount: number) {
+		for (let i=0; i<frames; ++i)
 		{
 			let frameData : IFrameData = { entities: {}, frameId: i, elapsedTime: 0.0166, tag: "" };
 			
-			for (let j=0; j<15; ++j)
+			for (let j=0; j<entityAmount; ++j)
 			{
 				const entityID = j + 1;
 
