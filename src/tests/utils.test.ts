@@ -36,6 +36,61 @@ describe('Utils', () => {
 
   });
 
+  describe('blend', () => {
+
+    var black = {r: 0, g: 0, b: 0};
+    var white = {r: 255, g: 255, b: 255};
+    var red = {r: 255, g: 0, b: 0};
+    var yellow = {r: 255, g: 255, b: 0};
+
+    it('blends white and black at 0.5 to gray', () => {
+      const result = Utils.blend(black, white, 0.5);
+      expect(result).property("r").to.equal(128);
+      expect(result).property("g").to.equal(128);
+      expect(result).property("b").to.equal(128);
+    });
+
+    it('blends red and yelow at 0.5 to orange', () => {
+      const result = Utils.blend(red, yellow, 0.5);
+      expect(result).property("r").to.equal(255);
+      expect(result).property("g").to.equal(128);
+      expect(result).property("b").to.equal(0);
+    });
+
+    it('blends red and yelow at 0 to red', () => {
+      const result = Utils.blend(red, yellow, 0);
+      expect(result).property("r").to.equal(red.r);
+      expect(result).property("g").to.equal(red.g);
+      expect(result).property("b").to.equal(red.b);
+    });
+
+    it('blends red and yelow at 1 to yellow', () => {
+      const result = Utils.blend(red, yellow, 1);
+      expect(result).property("r").to.equal(yellow.r);
+      expect(result).property("g").to.equal(yellow.g);
+      expect(result).property("b").to.equal(yellow.b);
+    });
+
+    it('clamps negative values', () => {
+      const red = {r: 255, g: 0, b: 0};
+      const yellow = {r: 255, g: 255, b: 0};
+      const result = Utils.blend(red, yellow, -2);
+      expect(result).property("r").to.equal(255);
+      expect(result).property("g").to.equal(0);
+      expect(result).property("b").to.equal(0);
+    });
+
+    it('clamps values above 1', () => {
+      const red = {r: 255, g: 0, b: 0};
+      const yellow = {r: 255, g: 255, b: 0};
+      const result = Utils.blend(red, yellow, 1);
+      expect(result).property("r").to.equal(255);
+      expect(result).property("g").to.equal(255);
+      expect(result).property("b").to.equal(0);
+    });
+
+  });
+
   describe('filterText', () => {
 
     it('finds "st" in "test"', () => {
@@ -51,6 +106,7 @@ describe('Utils', () => {
       const result = Utils.filterText(filter, content);
       expect(result).to.equal(false);
     });
+    
   });
 
 });

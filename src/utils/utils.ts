@@ -52,9 +52,9 @@ export function blend(color1: RGBColor, color2: RGBColor, amount: number)
     const bias = clamp(amount, 0, 1);
     const bias2 = 1 - bias;
     return {
-        r: Math.round(color1.r * bias + color2.r * bias2),
-        g: Math.round(color1.g * bias + color2.g * bias2),
-        b: Math.round(color1.b * bias + color2.b * bias2)
+        r: Math.round(color1.r * bias2 + color2.r * bias),
+        g: Math.round(color1.g * bias2 + color2.g * bias),
+        b: Math.round(color1.b * bias2 + color2.b * bias)
     }
 }
 

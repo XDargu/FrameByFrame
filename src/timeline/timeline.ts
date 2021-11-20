@@ -488,7 +488,7 @@ export default class Timeline {
                     {
                         const position : number = this.frame2canvas(event.frame);
 
-                        const blend = Utils.blend(event.color, Timeline.bodyColor, opacity);
+                        const blend = Utils.blend(Timeline.bodyColor, event.color, opacity);
                         this.ctx.fillStyle = Utils.rgbToHex(blend);
                         this.ctx.beginPath();
                         this.drawCircle(position);
@@ -530,7 +530,7 @@ export default class Timeline {
                         const hasNextFrameEvent = selectedOnly ? nextFrameEvents && findEventOfEntityId(nextFrameEvents, selectionAsString) != undefined : nextFrameEvents != undefined;
                         const hasPrevFrameEvent = selectedOnly ? prevFrameEvents && findEventOfEntityId(prevFrameEvents, selectionAsString) != undefined : prevFrameEvents != undefined;
 
-                        const blend = Utils.blend(event.color, Timeline.bodyColor, opacity);
+                        const blend = Utils.blend(Timeline.bodyColor, event.color, opacity);
                         this.ctx.fillStyle = Utils.rgbToHex(blend);
 
                         this.ctx.beginPath();
