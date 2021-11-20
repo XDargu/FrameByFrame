@@ -149,7 +149,7 @@ export default class FileManager
         this.loadSettings();
     }
 
-    openFile(callback: IOpenFileCallback, acceptedCallback: IFileAcceptedCallback)
+    async openFile(callback: IOpenFileCallback, acceptedCallback: IFileAcceptedCallback)
     {
         const options = {
             filters: [
@@ -157,7 +157,10 @@ export default class FileManager
             ]
         };
 
-        dialog.showOpenDialog(null, options, (paths: string[]) => {
+        const result = await dialog.showOpenDialog(null, options);
+        if (result && !result.canceled)
+        {
+            const paths = result.filePaths;
             if (paths === undefined || paths.length == 0){
                 console.log("You didn't open a file");
                 return;
@@ -166,7 +169,7 @@ export default class FileManager
             acceptedCallback();
 
             this.loadFile(paths[0], callback);
-        });
+        }
     }
 
     loadFile(path: string, callback: IOpenFileCallback)
@@ -190,7 +193,7 @@ export default class FileManager
         });
     }
 
-    saveFile(content: string)
+    async saveFile(content: string)
     {
         const options = {
             defaultPath: app.getPath('documents') + '/recording.fbf',
@@ -199,7 +202,12 @@ export default class FileManager
             ]
         }
 
-        dialog.showSaveDialog(null, options, (path: string) => {
+        const result = await dialog.showSaveDialog(null, options);
+
+        if (result && !result.canceled)
+        {
+            const path = result.filePath;
+
             if (path === undefined){
                 console.log("You didn't save the file");
                 return;
@@ -213,7 +221,7 @@ export default class FileManager
                 this.updateHistory(path);
                 console.log("The file has been succesfully saved");
             });
-        });
+        }
     }
 
     loadHistory()

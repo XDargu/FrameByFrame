@@ -25,7 +25,8 @@ function createWindow() {
     frame: false,
     webPreferences: {
         nodeIntegration: true,
-        nodeIntegrationInWorker: true
+        nodeIntegrationInWorker: true,
+        enableRemoteModule: true
     }
   });
 
@@ -212,14 +213,14 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
         checkboxChecked: false,
       };
     
-      dialog.showMessageBox(null, options, (response, checkboxChecked) => {
-        const shouldClear: boolean = response == 0;
+      dialog.showMessageBox(null, options).then((result) => {
+        const shouldClear: boolean = result.response == 0;
 
-        if (shouldClear && checkboxChecked) {
+        if (shouldClear && result.checkboxChecked) {
           sessionOptions.showClearDataDialog = false;
         }
 
-        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.ClearResult, {clear: shouldClear, remember: checkboxChecked}));
+        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.ClearResult, {clear: shouldClear, remember: result.checkboxChecked}));
       });
       break;
     }
