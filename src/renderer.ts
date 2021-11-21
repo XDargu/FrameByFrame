@@ -26,6 +26,7 @@ import { ISettings } from "./files/Settings";
 import { SettingsList } from "./frontend/SettingsList";
 import { EntityTree } from "./frontend/EntityTree";
 import FiltersList, { FilterId } from "./frontend/FiltersList";
+import * as Utils from "./utils/utils";
 
 const { shell } = require('electron');
 
@@ -82,7 +83,8 @@ export default class Renderer {
     private playbackController: PlaybackController;
 
     // Timeline optimization
-    private unprocessedFrames: number[];
+    private unprocessedFramesWithEvents: number[];
+    private unprocessedFiltersPending: boolean;
 
     // Settings
     private settingsList: SettingsList;
@@ -117,7 +119,8 @@ export default class Renderer {
         this.recentFilesController = new FileListController(recentFilesListElement, recentFilesWelcomeElement, this.onRecentFileClicked.bind(this))
 
         this.propertyGroups = [];
-        this.unprocessedFrames = [];
+        this.unprocessedFramesWithEvents = [];
+        this.unprocessedFiltersPending = false;
 
         this.applyFrame(0);
     }
@@ -329,8 +332,9 @@ export default class Renderer {
                 this.timeline.updateLength(this.recordedData.getSize());
                 for (let i=0; i<this.recordedData.frameData.length; ++i)
                 {
-                    this.unprocessedFrames.push(i);
+                    this.unprocessedFramesWithEvents.push(i);
                 }
+                this.unprocessedFiltersPending = true;
                 this.applyFrame(0);
                 this.controlTabs.openTabByIndex(TabIndices.EntityList);
             }
@@ -344,7 +348,7 @@ export default class Renderer {
 
     clear()
     {
-        this.unprocessedFrames = [];
+        this.unprocessedFramesWithEvents = [];
         this.recordedData.clear();
         this.timeline.updateLength(this.recordedData.getSize());
         this.timeline.clearEvents();
@@ -386,7 +390,8 @@ export default class Renderer {
 
                     this.recordedData.pushFrame(frameToBuild);
                     this.timeline.updateLength(this.recordedData.getSize());
-                    this.unprocessedFrames.push(this.recordedData.getSize() - 1);
+                    this.unprocessedFramesWithEvents.push(this.recordedData.getSize() - 1);
+                    this.unprocessedFiltersPending = true;
                     
                     break;
                 }
@@ -590,21 +595,44 @@ export default class Renderer {
 
     updateTimelineEvents()
     {
-        for (let i=0; i<this.unprocessedFrames.length; ++i)
+        // Quick and dirty test. REMOVE THIS
+        const filters = this.filterList.getFilters();
+        if (filters.size > 0)
         {
-            const frameIdx = this.unprocessedFrames[i];
-            const frameData = this.recordedData.frameData[frameIdx];
-
-            for (let entityID in frameData.entities) {
-                const entity = frameData.entities[entityID];
-    
-                NaiveRecordedData.visitEvents(entity.events, (event: RECORDING.IEvent) => {
-                    this.timeline.addEvent(event.id, entityID, frameIdx, "#D6A3FF", 0);
-                });
+            if (this.unprocessedFiltersPending)
+            {
+                this.timeline.clearEvents();
+                for (const [filterId, filterData] of filters)
+                {
+                    const filterColor = Utils.colorFromHash(filterId);
+                    const result = filterData.filter.filter(this.recordedData);
+                    for (let i=0; i<result.length; ++i)
+                    {
+                        const entry = result[i];
+                        this.timeline.addEvent(0, entry.entityId.toString(), entry.frameIdx, filterColor, 0);
+                    }
+                    break; // Only do firt one for the test
+                }
             }
         }
+        else
+        {
+            for (let i=0; i<this.unprocessedFramesWithEvents.length; ++i)
+            {
+                const frameIdx = this.unprocessedFramesWithEvents[i];
+                const frameData = this.recordedData.frameData[frameIdx];
 
-        this.unprocessedFrames = [];
+                for (let entityID in frameData.entities) {
+                    const entity = frameData.entities[entityID];
+        
+                    NaiveRecordedData.visitEvents(entity.events, (event: RECORDING.IEvent) => {
+                        this.timeline.addEvent(event.id, entityID, frameIdx, "#D6A3FF", 0);
+                    });
+                }
+            }
+
+            this.unprocessedFramesWithEvents = [];
+        }
     }
 
     renderProperties()
@@ -732,6 +760,21 @@ export default class Renderer {
         console.log("Filter changed");
         console.log(filter);
         console.log(filter.filter(this.recordedData));
+        this.unprocessedFiltersPending = true;
+
+        // Restart normal events if needed
+        // TODO: Make an additional flag to avoid having to push every single frame in there?
+        const filters = this.filterList.getFilters();
+        if (filters.size > 0)
+        {
+            this.unprocessedFramesWithEvents = [];
+            for (let i=0; i<this.recordedData.frameData.length; ++i)
+            {
+                this.unprocessedFramesWithEvents.push(i);
+            }
+        }
+
+        this.updateTimelineEvents();
     }
 
     // Modal

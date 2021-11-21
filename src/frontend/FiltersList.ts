@@ -1,4 +1,5 @@
 import { availableModesPerMemberType, EventFilter, Filter, FilterMode, filterModeAsString, FilterType, getDefaultValuePerMemberType, MemberFilter, MemberFilterType, memberFilterTypeAsString } from "../filters/filters";
+import * as Utils from '../utils/utils'
 
 export type FilterId = number;
 
@@ -98,13 +99,15 @@ namespace UI
         return [...control.parentElement.childNodes].indexOf(control);
     }
 
-    function createFilterTitle(name: string) : HTMLDivElement
+    function createFilterTitle(id: FilterId, name: string) : HTMLDivElement
     {
         const title = document.createElement("div");
         title.className = "basico-title basico-title-compact uppercase";
 
+        const color = Utils.colorFromHash(id);
         const icon = document.createElement("div");
         icon.className = "filter-icon";
+        icon.style.backgroundColor = color;
 
         const span = document.createElement("span");
         span.textContent = name;
@@ -313,7 +316,7 @@ namespace UI
         const wrapper = document.createElement("div");
         wrapper.className = "basico-card filter-wrapper";
 
-        const title = createFilterTitle(filterName + " (event)");
+        const title = createFilterTitle(id, filterName + " (event)");
         wrapper.appendChild(title);
 
         const card = document.createElement("div");
@@ -390,6 +393,11 @@ export default class FiltersList
         this.addButton.onclick = () => { this.addEventFilter(); };
         this.filters = new Map<FilterId, FilterData>();
         this.callbacks = callbacks;
+    }
+
+    getFilters()
+    {
+        return this.filters;
     }
 
     addEventFilter()

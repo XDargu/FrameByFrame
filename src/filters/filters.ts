@@ -280,6 +280,8 @@ export class EventFilter extends Filter
     {
         super(FilterType.Event);
         this.members = members;
+        this.tag = tag;
+        this.name = name;
     }
 
     public filter(recordedData: RECORDING.NaiveRecordedData) : FilteredResult[]
