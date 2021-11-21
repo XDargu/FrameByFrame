@@ -17,7 +17,7 @@ interface FilterData
 
 export interface IFilterCallback
 {
-    (id: FilterId) : void
+    (id: FilterId, name: string, filter: Filter) : void
 }
 
 interface IFilterParamChanged
@@ -72,13 +72,11 @@ interface EventFilterCallbacks
     onTagChanged: IFilterParamChanged;
 
     members: MemberCallbacks;
+}
 
-    /*
-    onMemberNameChanged: (id: FilterId, index: number, name: string)
-    onMemberTypeChanged: (id: FilterId, index: number, type: FilterMemberType)
-    onMemberModeChanged: (id: FilterId, index: number, mode: FilterMode)
-    onMemberValueChanged: (id: FilterId, index: number, value: string | number | boolean)
-     */
+export interface FilterListCallbacks
+{
+    onFilterChanged: IFilterCallback;
 }
 
 namespace UI
@@ -367,6 +365,7 @@ export default class FiltersList
     private addButton: HTMLButtonElement;
     private filterContainer: HTMLElement;
     private filters: Map<FilterId, FilterData>;
+    private callbacks: FilterListCallbacks;
 
     private memberCallbacks = {
         onMemberAdded: this.onMemberAdded.bind(this),
@@ -384,12 +383,13 @@ export default class FiltersList
         members: this.memberCallbacks
     };
 
-    constructor(addButton: HTMLButtonElement, filterContainer: HTMLElement)
+    constructor(addButton: HTMLButtonElement, filterContainer: HTMLElement, callbacks: FilterListCallbacks)
     {
         this.addButton = addButton;
         this.filterContainer = filterContainer;
         this.addButton.onclick = () => { this.addEventFilter(); };
         this.filters = new Map<FilterId, FilterData>();
+        this.callbacks = callbacks;
     }
 
     addEventFilter()
@@ -407,7 +407,11 @@ export default class FiltersList
 
     private onFilterChanged(id: FilterId)
     {
-        console.log(this.filters.get(id));
+        const filterData = this.filters.get(id);
+        if (filterData)
+        {
+            this.callbacks.onFilterChanged(id, filterData.name, filterData.filter);
+        }
     }
 
     private onFilterNameChanged(id: FilterId, filterName: string)

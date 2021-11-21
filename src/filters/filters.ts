@@ -221,17 +221,18 @@ function filterProperty(property: RECORDING.IProperty, filters: MemberFilter[]) 
         case "string": return filterPropertyString(property, filters);
         case "number": return filterPropertyNumber(property, filters);
         case "boolean": return filterPropertyBoolean(property, filters);
+        case "group": return filterPropertyGroup(property as RECORDING.IPropertyGroup, filters);
         // TODO: What to do with complex types? What to do with shapes?
     }
 
     return false;
 }
 
-function filterPropertyGroup(propertyGroup: RECORDING.IPropertyGroup) : boolean
+function filterPropertyGroup(propertyGroup: RECORDING.IPropertyGroup, filters: MemberFilter[]) : boolean
 {
     let found = false;
     RECORDING.NaiveRecordedData.visitProperties([propertyGroup], (property: RECORDING.IProperty) => {
-        if (filterProperty(property, this.members))
+        if (filterProperty(property, filters))
         {
             found = true;
             return RECORDING.VisitorResult.Stop;
@@ -305,7 +306,7 @@ export class EventFilter extends Filter
                 return true;
             }
 
-            return filterPropertyGroup(event.properties);
+            return filterPropertyGroup(event.properties, this.members);
         }
         return false;
     }

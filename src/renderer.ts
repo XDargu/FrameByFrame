@@ -25,7 +25,7 @@ import { RecordingOptions } from "./frontend/RecordingOptions";
 import { ISettings } from "./files/Settings";
 import { SettingsList } from "./frontend/SettingsList";
 import { EntityTree } from "./frontend/EntityTree";
-import FiltersList from "./frontend/FiltersList";
+import FiltersList, { FilterId } from "./frontend/FiltersList";
 
 const { shell } = require('electron');
 
@@ -196,7 +196,10 @@ export default class Renderer {
         // Filter controls
         this.filterList = new FiltersList(
             document.getElementById("add-filter") as HTMLButtonElement,
-            document.getElementById("filter-editing-list")
+            document.getElementById("filter-editing-list"),
+            {
+                onFilterChanged: this.onFilterChanged.bind(this)
+            }
         );
 
         // Recording controls
@@ -721,6 +724,14 @@ export default class Renderer {
                 enabled: enabled
             }
         });
+    }
+
+    // Filter callbacks
+    onFilterChanged(id: FilterId, name: string, filter: Filters.Filter)
+    {
+        console.log("Filter changed");
+        console.log(filter);
+        console.log(filter.filter(this.recordedData));
     }
 
     // Modal
