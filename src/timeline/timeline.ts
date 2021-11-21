@@ -25,13 +25,36 @@ export interface ITimelineEvent {
 }
 
 type TEventsPerFrame = Map<number, ITimelineEvent[]>;
-type TEventsPerType = Map<TimelineEventTypeId, TEventsPerFrame>;
 
 export function findEventOfEntityId(eventList: ITimelineEvent[], entityId: string)
 {
     for (let i=0; i<eventList.length; ++i)
     {
         if (eventList[i].entityId == entityId)
+        {
+            return eventList[i];
+        }
+    }
+    return undefined;
+}
+
+function findEventOfColor(eventList: ITimelineEvent[], color: Utils.RGBColor)
+{
+    for (let i=0; i<eventList.length; ++i)
+    {
+        if (eventList[i].color.r == color.r && eventList[i].color.g == color.g && eventList[i].color.b == color.b)
+        {
+            return eventList[i];
+        }
+    }
+    return undefined;
+}
+
+function findEventOfEntityIdAndColor(eventList: ITimelineEvent[], entityId: string, color: Utils.RGBColor)
+{
+    for (let i=0; i<eventList.length; ++i)
+    {
+        if (eventList[i].entityId == entityId && eventList[i].color.r == color.r && eventList[i].color.g == color.g && eventList[i].color.b == color.b)
         {
             return eventList[i];
         }
@@ -85,7 +108,7 @@ export default class Timeline {
     // Events
     private events : Map<TimelineEventId, ITimelineEvent>
     private eventsPerFrame : TEventsPerFrame;
-    private eventsPerType : TEventsPerType;
+    private eventColors: string[];
 
     private hoveredEvent: ITimelineEvent;
 
@@ -118,7 +141,7 @@ export default class Timeline {
         this.onEventClicked = null;
         this.events = new Map<number, ITimelineEvent>();
         this.eventsPerFrame = new Map<number, ITimelineEvent[]>();
-        this.eventsPerType = new Map<number, TEventsPerFrame>();
+        this.eventColors = [];
         this.timeStampLastUpdate = 0;
 
         canvas.addEventListener("mousemove", this.onMouseMove.bind(this));
@@ -170,6 +193,8 @@ export default class Timeline {
         {
             this.eventsPerFrame.set(frame, [event]);
         }
+
+        Utils.pushUnique(this.eventColors, color);
     }
 
     getEvent(id: TimelineEventId) : ITimelineEvent
@@ -186,6 +211,7 @@ export default class Timeline {
     {
         this.events.clear();
         this.eventsPerFrame.clear();
+        this.eventColors = [];
     }
 
     setFrameClickedCallback(callback : ITimelineFrameClickedCallback)
@@ -506,84 +532,86 @@ export default class Timeline {
         }
         else
         {
-            enum State
+            // TODO: Improve performance of this
+            for (let colIdx=0; colIdx<this.eventColors.length; ++colIdx)
             {
-                Initial = 0,
-                Drawing
-            }
+                const color = this.eventColors[colIdx];
+                const rgbColor = Utils.hexToRgb(color);
+                const blend = Utils.blend(Timeline.bodyColor, rgbColor, opacity);
 
-            let state = State.Initial;
-
-            let i : number = firstFrame;
-            for (; i < lastFrame; )
-            {
-                const eventList = this.eventsPerFrame.get(i);
-                if (eventList)
+                let i : number = firstFrame;
+                for (; i < lastFrame; )
                 {
-                    const event = selectedOnly ? findEventOfEntityId(eventList, selectionAsString) : eventList[0];
-                    if (event)
+                    const eventList = this.eventsPerFrame.get(i);
+                    if (eventList)
                     {
-                        const position : number = this.frame2canvas(i);
-
-                        const nextFrameEvents = this.getEventsInFrame(i + 1);
-                        const prevFrameEvents = this.getEventsInFrame(i - 1);
-                        const hasNextFrameEvent = selectedOnly ? nextFrameEvents && findEventOfEntityId(nextFrameEvents, selectionAsString) != undefined : nextFrameEvents != undefined;
-                        const hasPrevFrameEvent = selectedOnly ? prevFrameEvents && findEventOfEntityId(prevFrameEvents, selectionAsString) != undefined : prevFrameEvents != undefined;
-
-                        const blend = Utils.blend(Timeline.bodyColor, event.color, opacity);
-                        this.ctx.fillStyle = Utils.rgbToHex(blend);
-
-                        this.ctx.beginPath();
-
-                        if (!hasNextFrameEvent && !hasPrevFrameEvent)
+                        const event = selectedOnly ? findEventOfEntityIdAndColor(eventList, selectionAsString, rgbColor) : findEventOfColor(eventList, rgbColor);
+                        if (event)
                         {
-                            this.drawCircle(position);
-                            i++;
-                        }
-                        else
-                        {
-                            i++;
-                            let j = i + 1;
-                            while (j < lastFrame)
+                            const position : number = this.frame2canvas(i);
+
+                            const nextFrameEvents = this.getEventsInFrame(i + 1);
+                            const prevFrameEvents = this.getEventsInFrame(i - 1);
+                            const hasNextFrameEvent = selectedOnly ? 
+                                nextFrameEvents && findEventOfEntityIdAndColor(nextFrameEvents, selectionAsString, rgbColor) != undefined :
+                                nextFrameEvents && findEventOfColor(nextFrameEvents, rgbColor) != undefined;
+                            const hasPrevFrameEvent = selectedOnly ? 
+                            prevFrameEvents && findEventOfEntityIdAndColor(prevFrameEvents, selectionAsString, rgbColor) != undefined :
+                                prevFrameEvents && findEventOfColor(prevFrameEvents, rgbColor) != undefined;
+
+                            this.ctx.fillStyle = Utils.rgbToHex(blend);
+                            this.ctx.beginPath();
+
+                            if (!hasNextFrameEvent && !hasPrevFrameEvent)
                             {
-                                const peekEventList = this.eventsPerFrame.get(j);
-                                if (peekEventList)
+                                this.drawCircle(position);
+                                i++;
+                            }
+                            else
+                            {
+                                i++;
+                                let j = i + 1;
+                                while (j < lastFrame)
                                 {
-                                    const peekEvent = selectedOnly ? findEventOfEntityId(peekEventList, selectionAsString) : peekEventList[0];
-                                    if (peekEvent) {
-                                        j++
+                                    const peekEventList = this.eventsPerFrame.get(j);
+                                    if (peekEventList)
+                                    {
+                                        const peekEvent = selectedOnly ? findEventOfEntityIdAndColor(peekEventList, selectionAsString, rgbColor) : findEventOfColor(peekEventList, rgbColor);
+                                        if (peekEvent) {
+                                            j++
+                                        }
+                                        else
+                                        {
+                                            break;
+                                        }
                                     }
                                     else
                                     {
                                         break;
                                     }
                                 }
-                                else
-                                {
-                                    break;
-                                }
+
+                                const lastPosition : number = this.frame2canvas(j - 1);
+
+                                this.drawLeftHalf(position);
+                                this.ctx.lineTo(lastPosition, Timeline.eventHeight - Timeline.eventRadius);
+                                this.drawRightHalf(lastPosition);
+                                this.ctx.lineTo(position, Timeline.eventHeight + Timeline.eventRadius);
+                                i = j;
                             }
 
-                            const lastPosition : number = this.frame2canvas(j - 1);
-
-                            this.drawLeftHalf(position);
-                            this.ctx.lineTo(lastPosition, Timeline.eventHeight - Timeline.eventRadius);
-                            this.drawRightHalf(lastPosition);
-                            this.ctx.lineTo(position, Timeline.eventHeight + Timeline.eventRadius);
-                            i = j;
-                        }
-
-                        this.ctx.fill();
-                        if (selectedOnly)
-                        {
-                            this.ctx.strokeStyle = "#FFFFFF";
-                            this.ctx.lineWidth = 1;
-                            this.ctx.stroke();
+                            this.ctx.fill();
+                            if (selectedOnly)
+                            {
+                                this.ctx.strokeStyle = "#FFFFFF";
+                                this.ctx.lineWidth = 1;
+                                this.ctx.stroke();
+                            }
                         }
                     }
-                }
 
-                i++;
+                    i++;
+                }
             }
         }
 
@@ -601,63 +629,6 @@ export default class Timeline {
             this.ctx.stroke();
             this.ctx.fill();
         }
-
-
-        
-        /* The way this could work:
-            1. Go event by event
-            2. Check if the distance to the next event is less than X
-            4. If it's not, then just render a circle
-            5. If it is, then start rendering half a circle
-            6. Move ahead, and as long as theres is an event with the same colour within less than X, draw a rectangle
-            7. Draw the other half of the circle
-            
-            Maybe do this for each color? And if it overlaps, render the overlapping shape instead.
-            For overlapping shapes, something to take into consideration is keep the shape consistent
-            */
-
-        // Basic attempt, with all colors being the same, only using frames, not distance
-
-        /*for (const eventList of this.eventsPerFrame.values())
-        {
-            const event = eventList[0];
-            const position : number = this.frame2canvas(event.frame);
-
-            const nextFrameEvents = this.getEventsInFrame(event.frame + 1);
-            const hasNextFrameEvent = nextFrameEvents != undefined;
-
-            switch(state)
-            {
-                case State.Initial:
-                    {
-                        if (hasNextFrameEvent)
-                        {
-                            drawLeftHalf(position);
-                            state = State.Drawing;
-                        }
-                        else
-                        {
-                            drawCircle(position);
-                        }
-                    }
-                    break;
-                case State.Drawing:
-                    if (hasNextFrameEvent)
-                    {
-                        drawRectangle(position);
-                    }
-                    else
-                    {
-                        drawRightHalf(position);
-                        state = State.Initial;
-                    }
-                    break;
-            }
-
-            this.ctx.beginPath();
-            this.ctx.fillStyle = event.color;
-            this.ctx.fill();
-        }*/
     }
 
     isMouseHoveringEvent(event: ITimelineEvent, mouseX: number, mouseY: number)

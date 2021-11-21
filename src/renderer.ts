@@ -611,7 +611,6 @@ export default class Renderer {
                         const entry = result[i];
                         this.timeline.addEvent(0, entry.entityId.toString(), entry.frameIdx, filterColor, 0);
                     }
-                    break; // Only do firt one for the test
                 }
             }
         }

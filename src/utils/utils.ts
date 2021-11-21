@@ -68,3 +68,11 @@ export function filterText(filter: string, content: string)
 {
     return content.indexOf(filter) > -1;
 }
+
+export function pushUnique<Type>(array: Type[], value: Type)
+{
+    if (array.indexOf(value) == -1)
+    {
+        array.push(value);
+    }
+}
