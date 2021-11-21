@@ -84,6 +84,7 @@ export default class Renderer {
 
     // Timeline optimization
     private unprocessedFramesWithEvents: number[];
+    private areAllFramesWithEventsPending: boolean;
     private unprocessedFiltersPending: boolean;
 
     // Settings
@@ -120,6 +121,7 @@ export default class Renderer {
 
         this.propertyGroups = [];
         this.unprocessedFramesWithEvents = [];
+        this.areAllFramesWithEventsPending = false;
         this.unprocessedFiltersPending = false;
 
         this.applyFrame(0);
@@ -330,10 +332,8 @@ export default class Renderer {
             try {
                 this.recordedData.loadFromString(data);
                 this.timeline.updateLength(this.recordedData.getSize());
-                for (let i=0; i<this.recordedData.frameData.length; ++i)
-                {
-                    this.unprocessedFramesWithEvents.push(i);
-                }
+                this.areAllFramesWithEventsPending = true;
+                this.unprocessedFramesWithEvents = [];
                 this.unprocessedFiltersPending = true;
                 this.applyFrame(0);
                 this.controlTabs.openTabByIndex(TabIndices.EntityList);
@@ -349,6 +349,8 @@ export default class Renderer {
     clear()
     {
         this.unprocessedFramesWithEvents = [];
+        this.areAllFramesWithEventsPending = false;
+        this.unprocessedFiltersPending = true;
         this.recordedData.clear();
         this.timeline.updateLength(this.recordedData.getSize());
         this.timeline.clearEvents();
@@ -593,9 +595,19 @@ export default class Renderer {
         }
     }
 
+    updateFrameDataEvents(frameData: RECORDING.IFrameData, frameIdx: number)
+    {
+        for (let entityID in frameData.entities) {
+            const entity = frameData.entities[entityID];
+
+            NaiveRecordedData.visitEvents(entity.events, (event: RECORDING.IEvent) => {
+                this.timeline.addEvent(event.id, entityID, frameIdx, "#D6A3FF", 0);
+            });
+        }
+    }
+
     updateTimelineEvents()
     {
-        // Quick and dirty test. REMOVE THIS
         const filters = this.filterList.getFilters();
         if (filters.size > 0)
         {
@@ -616,20 +628,26 @@ export default class Renderer {
         }
         else
         {
-            for (let i=0; i<this.unprocessedFramesWithEvents.length; ++i)
+            if (this.areAllFramesWithEventsPending)
             {
-                const frameIdx = this.unprocessedFramesWithEvents[i];
-                const frameData = this.recordedData.frameData[frameIdx];
+                for (let i=0; i<this.recordedData.frameData.length; ++i)
+                {
+                    const frameData = this.recordedData.frameData[i];
+                    this.updateFrameDataEvents(frameData, i);
+                }
+            }
+            else
+            {
+                for (let i=0; i<this.unprocessedFramesWithEvents.length; ++i)
+                {
+                    const frameIdx = this.unprocessedFramesWithEvents[i];
+                    const frameData = this.recordedData.frameData[frameIdx];
 
-                for (let entityID in frameData.entities) {
-                    const entity = frameData.entities[entityID];
-        
-                    NaiveRecordedData.visitEvents(entity.events, (event: RECORDING.IEvent) => {
-                        this.timeline.addEvent(event.id, entityID, frameIdx, "#D6A3FF", 0);
-                    });
+                    this.updateFrameDataEvents(frameData, frameIdx);
                 }
             }
 
+            this.areAllFramesWithEventsPending = false;
             this.unprocessedFramesWithEvents = [];
         }
     }
@@ -756,21 +774,13 @@ export default class Renderer {
     // Filter callbacks
     onFilterChanged(id: FilterId, name: string, filter: Filters.Filter)
     {
-        console.log("Filter changed");
-        console.log(filter);
-        console.log(filter.filter(this.recordedData));
         this.unprocessedFiltersPending = true;
 
-        // Restart normal events if needed
-        // TODO: Make an additional flag to avoid having to push every single frame in there?
         const filters = this.filterList.getFilters();
         if (filters.size > 0)
         {
             this.unprocessedFramesWithEvents = [];
-            for (let i=0; i<this.recordedData.frameData.length; ++i)
-            {
-                this.unprocessedFramesWithEvents.push(i);
-            }
+            this.areAllFramesWithEventsPending = true;
         }
 
         this.updateTimelineEvents();

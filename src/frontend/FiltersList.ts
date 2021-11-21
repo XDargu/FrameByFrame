@@ -26,6 +26,12 @@ interface IFilterParamChanged
     (id: FilterId, param: string) : void
 }
 
+interface IFilterRemoved
+{
+    (id: FilterId) : void
+}
+
+
 interface IMemberAdded
 {
     (id: FilterId, member: MemberFilter) : void
@@ -69,8 +75,17 @@ interface MemberCallbacks
 interface EventFilterCallbacks
 {
     onFilterNameChanged: IFilterParamChanged;
+    onFilterRemoved: IFilterRemoved;
     onNameChanged: IFilterParamChanged;
     onTagChanged: IFilterParamChanged;
+
+    members: MemberCallbacks;
+}
+
+interface PropertyFilterCallbacks
+{
+    onFilterNameChanged: IFilterParamChanged;
+    onGroupChanged: IFilterParamChanged;
 
     members: MemberCallbacks;
 }
@@ -99,7 +114,7 @@ namespace UI
         return [...control.parentElement.childNodes].indexOf(control);
     }
 
-    function createFilterTitle(id: FilterId, name: string) : HTMLDivElement
+    function createFilterTitle(id: FilterId, name: string, callbacks: EventFilterCallbacks) : HTMLDivElement
     {
         const title = document.createElement("div");
         title.className = "basico-title basico-title-compact uppercase";
@@ -112,9 +127,16 @@ namespace UI
         const span = document.createElement("span");
         span.textContent = name;
 
+        const removeButton = document.createElement("i");
+        removeButton.className = "fa fa-trash";
+        removeButton.onclick = () => {
+            callbacks.onFilterRemoved(id);
+        };
+
         title.append(
             icon,
-            span
+            span,
+            removeButton
         );
 
         return title;
@@ -313,10 +335,13 @@ namespace UI
 
     export function createEventFilter(id: FilterId, filterName: string, filter: EventFilter, callbacks: EventFilterCallbacks) : HTMLDivElement
     {
+        const color = Utils.colorFromHash(id);
+
         const wrapper = document.createElement("div");
         wrapper.className = "basico-card filter-wrapper";
+        wrapper.style.borderBottom = "5px solid " + color;
 
-        const title = createFilterTitle(id, filterName + " (event)");
+        const title = createFilterTitle(id, filterName + " (event)", callbacks);
         wrapper.appendChild(title);
 
         const card = document.createElement("div");
@@ -381,6 +406,7 @@ export default class FiltersList
 
     private filterCallbacks = {
         onFilterNameChanged: this.onFilterNameChanged.bind(this),
+        onFilterRemoved: this.onFilterRemoved.bind(this),
         onNameChanged: this.onFilterEventNameChanged.bind(this),
         onTagChanged: this.onFilterEventTagChanged.bind(this),
         members: this.memberCallbacks
@@ -420,12 +446,24 @@ export default class FiltersList
         {
             this.callbacks.onFilterChanged(id, filterData.name, filterData.filter);
         }
+        else
+        {
+            this.callbacks.onFilterChanged(id, "", null);
+        }
     }
 
     private onFilterNameChanged(id: FilterId, filterName: string)
     {
         let filterData = this.filters.get(id);
         filterData.name = filterName;
+        this.onFilterChanged(id);
+    }
+
+    private onFilterRemoved(id: FilterId)
+    {
+        let filterData = this.filters.get(id);
+        filterData.element.remove();
+        this.filters.delete(id);
         this.onFilterChanged(id);
     }
 

@@ -2531,6 +2531,7 @@ body {
   left: 0;
   right: unset;
   font-size: 12px;
+  cursor: pointer;
 }
 
 .filter-icon {
@@ -2544,6 +2545,16 @@ body {
   display: inline-flex;
   text-align: left;
   align-items: center;
+}
+
+.filter-wrapper .basico-title i {
+  margin-left: auto;
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+.filter-wrapper .basico-title i:hover {
+  color: white;
 }
 
 .button-add-filter-prop span {
