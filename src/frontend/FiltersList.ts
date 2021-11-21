@@ -129,11 +129,14 @@ namespace UI
         icon.className = "filter-icon";
         icon.style.backgroundColor = color;
 
+        const arrowIcon = document.createElement("i");
+        arrowIcon.className = "fa fa-angle-down filter-arrow-icon";
+
         const span = document.createElement("span");
         span.textContent = name;
 
         const removeButton = document.createElement("i");
-        removeButton.className = "fa fa-trash";
+        removeButton.className = "fa fa-trash remove-filter";
         removeButton.title = "Remove filter";
         removeButton.onclick = () => {
             callbacks.onFilterRemoved(id);
@@ -141,6 +144,7 @@ namespace UI
 
         title.append(
             icon,
+            arrowIcon,
             span,
             removeButton
         );
@@ -366,14 +370,20 @@ namespace UI
 
         const wrapper = document.createElement("div");
         wrapper.className = "basico-card filter-wrapper";
-        wrapper.style.borderBottom = "5px solid " + color;
 
         const title = createFilterTitle(id, `${filterName} (${filterLabel})`, callbacks);
         wrapper.appendChild(title);
 
         const card = document.createElement("div");
         card.className = "basico-card-element";
+        card.style.borderBottom = "5px solid " + color;
         wrapper.appendChild(card);
+
+        title.onclick = () => {
+            card.classList.toggle("hidden");
+            let arrowIcon = title.querySelector(".filter-arrow-icon") as HTMLElement;
+            Utils.toggleClasses(arrowIcon, "fa-angle-down", "fa-angle-right");
+        };
 
         const form = document.createElement("div");
         form.className = "basico-form";

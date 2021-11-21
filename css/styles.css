@@ -2541,13 +2541,18 @@ body {
   margin: 0 10px;
 }
 
+.filter-arrow-icon {
+  margin-right: 4px;
+}
+
 .filter-wrapper .basico-title {
   display: inline-flex;
   text-align: left;
   align-items: center;
+  cursor: pointer;
 }
 
-.filter-wrapper .basico-title i {
+.filter-wrapper .basico-title i.remove-filter {
   margin-left: auto;
   margin-right: 10px;
   cursor: pointer;
@@ -2555,6 +2560,14 @@ body {
 
 .filter-wrapper .basico-title i:hover {
   color: white;
+}
+
+.filter-wrapper .basico-card-element {
+  border-radius: 0;
+}
+
+.filter-wrapper .basico-card-element.hidden {
+  display: none;
 }
 
 .button-add-filter-prop span {

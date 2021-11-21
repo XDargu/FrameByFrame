@@ -64,6 +64,18 @@ export function swapClass(element: HTMLElement, classToRemove: string, classToAd
     element.classList.add(classToAdd);
 }
 
+export function toggleClasses(element: HTMLElement, class1: string, class2: string)
+{
+    if (element.classList.contains(class1))
+    {
+        swapClass(element, class1, class2)
+    }
+    else
+    {
+        swapClass(element, class2, class1);
+    }
+}
+
 export function filterText(filter: string, content: string)
 {
     return content.indexOf(filter) > -1;
