@@ -8,6 +8,16 @@ export enum FilterType
     PropertyChanged
 }
 
+export function filterTypeAsString(type: FilterType) : string
+{
+    switch(type)
+    {
+        case FilterType.Event: return "Event";
+        case FilterType.Property: return "Property";
+        case FilterType.PropertyChanged: return "Property Changed";
+    }
+}
+
 export enum FilterMode
 {
     Contains, // String only
@@ -17,12 +27,55 @@ export enum FilterMode
     More // Number only
 }
 
+export function filterModeAsString(mode: FilterMode) : string
+{
+    switch(mode)
+    {
+        case FilterMode.Contains: return "Contains";
+        case FilterMode.Equals: return "Equals";
+        case FilterMode.Different: return "Different";
+        case FilterMode.Less: return "Less";
+        case FilterMode.More: return "More";
+    }
+}
+
 // TODO: How to support complex/custom types?
 export enum MemberFilterType
 {
     String,
     Number,
     Boolean
+}
+
+export function memberFilterTypeAsString(type: MemberFilterType) : string
+{
+    switch(type)
+    {
+        case MemberFilterType.String: return "String";
+        case MemberFilterType.Number: return "Number";
+        case MemberFilterType.Boolean: return "Boolean";
+    }
+}
+
+export function availableModesPerMemberType(type: MemberFilterType)
+{
+    switch(type)
+    {
+        case MemberFilterType.String: return [FilterMode.Contains, FilterMode.Equals, FilterMode.Different];
+        case MemberFilterType.Number: return [FilterMode.Equals, FilterMode.Different, FilterMode.Less, FilterMode.More];
+        case MemberFilterType.Boolean: return [FilterMode.Equals, FilterMode.Different];
+    }
+    return [];
+}
+
+export function getDefaultValuePerMemberType(type: MemberFilterType) : string | boolean | number
+{
+    switch(type)
+    {
+        case MemberFilterType.String: return "";
+        case MemberFilterType.Number: return 0;
+        case MemberFilterType.Boolean: return true;
+    }
 }
 
 export interface MemberFilter
