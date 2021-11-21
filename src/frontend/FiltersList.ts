@@ -81,7 +81,7 @@ export interface FilterListCallbacks
 
 namespace UI
 {
-    function getPropertyWithIndex(filterElement: HTMLElement, index: number) : HTMLElement
+    export function getPropertyWithIndex(filterElement: HTMLElement, index: number) : HTMLElement
     {
         const propertyList = filterElement.querySelector(".filter-properties-list");
         return propertyList.children.item(index) as HTMLElement;
@@ -512,7 +512,8 @@ export default class FiltersList
                 member.value = getDefaultValuePerMemberType(type);
 
                 // Update mode and value
-                const memberModeEntry = filterData.element.querySelector(".filter-member-mode-val");
+                const propertyElement = UI.getPropertyWithIndex(filterData.element, index);
+                const memberModeEntry = propertyElement.querySelector(".filter-member-mode-val");
                 let regeneratedModeEntry = UI.createModeAndValueWrapper(id, member, this.memberCallbacks);
 
                 memberModeEntry.parentNode.insertBefore(regeneratedModeEntry, memberModeEntry);

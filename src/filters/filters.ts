@@ -232,13 +232,26 @@ function filterPropertyGroup(propertyGroup: RECORDING.IPropertyGroup, filters: M
 {
     let found = false;
     RECORDING.NaiveRecordedData.visitProperties([propertyGroup], (property: RECORDING.IProperty) => {
-        if (filterProperty(property, filters))
+        if (property != propertyGroup && filterProperty(property, filters))
         {
             found = true;
             return RECORDING.VisitorResult.Stop;
         }
     });
     return found;
+}
+
+function filterEvent(event: RECORDING.IEvent, name: string, tag: string, members: MemberFilter[])
+{
+    if (filterTextOrEmpty(name, event.name.toLowerCase()) && filterTextOrEmpty(tag, event.tag.toLowerCase()))
+    {
+        if (members.length == 0) {
+            return true;
+        }
+
+        return filterPropertyGroup(event.properties, members);
+    }
+    return false;
 }
 
 export class Filter
@@ -266,18 +279,28 @@ export class EventFilter extends Filter
     constructor(name: string, tag: string, members: MemberFilter[])
     {
         super(FilterType.Event);
-        this.name = name.toLowerCase();
-        this.tag = tag.toLowerCase();
-        for (let i=0; i<members.length; ++i)
-        {
-            members[i].name = members[i].name.toLowerCase();
-        }
         this.members = members;
     }
 
     public filter(recordedData: RECORDING.NaiveRecordedData) : FilteredResult[]
     {
         let results: FilteredResult[] = [];
+
+        // Actual filters, so we don't override the existing ones.
+        // Maybe give an option in the future to match case
+        const nameFilter = this.name.toLowerCase();
+        const tagFilter = this.tag.toLowerCase();
+        let membersFilter: MemberFilter[] = [];
+        for (let i=0; i<this.members.length; ++i)
+        {
+            const member = this.members[i];
+            membersFilter.push({
+                type: member.type,
+                mode: member.mode,
+                value: member.type == MemberFilterType.String ? (member.value as string).toLowerCase() : member.value,
+                name: member.name.toLowerCase(),
+            });
+        }
 
         for (let i=0; i<recordedData.frameData.length; ++i)
         {
@@ -287,7 +310,7 @@ export class EventFilter extends Filter
                 const entity = frameData.entities[entityID];
 
                 RECORDING.NaiveRecordedData.visitEvents(entity.events, (event: RECORDING.IEvent) => {
-                    if (this.filterEvent(event))
+                    if (filterEvent(event, nameFilter, tagFilter, membersFilter))
                     {
                         results.push({ frameIdx: i, entityId: entity.id });
                     }
@@ -296,19 +319,6 @@ export class EventFilter extends Filter
         }
 
         return results;
-    }
-
-    private filterEvent(event: RECORDING.IEvent)
-    {
-        if (filterTextOrEmpty(this.name, event.name.toLowerCase()) && filterTextOrEmpty(this.tag, event.tag.toLowerCase()))
-        {
-            if (this.members.length == 0) {
-                return true;
-            }
-
-            return filterPropertyGroup(event.properties, this.members);
-        }
-        return false;
     }
 }
 
