@@ -109,4 +109,22 @@ describe('Utils', () => {
     
   });
 
+  describe('pushUnique', () => {
+
+    it('adds an element not in the vector', () => {
+      const vector = [1, 2, 3];
+      Utils.pushUnique(vector, 5);
+      expect(vector.length).to.equal(4);
+      expect(vector).to.contain(5)
+    });
+
+    it('does not add an element already in the vector', () => {
+      const vector = [1, 2, 3];
+      Utils.pushUnique(vector, 3);
+      expect(vector.length).to.equal(3);
+      expect(vector).to.contain(3)
+    });
+    
+  });
+
 });
