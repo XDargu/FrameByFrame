@@ -200,7 +200,7 @@ export default class Renderer {
 
         // Filter controls
         this.filterList = new FiltersList(
-            document.getElementById("add-filter") as HTMLButtonElement,
+            document.getElementById("add-filter-dropdown"),
             document.getElementById("filter-editing-list"),
             {
                 onFilterChanged: this.onFilterChanged.bind(this)
@@ -624,6 +624,8 @@ export default class Renderer {
                         this.timeline.addEvent(0, entry.entityId.toString(), entry.frameIdx, filterColor, 0);
                     }
                 }
+
+                this.unprocessedFiltersPending = false;
             }
         }
         else
@@ -779,6 +781,7 @@ export default class Renderer {
         const filters = this.filterList.getFilters();
         if (filters.size > 0)
         {
+            console.log(filter);
             this.unprocessedFramesWithEvents = [];
             this.areAllFramesWithEventsPending = true;
         }

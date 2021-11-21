@@ -228,16 +228,16 @@ function filterProperty(property: RECORDING.IProperty, filters: MemberFilter[]) 
     return false;
 }
 
-function filterPropertyGroup(propertyGroup: RECORDING.IPropertyGroup, filters: MemberFilter[]) : boolean
+function filterPropertyGroup(propertyGroup: RECORDING.IPropertyGroup, filters: MemberFilter[], visitChildGroups: boolean = true) : boolean
 {
     let found = false;
-    RECORDING.NaiveRecordedData.visitProperties([propertyGroup], (property: RECORDING.IProperty) => {
-        if (property != propertyGroup && filterProperty(property, filters))
+    RECORDING.NaiveRecordedData.visitProperties(propertyGroup.value, (property: RECORDING.IProperty) => {
+        if (filterProperty(property, filters))
         {
             found = true;
             return RECORDING.VisitorResult.Stop;
         }
-    });
+    }, visitChildGroups);
     return found;
 }
 
@@ -251,6 +251,45 @@ function filterEvent(event: RECORDING.IEvent, name: string, tag: string, members
 
         return filterPropertyGroup(event.properties, members);
     }
+    return false;
+}
+
+function filterEntityProperties(entity: RECORDING.IEntity, groupFilter: string, membersFilter: MemberFilter[]) : boolean
+{
+    const properties = entity.properties[0] as RECORDING.IPropertyGroup;
+    const specialProperties = entity.properties[1] as RECORDING.IPropertyGroup;
+
+    for (let i=0; i<properties.value.length; ++i)
+    {
+        let group = properties.value[i];
+        if (group.type == "group")
+        {
+            if (filterEntityPropertyGroup(group as RECORDING.IPropertyGroup, group.name, groupFilter, membersFilter))
+            {
+                return true;
+            }
+        }
+    }
+
+    // Filter properties as "Uncategorized", not recursively
+    if (filterEntityPropertyGroup(properties, "Uncategorized", groupFilter, membersFilter, false))
+    {
+        return true;
+    }
+
+    return filterEntityPropertyGroup(specialProperties, "Basic Information", groupFilter, membersFilter);
+}
+
+function filterEntityPropertyGroup(group: RECORDING.IPropertyGroup, groupName: string, groupFilter: string, members: MemberFilter[], visitChildGroups: boolean = true) : boolean
+{
+    if (filterTextOrEmpty(groupFilter, groupName.toLowerCase()))
+    {
+        if (filterPropertyGroup(group, members, visitChildGroups))
+        {
+            return true;
+        }
+    }
+
     return false;
 }
 
@@ -325,12 +364,12 @@ export class EventFilter extends Filter
 }
 
 // Filter specific property happening
-class PropertyFilter extends Filter
+export class PropertyFilter extends Filter
 {
     group: string;
     members: MemberFilter[];
 
-    constructor(group: string, tag: string, members: MemberFilter[])
+    constructor(group: string, members: MemberFilter[])
     {
         super(FilterType.Property);
         this.group = group.toLowerCase();
@@ -339,6 +378,44 @@ class PropertyFilter extends Filter
             members[i].name = members[i].name.toLowerCase();
         }
         this.members = members;
+    }
+
+    
+
+    public filter(recordedData: RECORDING.NaiveRecordedData) : FilteredResult[]
+    {
+        let results: FilteredResult[] = [];
+
+        // Actual filters, so we don't override the existing ones.
+        // Maybe give an option in the future to match case
+        const groupFilter = this.group.toLowerCase();
+        let membersFilter: MemberFilter[] = [];
+        for (let i=0; i<this.members.length; ++i)
+        {
+            const member = this.members[i];
+            membersFilter.push({
+                type: member.type,
+                mode: member.mode,
+                value: member.type == MemberFilterType.String ? (member.value as string).toLowerCase() : member.value,
+                name: member.name.toLowerCase(),
+            });
+        }
+
+        for (let i=0; i<recordedData.frameData.length; ++i)
+        {
+            const frameData = recordedData.frameData[i];
+            for (let entityID in frameData.entities)
+            {
+                const entity = frameData.entities[entityID];
+
+                if (filterEntityProperties(entity, groupFilter, membersFilter))
+                {
+                    results.push({ frameIdx: i, entityId: entity.id });
+                }
+            }
+        }
+
+        return results;
     }
 }
 

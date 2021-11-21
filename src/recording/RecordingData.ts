@@ -418,7 +418,7 @@ export class NaiveRecordedData {
 		NaiveRecordedData.visitProperties(entity.properties, callback);
 	}
 
-	static visitProperties(properties: IProperty[], callback: IPropertyVisitorCallback)
+	static visitProperties(properties: IProperty[], callback: IPropertyVisitorCallback, visitChildGroups: boolean = true)
 	{
 		const propertyCount = properties.length;
 		for (let i=0; i<propertyCount; ++i)
@@ -427,7 +427,10 @@ export class NaiveRecordedData {
 			{
 				const res = callback(properties[i]);
 				if (res == VisitorResult.Stop) { return; }
-				NaiveRecordedData.visitProperties((properties[i] as IPropertyGroup).value, callback);
+				if (visitChildGroups)
+				{
+					NaiveRecordedData.visitProperties((properties[i] as IPropertyGroup).value, callback);
+				}
 			}
 			else
 			{

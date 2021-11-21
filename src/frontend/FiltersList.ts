@@ -1,11 +1,11 @@
-import { availableModesPerMemberType, EventFilter, Filter, FilterMode, filterModeAsString, FilterType, getDefaultValuePerMemberType, MemberFilter, MemberFilterType, memberFilterTypeAsString } from "../filters/filters";
+import { availableModesPerMemberType, EventFilter, Filter, FilterMode, filterModeAsString, FilterType, getDefaultValuePerMemberType, MemberFilter, MemberFilterType, memberFilterTypeAsString, PropertyFilter } from "../filters/filters";
 import * as Utils from '../utils/utils'
 
 export type FilterId = number;
 
 class FilterIdGenerator
 {
-    static lastId: number= 1;
+    static lastId: number = 0;
     static nextId() { return ++this.lastId; }
 }
 
@@ -72,22 +72,27 @@ interface MemberCallbacks
     onMemberValueChanged: IMemberValueChanged;
 }
 
-interface EventFilterCallbacks
+interface CommonCallbacks
 {
     onFilterNameChanged: IFilterParamChanged;
     onFilterRemoved: IFilterRemoved;
+}
+
+interface EventFilterCallbacks
+{
     onNameChanged: IFilterParamChanged;
     onTagChanged: IFilterParamChanged;
 
     members: MemberCallbacks;
+    common: CommonCallbacks;
 }
 
 interface PropertyFilterCallbacks
 {
-    onFilterNameChanged: IFilterParamChanged;
     onGroupChanged: IFilterParamChanged;
 
     members: MemberCallbacks;
+    common: CommonCallbacks;
 }
 
 export interface FilterListCallbacks
@@ -114,7 +119,7 @@ namespace UI
         return [...control.parentElement.childNodes].indexOf(control);
     }
 
-    function createFilterTitle(id: FilterId, name: string, callbacks: EventFilterCallbacks) : HTMLDivElement
+    function createFilterTitle(id: FilterId, name: string, callbacks: CommonCallbacks) : HTMLDivElement
     {
         const title = document.createElement("div");
         title.className = "basico-title basico-title-compact uppercase";
@@ -129,6 +134,7 @@ namespace UI
 
         const removeButton = document.createElement("i");
         removeButton.className = "fa fa-trash";
+        removeButton.title = "Remove filter";
         removeButton.onclick = () => {
             callbacks.onFilterRemoved(id);
         };
@@ -333,7 +339,28 @@ namespace UI
         return propertiesWrapper;
     }
 
-    export function createEventFilter(id: FilterId, filterName: string, filter: EventFilter, callbacks: EventFilterCallbacks) : HTMLDivElement
+    function createMemberList(id: FilterId, members: MemberFilter[], memberCallbacks: MemberCallbacks) : HTMLElement[]
+    {
+        const propertiesWrapper = document.createElement("div");
+        propertiesWrapper.className = "filter-properties-list";
+
+        const button = createFilterAddPropButton();
+        button.onclick = () => {
+            const member = { name: "", type: MemberFilterType.String, value: "", mode: FilterMode.Contains};
+
+            propertiesWrapper.appendChild(createProperties(id, member, memberCallbacks));
+            memberCallbacks.onMemberAdded(id, member);
+        };
+
+        for (let i=0; i<members.length; ++i)
+        {
+            propertiesWrapper.appendChild(createProperties(id, members[i], memberCallbacks));
+        }
+
+        return [propertiesWrapper, button];
+    }
+
+    function createFilterWrapper(id: FilterId, filterName: string, filterLabel: string, callbacks: CommonCallbacks, filterExtraFields: HTMLElement[]) : HTMLDivElement
     {
         const color = Utils.colorFromHash(id);
 
@@ -341,7 +368,7 @@ namespace UI
         wrapper.className = "basico-card filter-wrapper";
         wrapper.style.borderBottom = "5px solid " + color;
 
-        const title = createFilterTitle(id, filterName + " (event)", callbacks);
+        const title = createFilterTitle(id, `${filterName} (${filterLabel})`, callbacks);
         wrapper.appendChild(title);
 
         const card = document.createElement("div");
@@ -353,49 +380,59 @@ namespace UI
         card.appendChild(form);
 
         const filterNameElem = createFilterField(id, "Filter name:", filterName, (id, param) => {
-            title.querySelector("span").textContent = param + " (event)";
+            title.querySelector("span").textContent = `${param} (${filterLabel})`;
             callbacks.onFilterNameChanged(id, param);
         });
         form.appendChild(filterNameElem);
 
-        const eventName = createFilterField(id, "Event name:", filter.name, callbacks.onNameChanged);
-        form.appendChild(eventName);
-
-        const eventTag = createFilterField(id, "Event tag:", filter.tag, callbacks.onTagChanged);
-        form.appendChild(eventTag);
-
-        form.appendChild(createPropertiesTitle("Event properties"));
-
-        const propertiesWrapper = document.createElement("div");
-        propertiesWrapper.className = "filter-properties-list";
-        form.appendChild(propertiesWrapper);
-
-        const button = createFilterAddPropButton();
-        button.onclick = () => {
-            const member = { name: "", type: MemberFilterType.String, value: "", mode: FilterMode.Contains};
-
-            propertiesWrapper.appendChild(createProperties(id, member, callbacks.members));
-            callbacks.members.onMemberAdded(id, member);
-        };
-        form.appendChild(button);
-
-        for (let i=0; i<filter.members.length; ++i)
-        {
-            propertiesWrapper.appendChild(createProperties(id, filter.members[i], callbacks.members));
-        }
+        form.append(...filterExtraFields);
 
         return wrapper;
+    }
+
+    export function createEventFilter(id: FilterId, filterName: string, filter: EventFilter, callbacks: EventFilterCallbacks) : HTMLDivElement
+    {
+        const eventName = createFilterField(id, "Event name:", filter.name, callbacks.onNameChanged);
+        const eventTag = createFilterField(id, "Event tag:", filter.tag, callbacks.onTagChanged);
+        const propertiesTitle = createPropertiesTitle("Event properties");
+        const memberList = createMemberList(id, filter.members, callbacks.members);
+
+        const fields = [eventName, eventTag, propertiesTitle, ...memberList];
+        
+        return createFilterWrapper(id, filterName, "Event", callbacks.common, fields);
+    }
+
+    export function createPropertyFilter(id: FilterId, filterName: string, filter: PropertyFilter, callbacks: PropertyFilterCallbacks) : HTMLDivElement
+    {
+        const propertyGroup = createFilterField(id, "Property group:", filter.group, callbacks.onGroupChanged);
+        const propertiesTitle = createPropertiesTitle("Properties");
+        const memberList = createMemberList(id, filter.members, callbacks.members);
+
+        const fields = [propertyGroup, propertiesTitle, ...memberList];
+        
+        return createFilterWrapper(id, filterName, "Property", callbacks.common, fields);
+    }
+
+    export function createFilterCreationEntry(name: string)
+    {
+        const entry = document.createElement("a");
+        entry.textContent = name;
+        return entry;
+    }
+}
+
+function getFilterMembers(filter: Filter) : MemberFilter[]
+{
+    switch(filter.type)
+    {
+        case FilterType.Event: return (filter as EventFilter).members;
+        case FilterType.Property: return (filter as PropertyFilter).members;
     }
 }
 
 export default class FiltersList
 {
-    private addButton: HTMLButtonElement;
-    private filterContainer: HTMLElement;
-    private filters: Map<FilterId, FilterData>;
-    private callbacks: FilterListCallbacks;
-
-    private memberCallbacks = {
+    private readonly memberCallbacks = {
         onMemberAdded: this.onMemberAdded.bind(this),
         onMemberRemoved: this.onMemberRemoved.bind(this),
         onMemberNameChanged: this.onMemberNameChanged.bind(this),
@@ -404,21 +441,50 @@ export default class FiltersList
         onMemberValueChanged: this.onMemberValueChanged.bind(this)
     }
 
-    private filterCallbacks = {
+    private readonly commonCallbacks = {
         onFilterNameChanged: this.onFilterNameChanged.bind(this),
-        onFilterRemoved: this.onFilterRemoved.bind(this),
-        onNameChanged: this.onFilterEventNameChanged.bind(this),
-        onTagChanged: this.onFilterEventTagChanged.bind(this),
-        members: this.memberCallbacks
+        onFilterRemoved: this.onFilterRemoved.bind(this)
+    }
+
+    private readonly eventFilterCallbacks = {
+        onNameChanged: this.onEventFilterNameChanged.bind(this),
+        onTagChanged: this.onEventFilterTagChanged.bind(this),
+        members: this.memberCallbacks,
+        common: this.commonCallbacks
     };
 
-    constructor(addButton: HTMLButtonElement, filterContainer: HTMLElement, callbacks: FilterListCallbacks)
+    private readonly propertyFilterCallbacks = {
+        onGroupChanged: this.onPropertyFilterGroupChanged.bind(this),
+        members: this.memberCallbacks,
+        common: this.commonCallbacks
+    };
+
+    private addDropdown: HTMLElement;
+    private filterContainer: HTMLElement;
+    private filters: Map<FilterId, FilterData>;
+    private callbacks: FilterListCallbacks;
+
+    constructor(addDropdown: HTMLElement, filterContainer: HTMLElement, callbacks: FilterListCallbacks)
     {
-        this.addButton = addButton;
+        this.addDropdown = addDropdown;
         this.filterContainer = filterContainer;
-        this.addButton.onclick = () => { this.addEventFilter(); };
         this.filters = new Map<FilterId, FilterData>();
         this.callbacks = callbacks;
+
+        this.initializeDropwdon();
+    }
+
+    initializeDropwdon()
+    {
+        let content = this.addDropdown.querySelector('.basico-dropdown-content');
+        
+        const createEventFilter = UI.createFilterCreationEntry("Event Filter");
+        createEventFilter.onclick = () => { this.addEventFilter(); };
+
+        const createPropertyFilter = UI.createFilterCreationEntry("Property Filter");
+        createPropertyFilter.onclick = () => { this.addPropertyFilter(); };
+
+        content.append(createEventFilter, createPropertyFilter);
     }
 
     getFilters()
@@ -432,7 +498,20 @@ export default class FiltersList
         const filter = new EventFilter("", "", []);
         const filterName = "Filter " + filterId;
 
-        const filterElement = UI.createEventFilter(filterId, filterName, filter, this.filterCallbacks);
+        const filterElement = UI.createEventFilter(filterId, filterName, filter, this.eventFilterCallbacks);
+
+        this.filters.set(filterId, { name: filterName, filter: filter, element: filterElement});
+        
+        this.filterContainer.appendChild(filterElement);
+    }
+
+    addPropertyFilter()
+    {
+        const filterId = FilterIdGenerator.nextId();
+        const filter = new PropertyFilter("", []);
+        const filterName = "Filter " + filterId;
+
+        const filterElement = UI.createPropertyFilter(filterId, filterName, filter, this.propertyFilterCallbacks);
 
         this.filters.set(filterId, { name: filterName, filter: filter, element: filterElement});
         
@@ -467,7 +546,17 @@ export default class FiltersList
         this.onFilterChanged(id);
     }
 
-    private onFilterEventNameChanged(id: FilterId, name: string)
+    private onPropertyFilterGroupChanged(id: FilterId, group: string)
+    {
+        let filter: Filter = this.filters.get(id).filter;
+        if (filter.type == FilterType.Property)
+        {
+            (filter as PropertyFilter).group = group;
+        }
+        this.onFilterChanged(id);
+    }
+
+    private onEventFilterNameChanged(id: FilterId, name: string)
     {
         let filter: Filter = this.filters.get(id).filter;
         if (filter.type == FilterType.Event)
@@ -477,7 +566,7 @@ export default class FiltersList
         this.onFilterChanged(id);
     }
 
-    private onFilterEventTagChanged(id: FilterId, tag: string)
+    private onEventFilterTagChanged(id: FilterId, tag: string)
     {
         let filter: Filter = this.filters.get(id).filter;
         if (filter.type == FilterType.Event)
@@ -490,9 +579,10 @@ export default class FiltersList
     private onMemberAdded(id: FilterId, member: MemberFilter)
     {
         let filter: Filter = this.filters.get(id).filter;
-        if (filter.type == FilterType.Event)
+        let members = getFilterMembers(filter);
+        if (members)
         {
-            (filter as EventFilter).members.push(member);
+            members.push(member);
         }
         this.onFilterChanged(id);
     }
@@ -500,9 +590,10 @@ export default class FiltersList
     private onMemberRemoved(id: FilterId, index: number)
     {
         let filter: Filter = this.filters.get(id).filter;
-        if (filter.type == FilterType.Event)
+        let members = getFilterMembers(filter);
+        if (members)
         {
-            (filter as EventFilter).members.splice(index, 1);
+            members.splice(index, 1);
         }
         this.onFilterChanged(id);
     }
@@ -510,9 +601,10 @@ export default class FiltersList
     private onMemberNameChanged(id: FilterId, index: number, name: string)
     {
         let filter: Filter = this.filters.get(id).filter;
-        if (filter.type == FilterType.Event)
+        let members = getFilterMembers(filter);
+        if (members)
         {
-            (filter as EventFilter).members[index].name = name;
+            members[index].name = name;
         }
         this.onFilterChanged(id);
     }
@@ -520,9 +612,10 @@ export default class FiltersList
     private onMemberValueChanged(id: FilterId, index: number, value: string | number | boolean)
     {
         let filter: Filter = this.filters.get(id).filter;
-        if (filter.type == FilterType.Event)
+        let members = getFilterMembers(filter);
+        if (members)
         {
-            (filter as EventFilter).members[index].value = value;
+            members[index].value = value;
         }
         this.onFilterChanged(id);
     }
@@ -530,9 +623,10 @@ export default class FiltersList
     private onMemberModeChanged(id: FilterId, index: number, mode: FilterMode)
     {
         let filter: Filter = this.filters.get(id).filter;
-        if (filter.type == FilterType.Event)
+        let members = getFilterMembers(filter);
+        if (members)
         {
-            (filter as EventFilter).members[index].mode = mode;
+            members[index].mode = mode;
         }
         this.onFilterChanged(id);
     }
@@ -541,9 +635,10 @@ export default class FiltersList
     {
         let filterData = this.filters.get(id);
         let filter = filterData.filter;
-        if (filter.type == FilterType.Event)
+        let members = getFilterMembers(filter);
+        if (members)
         {
-            let member = (filter as EventFilter).members[index];
+            let member = members[index];
             if (member.type != type)
             {
                 member.type = type;
@@ -567,12 +662,6 @@ export default class FiltersList
             }
         }
 
-        
         this.onFilterChanged(id);
-    }
-
-    private createEventFilter(id: FilterId, filter: EventFilter)
-    {
-
     }
 }
