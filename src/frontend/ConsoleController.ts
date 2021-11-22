@@ -49,6 +49,7 @@ export enum LogChannel
     Timeline,
     Files,
     Connections,
+    Filters,
 
     Count
 }

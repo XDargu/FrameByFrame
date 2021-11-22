@@ -1,5 +1,6 @@
 import { availableModesPerMemberType, EventFilter, Filter, FilterMode, filterModeAsString, FilterType, getDefaultValuePerMemberType, MemberFilter, MemberFilterType, memberFilterTypeAsString, PropertyFilter } from "../filters/filters";
 import * as Utils from '../utils/utils'
+import { Console, LogChannel, LogLevel } from "./ConsoleController";
 
 export type FilterId = number;
 
@@ -513,6 +514,9 @@ export default class FiltersList
         this.filters.set(filterId, { name: filterName, filter: filter, element: filterElement});
         
         this.filterContainer.appendChild(filterElement);
+
+        Console.log(LogLevel.Verbose, LogChannel.Filters, "Filter added: " + filterName);
+        this.onFilterChanged(filterId);
     }
 
     addPropertyFilter()
@@ -526,6 +530,9 @@ export default class FiltersList
         this.filters.set(filterId, { name: filterName, filter: filter, element: filterElement});
         
         this.filterContainer.appendChild(filterElement);
+
+        Console.log(LogLevel.Verbose, LogChannel.Filters, "Filter added: " + filterName);
+        this.onFilterChanged(filterId);
     }
 
     private onFilterChanged(id: FilterId)
@@ -552,6 +559,7 @@ export default class FiltersList
     {
         let filterData = this.filters.get(id);
         filterData.element.remove();
+        Console.log(LogLevel.Verbose, LogChannel.Filters, "Filter removed: " + filterData.name);
         this.filters.delete(id);
         this.onFilterChanged(id);
     }

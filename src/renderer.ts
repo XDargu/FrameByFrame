@@ -86,6 +86,9 @@ export default class Renderer {
     private unprocessedFramesWithEvents: number[];
     private areAllFramesWithEventsPending: boolean;
     private unprocessedFiltersPending: boolean;
+    
+    // Others
+    private timeoutFilter: any;
 
     // Settings
     private settingsList: SettingsList;
@@ -798,13 +801,10 @@ export default class Renderer {
             this.areAllFramesWithEventsPending = true;
         }
 
-        var timeoutFilter;
-        if (timeoutFilter)
-            clearTimeout(timeoutFilter);
-
-        timeoutFilter = setTimeout(() => {
+        clearTimeout(this.timeoutFilter);
+        this.timeoutFilter = setTimeout(() => {
             this.updateTimelineEvents();
-        }, 300);
+        }, 500);
     }
 
     // Modal
