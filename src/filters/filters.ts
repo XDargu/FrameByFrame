@@ -94,289 +94,292 @@ export interface FilteredResult
     entityId: number;
 }
 
-function filterTextOrEmpty(filter: string, content: string) : boolean
+export namespace Common
 {
-    return filter === "" || filterText(filter, content);
-}
-
-function filterBooleanWithMode(filter: boolean, content: boolean, mode: FilterMode) : boolean
-{
-    switch(mode)
+    export function filterTextOrEmpty(filter: string, content: string) : boolean
     {
-        case FilterMode.Equals: return content === filter;
-        case FilterMode.Different: return content != filter;
+        return filter === "" || filterText(filter, content);
     }
 
-    return false;
-}
-
-function filterNumberWithMode(filter: number, content: number, mode: FilterMode) : boolean
-{
-    switch(mode)
+    export function filterBooleanWithMode(filter: boolean, content: boolean, mode: FilterMode) : boolean
     {
-        case FilterMode.Equals: return content === filter;
-        case FilterMode.Similar: return Math.abs(content-filter) < 0.1;
-        case FilterMode.Different: return content != filter;
-        case FilterMode.Less: return content < filter;
-        case FilterMode.More: return content > filter;
-    }
-
-    return false;
-}
-
-function filterTextWithMode(filter: string, content: string, mode: FilterMode) : boolean
-{
-    switch(mode)
-    {
-        case FilterMode.Contains: return filterTextOrEmpty(filter, content);
-        case FilterMode.Equals: return filter === content;
-        case FilterMode.Different: return filter != content;
-    }
-
-    return false;
-}
-
-function applyFilterBoolean(name: string, value: boolean, filter: MemberFilter)
-{
-    if (filterTextOrEmpty(filter.name, name))
-    {
-        if (filterBooleanWithMode(filter.value as boolean, value, filter.mode))
+        switch(mode)
         {
-            return true;
-        }
-    }
-    return false;
-}
-
-function applyFilterNumber(name: string, value: number, filter: MemberFilter)
-{
-    if (filterTextOrEmpty(filter.name, name))
-    {
-        if (filterNumberWithMode(filter.value as number, value, filter.mode))
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
-function applyFilterString(name: string, value: string, filter: MemberFilter)
-{
-    if (filterTextOrEmpty(filter.name, name))
-    {
-        if (filterTextWithMode(filter.value as string, value, filter.mode))
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
-function filterPropertyBoolean(property: RECORDING.IProperty, filters: MemberFilter[]) : boolean
-{
-    const name = property.name.toLowerCase();
-    const value = property.value == "true" ? true : false;
-
-    for (let i=0; i<filters.length; ++i)
-    {
-        if (applyFilterBoolean(name, value, filters[i]))
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
-function filterNumber(name: string, value: number, filters: MemberFilter[]) : boolean
-{
-    for (let i=0; i<filters.length; ++i)
-    {
-        if (applyFilterNumber(name, value, filters[i]))
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
-function filterPropertyNumber(property: RECORDING.IProperty, filters: MemberFilter[]) : boolean
-{
-    const name = property.name.toLowerCase();
-    const value = property.value as number;
-
-    return filterNumber(name, value, filters);
-}
-
-function filterPropertyString(property: RECORDING.IProperty, filters: MemberFilter[]) : boolean
-{
-    const name = property.name.toLowerCase();
-    const value = (property.value as string).toLowerCase();
-
-    for (let i=0; i<filters.length; ++i)
-    {
-        if (applyFilterString(name, value, filters[i]))
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
-function filterVec3(name: string, value: RECORDING.IVec3, filters: MemberFilter[]) : boolean
-{
-    const nameX = name + ".x";
-    const nameY = name + ".y";
-    const nameZ = name + ".z";
-
-    for (let i=0; i<filters.length; ++i)
-    {
-        if (applyFilterNumber(nameX, value.x, filters[i]) ||
-            applyFilterNumber(nameY, value.y, filters[i]) ||
-            applyFilterNumber(nameZ, value.z, filters[i]))
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
-function filterPropertyVec3(property: RECORDING.IProperty, filters: MemberFilter[]) : boolean
-{
-    return filterVec3(property.name, property.value as RECORDING.IVec3, filters);
-}
-
-function filterPropertySphere(property: RECORDING.IPropertySphere, filters: MemberFilter[]) : boolean
-{
-    return filterNumber("radius", property.radius, filters) ||
-        filterVec3("position", property.position, filters);
-}
-
-function filterPropertyLine(property: RECORDING.IPropertyLine, filters: MemberFilter[]) : boolean
-{
-    return filterVec3("origin", property.origin, filters) ||
-        filterVec3("destination", property.destination, filters);
-}
-
-function filterPropertyPlane(property: RECORDING.IPropertyPlane, filters: MemberFilter[]) : boolean
-{
-    return filterNumber("length", property.length, filters) || 
-        filterNumber("width", property.width, filters) ||
-        filterVec3("position", property.position, filters) ||
-        filterVec3("normal", property.normal, filters) ||
-        filterVec3("up", property.up, filters);
-}
-
-function filterPropertyAABB(property: RECORDING.IPropertyAABB, filters: MemberFilter[]) : boolean
-{
-    return filterVec3("position", property.position, filters) ||
-        filterVec3("size", property.size, filters);
-}
-
-function filterPropertyOOBB(property: RECORDING.IPropertyOOBB, filters: MemberFilter[]) : boolean
-{
-    return filterVec3("position", property.position, filters) ||
-        filterVec3("size", property.size, filters) ||
-        filterVec3("up", property.up, filters) ||
-        filterVec3("forward", property.size, filters);
-}
-
-function filterPropertyCapsule(property: RECORDING.IPropertyCapsule, filters: MemberFilter[]) : boolean
-{
-    return filterNumber("radius", property.radius, filters) || 
-        filterNumber("height", property.height, filters) ||
-        filterVec3("position", property.position, filters) ||
-        filterVec3("direction", property.direction, filters);
-}
-
-function filterPropertyMesh(property: RECORDING.IPropertyMesh, filters: MemberFilter[]) : boolean
-{
-    return false;
-}
-
-function filterProperty(property: RECORDING.IProperty, filters: MemberFilter[]) : boolean
-{
-    switch (property.type)
-    {
-        case "string": return filterPropertyString(property, filters);
-        case "number": return filterPropertyNumber(property, filters);
-        case "boolean": return filterPropertyBoolean(property, filters);
-        case "group": return filterPropertyGroup(property as RECORDING.IPropertyGroup, filters);
-        case "sphere": return filterPropertySphere(property as RECORDING.IPropertySphere, filters);
-        case "line": return filterPropertyLine(property as RECORDING.IPropertyLine, filters);
-        case "plane": return filterPropertyPlane(property as RECORDING.IPropertyPlane, filters);
-        case "aabb": return filterPropertyAABB(property as RECORDING.IPropertyAABB, filters);
-        case "oobb": return filterPropertyOOBB(property as RECORDING.IPropertyOOBB, filters);
-        case "capsule": return filterPropertyCapsule(property as RECORDING.IPropertyCapsule, filters);
-        case "mesh": return filterPropertyMesh(property as RECORDING.IPropertyMesh, filters);
-        case "vec3": return filterPropertyVec3(property, filters);
-    }
-
-    return false;
-}
-
-function filterPropertyGroup(propertyGroup: RECORDING.IPropertyGroup, filters: MemberFilter[], visitChildGroups: boolean = true) : boolean
-{
-    let found = false;
-    RECORDING.NaiveRecordedData.visitProperties(propertyGroup.value, (property: RECORDING.IProperty) => {
-        if (filterProperty(property, filters))
-        {
-            found = true;
-            return RECORDING.VisitorResult.Stop;
-        }
-    }, visitChildGroups);
-    return found;
-}
-
-function filterEvent(event: RECORDING.IEvent, name: string, tag: string, members: MemberFilter[])
-{
-    if (filterTextOrEmpty(name, event.name.toLowerCase()) && filterTextOrEmpty(tag, event.tag.toLowerCase()))
-    {
-        if (members.length == 0) {
-            return true;
+            case FilterMode.Equals: return content === filter;
+            case FilterMode.Different: return content != filter;
         }
 
-        return filterPropertyGroup(event.properties, members);
+        return false;
     }
-    return false;
-}
 
-function filterEntityProperties(entity: RECORDING.IEntity, groupFilter: string, membersFilter: MemberFilter[]) : boolean
-{
-    const properties = entity.properties[0] as RECORDING.IPropertyGroup;
-    const specialProperties = entity.properties[1] as RECORDING.IPropertyGroup;
-
-    for (let i=0; i<properties.value.length; ++i)
+    export function filterNumberWithMode(filter: number, content: number, mode: FilterMode) : boolean
     {
-        let group = properties.value[i];
-        if (group.type == "group")
+        switch(mode)
         {
-            if (filterEntityPropertyGroup(group as RECORDING.IPropertyGroup, group.name, groupFilter, membersFilter))
+            case FilterMode.Equals: return content === filter;
+            case FilterMode.Similar: return Math.abs(content-filter) < 0.1;
+            case FilterMode.Different: return content != filter;
+            case FilterMode.Less: return content < filter;
+            case FilterMode.More: return content > filter;
+        }
+
+        return false;
+    }
+
+    export function filterTextWithMode(filter: string, content: string, mode: FilterMode) : boolean
+    {
+        switch(mode)
+        {
+            case FilterMode.Contains: return filterTextOrEmpty(filter, content);
+            case FilterMode.Equals: return filter === content;
+            case FilterMode.Different: return filter != content;
+        }
+
+        return false;
+    }
+
+    export function applyFilterBoolean(name: string, value: boolean, filter: MemberFilter)
+    {
+        if (filterTextOrEmpty(filter.name, name))
+        {
+            if (filterBooleanWithMode(filter.value as boolean, value, filter.mode))
             {
                 return true;
             }
         }
+        return false;
     }
 
-    // Filter properties as "Uncategorized", not recursively
-    if (filterEntityPropertyGroup(properties, "Uncategorized", groupFilter, membersFilter, false))
+    export function applyFilterNumber(name: string, value: number, filter: MemberFilter)
     {
-        return true;
+        if (filterTextOrEmpty(filter.name, name))
+        {
+            if (filterNumberWithMode(filter.value as number, value, filter.mode))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
-    return filterEntityPropertyGroup(specialProperties, "Basic Information", groupFilter, membersFilter);
-}
-
-function filterEntityPropertyGroup(group: RECORDING.IPropertyGroup, groupName: string, groupFilter: string, members: MemberFilter[], visitChildGroups: boolean = true) : boolean
-{
-    if (filterTextOrEmpty(groupFilter, groupName.toLowerCase()))
+    function applyFilterString(name: string, value: string, filter: MemberFilter)
     {
-        if (filterPropertyGroup(group, members, visitChildGroups))
+        if (filterTextOrEmpty(filter.name, name))
+        {
+            if (filterTextWithMode(filter.value as string, value, filter.mode))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    export function filterPropertyBoolean(property: RECORDING.IProperty, filters: MemberFilter[]) : boolean
+    {
+        const name = property.name.toLowerCase();
+        const value = property.value == "true" ? true : false;
+
+        for (let i=0; i<filters.length; ++i)
+        {
+            if (applyFilterBoolean(name, value, filters[i]))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    export function filterNumber(name: string, value: number, filters: MemberFilter[]) : boolean
+    {
+        for (let i=0; i<filters.length; ++i)
+        {
+            if (applyFilterNumber(name, value, filters[i]))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    export function filterPropertyNumber(property: RECORDING.IProperty, filters: MemberFilter[]) : boolean
+    {
+        const name = property.name.toLowerCase();
+        const value = property.value as number;
+
+        return filterNumber(name, value, filters);
+    }
+
+    export function filterPropertyString(property: RECORDING.IProperty, filters: MemberFilter[]) : boolean
+    {
+        const name = property.name.toLowerCase();
+        const value = (property.value as string).toLowerCase();
+
+        for (let i=0; i<filters.length; ++i)
+        {
+            if (applyFilterString(name, value, filters[i]))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    export function filterVec3(name: string, value: RECORDING.IVec3, filters: MemberFilter[]) : boolean
+    {
+        const nameX = name + ".x";
+        const nameY = name + ".y";
+        const nameZ = name + ".z";
+
+        for (let i=0; i<filters.length; ++i)
+        {
+            if (applyFilterNumber(nameX, value.x, filters[i]) ||
+                applyFilterNumber(nameY, value.y, filters[i]) ||
+                applyFilterNumber(nameZ, value.z, filters[i]))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    export function filterPropertyVec3(property: RECORDING.IProperty, filters: MemberFilter[]) : boolean
+    {
+        return filterVec3(property.name, property.value as RECORDING.IVec3, filters);
+    }
+
+    export function filterPropertySphere(property: RECORDING.IPropertySphere, filters: MemberFilter[]) : boolean
+    {
+        return filterNumber("radius", property.radius, filters) ||
+            filterVec3("position", property.position, filters);
+    }
+
+    export function filterPropertyLine(property: RECORDING.IPropertyLine, filters: MemberFilter[]) : boolean
+    {
+        return filterVec3("origin", property.origin, filters) ||
+            filterVec3("destination", property.destination, filters);
+    }
+
+    export function filterPropertyPlane(property: RECORDING.IPropertyPlane, filters: MemberFilter[]) : boolean
+    {
+        return filterNumber("length", property.length, filters) || 
+            filterNumber("width", property.width, filters) ||
+            filterVec3("position", property.position, filters) ||
+            filterVec3("normal", property.normal, filters) ||
+            filterVec3("up", property.up, filters);
+    }
+
+    export function filterPropertyAABB(property: RECORDING.IPropertyAABB, filters: MemberFilter[]) : boolean
+    {
+        return filterVec3("position", property.position, filters) ||
+            filterVec3("size", property.size, filters);
+    }
+
+    export function filterPropertyOOBB(property: RECORDING.IPropertyOOBB, filters: MemberFilter[]) : boolean
+    {
+        return filterVec3("position", property.position, filters) ||
+            filterVec3("size", property.size, filters) ||
+            filterVec3("up", property.up, filters) ||
+            filterVec3("forward", property.size, filters);
+    }
+
+    export function filterPropertyCapsule(property: RECORDING.IPropertyCapsule, filters: MemberFilter[]) : boolean
+    {
+        return filterNumber("radius", property.radius, filters) || 
+            filterNumber("height", property.height, filters) ||
+            filterVec3("position", property.position, filters) ||
+            filterVec3("direction", property.direction, filters);
+    }
+
+    export function filterPropertyMesh(property: RECORDING.IPropertyMesh, filters: MemberFilter[]) : boolean
+    {
+        return false;
+    }
+
+    export function filterProperty(property: RECORDING.IProperty, filters: MemberFilter[]) : boolean
+    {
+        switch (property.type)
+        {
+            case "string": return filterPropertyString(property, filters);
+            case "number": return filterPropertyNumber(property, filters);
+            case "boolean": return filterPropertyBoolean(property, filters);
+            case "group": return filterPropertyGroup(property as RECORDING.IPropertyGroup, filters);
+            case "sphere": return filterPropertySphere(property as RECORDING.IPropertySphere, filters);
+            case "line": return filterPropertyLine(property as RECORDING.IPropertyLine, filters);
+            case "plane": return filterPropertyPlane(property as RECORDING.IPropertyPlane, filters);
+            case "aabb": return filterPropertyAABB(property as RECORDING.IPropertyAABB, filters);
+            case "oobb": return filterPropertyOOBB(property as RECORDING.IPropertyOOBB, filters);
+            case "capsule": return filterPropertyCapsule(property as RECORDING.IPropertyCapsule, filters);
+            case "mesh": return filterPropertyMesh(property as RECORDING.IPropertyMesh, filters);
+            case "vec3": return filterPropertyVec3(property, filters);
+        }
+
+        return false;
+    }
+
+    export function filterPropertyGroup(propertyGroup: RECORDING.IPropertyGroup, filters: MemberFilter[], visitChildGroups: boolean = true) : boolean
+    {
+        let found = false;
+        RECORDING.NaiveRecordedData.visitProperties(propertyGroup.value, (property: RECORDING.IProperty) => {
+            if (filterProperty(property, filters))
+            {
+                found = true;
+                return RECORDING.VisitorResult.Stop;
+            }
+        }, visitChildGroups);
+        return found;
+    }
+
+    export function filterEvent(event: RECORDING.IEvent, name: string, tag: string, members: MemberFilter[])
+    {
+        if (filterTextOrEmpty(name, event.name.toLowerCase()) && filterTextOrEmpty(tag, event.tag.toLowerCase()))
+        {
+            if (members.length == 0) {
+                return true;
+            }
+
+            return filterPropertyGroup(event.properties, members);
+        }
+        return false;
+    }
+
+    export function filterEntityProperties(entity: RECORDING.IEntity, groupFilter: string, membersFilter: MemberFilter[]) : boolean
+    {
+        const properties = entity.properties[0] as RECORDING.IPropertyGroup;
+        const specialProperties = entity.properties[1] as RECORDING.IPropertyGroup;
+
+        for (let i=0; i<properties.value.length; ++i)
+        {
+            let group = properties.value[i];
+            if (group.type == "group")
+            {
+                if (filterEntityPropertyGroup(group as RECORDING.IPropertyGroup, group.name, groupFilter, membersFilter))
+                {
+                    return true;
+                }
+            }
+        }
+
+        // Filter properties as "Uncategorized", not recursively
+        if (filterEntityPropertyGroup(properties, "Uncategorized", groupFilter, membersFilter, false))
         {
             return true;
         }
+
+        return filterEntityPropertyGroup(specialProperties, "Basic Information", groupFilter, membersFilter);
     }
 
-    return false;
+    export function filterEntityPropertyGroup(group: RECORDING.IPropertyGroup, groupName: string, groupFilter: string, members: MemberFilter[], visitChildGroups: boolean = true) : boolean
+    {
+        if (filterTextOrEmpty(groupFilter, groupName.toLowerCase()))
+        {
+            if (filterPropertyGroup(group, members, visitChildGroups))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }
 
 export class Filter
@@ -441,7 +444,7 @@ export class EventFilter extends Filter
 
                     for (let j=0; j<membersFilter.length; ++j)
                     {
-                        if (!filterEvent(event, nameFilter, tagFilter, [membersFilter[j]]))
+                        if (!Common.filterEvent(event, nameFilter, tagFilter, [membersFilter[j]]))
                         {
                             allGood = false;
                             break;
@@ -509,7 +512,7 @@ export class PropertyFilter extends Filter
                 let allGood = true;
                 for (let i=0; i<membersFilter.length; ++i)
                 {
-                    if (!filterEntityProperties(entity, groupFilter, [membersFilter[i]]))
+                    if (!Common.filterEntityProperties(entity, groupFilter, [membersFilter[i]]))
                     {
                         allGood = false;
                         break;
