@@ -12,7 +12,15 @@ export function hashCode(str: string): number
     return h & 0xFFFFFFFF
 }
 
-const colors = ["#D6A3FF", "#EB7C2B", "#5DAEDC", "#DFC956", "E5CF58"];
+export function isHexColor(hex: string)
+{
+    return typeof hex === 'string'
+        && hex.length === 7
+        && hex[0] === '#'
+        && !isNaN(Number('0x' + hex.substr(1)))
+}
+
+const colors = ["#D6A3FF", "#EB7C2B", "#5DAEDC", "#DFC956", "#E5CF58"];
 export function colorFromHash(hash: number) : string
 {
     return colors[hash % colors.length];

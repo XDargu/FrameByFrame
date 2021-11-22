@@ -36,6 +36,58 @@ describe('Utils', () => {
 
   });
 
+  describe('isHexColor', () => {
+
+    it('returns true for correct colors', () => {
+      expect(Utils.isHexColor('#AAABBB')).to.be.true;
+      expect(Utils.isHexColor('#274CBA')).to.be.true;
+      expect(Utils.isHexColor('#FFFFFF')).to.be.true;
+      expect(Utils.isHexColor('#012345')).to.be.true;
+      expect(Utils.isHexColor('#6789AB')).to.be.true;
+    });
+
+    it('returns false for colors without hash', () => {
+      expect(Utils.isHexColor('FFFFFF')).to.be.false;
+      expect(Utils.isHexColor('012345')).to.be.false;
+      expect(Utils.isHexColor('6789AB')).to.be.false;
+    });
+
+    it('returns false for non-hex values', () => {
+      expect(Utils.isHexColor('#FFFFFG')).to.be.false;
+      expect(Utils.isHexColor('#01234K')).to.be.false;
+      expect(Utils.isHexColor('#6789AT')).to.be.false;
+    });
+
+    it('returns false for hex of wrong length', () => {
+      expect(Utils.isHexColor('#FFF')).to.be.false;
+      expect(Utils.isHexColor('#01234')).to.be.false;
+      expect(Utils.isHexColor('#FFFFFFF')).to.be.false;
+    });
+    
+  });
+
+  describe('colorFromHash', () => {
+
+    it('returns the same color for the same value', () => {
+      for (let i=0; i<20; ++i)
+      {
+        const val1 = Utils.colorFromHash(i);
+        const val2 = Utils.colorFromHash(i);
+        expect(val1).to.equal(val2);
+      }
+    });
+
+    it('returns values correctly formatted', () => {
+      for (let i=0; i<20; ++i)
+      {
+        const color = Utils.colorFromHash(i);
+        const isHexColor = Utils.isHexColor(color);
+        expect(isHexColor).to.be.true;
+      }
+    });
+    
+  });
+
   describe('blend', () => {
 
     var black = {r: 0, g: 0, b: 0};
@@ -97,14 +149,14 @@ describe('Utils', () => {
       const filter = "st";
       const content = "test";
       const result = Utils.filterText(filter, content);
-      expect(result).to.equal(true);
+      expect(result).to.be.true;
     });
 
     it('does not find "a" in "test"', () => {
       const filter = "a";
       const content = "test";
       const result = Utils.filterText(filter, content);
-      expect(result).to.equal(false);
+      expect(result).to.be.false;
     });
     
   });
