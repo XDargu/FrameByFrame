@@ -159,8 +159,8 @@ export class PlaybackController {
         }
     }
 
-    onTimelinePrevEventClicked(evt: MouseEvent) {
-        const prevEvent = this.getPreviousEventFrame(evt.ctrlKey);
+    onTimelinePrevEventClicked(filterSelection: boolean) {
+        const prevEvent = this.getPreviousEventFrame(filterSelection);
         if (prevEvent) {
             this.renderer.applyFrame(prevEvent.frame);
             this.renderer.selectEntity(Number.parseInt(prevEvent.entityId))
@@ -168,8 +168,8 @@ export class PlaybackController {
         }
     }
 
-    onTimelineNextEventClicked(evt: MouseEvent) {
-        const nextEvent = this.getNextEventFrame(evt.ctrlKey);
+    onTimelineNextEventClicked(filterSelection: boolean) {
+        const nextEvent = this.getNextEventFrame(filterSelection);
         if (nextEvent) {
             this.renderer.applyFrame(nextEvent.frame);
             this.renderer.selectEntity(Number.parseInt(nextEvent.entityId))

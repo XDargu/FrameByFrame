@@ -7,6 +7,10 @@ enum ShortcutActions
     LastFrame,
     NextFrame,
     PrevFrame,
+    NextEvent,
+    PrevEvent,
+    NextSelectionEvent,
+    PrevSelectionEvent,
     TogglePlayback,
     ToggleRecording,
     OpenFile,
@@ -23,6 +27,8 @@ interface ShortcutTable
 {
     control: ShortcutActionMap;
     normal: ShortcutActionMap;
+    alt: ShortcutActionMap;
+    controlAtl: ShortcutActionMap;
 }
 
 const shortcuts : ShortcutTable = {
@@ -38,13 +44,25 @@ const shortcuts : ShortcutTable = {
         "ArrowLeft": ShortcutActions.PrevFrame,
         "ArrowRight": ShortcutActions.NextFrame,
         " ": ShortcutActions.TogglePlayback
+    },
+    alt: {
+        "ArrowLeft": ShortcutActions.PrevEvent,
+        "ArrowRight": ShortcutActions.NextEvent,
+    },
+    controlAtl: {
+        "ArrowLeft": ShortcutActions.PrevSelectionEvent,
+        "ArrowRight": ShortcutActions.NextSelectionEvent,
     }
 };
 
 function getShortcutActionMap(e : KeyboardEvent) : ShortcutActionMap
 {
+    if (e.ctrlKey && e.altKey)
+        return shortcuts.controlAtl;
     if (e.ctrlKey)
         return shortcuts.control;
+    if (e.altKey)
+        return shortcuts.alt;
     return shortcuts.normal;
 }
 
@@ -64,6 +82,10 @@ function executeShortcut(action: ShortcutActions, playbackController: PlaybackCo
         case ShortcutActions.NextFrame: playbackController.onTimelineNextClicked(); break;
         case ShortcutActions.PrevFrame: playbackController.onTimelinePrevClicked(); break;
         case ShortcutActions.TogglePlayback: playbackController.onTimelinePlayClicked(); break;
+        case ShortcutActions.NextEvent: playbackController.onTimelineNextEventClicked(false); break;
+        case ShortcutActions.PrevEvent: playbackController.onTimelinePrevEventClicked(false); break;
+        case ShortcutActions.NextSelectionEvent: playbackController.onTimelineNextEventClicked(true); break;
+        case ShortcutActions.PrevSelectionEvent: playbackController.onTimelinePrevEventClicked(true); break;
         case ShortcutActions.ToggleRecording: break;
         case ShortcutActions.OpenFile: break;
         case ShortcutActions.SaveFile: break;

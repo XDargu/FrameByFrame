@@ -183,8 +183,8 @@ export default class Renderer {
         document.getElementById("timeline-prev").onmousedown = (e) => { this.playbackController.onTimelinePrevClicked(); e.preventDefault(); }
         document.getElementById("timeline-first").onmousedown = (e) => { this.playbackController.onTimelineFirstClicked(); e.preventDefault(); }
         document.getElementById("timeline-last").onmousedown = (e) => { this.playbackController.onTimelineLastClicked(); e.preventDefault(); }
-        document.getElementById("timeline-event-prev").onmousedown = (e) => { this.playbackController.onTimelinePrevEventClicked(e); e.preventDefault(); }
-        document.getElementById("timeline-event-next").onmousedown = (e) => { this.playbackController.onTimelineNextEventClicked(e); e.preventDefault(); }
+        document.getElementById("timeline-event-prev").onmousedown = (e) => { this.playbackController.onTimelinePrevEventClicked(e.ctrlKey); e.preventDefault(); }
+        document.getElementById("timeline-event-next").onmousedown = (e) => { this.playbackController.onTimelineNextEventClicked(e.ctrlKey); e.preventDefault(); }
 
         // Create control bar callbacks
         document.getElementById("title-bar-open").onmousedown = (e) => { this.onOpenFile(); e.preventDefault(); }
