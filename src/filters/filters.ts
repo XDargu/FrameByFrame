@@ -22,6 +22,7 @@ export enum FilterMode
 {
     Contains, // String only
     Equals,
+    Similar, // Number only
     Different,
     Less, // Number only
     More // Number only
@@ -33,6 +34,7 @@ export function filterModeAsString(mode: FilterMode) : string
     {
         case FilterMode.Contains: return "Contains";
         case FilterMode.Equals: return "Equals";
+        case FilterMode.Similar: return "Similar";
         case FilterMode.Different: return "Different";
         case FilterMode.Less: return "Less";
         case FilterMode.More: return "More";
@@ -62,7 +64,7 @@ export function availableModesPerMemberType(type: MemberFilterType)
     switch(type)
     {
         case MemberFilterType.String: return [FilterMode.Contains, FilterMode.Equals, FilterMode.Different];
-        case MemberFilterType.Number: return [FilterMode.Equals, FilterMode.Different, FilterMode.Less, FilterMode.More];
+        case MemberFilterType.Number: return [FilterMode.Equals, FilterMode.Similar, FilterMode.Different, FilterMode.Less, FilterMode.More];
         case MemberFilterType.Boolean: return [FilterMode.Equals, FilterMode.Different];
     }
     return [];
@@ -113,6 +115,7 @@ function filterNumberWithMode(filter: number, content: number, mode: FilterMode)
     switch(mode)
     {
         case FilterMode.Equals: return content === filter;
+        case FilterMode.Similar: return Math.abs(content-filter) < 0.1;
         case FilterMode.Different: return content != filter;
         case FilterMode.Less: return content < filter;
         case FilterMode.More: return content > filter;
@@ -184,11 +187,8 @@ function filterPropertyBoolean(property: RECORDING.IProperty, filters: MemberFil
     return false;
 }
 
-function filterPropertyNumber(property: RECORDING.IProperty, filters: MemberFilter[]) : boolean
+function filterNumber(name: string, value: number, filters: MemberFilter[]) : boolean
 {
-    const name = property.name.toLowerCase();
-    const value = property.value as number;
-
     for (let i=0; i<filters.length; ++i)
     {
         if (applyFilterNumber(name, value, filters[i]))
@@ -197,6 +197,14 @@ function filterPropertyNumber(property: RECORDING.IProperty, filters: MemberFilt
         }
     }
     return false;
+}
+
+function filterPropertyNumber(property: RECORDING.IProperty, filters: MemberFilter[]) : boolean
+{
+    const name = property.name.toLowerCase();
+    const value = property.value as number;
+
+    return filterNumber(name, value, filters);
 }
 
 function filterPropertyString(property: RECORDING.IProperty, filters: MemberFilter[]) : boolean
@@ -214,6 +222,77 @@ function filterPropertyString(property: RECORDING.IProperty, filters: MemberFilt
     return false;
 }
 
+function filterVec3(name: string, value: RECORDING.IVec3, filters: MemberFilter[]) : boolean
+{
+    const nameX = name + ".x";
+    const nameY = name + ".y";
+    const nameZ = name + ".z";
+
+    for (let i=0; i<filters.length; ++i)
+    {
+        if (applyFilterNumber(nameX, value.x, filters[i]) ||
+            applyFilterNumber(nameY, value.y, filters[i]) ||
+            applyFilterNumber(nameZ, value.z, filters[i]))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+function filterPropertyVec3(property: RECORDING.IProperty, filters: MemberFilter[]) : boolean
+{
+    return filterVec3(property.name, property.value as RECORDING.IVec3, filters);
+}
+
+function filterPropertySphere(property: RECORDING.IPropertySphere, filters: MemberFilter[]) : boolean
+{
+    return filterNumber("radius", property.radius, filters) ||
+        filterVec3("position", property.position, filters);
+}
+
+function filterPropertyLine(property: RECORDING.IPropertyLine, filters: MemberFilter[]) : boolean
+{
+    return filterVec3("origin", property.origin, filters) ||
+        filterVec3("destination", property.destination, filters);
+}
+
+function filterPropertyPlane(property: RECORDING.IPropertyPlane, filters: MemberFilter[]) : boolean
+{
+    return filterNumber("length", property.length, filters) || 
+        filterNumber("width", property.width, filters) ||
+        filterVec3("position", property.position, filters) ||
+        filterVec3("normal", property.normal, filters) ||
+        filterVec3("up", property.up, filters);
+}
+
+function filterPropertyAABB(property: RECORDING.IPropertyAABB, filters: MemberFilter[]) : boolean
+{
+    return filterVec3("position", property.position, filters) ||
+        filterVec3("size", property.size, filters);
+}
+
+function filterPropertyOOBB(property: RECORDING.IPropertyOOBB, filters: MemberFilter[]) : boolean
+{
+    return filterVec3("position", property.position, filters) ||
+        filterVec3("size", property.size, filters) ||
+        filterVec3("up", property.up, filters) ||
+        filterVec3("forward", property.size, filters);
+}
+
+function filterPropertyCapsule(property: RECORDING.IPropertyCapsule, filters: MemberFilter[]) : boolean
+{
+    return filterNumber("radius", property.radius, filters) || 
+        filterNumber("height", property.height, filters) ||
+        filterVec3("position", property.position, filters) ||
+        filterVec3("direction", property.direction, filters);
+}
+
+function filterPropertyMesh(property: RECORDING.IPropertyMesh, filters: MemberFilter[]) : boolean
+{
+    return false;
+}
+
 function filterProperty(property: RECORDING.IProperty, filters: MemberFilter[]) : boolean
 {
     switch (property.type)
@@ -222,7 +301,14 @@ function filterProperty(property: RECORDING.IProperty, filters: MemberFilter[]) 
         case "number": return filterPropertyNumber(property, filters);
         case "boolean": return filterPropertyBoolean(property, filters);
         case "group": return filterPropertyGroup(property as RECORDING.IPropertyGroup, filters);
-        // TODO: What to do with complex types? What to do with shapes?
+        case "sphere": return filterPropertySphere(property as RECORDING.IPropertySphere, filters);
+        case "line": return filterPropertyLine(property as RECORDING.IPropertyLine, filters);
+        case "plane": return filterPropertyPlane(property as RECORDING.IPropertyPlane, filters);
+        case "aabb": return filterPropertyAABB(property as RECORDING.IPropertyAABB, filters);
+        case "oobb": return filterPropertyOOBB(property as RECORDING.IPropertyOOBB, filters);
+        case "capsule": return filterPropertyCapsule(property as RECORDING.IPropertyCapsule, filters);
+        case "mesh": return filterPropertyMesh(property as RECORDING.IPropertyMesh, filters);
+        case "vec3": return filterPropertyVec3(property, filters);
     }
 
     return false;
@@ -351,10 +437,22 @@ export class EventFilter extends Filter
                 const entity = frameData.entities[entityID];
 
                 RECORDING.NaiveRecordedData.visitEvents(entity.events, (event: RECORDING.IEvent) => {
-                    if (filterEvent(event, nameFilter, tagFilter, membersFilter))
+                    let allGood = true;
+
+                    for (let j=0; j<membersFilter.length; ++j)
+                    {
+                        if (!filterEvent(event, nameFilter, tagFilter, [membersFilter[j]]))
+                        {
+                            allGood = false;
+                            break;
+                        }
+                    }
+
+                    if (allGood)
                     {
                         results.push({ frameIdx: i, entityId: entity.id });
                     }
+                    
                 });
             }
         }
@@ -408,7 +506,17 @@ export class PropertyFilter extends Filter
             {
                 const entity = frameData.entities[entityID];
 
-                if (filterEntityProperties(entity, groupFilter, membersFilter))
+                let allGood = true;
+                for (let i=0; i<membersFilter.length; ++i)
+                {
+                    if (!filterEntityProperties(entity, groupFilter, [membersFilter[i]]))
+                    {
+                        allGood = false;
+                        break;
+                    }
+                }
+
+                if (allGood)
                 {
                     results.push({ frameIdx: i, entityId: entity.id });
                 }

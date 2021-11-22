@@ -2542,6 +2542,7 @@ body {
 }
 
 .filter-arrow-icon {
+  width: 10px;
   margin-right: 4px;
 }
 

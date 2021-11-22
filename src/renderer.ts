@@ -781,12 +781,17 @@ export default class Renderer {
         const filters = this.filterList.getFilters();
         if (filters.size > 0)
         {
-            console.log(filter);
             this.unprocessedFramesWithEvents = [];
             this.areAllFramesWithEventsPending = true;
         }
 
-        this.updateTimelineEvents();
+        var timeoutFilter;
+        if (timeoutFilter)
+            clearTimeout(timeoutFilter);
+
+        timeoutFilter = setTimeout(() => {
+            this.updateTimelineEvents();
+        }, 300);
     }
 
     // Modal
