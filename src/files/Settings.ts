@@ -4,7 +4,8 @@ export interface ISettings
     autoReconnect: boolean,
     moveToEntityOnSelection: boolean,
     openEntityListOnSelection: boolean,
-    followCurrentSelection: boolean
+    followCurrentSelection: boolean,
+    showAllLayersOnStart: boolean,
 }
 
 export function createDefaultSettings() : ISettings
@@ -17,5 +18,6 @@ export function createDefaultSettings() : ISettings
         moveToEntityOnSelection: true,
         openEntityListOnSelection: true,
         followCurrentSelection: false,
+        showAllLayersOnStart: true,
     };
 }

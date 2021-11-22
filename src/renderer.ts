@@ -268,7 +268,16 @@ export default class Renderer {
                 {
                     this.sceneController.stopFollowEntity();
                 }
+                if (this.settings && this.settings.showAllLayersOnStart)
+                {
+                    this.layerController.setInitialState(LayerState.All);
+                }
             });
+
+        if (this.settings && this.settings.showAllLayersOnStart)
+        {
+            this.layerController.setInitialState(LayerState.All);
+        }
 
         // Connection buttons
         this.connectionButtons = new ConnectionButtons(document.getElementById(`connection-buttons`), (id: ConnectionId) => {
@@ -337,6 +346,10 @@ export default class Renderer {
                 this.unprocessedFiltersPending = true;
                 this.applyFrame(0);
                 this.controlTabs.openTabByIndex(TabIndices.EntityList);
+                if (this.settings.showAllLayersOnStart)
+                {
+                    this.layerController.setAllLayersState(LayerState.All);
+                }
             }
             catch (error)
             {

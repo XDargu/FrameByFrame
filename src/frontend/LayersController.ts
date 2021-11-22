@@ -34,12 +34,14 @@ export class LayerController
     private allLayerList: HTMLElement;
     private layers: Map<string, ILayer>;
     private layerChangedCallback: ILayerChanged;
+    private initialState: LayerState;
 
     constructor(layerList: HTMLElement, allLayerList: HTMLElement, layerChangedCallback: ILayerChanged)
     {
         this.allLayerList = allLayerList;
         this.layerList = new ListControl(layerList);
         this.layers = new Map<string, ILayer>();
+        this.initialState = LayerState.Selected;
         this.layerChangedCallback = layerChangedCallback;
 
         this.initButtonsAllLayers();
@@ -73,6 +75,20 @@ export class LayerController
         }
 
         this.updateLayers();
+    }
+
+    setInitialState(state: LayerState)
+    {
+        this.initialState = state;
+    }
+
+    setAllLayersState(state: LayerState)
+    {
+        for (let [layerName, layerData] of this.layers)
+        {
+            layerData.state = state;
+            this.layerChangedCallback(layerData.name, layerData.state);
+        }   
     }
 
     private updateLayers()
@@ -194,7 +210,7 @@ export class LayerController
             return layer;
         }
         
-        const newLayer = { name: name, state: LayerState.Selected};
+        const newLayer = { name: name, state: this.initialState};
         this.layers.set(name, newLayer);
         return newLayer;
     }
