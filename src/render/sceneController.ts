@@ -2,8 +2,9 @@ import * as BABYLON from 'babylonjs';
 import * as RECORDING from '../recording/RecordingData';
 import { GridMaterial } from 'babylonjs-materials';
 import { LinesMesh } from 'babylonjs/Meshes/linesMesh';
-import { Scalar } from 'babylonjs/Maths/math.scalar';
 import { LayerState } from '../frontend/LayersController';
+import * as Utils from '../utils/utils';
+import { getOutlineShader } from './outlineShader';
 
 export interface IEntitySelectedCallback
 {
@@ -762,6 +763,10 @@ export default class SceneController
 
     private isFollowingEntity: boolean;
 
+    // Outline
+    private selectionRenderTarget: BABYLON.RenderTargetTexture;
+    private hoverRenderTarget: BABYLON.RenderTargetTexture;
+
     removeAllProperties()
     {
         for (let data of this.entities.values())
@@ -1023,7 +1028,7 @@ export default class SceneController
 
     private applySelectionMaterial(entity: IEntityData)
     {
-        entity.mesh.outlineColor = BABYLON.Color3.FromHexString("#6DE080");
+        /*entity.mesh.outlineColor = BABYLON.Color3.FromHexString("#6DE080");
         entity.mesh.outlineWidth = 0.03;
         entity.mesh.renderOutline = true;
 
@@ -1032,14 +1037,14 @@ export default class SceneController
             mesh.outlineColor = BABYLON.Color3.FromHexString("#6DE080");
             mesh.outlineWidth = 0.03;
             mesh.renderOutline = true;
-        });
+        });*/
 
         this.axisGizmo.attachToMesh(entity.mesh);
     }
 
     private applyHoverMaterial(entity: IEntityData)
     {
-        entity.mesh.outlineColor = BABYLON.Color3.FromHexString("#8442B9");
+        /*entity.mesh.outlineColor = BABYLON.Color3.FromHexString("#8442B9");
         entity.mesh.outlineWidth = 0.03;
         entity.mesh.renderOutline = true;
 
@@ -1048,17 +1053,17 @@ export default class SceneController
             mesh.outlineColor = BABYLON.Color3.FromHexString("#8442B9");
             mesh.outlineWidth = 0.03;
             mesh.renderOutline = true;
-        });
+        });*/
     }
 
     private restoreEntityMaterial(entity: IEntityData)
     {
-        entity.mesh.renderOutline = false;
+        /*entity.mesh.renderOutline = false;
 
         // Apply on all meshes of the entity
         entity.properties.forEach((mesh: BABYLON.Mesh) => {
             mesh.renderOutline = false;
-        });
+        });*/
     }
 
     markEntityAsHovered(id: number)
@@ -1085,6 +1090,8 @@ export default class SceneController
 
             this.selectedEntity = storedMesh;
             this.applySelectionMaterial(this.selectedEntity);
+
+            this.refreshOutlineTargets();
         }
     }
 
@@ -1161,6 +1168,8 @@ export default class SceneController
             this.hoveredEntity = storedMesh;
             this.applyHoverMaterial(this.hoveredEntity);
         }
+
+        this.refreshOutlineTargets();
     }
 
     private onEntityStopHovered()
@@ -1171,6 +1180,30 @@ export default class SceneController
             this.restoreEntityMaterial(this.hoveredEntity);
         }
         this.hoveredEntity = null;
+
+        this.refreshOutlineTargets();
+    }
+
+    refreshOutlineTargets()
+    {
+        this.hoverRenderTarget.renderList = [];
+        this.selectionRenderTarget.renderList = [];
+
+        if (this.selectedEntity)
+        {
+            this.selectionRenderTarget.renderList.push(this.selectedEntity.mesh);
+            this.selectedEntity.properties.forEach((mesh: BABYLON.Mesh) => {
+                this.selectionRenderTarget.renderList.push(mesh);
+            });
+        }
+
+        if (this.hoveredEntity && this.hoveredEntity != this.selectedEntity)
+        {
+            this.hoverRenderTarget.renderList.push(this.hoveredEntity.mesh);
+            this.hoveredEntity.properties.forEach((mesh: BABYLON.Mesh) => {
+                this.hoverRenderTarget.renderList.push(mesh);
+            });
+        }
     }
 
     updateLayerStatus(layer: string, state: LayerState)
@@ -1333,6 +1366,36 @@ export default class SceneController
 
         
         this.isFollowingEntity = false;
+
+        // Outline post-process effect
+        this.selectionRenderTarget = new BABYLON.RenderTargetTexture("test", 1024, scene, true);
+        this.selectionRenderTarget.activeCamera = this._camera;
+        scene.customRenderTargets.push(this.selectionRenderTarget);
+        this.selectionRenderTarget.clearColor = new BABYLON.Color4(0, 0, 0, 0);
+
+        this.hoverRenderTarget = new BABYLON.RenderTargetTexture("test", 1024, scene, true);
+        this.hoverRenderTarget.activeCamera = this._camera;
+        scene.customRenderTargets.push(this.hoverRenderTarget);
+        this.hoverRenderTarget.clearColor = new BABYLON.Color4(0, 0, 0, 0);
+
+        BABYLON.Effect.ShadersStore["SelectionFragmentShader"] = getOutlineShader();
+
+        const selectionColor = Utils.RgbToRgb01(Utils.hexToRgb("#6DE080"));
+        const hoverColor = Utils.RgbToRgb01(Utils.hexToRgb("#8442B9"));
+        console.log(selectionColor);
+        let selectionPostProcess = new BABYLON.PostProcess("Selection post process", "Selection", ["screenSize", "color"], ["testSampler"], 1, this._camera);
+        selectionPostProcess.onApply = (effect) => {
+            effect.setTexture("testSampler", this.selectionRenderTarget);
+            effect.setFloat2("screenSize", selectionPostProcess.width, selectionPostProcess.height);
+            effect.setColor3("color", selectionColor)
+        };
+
+        let hoverPostProcess = new BABYLON.PostProcess("Hover post process", "Selection", ["screenSize", "color"], ["testSampler"], 1, this._camera);
+        hoverPostProcess.onApply = (effect) => {
+            effect.setTexture("testSampler", this.hoverRenderTarget);
+            effect.setFloat2("screenSize", hoverPostProcess.width, hoverPostProcess.height);
+            effect.setColor3("color", hoverColor)
+        };
     }
 
     private updateCameraFollow()

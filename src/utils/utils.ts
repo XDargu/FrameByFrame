@@ -33,7 +33,14 @@ export function componentToHex(c: number)
 }
 
 // Colors
-export interface RGBColor
+export class RGBColor
+{
+    r: number;
+    g: number;
+    b: number;
+}
+
+export class RGBColor01
 {
     r: number;
     g: number;
@@ -55,7 +62,16 @@ export function hexToRgb(hex: string) : RGBColor
     } : null;
 }
 
-export function blend(color1: RGBColor, color2: RGBColor, amount: number)
+export function RgbToRgb01(color: RGBColor) : RGBColor01
+{
+    return {
+        r: color.r / 255,
+        g: color.g / 255,
+        b: color.b / 255
+    };
+}
+
+export function blend(color1: RGBColor, color2: RGBColor, amount: number) : RGBColor
 {
     const bias = clamp(amount, 0, 1);
     const bias2 = 1 - bias;

@@ -688,6 +688,8 @@ export default class Renderer {
                 });
             });
         }
+
+        sceneController.refreshOutlineTargets();
     }
 
     initializeTimeline()
