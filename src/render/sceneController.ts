@@ -4,7 +4,7 @@ import { GridMaterial } from 'babylonjs-materials';
 import { LinesMesh } from 'babylonjs/Meshes/linesMesh';
 import { LayerState } from '../frontend/LayersController';
 import * as Utils from '../utils/utils';
-import { getOutlineShader, OutlinePostProcess } from './outlineShader';
+import { getOutlineShader, OutlineEffect } from './outlineShader';
 
 export interface IEntitySelectedCallback
 {
@@ -764,8 +764,8 @@ export default class SceneController
     private isFollowingEntity: boolean;
 
     // Outline
-    private selectionRenderTarget: BABYLON.RenderTargetTexture;
-    private hoverRenderTarget: BABYLON.RenderTargetTexture;
+    private selectionOutline: OutlineEffect;
+    private hoverOutline: OutlineEffect;
 
     removeAllProperties()
     {
@@ -1186,22 +1186,21 @@ export default class SceneController
 
     refreshOutlineTargets()
     {
-        this.hoverRenderTarget.renderList = [];
-        this.selectionRenderTarget.renderList = [];
-
+        this.selectionOutline.clearSelection();
         if (this.selectedEntity)
         {
-            this.selectionRenderTarget.renderList.push(this.selectedEntity.mesh);
+            this.selectionOutline.addMesh(this.selectedEntity.mesh);
             this.selectedEntity.properties.forEach((mesh: BABYLON.Mesh) => {
-                this.selectionRenderTarget.renderList.push(mesh);
+                this.selectionOutline.addMesh(mesh);
             });
         }
 
+        this.hoverOutline.clearSelection();
         if (this.hoveredEntity && this.hoveredEntity != this.selectedEntity)
         {
-            this.hoverRenderTarget.renderList.push(this.hoveredEntity.mesh);
+            this.hoverOutline.addMesh(this.hoveredEntity.mesh);
             this.hoveredEntity.properties.forEach((mesh: BABYLON.Mesh) => {
-                this.hoverRenderTarget.renderList.push(mesh);
+                this.hoverOutline.addMesh(mesh);
             });
         }
     }
@@ -1372,24 +1371,18 @@ export default class SceneController
         this.isFollowingEntity = false;
 
         // Outline post-process effect
-        this.selectionRenderTarget = new BABYLON.RenderTargetTexture("test", 1024, scene, true);
-        this.selectionRenderTarget.activeCamera = this._camera;
-        scene.customRenderTargets.push(this.selectionRenderTarget);
-        this.selectionRenderTarget.clearColor = new BABYLON.Color4(0, 0, 0, 0);
-
-        this.hoverRenderTarget = new BABYLON.RenderTargetTexture("test", 1024, scene, true);
-        this.hoverRenderTarget.activeCamera = this._camera;
-        scene.customRenderTargets.push(this.hoverRenderTarget);
-        this.hoverRenderTarget.clearColor = new BABYLON.Color4(0, 0, 0, 0);
+        // Enable this for outline with depth
+        /*this._camera.maxZ=500;
+        this._camera.minZ=0;
+        let mainDepthRenderer = scene.enableDepthRenderer(this._camera, false);*/
 
         BABYLON.Effect.ShadersStore["SelectionFragmentShader"] = getOutlineShader();
 
         const selectionColor = Utils.RgbToRgb01(Utils.hexToRgb("#6DE080"));
         const hoverColor = Utils.RgbToRgb01(Utils.hexToRgb("#8442B9"));
 
-        let selectionPostProcess = new OutlinePostProcess("Selection", this._camera, this.selectionRenderTarget, selectionColor, false);
-        let hoverPostProcess = new OutlinePostProcess("Hover", this._camera, this.hoverRenderTarget, hoverColor, false);
-        // TODO: Another post process with stripes for hovering over events/properties with shapes
+        this.selectionOutline = new OutlineEffect(scene, this._camera, selectionColor);
+        this.hoverOutline = new OutlineEffect(scene, this._camera, hoverColor);
 
         let antiAliasPostProcess = new BABYLON.FxaaPostProcess("fxaa", 1.0,  scene.activeCamera);
         antiAliasPostProcess.samples = 2;
