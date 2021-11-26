@@ -2613,4 +2613,234 @@ body {
   cursor: pointer;
 }
 
+.full-page {
+  background: #473D4F;
+  color: #C4C4C4;
+}
+
+.basico-navbar {
+  background: #362E3B;
+  color: #C4C4C4;
+}
+
+.basico-title {
+  background: #362E3B;
+  color: #C4C4C4;
+}
+
+.basico-tree {
+  background: #362E3B;
+}
+
+.basico-tree .basico-tree-item-wrapper:hover,
+.basico-tree .basico-tree-item-wrapper:hover:not(.basico-no-hover) {
+  background: #5F516A;
+}
+
+.basico-tree .basico-tree-item-wrapper.basico-tree-item-active {
+  background: #8442B9;
+}
+
+.basico-list {
+  background: #362E3B;
+  color: #eee;
+}
+
+.basico-list-item:hover:not(.basico-no-hover) {
+  background: #5F516A;
+}
+
+.basico-list-item.basico-list-item-active {
+  background: #8442B9;
+}
+
+.basico-list-item:not(:last-child) {
+  border-bottom: 1px solid #424242;
+}
+
+.basico-card {
+  background: #362E3B;
+  color: #C4C4C4;
+  border-radius: 0px;
+}
+
+.basico-title {
+  background: #2B2530;
+}
+
+.basico-input {
+  background: #D2C7DB;
+  color: #424242;
+  border-bottom: 1px solid #BA92D9;
+  border-radius: 3px;
+}
+
+.basico-input:focus {
+  background: #ECDDF9;
+  border-bottom: 3px solid #BA92D9;
+}
+
+#control-tabs, #control-tabs .basico-tabs-item {
+  background: #302935;
+  color: #918B95;
+}
+
+#control-tabs .basico-tabs-item:hover {
+  background: #3F3447;
+  color: #C4C4C4;
+}
+
+#control-tabs .basico-tabs-item.basico-tabs-selected {
+  background: #5F516A;
+  color: #C4C4C4;
+}
+
+#properties .basico-title,
+#events .basico-title {
+  background: #2B2530;
+  border-radius: 0px;
+}
+
+#properties .basico-title,
+#events .basico-title {
+  text-align: left;
+  padding-left: 10px;
+  box-sizing: border-box;
+}
+
+#properties .basico-tag,
+#events .basico-tag {
+  background: #D2C7DB;
+  color: #302935;
+}
+
+.title-darker {
+  border-top: 2px solid #5f516a;
+  background: #2b2530;
+}
+
+#entity-list .basico-title,
+#var-list .basico-title,
+#connection-list .basico-title,
+#recent-list .basico-title,
+#setting-list .basico-title {
+  border-radius: 0px;
+}
+
+#connection-buttons .basico-button {
+  background: #6DE080;
+}
+
+#connection-buttons .basico-button.connection-button-disabled {
+  background: #C4C4C4;
+}
+
+#connection-buttons .basico-button.connection-button-disabled:hover {
+  background: #dddddd;
+}
+
+#connection-buttons .basico-button:not(.connection-button-disabled) {
+  animation: pulse 2s infinite;
+}
+
+#button-record:not(.basico-disabled) {
+  color: #DE0000;
+}
+
+#button-record.recording {
+  animation: recording-pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(109, 224, 128, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(109, 224, 128, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(109, 224, 128, 0);
+  }
+}
+@keyframes recording-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(222, 0, 0, 0.4);
+  }
+  60% {
+    box-shadow: 0 0 0 8px rgba(222, 0, 0, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(222, 0, 0, 0);
+  }
+}
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  border: 1px solid #6DE080;
+}
+
+#filter-ticker-wrapper {
+  position: absolute;
+  z-index: 10;
+  width: 190px;
+  margin-top: 15px;
+}
+
+.filter-ticker {
+  background: #362E3B;
+  display: flex;
+  border-left: 5px solid orange;
+  transition: ease-in-out 0.2s;
+  opacity: 0.5;
+  cursor: pointer;
+}
+
+.filter-ticker:hover,
+.filter-ticker.active {
+  opacity: 1;
+}
+
+.filter-ticker-data {
+  text-align: left;
+  overflow: hidden;
+  padding: 5px;
+  flex: auto;
+}
+
+.filter-ticker-name {
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.filter-ticker-type {
+  font-size: 12px;
+  color: #6de080;
+  font-weight: bold;
+}
+
+.filter-ticker-buttons {
+  display: flex;
+  align-items: center;
+  padding-left: 5px;
+}
+
+.filter-ticker-buttons > .basico-button {
+  width: 32px;
+  height: 42px;
+  border-radius: 0;
+  padding: 2px 2px;
+  background: transparent;
+  color: #C4C4C4;
+  font-size: 16px;
+}
+
+.filter-ticker-buttons > .basico-button:hover {
+  color: white;
+  background: #3F3447;
+}
+
 /*# sourceMappingURL=styles.css.map */
