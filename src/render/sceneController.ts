@@ -161,8 +161,6 @@ export default class SceneController
     private hoveredEntity: IEntityData;
 
     private entityMaterial: BABYLON.StandardMaterial;
-    private selectedMaterial: BABYLON.StandardMaterial;
-    private hoveredMaterial: BABYLON.StandardMaterial;
 
     public onEntitySelected: IEntitySelectedCallback;
 
@@ -692,14 +690,6 @@ export default class SceneController
         this.entityMaterial = new BABYLON.StandardMaterial("entityMaterial", scene);
         this.entityMaterial.diffuseColor = new BABYLON.Color3(1, 1, 1);
         this.entityMaterial.alpha = 0.8;
-
-        this.selectedMaterial = new BABYLON.StandardMaterial("entityMaterial", scene);
-        this.selectedMaterial.diffuseColor = new BABYLON.Color3(1, 1, 0);
-        this.selectedMaterial.alpha = 0.8;
-
-        this.hoveredMaterial = new BABYLON.StandardMaterial("entityMaterial", scene);
-        this.hoveredMaterial.diffuseColor = new BABYLON.Color3(1, 0, 0);
-        this.hoveredMaterial.alpha = 0.8;
 
         // Mouse picking
         // We need this to let the system select invisible meshes

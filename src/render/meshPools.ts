@@ -77,15 +77,24 @@ export class MeshPool
 
     logDebugData()
     {
-        console.log(`Total hashes: ${this.pool.size}`);
+        console.log(`Total hashes: ${this.getHashedMeshes()}`);
+        console.log(`Total items: ${this.getTotalMeshes()}`);
+        console.log(this.pool);
+    }
+
+    getHashedMeshes() : number
+    {
+        return this.pool.size;
+    }
+
+    getTotalMeshes() : number
+    {
         let size = 0;
         for (let pool of this.pool)
         {
             size += pool[1].length;
         }
-        console.log(`Total items: ${size}`);
-
-        console.log(this.pool);
+        return size;
     }
 }
 

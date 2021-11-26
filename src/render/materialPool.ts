@@ -34,4 +34,9 @@ export class MaterialPool
         this.pool.set(hash, material);
         return material;
     }
+
+    getPoolSize() : number
+    {
+        return this.pool.size;
+    }
 }
