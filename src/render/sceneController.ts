@@ -1351,8 +1351,12 @@ export default class SceneController
         scene.onPointerMove = function (evt, pickInfo) {
             if (pickInfo.hit) {
                 const entityId: number = control.propertyToEntity.get(parseInt(pickInfo.pickedMesh.id));
-                if (!control.selectedEntity || parseInt(control.selectedEntity.mesh.id) != entityId) {
+                if (!control.selectedEntity || control.selectedEntityId != entityId) {
                     control.onEntityHovered(entityId);
+                }
+                if (control.selectedEntityId && control.hoveredEntity && control.selectedEntityId == entityId)
+                {
+                    control.onEntityStopHovered();
                 }
                 canvas.style.cursor = "pointer";
             }
