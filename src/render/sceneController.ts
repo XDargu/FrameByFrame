@@ -4,7 +4,7 @@ import { GridMaterial } from 'babylonjs-materials';
 import { LinesMesh } from 'babylonjs/Meshes/linesMesh';
 import { LayerState } from '../frontend/LayersController';
 import * as Utils from '../utils/utils';
-import { getOutlineShader } from './outlineShader';
+import { getOutlineShader, OutlinePostProcess } from './outlineShader';
 
 export interface IEntitySelectedCallback
 {
@@ -1382,20 +1382,13 @@ export default class SceneController
 
         const selectionColor = Utils.RgbToRgb01(Utils.hexToRgb("#6DE080"));
         const hoverColor = Utils.RgbToRgb01(Utils.hexToRgb("#8442B9"));
-        console.log(selectionColor);
-        let selectionPostProcess = new BABYLON.PostProcess("Selection post process", "Selection", ["screenSize", "color"], ["testSampler"], 1, this._camera);
-        selectionPostProcess.onApply = (effect) => {
-            effect.setTexture("testSampler", this.selectionRenderTarget);
-            effect.setFloat2("screenSize", selectionPostProcess.width, selectionPostProcess.height);
-            effect.setColor3("color", selectionColor)
-        };
 
-        let hoverPostProcess = new BABYLON.PostProcess("Hover post process", "Selection", ["screenSize", "color"], ["testSampler"], 1, this._camera);
-        hoverPostProcess.onApply = (effect) => {
-            effect.setTexture("testSampler", this.hoverRenderTarget);
-            effect.setFloat2("screenSize", hoverPostProcess.width, hoverPostProcess.height);
-            effect.setColor3("color", hoverColor)
-        };
+        let selectionPostProcess = new OutlinePostProcess("Selection", this._camera, this.selectionRenderTarget, selectionColor, false);
+        let hoverPostProcess = new OutlinePostProcess("Hover", this._camera, this.hoverRenderTarget, hoverColor, false);
+        // TODO: Another post process with stripes for hovering over events/properties with shapes
+
+        let antiAliasPostProcess = new BABYLON.FxaaPostProcess("fxaa", 1.0,  scene.activeCamera);
+        antiAliasPostProcess.samples = 2;
     }
 
     private updateCameraFollow()
