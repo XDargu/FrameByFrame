@@ -82,6 +82,14 @@ export function blend(color1: RGBColor, color2: RGBColor, amount: number) : RGBC
     }
 }
 
+export function addUniqueClass(element: HTMLElement, classToAdd: string)
+{
+    if (!element.classList.contains(classToAdd))
+    {
+        element.classList.add(classToAdd);
+    }
+}
+
 export function swapClass(element: HTMLElement, classToRemove: string, classToAdd: string)
 {
     element.classList.remove(classToRemove);

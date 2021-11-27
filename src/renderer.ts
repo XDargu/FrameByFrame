@@ -27,6 +27,7 @@ import { SettingsList } from "./frontend/SettingsList";
 import { EntityTree } from "./frontend/EntityTree";
 import FiltersList, { FilterId } from "./frontend/FiltersList";
 import * as Utils from "./utils/utils";
+import FilterTickers from "./frontend/FilterTickers";
 
 const { shell } = require('electron');
 
@@ -42,6 +43,7 @@ enum TabIndices
     EntityList = 0,
     RecordingOptions,
     Connections,
+    Filters,
     Recent,
     Settings
 }
@@ -68,6 +70,7 @@ export default class Renderer {
     private entitiesPaneSplitter: Splitter;
     private consoleSplitter: Splitter;
     private filterList: FiltersList;
+    private filterTickers: FilterTickers;
 
     // Networking
     private connectionsList: ConnectionsList;
@@ -206,9 +209,23 @@ export default class Renderer {
             document.getElementById("add-filter-dropdown"),
             document.getElementById("filter-editing-list"),
             {
-                onFilterChanged: this.onFilterChanged.bind(this)
+                onFilterChanged: this.onFilterChanged.bind(this),
+                onFilterCreated: this.onFilterAdded.bind(this),
+                onFilterRemoved: this.onFilterRemoved.bind(this),
+                onFilterNameChanged: this.onFilterNameChanged.bind(this)
             }
         );
+
+        this.filterTickers = new FilterTickers(
+            document.getElementById("filter-ticker-wrapper"),
+            (id, visible) => {
+                this.filterList.setFilterVisibility(id, visible);
+            },
+            (id) => {
+                this.controlTabs.openTabByIndex(TabIndices.Filters);
+                this.filterList.scrollToFilter(id);
+            }
+        )
 
         // Recording controls
         this.recordingOptions = new RecordingOptions(
@@ -632,12 +649,15 @@ export default class Renderer {
                 this.timeline.clearEvents();
                 for (const [filterId, filterData] of filters)
                 {
-                    const filterColor = Utils.colorFromHash(filterId);
-                    const result = filterData.filter.filter(this.recordedData);
-                    for (let i=0; i<result.length; ++i)
+                    if (filterData.visible)
                     {
-                        const entry = result[i];
-                        this.timeline.addEvent(0, entry.entityId.toString(), entry.frameIdx, filterColor, 0);
+                        const filterColor = Utils.colorFromHash(filterId);
+                        const result = filterData.filter.filter(this.recordedData);
+                        for (let i=0; i<result.length; ++i)
+                        {
+                            const entry = result[i];
+                            this.timeline.addEvent(0, entry.entityId.toString(), entry.frameIdx, filterColor, 0);
+                        }
                     }
                 }
 
@@ -792,6 +812,21 @@ export default class Renderer {
     }
 
     // Filter callbacks
+    onFilterAdded(id: FilterId, name: string, filter: Filters.Filter)
+    {
+        this.filterTickers.addTicker(id, name, filter);
+    }
+
+    onFilterRemoved(id: FilterId)
+    {
+        this.filterTickers.removeTicker(id);
+    }
+
+    onFilterNameChanged(id: FilterId, name: string)
+    {
+        this.filterTickers.setTickerName(id, name);
+    }
+
     onFilterChanged(id: FilterId, name: string, filter: Filters.Filter)
     {
         this.unprocessedFiltersPending = true;

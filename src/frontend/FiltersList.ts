@@ -15,6 +15,7 @@ interface FilterData
     name: string;
     filter: Filter;
     element: HTMLDivElement;
+    visible: boolean;
 }
 
 export interface IFilterCallback
@@ -27,7 +28,7 @@ interface IFilterParamChanged
     (id: FilterId, param: string) : void
 }
 
-interface IFilterRemoved
+export interface IFilterRemoved
 {
     (id: FilterId) : void
 }
@@ -99,6 +100,9 @@ interface PropertyFilterCallbacks
 export interface FilterListCallbacks
 {
     onFilterChanged: IFilterCallback;
+    onFilterCreated: IFilterCallback;
+    onFilterRemoved: IFilterRemoved;
+    onFilterNameChanged: IFilterParamChanged;
 }
 
 namespace UI
@@ -503,6 +507,15 @@ export default class FiltersList
         return this.filters;
     }
 
+    scrollToFilter(id: FilterId)
+    {
+        let filterData = this.filters.get(id);
+        if (filterData)
+        {
+            filterData.element.scrollIntoView();
+        }
+    }
+
     addEventFilter()
     {
         const filterId = FilterIdGenerator.nextId();
@@ -511,11 +524,12 @@ export default class FiltersList
 
         const filterElement = UI.createEventFilter(filterId, filterName, filter, this.eventFilterCallbacks);
 
-        this.filters.set(filterId, { name: filterName, filter: filter, element: filterElement});
+        this.filters.set(filterId, { name: filterName, filter: filter, element: filterElement, visible: true});
         
         this.filterContainer.appendChild(filterElement);
 
         Console.log(LogLevel.Verbose, LogChannel.Filters, "Filter added: " + filterName);
+        this.callbacks.onFilterCreated(filterId, filterName, filter);
         this.onFilterChanged(filterId);
     }
 
@@ -527,12 +541,34 @@ export default class FiltersList
 
         const filterElement = UI.createPropertyFilter(filterId, filterName, filter, this.propertyFilterCallbacks);
 
-        this.filters.set(filterId, { name: filterName, filter: filter, element: filterElement});
+        this.filters.set(filterId, { name: filterName, filter: filter, element: filterElement, visible: true});
         
         this.filterContainer.appendChild(filterElement);
 
         Console.log(LogLevel.Verbose, LogChannel.Filters, "Filter added: " + filterName);
+        this.callbacks.onFilterCreated(filterId, filterName, filter);
         this.onFilterChanged(filterId);
+    }
+
+    setFilterVisibility(id: FilterId, visible: boolean)
+    {
+        let filterData = this.filters.get(id);
+        if (filterData)
+        {
+            filterData.visible = visible;
+            this.onFilterChanged(id);
+        }
+    }
+
+    isFilterVisible(id: FilterId) : boolean
+    {
+        const filterData = this.filters.get(id);
+        if (filterData)
+        {
+            return filterData.visible;
+        }
+
+        return false;
     }
 
     private onFilterChanged(id: FilterId)
@@ -552,6 +588,7 @@ export default class FiltersList
     {
         let filterData = this.filters.get(id);
         filterData.name = filterName;
+        this.callbacks.onFilterNameChanged(id, filterName);
         this.onFilterChanged(id);
     }
 
@@ -561,6 +598,7 @@ export default class FiltersList
         filterData.element.remove();
         Console.log(LogLevel.Verbose, LogChannel.Filters, "Filter removed: " + filterData.name);
         this.filters.delete(id);
+        this.callbacks.onFilterRemoved(id);
         this.onFilterChanged(id);
     }
 
