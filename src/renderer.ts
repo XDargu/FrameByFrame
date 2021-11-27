@@ -25,6 +25,9 @@ import { RecordingOptions } from "./frontend/RecordingOptions";
 import { ISettings } from "./files/Settings";
 import { SettingsList } from "./frontend/SettingsList";
 import { EntityTree } from "./frontend/EntityTree";
+import FiltersList, { FilterId } from "./frontend/FiltersList";
+import * as Utils from "./utils/utils";
+import FilterTickers from "./frontend/FilterTickers";
 
 const { shell } = require('electron');
 
@@ -40,6 +43,7 @@ enum TabIndices
     EntityList = 0,
     RecordingOptions,
     Connections,
+    Filters,
     Recent,
     Settings
 }
@@ -65,6 +69,8 @@ export default class Renderer {
     private detailPaneSplitter: Splitter;
     private entitiesPaneSplitter: Splitter;
     private consoleSplitter: Splitter;
+    private filterList: FiltersList;
+    private filterTickers: FilterTickers;
 
     // Networking
     private connectionsList: ConnectionsList;
@@ -80,15 +86,18 @@ export default class Renderer {
     private playbackController: PlaybackController;
 
     // Timeline optimization
-    private unprocessedFrames: number[];
+    private unprocessedFramesWithEvents: number[];
+    private areAllFramesWithEventsPending: boolean;
+    private unprocessedFiltersPending: boolean;
+    
+    // Others
+    private timeoutFilter: any;
 
     // Settings
     private settingsList: SettingsList;
     private settings: ISettings;
 
     initialize(canvas: HTMLCanvasElement) {
-
-        this.playbackController = new PlaybackController(this);
 
         this.sceneController = new SceneController();
         this.sceneController.initialize(canvas);
@@ -103,6 +112,8 @@ export default class Renderer {
         this.initializeTimeline();
         this.initializeUI();
 
+        this.playbackController = new PlaybackController(this, this.timeline);
+
         this.recordedData = new RECORDING.NaiveRecordedData();
         //this.recordedData.addTestData();
 
@@ -115,7 +126,9 @@ export default class Renderer {
         this.recentFilesController = new FileListController(recentFilesListElement, recentFilesWelcomeElement, this.onRecentFileClicked.bind(this))
 
         this.propertyGroups = [];
-        this.unprocessedFrames = [];
+        this.unprocessedFramesWithEvents = [];
+        this.areAllFramesWithEventsPending = false;
+        this.unprocessedFiltersPending = false;
 
         this.applyFrame(0);
     }
@@ -173,6 +186,8 @@ export default class Renderer {
         document.getElementById("timeline-prev").onmousedown = (e) => { this.playbackController.onTimelinePrevClicked(); e.preventDefault(); }
         document.getElementById("timeline-first").onmousedown = (e) => { this.playbackController.onTimelineFirstClicked(); e.preventDefault(); }
         document.getElementById("timeline-last").onmousedown = (e) => { this.playbackController.onTimelineLastClicked(); e.preventDefault(); }
+        document.getElementById("timeline-event-prev").onmousedown = (e) => { this.playbackController.onTimelinePrevEventClicked(e.ctrlKey); e.preventDefault(); }
+        document.getElementById("timeline-event-next").onmousedown = (e) => { this.playbackController.onTimelineNextEventClicked(e.ctrlKey); e.preventDefault(); }
 
         // Create control bar callbacks
         document.getElementById("title-bar-open").onmousedown = (e) => { this.onOpenFile(); e.preventDefault(); }
@@ -188,6 +203,29 @@ export default class Renderer {
             document.getElementById("all-layer-selection"),
             this.onLayerChanged.bind(this)
         );
+
+        // Filter controls
+        this.filterList = new FiltersList(
+            document.getElementById("add-filter-dropdown"),
+            document.getElementById("filter-editing-list"),
+            {
+                onFilterChanged: this.onFilterChanged.bind(this),
+                onFilterCreated: this.onFilterAdded.bind(this),
+                onFilterRemoved: this.onFilterRemoved.bind(this),
+                onFilterNameChanged: this.onFilterNameChanged.bind(this)
+            }
+        );
+
+        this.filterTickers = new FilterTickers(
+            document.getElementById("filter-ticker-wrapper"),
+            (id, visible) => {
+                this.filterList.setFilterVisibility(id, visible);
+            },
+            (id) => {
+                this.controlTabs.openTabByIndex(TabIndices.Filters);
+                this.filterList.scrollToFilter(id);
+            }
+        )
 
         // Recording controls
         this.recordingOptions = new RecordingOptions(
@@ -250,7 +288,16 @@ export default class Renderer {
                 {
                     this.sceneController.stopFollowEntity();
                 }
+                if (this.settings && this.settings.showAllLayersOnStart)
+                {
+                    this.layerController.setInitialState(LayerState.All);
+                }
             });
+
+        if (this.settings && this.settings.showAllLayersOnStart)
+        {
+            this.layerController.setInitialState(LayerState.All);
+        }
 
         // Connection buttons
         this.connectionButtons = new ConnectionButtons(document.getElementById(`connection-buttons`), (id: ConnectionId) => {
@@ -314,12 +361,15 @@ export default class Renderer {
             try {
                 this.recordedData.loadFromString(data);
                 this.timeline.updateLength(this.recordedData.getSize());
-                for (let i=0; i<this.recordedData.frameData.length; ++i)
-                {
-                    this.unprocessedFrames.push(i);
-                }
+                this.areAllFramesWithEventsPending = true;
+                this.unprocessedFramesWithEvents = [];
+                this.unprocessedFiltersPending = true;
                 this.applyFrame(0);
                 this.controlTabs.openTabByIndex(TabIndices.EntityList);
+                if (this.settings.showAllLayersOnStart)
+                {
+                    this.layerController.setAllLayersState(LayerState.All);
+                }
             }
             catch (error)
             {
@@ -331,7 +381,9 @@ export default class Renderer {
 
     clear()
     {
-        this.unprocessedFrames = [];
+        this.unprocessedFramesWithEvents = [];
+        this.areAllFramesWithEventsPending = false;
+        this.unprocessedFiltersPending = true;
         this.recordedData.clear();
         this.timeline.updateLength(this.recordedData.getSize());
         this.timeline.clearEvents();
@@ -373,7 +425,8 @@ export default class Renderer {
 
                     this.recordedData.pushFrame(frameToBuild);
                     this.timeline.updateLength(this.recordedData.getSize());
-                    this.unprocessedFrames.push(this.recordedData.getSize() - 1);
+                    this.unprocessedFramesWithEvents.push(this.recordedData.getSize() - 1);
+                    this.unprocessedFiltersPending = true;
                     
                     break;
                 }
@@ -575,23 +628,66 @@ export default class Renderer {
         }
     }
 
+    updateFrameDataEvents(frameData: RECORDING.IFrameData, frameIdx: number)
+    {
+        for (let entityID in frameData.entities) {
+            const entity = frameData.entities[entityID];
+
+            NaiveRecordedData.visitEvents(entity.events, (event: RECORDING.IEvent) => {
+                this.timeline.addEvent(event.id, entityID, frameIdx, "#D6A3FF", 0);
+            });
+        }
+    }
+
     updateTimelineEvents()
     {
-        for (let i=0; i<this.unprocessedFrames.length; ++i)
+        const filters = this.filterList.getFilters();
+        if (filters.size > 0)
         {
-            const frameIdx = this.unprocessedFrames[i];
-            const frameData = this.recordedData.frameData[frameIdx];
+            if (this.unprocessedFiltersPending)
+            {
+                this.timeline.clearEvents();
+                for (const [filterId, filterData] of filters)
+                {
+                    if (filterData.visible)
+                    {
+                        const filterColor = Utils.colorFromHash(filterId);
+                        const result = filterData.filter.filter(this.recordedData);
+                        for (let i=0; i<result.length; ++i)
+                        {
+                            const entry = result[i];
+                            this.timeline.addEvent(0, entry.entityId.toString(), entry.frameIdx, filterColor, 0);
+                        }
+                    }
+                }
 
-            for (let entityID in frameData.entities) {
-                const entity = frameData.entities[entityID];
-    
-                NaiveRecordedData.visitEvents(entity.events, (event: RECORDING.IEvent) => {
-                    this.timeline.addEvent(event.id, entityID, frameIdx, "#D6A3FF", 0);
-                });
+                this.unprocessedFiltersPending = false;
             }
         }
+        else
+        {
+            if (this.areAllFramesWithEventsPending)
+            {
+                for (let i=0; i<this.recordedData.frameData.length; ++i)
+                {
+                    const frameData = this.recordedData.frameData[i];
+                    this.updateFrameDataEvents(frameData, i);
+                }
+            }
+            else
+            {
+                for (let i=0; i<this.unprocessedFramesWithEvents.length; ++i)
+                {
+                    const frameIdx = this.unprocessedFramesWithEvents[i];
+                    const frameData = this.recordedData.frameData[frameIdx];
 
-        this.unprocessedFrames = [];
+                    this.updateFrameDataEvents(frameData, frameIdx);
+                }
+            }
+
+            this.areAllFramesWithEventsPending = false;
+            this.unprocessedFramesWithEvents = [];
+        }
     }
 
     renderProperties()
@@ -612,6 +708,8 @@ export default class Renderer {
                 });
             });
         }
+
+        sceneController.refreshOutlineTargets();
     }
 
     initializeTimeline()
@@ -711,6 +809,39 @@ export default class Renderer {
                 enabled: enabled
             }
         });
+    }
+
+    // Filter callbacks
+    onFilterAdded(id: FilterId, name: string, filter: Filters.Filter)
+    {
+        this.filterTickers.addTicker(id, name, filter);
+    }
+
+    onFilterRemoved(id: FilterId)
+    {
+        this.filterTickers.removeTicker(id);
+    }
+
+    onFilterNameChanged(id: FilterId, name: string)
+    {
+        this.filterTickers.setTickerName(id, name);
+    }
+
+    onFilterChanged(id: FilterId, name: string, filter: Filters.Filter)
+    {
+        this.unprocessedFiltersPending = true;
+
+        const filters = this.filterList.getFilters();
+        if (filters.size > 0)
+        {
+            this.unprocessedFramesWithEvents = [];
+            this.areAllFramesWithEventsPending = true;
+        }
+
+        clearTimeout(this.timeoutFilter);
+        this.timeoutFilter = setTimeout(() => {
+            this.updateTimelineEvents();
+        }, 500);
     }
 
     // Modal

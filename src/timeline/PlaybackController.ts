@@ -2,18 +2,21 @@ import { LogLevel } from "../frontend/ConsoleController";
 import { LogChannel } from "../frontend/ConsoleController";
 import { Console } from "../frontend/ConsoleController";
 import Renderer from "../renderer";
+import Timeline, { findEventOfEntityId, ITimelineEvent } from "./timeline";
 
 export class PlaybackController {
 
     private renderer: Renderer;
+    private timeline: Timeline;
     private isPlaying: boolean;
     private elapsedTime: number;
     private playbackSpeedFactor: number;
 
-    constructor(renderer: Renderer) {
+    constructor(renderer: Renderer, timeline: Timeline) {
         this.isPlaying = false;
         this.elapsedTime = 0;
         this.renderer = renderer;
+        this.timeline = timeline;
         this.playbackSpeedFactor = 1;
 
         this.initialize();
@@ -64,6 +67,10 @@ export class PlaybackController {
         const isLastFrame = recordingEmpty || (this.renderer.getCurrentFrame() == this.renderer.getFrameCount() - 1);
         const isFirstFrame = recordingEmpty || (this.renderer.getCurrentFrame() == 0);
 
+        // TODO: Optimize this
+        const prevEvent = this.getPreviousEventFrame(false);
+        const nextEvent = this.getNextEventFrame(false);
+
         if (this.isPlaying) {
             document.getElementById("timeline-play-icon").classList.remove("fa-play");
             document.getElementById("timeline-play-icon").classList.add("fa-stop");
@@ -94,6 +101,20 @@ export class PlaybackController {
         else {
             document.getElementById("timeline-last").classList.remove("basico-disabled");
             document.getElementById("timeline-next").classList.remove("basico-disabled");
+        }
+
+        if (!prevEvent) {
+            document.getElementById("timeline-event-prev").classList.add("basico-disabled");
+        }
+        else {
+            document.getElementById("timeline-event-prev").classList.remove("basico-disabled");
+        }
+
+        if (!nextEvent) {
+            document.getElementById("timeline-event-next").classList.add("basico-disabled");
+        }
+        else {
+            document.getElementById("timeline-event-next").classList.remove("basico-disabled");
         }
     }
 
@@ -138,6 +159,24 @@ export class PlaybackController {
         }
     }
 
+    onTimelinePrevEventClicked(filterSelection: boolean) {
+        const prevEvent = this.getPreviousEventFrame(filterSelection);
+        if (prevEvent) {
+            this.renderer.applyFrame(prevEvent.frame);
+            this.renderer.selectEntity(Number.parseInt(prevEvent.entityId))
+            this.updateUI();
+        }
+    }
+
+    onTimelineNextEventClicked(filterSelection: boolean) {
+        const nextEvent = this.getNextEventFrame(filterSelection);
+        if (nextEvent) {
+            this.renderer.applyFrame(nextEvent.frame);
+            this.renderer.selectEntity(Number.parseInt(nextEvent.entityId))
+            this.updateUI();
+        }
+    }
+
     onTimelinePlayClicked() {
         if (!this.isPlaying) {
             this.startPlayback();
@@ -146,5 +185,59 @@ export class PlaybackController {
         else {
             this.stopPlayback();
         }
+    }
+
+    getPreviousEventFrame(filterSelection: boolean) : ITimelineEvent
+    {
+        // TODO: Optimize this
+        const entity = this.timeline.selectedEntityId.toString();
+        for (let i=this.renderer.getCurrentFrame() - 1; i>= 0; --i)
+        {
+            const eventList = this.timeline.getEventsInFrame(i);
+            if (eventList)
+            {
+                if (!filterSelection)
+                {
+                    return eventList[0];
+                }
+                else
+                {
+                    const result = findEventOfEntityId(eventList, entity);
+                    if (result)
+                    {
+                        return result;
+                    }
+                }
+            }
+        }
+
+        return undefined;
+    }
+
+    getNextEventFrame(filterSelection: boolean) : ITimelineEvent
+    {
+        // TODO: Optimize this
+        const entity = this.timeline.selectedEntityId.toString();
+        for (let i=this.renderer.getCurrentFrame() + 1; i< this.renderer.getFrameCount() - 1; ++i)
+        {
+            const eventList = this.timeline.getEventsInFrame(i);
+            if (eventList)
+            {
+                if (!filterSelection)
+                {
+                    return eventList[0];
+                }
+                else
+                {
+                    const result = findEventOfEntityId(eventList, entity);
+                    if (result)
+                    {
+                        return result;
+                    }
+                }
+            }
+        }
+
+        return undefined;
     }
 }

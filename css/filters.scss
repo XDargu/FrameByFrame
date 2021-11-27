@@ -1,8 +1,15 @@
+@import "colorStyles.scss";
+
 .filter-property-wrapper
 {
     display: flex;
     align-items: center;
     margin-bottom: 5px;
+}
+
+.filter-property-wrapper:last-child
+{
+    margin-bottom: 0;
 }
 
 .filter-property-wrapper .basico-dropdown-button
@@ -18,4 +25,99 @@
 {
     left: 0;
     right: unset;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.filter-icon
+{
+    width: 14px;
+    height: 14px;
+    background: #6de080;
+    margin: 0 10px;
+}
+
+.filter-arrow-icon
+{
+    width: 10px;
+    margin-right: 4px;
+}
+
+.filter-wrapper .basico-title
+{
+    display: inline-flex;
+    text-align: left;
+    align-items: center;
+    cursor: pointer;
+}
+
+.filter-wrapper .basico-title i.remove-filter
+{
+    margin-left: auto;
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+.filter-wrapper .basico-title i:hover
+{
+    color: white;
+}
+
+.filter-wrapper .basico-card-element
+{
+    border-radius: 0;
+}
+
+.filter-wrapper .basico-card-element.hidden
+{
+    display: none;
+}
+
+.button-add-filter-prop span
+{
+    padding-left: 10px;
+}
+
+.filter-property-control
+{
+    background-color: $default-background;
+    padding: 5px;
+    margin-bottom: 5px;
+    display: inline-flex;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.filter-property-control .remove-property
+{
+    font-size: 16px;
+    margin-left: 5px;
+    padding: 5px;
+    cursor: pointer;
+}
+
+.filter-property-control .remove-property:hover
+{
+    color: white;
+}
+
+.filter-property-control-form
+{
+    width: 100%;
+}
+
+#add-filter-dropdown button
+{
+    background: $soft-primary;
+    color: black;
+    font-size: 13px;
+    border-radius: 2px;
+}
+
+#add-filter-dropdown .basico-dropdown-content a
+{
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
 }

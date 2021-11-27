@@ -1,24 +1,24 @@
 // Variables
-$strong-primary: #8442B9;
+$strong-primary: #8442B9; // hsl(273, 47%, 49%)
 $strong-secondary: #6DE080;
 
-$soft-primary: #cca4fd;
+$soft-primary: #cca4fd; // 	hsl(267, 96%, 82%) 
 
-$default-background: #473D4F;
-$dark-background: #362E3B;
-$dark-heading: #2B2530;
-$darker-background: #302935;
+$default-background: #473D4F; // hsl(273, 13%, 27%)
+$dark-background: #362E3B; // hsl(277, 12%, 21%)
+$dark-heading: #2B2530; // hsl(273, 13%, 17%)
+$darker-background: #302935; // hsl(275, 13%, 18%)
 
-$faint-selection: #3F3447;
-$light-selection: #5F516A;
+$faint-selection: #3F3447; // hsl(275, 15%, 24%)
+$light-selection: #5F516A; // hsl(274, 13%, 37%)
 
 $text-color: #C4C4C4;
 $text-color-dark: #918B95;
 $text-color-darker: #424242;
 
-$form-background: #D2C7DB;
-$form-background-focus: #ECDDF9;
-$form-accent: #BA92D9;
+$form-background: #D2C7DB; // hsl(273, 22%, 82%)
+$form-background-focus: #ECDDF9; // hsl(272, 70%, 92%)
+$form-accent: #BA92D9; // hsl(274, 48%, 71%)
 
 $light-text: #eee;
 
@@ -60,7 +60,7 @@ $recording-button: #DE0000;
 
 .basico-list
 {
-    background: $darker-background;
+    background: $dark-background;
     color: $light-text;
 }
 
@@ -81,9 +81,14 @@ $recording-button: #DE0000;
 
 .basico-card
 {
-    background: $darker-background;
+    background: $dark-background;
     color: $text-color;
     border-radius: 0px;
+}
+
+.basico-title
+{
+    background: $dark-heading;
 }
 
 .basico-input

@@ -1,11 +1,6 @@
 import { expect } from 'chai';
 import * as Recording from "../recording/RecordingData"
 
-function getNaiveData()
-{
-
-}
-
 describe('RecordingData', () => {
 
     var data: Recording.NaiveRecordedData;

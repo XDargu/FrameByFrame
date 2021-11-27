@@ -1,9 +1,12 @@
 import * as BABYLON from 'babylonjs';
 import * as RECORDING from '../recording/RecordingData';
 import { GridMaterial } from 'babylonjs-materials';
-import { LinesMesh } from 'babylonjs/Meshes/linesMesh';
-import { Scalar } from 'babylonjs/Maths/math.scalar';
 import { LayerState } from '../frontend/LayersController';
+import * as Utils from '../utils/utils';
+import { getOutlineShader, OutlineEffect } from './outlineShader';
+import { AxisGizmo } from './gizmos';
+import { MaterialPool } from './materialPool';
+import { BoxPool, CapsulePool, LinePool, PlanePool, SpherePool } from './meshPools';
 
 export interface IEntitySelectedCallback
 {
@@ -14,235 +17,6 @@ interface IEntityData
 {
     mesh: BABYLON.Mesh;
     properties: Map<number, BABYLON.Mesh>;
-}
-
-// Capsule, move somewhere else. Babylon 4.2.0 has capsule built-in, but performance is much worse. Use this until we find out why.
-function CreateCapsule(name: string, args: any, scene: BABYLON.Scene) : BABYLON.Mesh
-{
-    let mesh = new BABYLON.Mesh(name, scene)
-    let path = args.orientation || BABYLON.Vector3.Right()
-    let subdivisions = Math.max(args.subdivisions?args.subdivisions:2, 1)
-    let tessellation = Math.max(args.tessellation?args.tessellation:16, 3)
-    let height = Math.max(args.height?args.height:2, 0.)
-    let radius = Math.max(args.radius?args.radius:1, 0.)
-    let capRadius = Math.max(args.capRadius?args.capRadius:radius, radius)
-    let capDetail = Math.max(args.capDetail?args.capDetail:6, 1)
-
-    let  radialSegments = tessellation;
-	let  heightSegments = subdivisions;
-
-    let radiusTop = Math.max(args.radiusTop?args.radiusTop:radius, 0.)
-    let radiusBottom = Math.max(args.radiusBottom?args.radiusBottom:radius, 0.)
-
-    let thetaStart = args.thetaStart || 0.0
-    let thetaLength = args.thetaLength || (2.0 * Math.PI)
-
-    let capsTopSegments = Math.max(args.topCapDetail?args.topCapDetail:capDetail, 1)
-    let capsBottomSegments = Math.max(args.bottomCapDetail?args.bottomCapDetail:capDetail, 1)
-
-    var alpha = Math.acos((radiusBottom-radiusTop)/height)
-    var eqRadii = (radiusTop-radiusBottom === 0)
-
-    var indices = []
-	var vertices = []
-	var normals = []
-	var uvs = []
-    
-    var index = 0,
-	    indexOffset = 0,
-	    indexArray = [],
-	    halfHeight = height / 2;
-    
-    var x, y;
-    var normal = BABYLON.Vector3.Zero();
-    var vertex = BABYLON.Vector3.Zero();
-
-    var cosAlpha = Math.cos(alpha);
-    var sinAlpha = Math.sin(alpha);
-
-    var cone_length =
-        new BABYLON.Vector2(
-            radiusTop*sinAlpha,
-            halfHeight+radiusTop*cosAlpha
-            ).subtract(new BABYLON.Vector2(
-                radiusBottom*sinAlpha,
-                -halfHeight+radiusBottom*cosAlpha
-            )
-        ).length();
-
-    // Total length for v texture coord
-    var vl = radiusTop*alpha
-                + cone_length
-                + radiusBottom*(Math.PI/2-alpha);
-
-    var groupCount = 0;
-
-    // generate vertices, normals and uvs
-
-    var v = 0;
-    for( y = 0; y <= capsTopSegments; y++ ) {
-
-        var indexRow = [];
-
-        var a = Math.PI/2 - alpha*(y / capsTopSegments);
-
-        v += radiusTop*alpha/capsTopSegments;
-
-        var cosA = Math.cos(a);
-        var sinA = Math.sin(a);
-
-        // calculate the radius of the current row
-        var _radius = cosA*radiusTop;
-
-        for ( x = 0; x <= radialSegments; x ++ ) {
-
-            var u = x / radialSegments;
-
-            var theta = u * thetaLength + thetaStart;
-
-            var sinTheta = Math.sin( theta );
-            var cosTheta = Math.cos( theta );
-
-            // vertex
-            vertex.x = _radius * sinTheta;
-            vertex.y = halfHeight + sinA*radiusTop;
-            vertex.z = _radius * cosTheta;
-            vertices.push( vertex.x, vertex.y, vertex.z );
-
-            // normal
-            normal.set( cosA*sinTheta, sinA, cosA*cosTheta );
-            normals.push( normal.x, normal.y, normal.z );
-            // uv
-            uvs.push( u, 1 - v/vl );
-            // save index of vertex in respective row
-            indexRow.push( index );
-            // increase index
-            index ++;
-        }
-
-        // now save vertices of the row in our index array
-        indexArray.push( indexRow );
-
-    }
-
-    var cone_height = height + cosAlpha*radiusTop - cosAlpha*radiusBottom;
-    var slope = sinAlpha * ( radiusBottom - radiusTop ) / cone_height;
-    for ( y = 1; y <= heightSegments; y++ ) {
-
-        var indexRow = [];
-
-        v += cone_length/heightSegments;
-
-        // calculate the radius of the current row
-        var _radius = sinAlpha * ( y * ( radiusBottom - radiusTop ) / heightSegments + radiusTop);
-
-        for ( x = 0; x <= radialSegments; x ++ ) {
-
-            var u = x / radialSegments;
-
-            var theta = u * thetaLength + thetaStart;
-
-            var sinTheta = Math.sin( theta );
-            var cosTheta = Math.cos( theta );
-
-            // vertex
-            vertex.x = _radius * sinTheta;
-            vertex.y = halfHeight + cosAlpha*radiusTop - y * cone_height / heightSegments;
-            vertex.z = _radius * cosTheta;
-            vertices.push( vertex.x, vertex.y, vertex.z );
-
-            // normal
-            normal.set( sinTheta, slope, cosTheta ).normalize();
-            normals.push( normal.x, normal.y, normal.z );
-
-            // uv
-            uvs.push( u, 1 - v/vl );
-
-            // save index of vertex in respective row
-            indexRow.push( index );
-
-            // increase index
-            index ++;
-
-        }
-
-        // now save vertices of the row in our index array
-        indexArray.push( indexRow );
-
-    }
-
-    for( y = 1; y <= capsBottomSegments; y++ ) {
-
-        var indexRow = [];
-
-        var a = (Math.PI/2 - alpha) - (Math.PI - alpha)*( y / capsBottomSegments);
-
-        v += radiusBottom*alpha/capsBottomSegments;
-
-        var cosA = Math.cos(a);
-        var sinA = Math.sin(a);
-
-        // calculate the radius of the current row
-        var _radius = cosA*radiusBottom;
-
-        for ( x = 0; x <= radialSegments; x ++ ) {
-
-            var u = x / radialSegments;
-
-            var theta = u * thetaLength + thetaStart;
-
-            var sinTheta = Math.sin( theta );
-            var cosTheta = Math.cos( theta );
-
-            // vertex
-            vertex.x = _radius * sinTheta;
-            vertex.y = -halfHeight + sinA*radiusBottom;;
-            vertex.z = _radius * cosTheta;
-            vertices.push( vertex.x, vertex.y, vertex.z );
-
-            // normal
-            normal.set( cosA*sinTheta, sinA, cosA*cosTheta );
-            normals.push( normal.x, normal.y, normal.z );
-
-            // uv
-            uvs.push( u, 1 - v/vl );
-
-            // save index of vertex in respective row
-            indexRow.push( index );
-            // increase index
-            index ++;
-        }
-        // now save vertices of the row in our index array
-        indexArray.push( indexRow );
-    }
-    // generate indices
-    for ( x = 0; x < radialSegments; x ++ ) {
-        for ( y = 0; y < capsTopSegments + heightSegments + capsBottomSegments; y ++ ) {
-            // we use the index array to access the correct indices
-            var i1 = indexArray[ y ][ x ];
-            var i2 = indexArray[ y + 1 ][ x ];
-            var i3 = indexArray[ y + 1 ][ x + 1 ];
-            var i4 = indexArray[ y ][ x + 1 ];
-            // face one
-            indices.push( i1 ); 
-            indices.push( i2 );
-            indices.push( i4 );
-            // face two
-            indices.push( i2 ); 
-            indices.push( i3 );
-            indices.push( i4 );
-        }
-    }
-    indices = indices.reverse()
-
-    let vDat = new BABYLON.VertexData()
-    vDat.positions = vertices
-    vDat.normals = normals
-    vDat.uvs = uvs
-    vDat.indices = indices
-
-    vDat.applyToMesh(mesh)
-    return mesh
 }
 
 // Unused for now, should be used later on
@@ -339,251 +113,6 @@ function CreateCapsule(name: string, args: any, scene: BABYLON.Scene) : BABYLON.
     }
 }*/
 
-class MaterialPool
-{
-    private pool: Map<string, BABYLON.StandardMaterial>;
-    private scene: BABYLON.Scene;
-
-    constructor(scene: BABYLON.Scene)
-    {
-        this.pool = new Map<string, BABYLON.StandardMaterial>();
-        this.scene = scene;
-    }
-
-    getMaterialByColor(color: RECORDING.IColor): BABYLON.StandardMaterial
-    {
-        return this.getMaterial(color.r, color.g, color.b, color.a);
-    }
-
-    getMaterial(r: number, g: number, b:number, a:number) : BABYLON.StandardMaterial
-    {
-        // TODO: Do a proper hash not string based
-        const hash: string = r.toString() + g.toString() + b.toString() + a.toString();
-        const cachedMaterial = this.pool.get(hash);
-        if (cachedMaterial != undefined)
-        {
-            return cachedMaterial;
-        }
-
-        let material = new BABYLON.StandardMaterial("cachedMaterial", this.scene);
-        material.diffuseColor = new BABYLON.Color3(r, g, b);
-        material.alpha = a;
-
-        this.pool.set(hash, material);
-        return material;
-    }
-}
-
-interface IPooledMesh
-{
-    mesh: BABYLON.Mesh;
-    used: boolean;
-}
-class MeshPool
-{
-    protected pool: Map<string, IPooledMesh[]>;
-    protected scene: BABYLON.Scene;
-
-    constructor(scene: BABYLON.Scene)
-    {
-        this.pool = new Map<string, IPooledMesh[]>();
-        this.scene = scene;
-    }
-
-    protected findMesh(hash: string, args: any)
-    {
-        const cachedMeshes = this.pool.get(hash);
-        if (cachedMeshes != undefined)
-        {
-            return this.findOrAddMesh(hash, args, cachedMeshes);
-        }
-
-        let meshes: IPooledMesh[] = [];
-        this.pool.set(hash, meshes);
-        return this.findOrAddMesh(hash, args, meshes);
-    }
-
-    private findOrAddMesh(hash: string, args: any, meshes: IPooledMesh[]) : BABYLON.Mesh
-    {
-        for (let mesh of meshes)
-        {
-            if (!mesh.used)
-            {
-                mesh.mesh.setEnabled(true);
-                mesh.used = true;
-                return mesh.mesh;
-            }
-        }
-
-        const mesh = this.buildMesh(hash, args);
-        meshes.push({mesh: mesh, used: true});
-        return mesh;
-    }
-
-    protected buildMesh(hash: string, args: any) : BABYLON.Mesh
-    {
-        return null;
-    }
-
-    freeMesh(mesh: BABYLON.Mesh)
-    {
-        let cachedMesh = this.pool.get(mesh.name);
-        if (cachedMesh)
-        {
-            for (let pooledMesh of cachedMesh)
-            {
-                if (pooledMesh.mesh.uniqueId == mesh.uniqueId)
-                {
-                    pooledMesh.mesh.setEnabled(false);
-                    pooledMesh.used = false;
-                    pooledMesh.mesh.isPickable = false;
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    logDebugData()
-    {
-        console.log(`Total hashes: ${this.pool.size}`);
-        let size = 0;
-        for (let pool of this.pool)
-        {
-            size += pool[1].length;
-        }
-        console.log(`Total items: ${size}`);
-
-        console.log(this.pool);
-    }
-}
-class CapsulePool extends MeshPool
-{
-    constructor(scene: BABYLON.Scene)
-    {
-        super(scene);
-    }
-
-    getCapsule(height: number, radius: number): BABYLON.Mesh
-    {
-        const hash: string = height.toFixed(3).toString() + radius.toFixed(3).toString();
-        return this.findMesh(hash, {radius: radius, height: height});
-    }
-
-    protected buildMesh(hash: string, args: any) : BABYLON.Mesh
-    {
-        return CreateCapsule(hash, {
-            height: args.height - (args.radius * 2),
-            radius: args.radius,
-            tessellation : 9,
-            capDetail : 5,
-        }, this.scene);
-    }
-}
-
-class SpherePool extends MeshPool
-{
-    constructor(scene: BABYLON.Scene)
-    {
-        super(scene);
-    }
-
-    getSphere(radius: number): BABYLON.Mesh
-    {
-        const hash: string = radius.toFixed(3).toString();
-        return this.findMesh(hash, {radius: radius });
-    }
-
-    protected buildMesh(hash: string, args: any) : BABYLON.Mesh
-    {
-        return BABYLON.Mesh.CreateSphere(hash, 8.0, args.radius * 2, this.scene);
-    }
-}
-
-class BoxPool extends MeshPool
-{
-    constructor(scene: BABYLON.Scene)
-    {
-        super(scene);
-    }
-
-    getBox(size: RECORDING.IVec3): BABYLON.Mesh
-    {
-        const hash: string = size.x.toFixed(3).toString() + size.y.toFixed(3).toString() + size.z.toFixed(3).toString();
-        return this.findMesh(hash, { size: size });
-    }
-
-    protected buildMesh(hash: string, args: any) : BABYLON.Mesh
-    {
-        return BABYLON.MeshBuilder.CreateBox(hash, {height: args.size.x, width: args.size.y, depth: args.size.z}, this.scene)
-    }
-}
-
-class PlanePool extends MeshPool
-{
-    constructor(scene: BABYLON.Scene)
-    {
-        super(scene);
-    }
-
-    getPlane(normal: RECORDING.IVec3, length: number, width: number): BABYLON.Mesh
-    {
-        const hash: string = normal.x.toFixed(3) + normal.y.toFixed(3) + normal.z.toFixed(3) + length.toFixed(3) + width.toFixed(3);
-        return this.findMesh(hash, { normal: normal, length: length, width: width });
-    }
-
-    protected buildMesh(hash: string, args: any) : BABYLON.Mesh
-    {
-        // TODO: We can probably just rotate the plane, instead of having many copies
-        let sourcePlane = new BABYLON.Plane(args.normal.x, args.normal.y, args.normal.z, 0);
-        return BABYLON.MeshBuilder.CreatePlane(hash, {height: args.length, width: args.width, sourcePlane: sourcePlane, sideOrientation: BABYLON.Mesh.DOUBLESIDE}, this.scene);
-    }
-}
-
-class LinePool extends MeshPool
-{
-    constructor(scene: BABYLON.Scene)
-    {
-        super(scene);
-    }
-
-    getLine(origin: RECORDING.IVec3, end: RECORDING.IVec3, color: RECORDING.IColor): BABYLON.Mesh
-    {
-        const hash: string = "line";
-        let mesh = this.findMesh(hash, { origin: origin, end: end, color: color });
-
-        let linePoints = [
-            new BABYLON.Vector3(origin.x, origin.y, origin.z),
-            new BABYLON.Vector3(end.x, end.y, end.z),
-        ];
-
-        let lineColors = [
-            new BABYLON.Color4(color.r, color.g, color.b, color.a),
-            new BABYLON.Color4(color.r, color.g, color.b, color.a),
-        ];
-
-        mesh = BABYLON.MeshBuilder.CreateLines(hash, {points: linePoints, colors: lineColors, instance: mesh as LinesMesh, updatable: true} );
-        mesh.alwaysSelectAsActiveMesh = true;
-        return mesh;
-    }
-
-    protected buildMesh(hash: string, args: any) : BABYLON.Mesh
-    {
-        let linePoints = [
-            new BABYLON.Vector3(args.origin.x, args.origin.y, args.origin.z),
-            new BABYLON.Vector3(args.end.x, args.end.y, args.end.z),
-        ];
-
-        let lineColors = [
-            new BABYLON.Color4(args.color.r, args.color.g, args.color.b, args.color.a),
-            new BABYLON.Color4(args.color.r, args.color.g, args.color.b, args.color.a),
-        ];
-
-        return BABYLON.MeshBuilder.CreateLines(hash, {points: linePoints, colors: lineColors, updatable: true} );
-    }
-}
-
 class LayerManager
 {
     private layers: Map<string, LayerState>;
@@ -610,116 +139,6 @@ class LayerManager
     }
 }
 
-class ArrowGizmo extends BABYLON.Gizmo
-{
-    private _coloredMaterial: BABYLON.StandardMaterial;
-    private _gizmoMesh: BABYLON.Mesh;
-    
-    constructor(gizmoLayer: BABYLON.UtilityLayerRenderer = BABYLON.UtilityLayerRenderer.DefaultUtilityLayer, axis: BABYLON.Vector3, color: BABYLON.Color3 = BABYLON.Color3.Gray(), thickness: number = 1) {
-        super(gizmoLayer);
-
-        // Create Material
-        this._coloredMaterial = new BABYLON.StandardMaterial("", gizmoLayer.utilityLayerScene);
-        this._coloredMaterial.diffuseColor = color;
-        this._coloredMaterial.specularColor = color.subtract(new BABYLON.Color3(0.1, 0.1, 0.1));
-
-        // Build Mesh + Collider
-        const arrow = ArrowGizmo._CreateArrow(gizmoLayer.utilityLayerScene, this._coloredMaterial, thickness);
-        const collider = ArrowGizmo._CreateArrow(gizmoLayer.utilityLayerScene, this._coloredMaterial, thickness + 4, true);
-
-        // Add to Root Node
-        this._gizmoMesh = new BABYLON.Mesh("", gizmoLayer.utilityLayerScene);
-        this._gizmoMesh.addChild((arrow as BABYLON.Mesh));
-        this._gizmoMesh.addChild((collider as BABYLON.Mesh));
-
-        this._gizmoMesh.lookAt(this._rootMesh.position.add(axis));
-        this._gizmoMesh.scaling.scaleInPlace(1 / 3);
-        this._gizmoMesh.parent = this._rootMesh;
-
-        var light = gizmoLayer._getSharedGizmoLight();
-        light.includedOnlyMeshes = light.includedOnlyMeshes.concat(this._rootMesh.getChildMeshes(false));
-    }
-
-    public static _CreateArrow(scene: BABYLON.Scene, material: BABYLON.StandardMaterial, thickness: number = 1, isCollider = false): BABYLON.TransformNode {
-        const arrow = new BABYLON.TransformNode("arrow", scene);
-        let cylinder = BABYLON.CylinderBuilder.CreateCylinder("cylinder", { diameterTop: 0, height: 0.075, diameterBottom: 0.0375 * (1 + (thickness - 1) / 4), tessellation: 96 }, scene);
-        let line = BABYLON.CylinderBuilder.CreateCylinder("cylinder", { diameterTop: 0.005 * thickness, height: 0.275, diameterBottom: 0.005 * thickness, tessellation: 96 }, scene);
-
-        // Position arrow pointing in its drag axis
-        cylinder.parent = arrow;
-        cylinder.material = material;
-        cylinder.rotation.x = Math.PI / 2;
-        cylinder.position.z += 0.3;
-
-        line.parent = arrow;
-        line.material = material;
-        line.position.z += 0.275 / 2;
-        line.rotation.x = Math.PI / 2;
-
-        if (isCollider) {
-            line.visibility = 0;
-            cylinder.visibility = 0;
-        }
-        return arrow;
-    }
-
-    public setAxis(axis: BABYLON.Vector3) {
-        this._gizmoMesh.lookAt(axis);
-    }
-
-    public dispose() {
-        if (this._gizmoMesh) {
-            this._gizmoMesh.dispose();
-        }
-        this._coloredMaterial.dispose();
-        super.dispose();
-    }
-}
-
-class AxisGizmo extends BABYLON.Gizmo
-{
-    private xGizmo: ArrowGizmo;
-    private yGizmo: ArrowGizmo;
-    private zGizmo: ArrowGizmo;
-    private beforeRenderObserver: BABYLON.Observer<BABYLON.Scene>;
-    
-    constructor(gizmoLayer: BABYLON.UtilityLayerRenderer = BABYLON.UtilityLayerRenderer.DefaultUtilityLayer, thickness: number = 1) {
-        super(gizmoLayer);
-
-        this.xGizmo = new ArrowGizmo(gizmoLayer, new BABYLON.Vector3(1, 0, 0), BABYLON.Color3.Red().scale(0.5), thickness);
-        this.yGizmo = new ArrowGizmo(gizmoLayer, new BABYLON.Vector3(0, 1, 0), BABYLON.Color3.Green().scale(0.5), thickness);
-        this.zGizmo = new ArrowGizmo(gizmoLayer, new BABYLON.Vector3(0, 0, 1), BABYLON.Color3.Blue().scale(0.5), thickness);
-
-        this.beforeRenderObserver = this.gizmoLayer.utilityLayerScene.onBeforeRenderObservable.add(() => {
-            /*if (this.xGizmo.attachedMesh) {
-                this.xGizmo.setAxis(this.xGizmo.attachedMesh.forward);
-            }
-            if (this.yGizmo.attachedMesh) {
-                this.yGizmo.setAxis(this.yGizmo.attachedMesh.up);
-            }
-            if (this.zGizmo.attachedMesh) {
-                this.zGizmo.setAxis(this.zGizmo.attachedMesh.right);
-            }*/
-        });
-    }
-
-    public attachToMesh(mesh: BABYLON.Mesh) {
-        [this.xGizmo, this.yGizmo, this.zGizmo].forEach((gizmo) => {
-            gizmo.attachedMesh = mesh;
-        });
-    }
-
-    public dispose() {
-        [this.xGizmo, this.yGizmo, this.zGizmo].forEach((gizmo) => {
-            gizmo.dispose();
-        });
-        if (this.beforeRenderObserver) {
-            this.gizmoLayer.utilityLayerScene.onBeforeRenderObservable.remove(this.beforeRenderObserver);
-        }
-        super.dispose();
-    }
-}
-
 export default class SceneController
 {
     private _canvas: HTMLCanvasElement;
@@ -742,8 +161,6 @@ export default class SceneController
     private hoveredEntity: IEntityData;
 
     private entityMaterial: BABYLON.StandardMaterial;
-    private selectedMaterial: BABYLON.StandardMaterial;
-    private hoveredMaterial: BABYLON.StandardMaterial;
 
     public onEntitySelected: IEntitySelectedCallback;
 
@@ -761,6 +178,10 @@ export default class SceneController
     private axisGizmo: AxisGizmo;
 
     private isFollowingEntity: boolean;
+
+    // Outline
+    private selectionOutline: OutlineEffect;
+    private hoverOutline: OutlineEffect;
 
     removeAllProperties()
     {
@@ -784,26 +205,9 @@ export default class SceneController
                         }
                     }
                 }
-                
-                /*if (propertyMesh.material)
-                {
-                    this._scene.removeMaterial(propertyMesh.material);
-                }*/
             }
             data.properties.clear();
         }
-
-        //this.entities.clear();
-        //this.propertyToEntity.clear();
-
-        /*console.log("Capsule pools:")
-        this.capsulePool.logDebugData();
-        console.log("Sphere pools:")
-        this.spherePool.logDebugData();
-        console.log("Box pools:")
-        this.boxPool.logDebugData();
-        console.log("Plane pools:")
-        this.planePool.logDebugData();*/
     }
 
     private isPropertyShape(property: RECORDING.IProperty)
@@ -1023,42 +427,15 @@ export default class SceneController
 
     private applySelectionMaterial(entity: IEntityData)
     {
-        entity.mesh.outlineColor = BABYLON.Color3.FromHexString("#6DE080");
-        entity.mesh.outlineWidth = 0.03;
-        entity.mesh.renderOutline = true;
-
-        // Apply on all meshes of the entity
-        entity.properties.forEach((mesh: BABYLON.Mesh) => {
-            mesh.outlineColor = BABYLON.Color3.FromHexString("#6DE080");
-            mesh.outlineWidth = 0.03;
-            mesh.renderOutline = true;
-        });
-
         this.axisGizmo.attachToMesh(entity.mesh);
     }
 
     private applyHoverMaterial(entity: IEntityData)
     {
-        entity.mesh.outlineColor = BABYLON.Color3.FromHexString("#8442B9");
-        entity.mesh.outlineWidth = 0.03;
-        entity.mesh.renderOutline = true;
-
-        // Apply on all meshes of the entity
-        entity.properties.forEach((mesh: BABYLON.Mesh) => {
-            mesh.outlineColor = BABYLON.Color3.FromHexString("#8442B9");
-            mesh.outlineWidth = 0.03;
-            mesh.renderOutline = true;
-        });
     }
 
     private restoreEntityMaterial(entity: IEntityData)
     {
-        entity.mesh.renderOutline = false;
-
-        // Apply on all meshes of the entity
-        entity.properties.forEach((mesh: BABYLON.Mesh) => {
-            mesh.renderOutline = false;
-        });
     }
 
     markEntityAsHovered(id: number)
@@ -1085,6 +462,8 @@ export default class SceneController
 
             this.selectedEntity = storedMesh;
             this.applySelectionMaterial(this.selectedEntity);
+
+            this.refreshOutlineTargets();
         }
     }
 
@@ -1161,6 +540,8 @@ export default class SceneController
             this.hoveredEntity = storedMesh;
             this.applyHoverMaterial(this.hoveredEntity);
         }
+
+        this.refreshOutlineTargets();
     }
 
     private onEntityStopHovered()
@@ -1171,6 +552,29 @@ export default class SceneController
             this.restoreEntityMaterial(this.hoveredEntity);
         }
         this.hoveredEntity = null;
+
+        this.refreshOutlineTargets();
+    }
+
+    refreshOutlineTargets()
+    {
+        this.selectionOutline.clearSelection();
+        if (this.selectedEntity)
+        {
+            this.selectionOutline.addMesh(this.selectedEntity.mesh);
+            this.selectedEntity.properties.forEach((mesh: BABYLON.Mesh) => {
+                this.selectionOutline.addMesh(mesh);
+            });
+        }
+
+        this.hoverOutline.clearSelection();
+        if (this.hoveredEntity && this.hoveredEntity != this.selectedEntity)
+        {
+            this.hoverOutline.addMesh(this.hoveredEntity.mesh);
+            this.hoveredEntity.properties.forEach((mesh: BABYLON.Mesh) => {
+                this.hoverOutline.addMesh(mesh);
+            });
+        }
     }
 
     updateLayerStatus(layer: string, state: LayerState)
@@ -1179,7 +583,7 @@ export default class SceneController
     }
 
     initialize(canvas: HTMLCanvasElement) {
-        const engine = new BABYLON.Engine(canvas, true, { stencil: true });
+        const engine = new BABYLON.Engine(canvas, false, { stencil: true });
         this.createScene(canvas, engine);
 
         engine.runRenderLoop(() => {
@@ -1287,14 +691,6 @@ export default class SceneController
         this.entityMaterial.diffuseColor = new BABYLON.Color3(1, 1, 1);
         this.entityMaterial.alpha = 0.8;
 
-        this.selectedMaterial = new BABYLON.StandardMaterial("entityMaterial", scene);
-        this.selectedMaterial.diffuseColor = new BABYLON.Color3(1, 1, 0);
-        this.selectedMaterial.alpha = 0.8;
-
-        this.hoveredMaterial = new BABYLON.StandardMaterial("entityMaterial", scene);
-        this.hoveredMaterial.diffuseColor = new BABYLON.Color3(1, 0, 0);
-        this.hoveredMaterial.alpha = 0.8;
-
         // Mouse picking
         // We need this to let the system select invisible meshes
         scene.pointerDownPredicate = function(mesh) {
@@ -1318,8 +714,12 @@ export default class SceneController
         scene.onPointerMove = function (evt, pickInfo) {
             if (pickInfo.hit) {
                 const entityId: number = control.propertyToEntity.get(parseInt(pickInfo.pickedMesh.id));
-                if (!control.selectedEntity || parseInt(control.selectedEntity.mesh.id) != entityId) {
+                if (!control.selectedEntity || control.selectedEntityId != entityId) {
                     control.onEntityHovered(entityId);
+                }
+                if (control.selectedEntityId && control.hoveredEntity && control.selectedEntityId == entityId)
+                {
+                    control.onEntityStopHovered();
                 }
                 canvas.style.cursor = "pointer";
             }
@@ -1333,6 +733,23 @@ export default class SceneController
 
         
         this.isFollowingEntity = false;
+
+        // Outline post-process effect
+        // Enable this for outline with depth
+        /*this._camera.maxZ=500;
+        this._camera.minZ=0;
+        let mainDepthRenderer = scene.enableDepthRenderer(this._camera, false);*/
+
+        BABYLON.Effect.ShadersStore["SelectionFragmentShader"] = getOutlineShader();
+
+        const selectionColor = Utils.RgbToRgb01(Utils.hexToRgb("#6DE080"));
+        const hoverColor = Utils.RgbToRgb01(Utils.hexToRgb("#8442B9"));
+
+        this.selectionOutline = new OutlineEffect(scene, this._camera, selectionColor);
+        this.hoverOutline = new OutlineEffect(scene, this._camera, hoverColor);
+
+        let antiAliasPostProcess = new BABYLON.FxaaPostProcess("fxaa", 1.0,  scene.activeCamera);
+        antiAliasPostProcess.samples = 2;
     }
 
     private updateCameraFollow()
