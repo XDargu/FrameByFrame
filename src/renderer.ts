@@ -451,7 +451,6 @@ export default class Renderer {
         this.frameData = this.recordedData.buildFrameData(frame);
 
         this.timeline.setCurrentFrame(frame);
-        this.playbackController.updateUI();
 
         this.layerController.setLayers(this.recordedData.layers);
 
@@ -688,6 +687,8 @@ export default class Renderer {
             this.areAllFramesWithEventsPending = false;
             this.unprocessedFramesWithEvents = [];
         }
+
+        this.playbackController.updateUI();
     }
 
     renderProperties()

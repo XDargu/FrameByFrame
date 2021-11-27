@@ -2540,6 +2540,8 @@ body {
   height: 14px;
   background: #6de080;
   margin: 0 10px;
+  flex-shrink: 0;
+  flex-grow: 0;
 }
 
 .filter-arrow-icon {
@@ -2552,6 +2554,27 @@ body {
   text-align: left;
   align-items: center;
   cursor: pointer;
+}
+
+.filter-wrapper .filter-title-content {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  margin-right: 10px;
+}
+
+.filter-wrapper .filter-title-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-transform: none;
+}
+
+.filter-wrapper .filter-title-type {
+  text-transform: uppercase;
+  color: #6de080;
+  font-size: 10px;
+  font-weight: bold;
 }
 
 .filter-wrapper .basico-title i.remove-filter {
