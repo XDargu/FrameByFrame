@@ -1327,6 +1327,7 @@ body {
 #title-bar-wrapper {
   min-height: 48px;
   height: 48px;
+  z-index: 99;
 }
 
 #title-bar #drag-region {
@@ -2236,7 +2237,7 @@ body {
   /* Hidden by default */
   position: fixed;
   /* Stay in place */
-  z-index: 1;
+  z-index: 50;
   /* Sit on top */
   padding-top: 100px;
   /* Location of the box */

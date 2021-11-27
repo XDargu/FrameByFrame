@@ -583,7 +583,7 @@ export default class SceneController
     }
 
     initialize(canvas: HTMLCanvasElement) {
-        const engine = new BABYLON.Engine(canvas, true, { stencil: true });
+        const engine = new BABYLON.Engine(canvas, false, { stencil: true });
         this.createScene(canvas, engine);
 
         engine.runRenderLoop(() => {

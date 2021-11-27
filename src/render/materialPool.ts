@@ -24,6 +24,7 @@ export class MaterialPool
         const cachedMaterial = this.pool.get(hash);
         if (cachedMaterial != undefined)
         {
+            cachedMaterial.wireframe = false;
             return cachedMaterial;
         }
 
