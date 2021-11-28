@@ -664,6 +664,8 @@ export default class Renderer {
                     {
                         const filterColor = Utils.colorFromHash(filterId);
                         const result = filterData.filter.filter(this.recordedData);
+                        this.filterList.setFilterResultsCount(filterId, result.length);
+                        
                         for (let i=0; i<result.length; ++i)
                         {
                             const entry = result[i];

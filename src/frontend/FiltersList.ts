@@ -113,6 +113,12 @@ namespace UI
         return propertyList.children.item(index) as HTMLElement;
     }
 
+    export function setResultCount(filterElement: HTMLElement, count: number) 
+    {
+        let results = filterElement.querySelector(".filter-results-count");
+        results.textContent = `${count} results`;
+    }
+
     function getParentPropertyControl(element: HTMLElement) : HTMLElement
     {
         return element.closest(".filter-property-control");
@@ -400,6 +406,10 @@ namespace UI
             Utils.toggleClasses(arrowIcon, "fa-angle-down", "fa-angle-right");
         };
 
+        const resultCount = document.createElement("div");
+        resultCount.className = "filter-results-count";
+        card.appendChild(resultCount);
+
         const form = document.createElement("div");
         form.className = "basico-form";
         card.appendChild(form);
@@ -579,6 +589,15 @@ export default class FiltersList
         }
 
         return false;
+    }
+
+    setFilterResultsCount(id: FilterId, count: number)
+    {
+        const filterData = this.filters.get(id);
+        if (filterData)
+        {
+            UI.setResultCount(filterData.element, count);
+        }
     }
 
     private onFilterChanged(id: FilterId)

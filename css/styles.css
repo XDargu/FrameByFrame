@@ -2600,7 +2600,7 @@ body {
   margin-bottom: 0;
 }
 
-.filter-property-wrapper .basico-input {
+.filter-wrapper .basico-input {
   height: 26px;
 }
 
@@ -2617,6 +2617,12 @@ body {
   right: unset;
   font-size: 12px;
   cursor: pointer;
+}
+
+.filter-results-count {
+  float: right;
+  font-weight: bold;
+  font-size: 12px;
 }
 
 .filter-icon {
