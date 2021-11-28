@@ -532,7 +532,7 @@ export default class Renderer {
         this.onEntitySelected(entityId);
     }
 
-    buildSinglePropertyTree(treeParent: HTMLElement, propertyGroup: RECORDING.IPropertyGroup, depth: number, nameOverride: string = undefined)
+    buildSinglePropertyTree(treeParent: HTMLElement, propertyGroup: RECORDING.IPropertyGroup, depth: number, nameOverride: string = undefined, tag: string = undefined)
     {
         const isSpecialProperties = propertyGroup.name == "special" && depth == 0;
         const isDefaultProperties = propertyGroup.name == "properties" && depth == 0;
@@ -565,8 +565,20 @@ export default class Renderer {
         if (propsToAdd.length > 0)
         {
             let titleElement = document.createElement("div");
-            titleElement.innerText = name;
             titleElement.classList.add("basico-title");
+
+            let nameElement = document.createElement("span");
+            nameElement.innerText = name;
+            titleElement.append(nameElement);
+            
+            if (tag)
+            {
+                let tagElement = document.createElement("div");
+                tagElement.innerText = tag;
+                tagElement.classList.add("basico-tag");
+                tagElement.style.background = Utils.colorFromHash(Utils.hashCode(tag));
+                titleElement.append(tagElement);
+            }
 
             let treeElement = document.createElement("div");
             treeElement.classList.add("basico-tree");
@@ -621,7 +633,7 @@ export default class Renderer {
                 for (let i=0; i<selectedEntity.events.length; ++i)
                 {
                     const propertyGroup = selectedEntity.events[i].properties;
-                    this.buildSinglePropertyTree(eventTree, propertyGroup, 1, selectedEntity.events[i].name);
+                    this.buildSinglePropertyTree(eventTree, propertyGroup, 1, selectedEntity.events[i].name, selectedEntity.events[i].tag);
                 }
             }
         }

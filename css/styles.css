@@ -1566,6 +1566,26 @@ body {
   box-sizing: border-box;
 }
 
+/* Tags: maybe move to UI code? */
+#events .basico-title {
+  display: inline-flex;
+  align-items: center;
+}
+
+#events .basico-title span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: auto;
+}
+
+#events .basico-title .basico-tag {
+  margin-right: 8px;
+  text-transform: uppercase;
+  font-weight: bold;
+  font-size: 8px;
+}
+
 #properties .basico-tag,
 #events .basico-tag {
   background: #D2C7DB;
@@ -1768,6 +1788,26 @@ body {
   box-sizing: border-box;
 }
 
+/* Tags: maybe move to UI code? */
+#events .basico-title {
+  display: inline-flex;
+  align-items: center;
+}
+
+#events .basico-title span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: auto;
+}
+
+#events .basico-title .basico-tag {
+  margin-right: 8px;
+  text-transform: uppercase;
+  font-weight: bold;
+  font-size: 8px;
+}
+
 #properties .basico-tag,
 #events .basico-tag {
   background: #D2C7DB;
@@ -1934,6 +1974,26 @@ body {
   text-align: left;
   padding-left: 10px;
   box-sizing: border-box;
+}
+
+/* Tags: maybe move to UI code? */
+#events .basico-title {
+  display: inline-flex;
+  align-items: center;
+}
+
+#events .basico-title span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: auto;
+}
+
+#events .basico-title .basico-tag {
+  margin-right: 8px;
+  text-transform: uppercase;
+  font-weight: bold;
+  font-size: 8px;
 }
 
 #properties .basico-tag,
@@ -2437,6 +2497,26 @@ body {
   box-sizing: border-box;
 }
 
+/* Tags: maybe move to UI code? */
+#events .basico-title {
+  display: inline-flex;
+  align-items: center;
+}
+
+#events .basico-title span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: auto;
+}
+
+#events .basico-title .basico-tag {
+  margin-right: 8px;
+  text-transform: uppercase;
+  font-weight: bold;
+  font-size: 8px;
+}
+
 #properties .basico-tag,
 #events .basico-tag {
   background: #D2C7DB;
@@ -2730,6 +2810,26 @@ body {
   text-align: left;
   padding-left: 10px;
   box-sizing: border-box;
+}
+
+/* Tags: maybe move to UI code? */
+#events .basico-title {
+  display: inline-flex;
+  align-items: center;
+}
+
+#events .basico-title span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: auto;
+}
+
+#events .basico-title .basico-tag {
+  margin-right: 8px;
+  text-transform: uppercase;
+  font-weight: bold;
+  font-size: 8px;
 }
 
 #properties .basico-tag,

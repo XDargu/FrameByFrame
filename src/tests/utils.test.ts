@@ -85,6 +85,11 @@ describe('Utils', () => {
         expect(isHexColor).to.be.true;
       }
     });
+
+    it('returns a value with a negative hash', () => {
+      const val = Utils.colorFromHash(-23);
+      expect(val).to.be.not.undefined;
+    });
     
   });
 

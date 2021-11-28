@@ -23,7 +23,7 @@ export function isHexColor(hex: string)
 const colors = ["#D6A3FF", "#EB7C2B", "#5DAEDC", "#DFC956", "#E5CF58"];
 export function colorFromHash(hash: number) : string
 {
-    return colors[hash % colors.length];
+    return colors[Math.abs(hash) % colors.length];
 }
 
 export function componentToHex(c: number)
