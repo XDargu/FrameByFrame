@@ -42,9 +42,10 @@
 
 .filter-ticker-type
 {
-    font-size: 12px;
+    font-size: 10px;
     color: #6de080;
     font-weight: bold;
+    text-transform: uppercase;
 }
 
 .filter-ticker-buttons
@@ -57,7 +58,7 @@
 .filter-ticker-buttons > .basico-button
 {
     width: 32px;
-    height: 42px;
+    height: 38px;
     border-radius: 0;
     padding: 2px 2px;
     background: transparent;

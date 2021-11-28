@@ -2600,8 +2600,12 @@ body {
   margin-bottom: 0;
 }
 
+.filter-property-wrapper .basico-input {
+  height: 26px;
+}
+
 .filter-property-wrapper .basico-dropdown-button {
-  height: 30px;
+  height: 26px;
   width: 70px;
   margin-right: 10px;
   font-size: 12px;
@@ -2941,9 +2945,10 @@ body {
 }
 
 .filter-ticker-type {
-  font-size: 12px;
+  font-size: 10px;
   color: #6de080;
   font-weight: bold;
+  text-transform: uppercase;
 }
 
 .filter-ticker-buttons {
@@ -2954,7 +2959,7 @@ body {
 
 .filter-ticker-buttons > .basico-button {
   width: 32px;
-  height: 42px;
+  height: 38px;
   border-radius: 0;
   padding: 2px 2px;
   background: transparent;
