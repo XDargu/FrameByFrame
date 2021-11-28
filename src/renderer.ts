@@ -665,7 +665,7 @@ export default class Renderer {
                         const filterColor = Utils.colorFromHash(filterId);
                         const result = filterData.filter.filter(this.recordedData);
                         this.filterList.setFilterResultsCount(filterId, result.length);
-                        
+
                         for (let i=0; i<result.length; ++i)
                         {
                             const entry = result[i];
@@ -681,6 +681,7 @@ export default class Renderer {
         {
             if (this.areAllFramesWithEventsPending)
             {
+                this.timeline.clearEvents();
                 for (let i=0; i<this.recordedData.frameData.length; ++i)
                 {
                     const frameData = this.recordedData.frameData[i];
@@ -847,7 +848,7 @@ export default class Renderer {
         this.unprocessedFiltersPending = true;
 
         const filters = this.filterList.getFilters();
-        if (filters.size > 0)
+        if (filters.size == 0)
         {
             this.unprocessedFramesWithEvents = [];
             this.areAllFramesWithEventsPending = true;
