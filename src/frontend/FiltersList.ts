@@ -1,4 +1,4 @@
-import { availableModesPerMemberType, EventFilter, Filter, FilterMode, filterModeAsString, FilterType, getDefaultValuePerMemberType, MemberFilter, MemberFilterType, memberFilterTypeAsString, PropertyFilter } from "../filters/filters";
+import { availableModesPerMemberType, EventFilter, Filter, FilterMode, filterModeAsString, FilterType, filterTypeAsString, getDefaultValuePerMemberType, MemberFilter, MemberFilterType, memberFilterTypeAsString, PropertyFilter } from "../filters/filters";
 import * as Utils from '../utils/utils'
 import { Console, LogChannel, LogLevel } from "./ConsoleController";
 
@@ -113,6 +113,12 @@ namespace UI
         return propertyList.children.item(index) as HTMLElement;
     }
 
+    export function setResultCount(filterElement: HTMLElement, count: number) 
+    {
+        let results = filterElement.querySelector(".filter-results-count");
+        results.textContent = `${count} results`;
+    }
+
     function getParentPropertyControl(element: HTMLElement) : HTMLElement
     {
         return element.closest(".filter-property-control");
@@ -124,7 +130,7 @@ namespace UI
         return [...control.parentElement.childNodes].indexOf(control);
     }
 
-    function createFilterTitle(id: FilterId, name: string, callbacks: CommonCallbacks) : HTMLDivElement
+    function createFilterTitle(id: FilterId, name: string, label: string, callbacks: CommonCallbacks) : HTMLDivElement
     {
         const title = document.createElement("div");
         title.className = "basico-title basico-title-compact uppercase";
@@ -137,8 +143,18 @@ namespace UI
         const arrowIcon = document.createElement("i");
         arrowIcon.className = "fa fa-angle-down filter-arrow-icon";
 
-        const span = document.createElement("span");
-        span.textContent = name;
+        const titleContent = document.createElement("div");
+        titleContent.className = "filter-title-content";
+
+        const titleName = document.createElement("div");
+        titleName.className = "filter-title-name";
+        titleName.textContent = name;
+
+        const titleType = document.createElement("div");
+        titleType.className = "filter-title-type";
+        titleType.textContent = label;
+
+        titleContent.append(titleName, titleType);
 
         const removeButton = document.createElement("i");
         removeButton.className = "fa fa-trash remove-filter";
@@ -150,7 +166,7 @@ namespace UI
         title.append(
             icon,
             arrowIcon,
-            span,
+            titleContent,
             removeButton
         );
 
@@ -376,7 +392,7 @@ namespace UI
         const wrapper = document.createElement("div");
         wrapper.className = "basico-card filter-wrapper";
 
-        const title = createFilterTitle(id, `${filterName} (${filterLabel})`, callbacks);
+        const title = createFilterTitle(id, filterName, filterLabel, callbacks);
         wrapper.appendChild(title);
 
         const card = document.createElement("div");
@@ -390,12 +406,16 @@ namespace UI
             Utils.toggleClasses(arrowIcon, "fa-angle-down", "fa-angle-right");
         };
 
+        const resultCount = document.createElement("div");
+        resultCount.className = "filter-results-count";
+        card.appendChild(resultCount);
+
         const form = document.createElement("div");
         form.className = "basico-form";
         card.appendChild(form);
 
         const filterNameElem = createFilterField(id, "Filter name:", filterName, (id, param) => {
-            title.querySelector("span").textContent = `${param} (${filterLabel})`;
+            title.querySelector(".filter-title-name").textContent = param;
             callbacks.onFilterNameChanged(id, param);
         });
         form.appendChild(filterNameElem);
@@ -414,7 +434,7 @@ namespace UI
 
         const fields = [eventName, eventTag, propertiesTitle, ...memberList];
         
-        return createFilterWrapper(id, filterName, "Event", callbacks.common, fields);
+        return createFilterWrapper(id, filterName, filterTypeAsString(FilterType.Event), callbacks.common, fields);
     }
 
     export function createPropertyFilter(id: FilterId, filterName: string, filter: PropertyFilter, callbacks: PropertyFilterCallbacks) : HTMLDivElement
@@ -425,7 +445,7 @@ namespace UI
 
         const fields = [propertyGroup, propertiesTitle, ...memberList];
         
-        return createFilterWrapper(id, filterName, "Property", callbacks.common, fields);
+        return createFilterWrapper(id, filterName, filterTypeAsString(FilterType.Property), callbacks.common, fields);
     }
 
     export function createFilterCreationEntry(name: string)
@@ -569,6 +589,15 @@ export default class FiltersList
         }
 
         return false;
+    }
+
+    setFilterResultsCount(id: FilterId, count: number)
+    {
+        const filterData = this.filters.get(id);
+        if (filterData)
+        {
+            UI.setResultCount(filterData.element, count);
+        }
     }
 
     private onFilterChanged(id: FilterId)

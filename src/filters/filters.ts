@@ -337,7 +337,17 @@ export namespace Common
                 return true;
             }
 
-            return filterPropertyGroup(event.properties, members);
+            let allGood = true;
+            for (let i=0; i<members.length; ++i)
+            {
+                if (!filterPropertyGroup(event.properties, members))
+                {
+                    allGood = false;
+                    break;
+                }
+            }
+
+            return allGood;
         }
         return false;
     }
@@ -372,7 +382,7 @@ export namespace Common
     {
         if (filterTextOrEmpty(groupFilter, groupName.toLowerCase()))
         {
-            if (filterPropertyGroup(group, members, visitChildGroups))
+            if (members.length == 0 || filterPropertyGroup(group, members, visitChildGroups))
             {
                 return true;
             }
@@ -440,22 +450,10 @@ export class EventFilter extends Filter
                 const entity = frameData.entities[entityID];
 
                 RECORDING.NaiveRecordedData.visitEvents(entity.events, (event: RECORDING.IEvent) => {
-                    let allGood = true;
-
-                    for (let j=0; j<membersFilter.length; ++j)
-                    {
-                        if (!Common.filterEvent(event, nameFilter, tagFilter, [membersFilter[j]]))
-                        {
-                            allGood = false;
-                            break;
-                        }
-                    }
-
-                    if (allGood)
+                    if (Common.filterEvent(event, nameFilter, tagFilter, membersFilter))
                     {
                         results.push({ frameIdx: i, entityId: entity.id });
                     }
-                    
                 });
             }
         }
@@ -509,19 +507,22 @@ export class PropertyFilter extends Filter
             {
                 const entity = frameData.entities[entityID];
 
-                let allGood = true;
-                for (let i=0; i<membersFilter.length; ++i)
+                if (Common.filterEntityProperties(entity, groupFilter, []))
                 {
-                    if (!Common.filterEntityProperties(entity, groupFilter, [membersFilter[i]]))
+                    let allGood = true;
+                    for (let i=0; i<membersFilter.length; ++i)
                     {
-                        allGood = false;
-                        break;
+                        if (!Common.filterEntityProperties(entity, groupFilter, [membersFilter[i]]))
+                        {
+                            allGood = false;
+                            break;
+                        }
                     }
-                }
 
-                if (allGood)
-                {
-                    results.push({ frameIdx: i, entityId: entity.id });
+                    if (allGood)
+                    {
+                        results.push({ frameIdx: i, entityId: entity.id });
+                    }
                 }
             }
         }

@@ -39,6 +39,7 @@ namespace UI
     {
         let ticker = document.createElement('div');
         ticker.className = 'filter-ticker';
+        ticker.title = 'Go to filter definition';
         ticker.onclick = () => {
             creationData.onTickerclicked(creationData.id);
         };
@@ -61,6 +62,8 @@ namespace UI
 
         let tickerViewButton = document.createElement('button');
         tickerViewButton.className = 'basico-button basico-small';
+        tickerViewButton.title = 'Toggle filter visibility';
+
         let visibilityIcon = document.createElement('i');
         visibilityIcon.className = 'fas fa-eye';
 

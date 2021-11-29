@@ -193,6 +193,7 @@ export default class Renderer {
         document.getElementById("title-bar-open").onmousedown = (e) => { this.onOpenFile(); e.preventDefault(); }
         document.getElementById("title-bar-save").onmousedown = (e) => { this.onSaveFile(); e.preventDefault(); }
         document.getElementById("title-bar-clear").onmousedown = (e) => { this.onClearFile(); e.preventDefault(); }
+        document.getElementById("title-bar-help").onmousedown = (e) => { this.onHelpButton(); e.preventDefault(); }
 
         // Console callbacks
         document.getElementById("console-clear").onmousedown = (e) => { this.consoleWindow.clear(); e.preventDefault(); };
@@ -451,7 +452,6 @@ export default class Renderer {
         this.frameData = this.recordedData.buildFrameData(frame);
 
         this.timeline.setCurrentFrame(frame);
-        this.playbackController.updateUI();
 
         this.layerController.setLayers(this.recordedData.layers);
 
@@ -533,7 +533,7 @@ export default class Renderer {
         this.onEntitySelected(entityId);
     }
 
-    buildSinglePropertyTree(treeParent: HTMLElement, propertyGroup: RECORDING.IPropertyGroup, depth: number, nameOverride: string = undefined)
+    buildSinglePropertyTree(treeParent: HTMLElement, propertyGroup: RECORDING.IPropertyGroup, depth: number, nameOverride: string = undefined, tag: string = undefined)
     {
         const isSpecialProperties = propertyGroup.name == "special" && depth == 0;
         const isDefaultProperties = propertyGroup.name == "properties" && depth == 0;
@@ -566,8 +566,20 @@ export default class Renderer {
         if (propsToAdd.length > 0)
         {
             let titleElement = document.createElement("div");
-            titleElement.innerText = name;
             titleElement.classList.add("basico-title");
+
+            let nameElement = document.createElement("span");
+            nameElement.innerText = name;
+            titleElement.append(nameElement);
+            
+            if (tag)
+            {
+                let tagElement = document.createElement("div");
+                tagElement.innerText = tag;
+                tagElement.classList.add("basico-tag");
+                tagElement.style.background = Utils.colorFromHash(Utils.hashCode(tag));
+                titleElement.append(tagElement);
+            }
 
             let treeElement = document.createElement("div");
             treeElement.classList.add("basico-tree");
@@ -622,7 +634,7 @@ export default class Renderer {
                 for (let i=0; i<selectedEntity.events.length; ++i)
                 {
                     const propertyGroup = selectedEntity.events[i].properties;
-                    this.buildSinglePropertyTree(eventTree, propertyGroup, 1, selectedEntity.events[i].name);
+                    this.buildSinglePropertyTree(eventTree, propertyGroup, 1, selectedEntity.events[i].name, selectedEntity.events[i].tag);
                 }
             }
         }
@@ -653,6 +665,8 @@ export default class Renderer {
                     {
                         const filterColor = Utils.colorFromHash(filterId);
                         const result = filterData.filter.filter(this.recordedData);
+                        this.filterList.setFilterResultsCount(filterId, result.length);
+
                         for (let i=0; i<result.length; ++i)
                         {
                             const entry = result[i];
@@ -668,6 +682,7 @@ export default class Renderer {
         {
             if (this.areAllFramesWithEventsPending)
             {
+                this.timeline.clearEvents();
                 for (let i=0; i<this.recordedData.frameData.length; ++i)
                 {
                     const frameData = this.recordedData.frameData[i];
@@ -688,6 +703,8 @@ export default class Renderer {
             this.areAllFramesWithEventsPending = false;
             this.unprocessedFramesWithEvents = [];
         }
+
+        this.playbackController.updateUI();
     }
 
     renderProperties()
@@ -784,6 +801,11 @@ export default class Renderer {
         ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.Clear, ""));
     }
 
+    onHelpButton()
+    {
+        this.toggleWelcomeMessage();
+    }
+
     // Recent files callbacks
     onRecentFileClicked(path: string)
     {
@@ -832,7 +854,7 @@ export default class Renderer {
         this.unprocessedFiltersPending = true;
 
         const filters = this.filterList.getFilters();
-        if (filters.size > 0)
+        if (filters.size == 0)
         {
             this.unprocessedFramesWithEvents = [];
             this.areAllFramesWithEventsPending = true;
@@ -940,6 +962,20 @@ export default class Renderer {
         {
             document.body.classList.remove("welcome-active");
             this.controlTabs.openTabByIndex(TabIndices.RecordingOptions);
+        }
+    }
+
+    toggleWelcomeMessage()
+    {
+        if (this.isWelcomeMessageActive())
+        {
+            document.body.classList.remove("welcome-active");
+            this.controlTabs.openTabByIndex(TabIndices.RecordingOptions);
+        }
+        else
+        {
+            document.body.classList.add("welcome-active");
+            this.controlTabs.closeAllTabs();
         }
     }
 }
