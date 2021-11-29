@@ -503,9 +503,9 @@ export class NaiveRecordedData {
 				var propertyGroup = { type: "group", name: "properties", value: [
 					{ type: "int", name: "Target ID", value: 122 },
 					{ type: "string", name: "Target Name", value: "Player" },
-					{ type: "float", name: "Target Distance", value: Math.random() * 352 },
+					{ type: "float", name: "Target Distance", value: j },
 					{ type: "group", name: "Target Info", value: [
-						{ type: "float", name: "Target Radius", value: Math.random() * 5 },
+						{ type: "float", name: "Target Radius", value: i },
 						{ type: "float", name: "Target Length", value: Math.random() * 20 }
 						] }
 					]
@@ -516,6 +516,35 @@ export class NaiveRecordedData {
 					{ type: "vec3", name: "Position", value: { x: Math.random() * 10, y: Math.random() * 10, z: Math.random() * 10} }
 					]
 				};
+
+				if (i % 2 == 0)
+				{
+					var eventProperties = [
+						{ name: "Test string", type: "string", value: "eventProp" + i },
+						{ name: "Test number", type: "number", value: j }
+					];
+					var event = {
+						eventIdx: 0,
+						name: "OnTestEvent",
+						tag: "FirstTest",
+						properties: {value: eventProperties, type: "group", name: "properties" }
+					};
+					entity.events.push(event);
+				}
+				else
+				{
+					var eventProperties2 = [
+						{ name: "Test other string", type: "string", value: "eventProp" + i },
+						{ name: "Test other number", type: "number", value: j }
+					];
+					var event2 = {
+						eventIdx: 0,
+						name: "OnOtherTestEvent",
+						tag: "OtherTest",
+						properties: {value: eventProperties2, type: "group", name: "properties" }
+					};
+					entity.events.push(event2);
+				}
 
 				entity.properties.push(propertyGroup);
 				entity.properties.push(specialGroup);
