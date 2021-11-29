@@ -161,7 +161,6 @@ const outlineShader: string = `
     float selectionValue = 0.1;
     float effect = max(outline, maskedSelection);
 
-    //gl_FragColor = vec4(effect, 0.0, 0.0, 1.0);
     gl_FragColor = mix(baseColor, vec4(color, 1.0), effect);
     }
     `;
@@ -245,7 +244,6 @@ float outline = val-valMin;
 float selectionValue = 0.1;
 float effect = outline * max(selectionValue, 1.0 - behindElements);
 
-//gl_FragColor = vec4(effect, 0.0, 0.0, 1.0);
 gl_FragColor = mix(baseColor, vec4(color, 1.0), effect);
 }
 `;
