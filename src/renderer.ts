@@ -193,6 +193,7 @@ export default class Renderer {
         document.getElementById("title-bar-open").onmousedown = (e) => { this.onOpenFile(); e.preventDefault(); }
         document.getElementById("title-bar-save").onmousedown = (e) => { this.onSaveFile(); e.preventDefault(); }
         document.getElementById("title-bar-clear").onmousedown = (e) => { this.onClearFile(); e.preventDefault(); }
+        document.getElementById("title-bar-help").onmousedown = (e) => { this.onHelpButton(); e.preventDefault(); }
 
         // Console callbacks
         document.getElementById("console-clear").onmousedown = (e) => { this.consoleWindow.clear(); e.preventDefault(); };
@@ -800,6 +801,11 @@ export default class Renderer {
         ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.Clear, ""));
     }
 
+    onHelpButton()
+    {
+        this.toggleWelcomeMessage();
+    }
+
     // Recent files callbacks
     onRecentFileClicked(path: string)
     {
@@ -956,6 +962,20 @@ export default class Renderer {
         {
             document.body.classList.remove("welcome-active");
             this.controlTabs.openTabByIndex(TabIndices.RecordingOptions);
+        }
+    }
+
+    toggleWelcomeMessage()
+    {
+        if (this.isWelcomeMessageActive())
+        {
+            document.body.classList.remove("welcome-active");
+            this.controlTabs.openTabByIndex(TabIndices.RecordingOptions);
+        }
+        else
+        {
+            document.body.classList.add("welcome-active");
+            this.controlTabs.closeAllTabs();
         }
     }
 }
