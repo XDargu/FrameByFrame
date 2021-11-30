@@ -1,7 +1,9 @@
 import * as BABYLON from 'babylonjs';
 import * as RECORDING from '../recording/RecordingData';
+import * as RenderUtils from '../render/renderUtils';
 import CreateCapsule from './capsule';
-import { LinesMesh } from 'babylonjs/Meshes/linesMesh';
+import { LinesMesh, } from 'babylonjs/Meshes/linesMesh';
+import { CustomLinesMesh, createCustomLinesystem } from './customLineMesh';
 
 export interface IPooledMesh
 {
@@ -203,7 +205,7 @@ export class LinePool extends MeshPool
     getLine(origin: RECORDING.IVec3, end: RECORDING.IVec3, color: RECORDING.IColor): BABYLON.Mesh
     {
         const hash: string = "line";
-        let mesh = this.findMesh(hash, { origin: origin, end: end, color: color }) as LinesMesh;
+        let mesh = this.findMesh(hash, { origin: origin, end: end, color: color }) as CustomLinesMesh;
 
         let linePoints = [
             new BABYLON.Vector3(origin.x, origin.y, origin.z),
@@ -214,7 +216,9 @@ export class LinePool extends MeshPool
             new BABYLON.Color4(color.r, color.g, color.b, color.a),
             new BABYLON.Color4(color.r, color.g, color.b, color.a),
         ];
-        mesh = BABYLON.MeshBuilder.CreateLines(hash, {points: linePoints, colors: lineColors, instance: mesh, updatable: true} );
+        // Custom createCustomLinesystem so we can pass materials around
+        // Adapted form Babylon's updated mesh build from 5.0
+        mesh = createCustomLinesystem(hash, {lines: [linePoints], colors: [lineColors], instance: mesh, updatable: true, material: mesh.material }, this.scene );
         mesh.alwaysSelectAsActiveMesh = true;
         return mesh;
     }
@@ -222,8 +226,8 @@ export class LinePool extends MeshPool
     protected buildMesh(hash: string, args: any) : BABYLON.Mesh
     {
         let linePoints = [
-            new BABYLON.Vector3(args.origin.x, args.origin.y, args.origin.z),
-            new BABYLON.Vector3(args.end.x, args.end.y, args.end.z),
+            RenderUtils.createVec3(args.origin),
+            RenderUtils.createVec3(args.end)
         ];
 
         let lineColors = [
@@ -231,14 +235,12 @@ export class LinePool extends MeshPool
             new BABYLON.Color4(args.color.r, args.color.g, args.color.b, args.color.a),
         ];
 
-        return BABYLON.MeshBuilder.CreateLines(hash, {points: linePoints, colors: lineColors, updatable: true} );
+        return createCustomLinesystem(hash, {lines: [linePoints], colors: [lineColors], updatable: true}, this.scene );
     }
 
     clear()
     {
-        // Babylon currently creates new materials for each instance of the line.
-        // This can be fixed in the next version (5.0), but for now we will have to manually free them here.
-        // Once that happens, we can use the material pool as well
+        // Currently not using a material pool here, so we need to remove the materials
         for (let [hash, meshes] of this.pool)
         {
             for (let pooledMesh of meshes)
