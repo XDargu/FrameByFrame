@@ -3,10 +3,11 @@ import * as RECORDING from '../recording/RecordingData';
 import { GridMaterial } from 'babylonjs-materials';
 import { LayerState } from '../frontend/LayersController';
 import * as Utils from '../utils/utils';
+import * as RenderUtils from '../render/renderUtils';
+import * as ShapeBuilders from '../render/shapeBuilders';
 import { getOutlineShader, OutlineEffect } from './outlineShader';
 import { AxisGizmo } from './gizmos';
-import { MaterialPool } from './materialPool';
-import { BoxPool, CapsulePool, LinePool, PlanePool, SpherePool } from './meshPools';
+import RenderPools from './renderPools';
 
 export interface IEntitySelectedCallback
 {
@@ -18,100 +19,6 @@ interface IEntityData
     mesh: BABYLON.Mesh;
     properties: Map<number, BABYLON.Mesh>;
 }
-
-// Unused for now, should be used later on
-/*class UniversalCameraCustomKeyboardInput implements BABYLON.ICameraInput<BABYLON.UniversalCamera>
-{
-    camera: BABYLON.UniversalCamera;
-    
-    private keysLeft = [37, 65];
-    private keysRight = [39, 68];
-    private keysUp = [38, 87];
-    private keysDown = [40, 83];
-    private sensibility = 0.2;
-
-    private _keys: number[] = [];
-    private _onKeyDown: (ev: KeyboardEvent)=> any
-    private _onKeyUp: (ev: KeyboardEvent)=> any
-    
-    getClassName(): string {
-        return "UniversalCameraCustomKeyboardInput";
-    }
-    getSimpleName(): string {
-        return "CustomKeyboardInput";
-    }
-    attachControl(element: HTMLElement, noPreventDefault?: boolean): void {
-        var _this = this;
-        if (!this._onKeyDown) {
-            element.tabIndex = 1;
-            this._onKeyDown = function (evt) {
-                if (_this.keysLeft.indexOf(evt.keyCode) !== -1 || _this.keysRight.indexOf(evt.keyCode) !== -1) {
-                    var index = _this._keys.indexOf(evt.keyCode);
-                    if (index === -1) {
-                        _this._keys.push(evt.keyCode);
-                    }
-                    if (!noPreventDefault) {
-                        evt.preventDefault();
-                    }
-                }
-            };
-            this._onKeyUp = function (evt) {
-                if (_this.keysLeft.indexOf(evt.keyCode) !== -1 || _this.keysRight.indexOf(evt.keyCode) !== -1) {
-                    var index = _this._keys.indexOf(evt.keyCode);
-                    if (index >= 0) {
-                        _this._keys.splice(index, 1);
-                    }
-                    if (!noPreventDefault) {
-                        evt.preventDefault();
-                    }
-                }
-            };
-
-            element.addEventListener("keydown", this._onKeyDown, false);
-            element.addEventListener("keyup", this._onKeyUp, false);
-        }
-    }
-
-    detachControl(element: HTMLElement): void {
-        if (this._onKeyDown) {
-            element.removeEventListener("keydown", this._onKeyDown);
-            element.removeEventListener("keyup", this._onKeyUp);
-            this._keys = [];
-            this._onKeyDown = null;
-            this._onKeyUp = null;
-        }
-    }
-
-    checkInputs() {
-        if (this._onKeyDown) {
-            var camera = this.camera;
-
-            // Keyboard
-            for (var index = 0; index < this._keys.length; index++) {
-                var keyCode = this._keys[index];
-                if (this.keysLeft.indexOf(keyCode) !== -1) {
-                    const right = camera.getWorldMatrix().getRow(0).toVector3();
-                    camera.position = BABYLON.Vector3.Lerp(camera.position, camera.position.subtract(right) , this.sensibility);
-                }
-                else if (this.keysRight.indexOf(keyCode) !== -1) {
-                    const right = camera.getWorldMatrix().getRow(0).toVector3();
-                    camera.position = BABYLON.Vector3.Lerp(camera.position, camera.position.add(right) , this.sensibility);
-                }
-                else if (this.keysUp.indexOf(keyCode) !== -1) {
-                    const forward = camera.getWorldMatrix().getRow(2).toVector3();
-                    camera.position = BABYLON.Vector3.Lerp(camera.position, camera.position.add(forward) , this.sensibility);
-
-                    //camera.position = BABYLON.Vector3.Lerp(camera.position, camera.getFrontPosition(1), this.sensibility);
-                }
-                else if (this.keysDown.indexOf(keyCode) !== -1) {
-                    const forward = camera.getWorldMatrix().getRow(2).toVector3();
-                    camera.position = BABYLON.Vector3.Lerp(camera.position, camera.position.subtract(forward) , this.sensibility);
-                    //camera.position = BABYLON.Vector3.Lerp(camera.position, camera.getFrontPosition(-1), this.sensibility);
-                }
-            }
-        }
-    }
-}*/
 
 class LayerManager
 {
@@ -139,6 +46,32 @@ class LayerManager
     }
 }
 
+interface IPropertyBuilderFunction
+{
+    (shape: RECORDING.IProperyShape, pools: RenderPools) : BABYLON.Mesh
+}
+
+interface IPropertyBuilderConfigEntry
+{
+    builder: IPropertyBuilderFunction;
+    pickable: boolean;
+}
+
+interface IPropertyBuilderConfig
+{
+    [type: string] : IPropertyBuilderConfigEntry;
+}
+
+const shapeBuildConfig : IPropertyBuilderConfig = {
+    "sphere": { builder: ShapeBuilders.buildSphereShape, pickable: true},
+    "capsule": { builder: ShapeBuilders.buildCapsuleShape, pickable: true},
+    "aabb": { builder: ShapeBuilders.buildAABBShape, pickable: true},
+    "oobb": { builder: ShapeBuilders.buildOOBBShape, pickable: true},
+    "plane": { builder: ShapeBuilders.buildPlaneShape, pickable: true},
+    "line": { builder: ShapeBuilders.buildLinesShape, pickable: false},
+    "mesh": { builder: ShapeBuilders.buildMeshShape, pickable: true},
+}
+
 export default class SceneController
 {
     private _canvas: HTMLCanvasElement;
@@ -164,15 +97,9 @@ export default class SceneController
 
     public onEntitySelected: IEntitySelectedCallback;
 
-    private materialPool: MaterialPool;
     private layerManager: LayerManager;
 
-    // Mesh pools
-    private capsulePool: CapsulePool;
-    private spherePool: SpherePool;
-    private boxPool: BoxPool;
-    private planePool: PlanePool;
-    private linePool: LinePool;
+    private pools: RenderPools;
 
     // Gizmos
     private axisGizmo: AxisGizmo;
@@ -185,45 +112,22 @@ export default class SceneController
 
     removeAllProperties()
     {
-        for (let data of this.entities.values())
+        for (const [id, data] of this.entities)
         {
-            for (let propertyMesh of data.properties.values())
+            for (let [propId, propertyMesh] of data.properties)
             {
-                if (!this.capsulePool.freeMesh(propertyMesh))
+                if (this.pools.tryFreeMesh(propertyMesh))
                 {
-                    if (!this.spherePool.freeMesh(propertyMesh))
-                    {
-                        if (!this.boxPool.freeMesh(propertyMesh))
-                        {
-                            if (!this.planePool.freeMesh(propertyMesh))
-                            {
-                                if (!this.linePool.freeMesh(propertyMesh))
-                                {
-                                    this._scene.removeMesh(propertyMesh, true);
-                                }
-                            }
-                        }
-                    }
+                    this._scene.removeMesh(propertyMesh, true);
                 }
             }
             data.properties.clear();
         }
     }
 
-    private isPropertyShape(property: RECORDING.IProperty)
-    {
-        return property.type == "sphere" || 
-            property.type == "line"||
-            property.type == "plane" ||
-            property.type == "aabb" ||
-            property.type == "oobb" ||
-            property.type == "capsule" ||
-            property.type == "mesh";
-    }
-
     addProperty(entity: RECORDING.IEntity, property: RECORDING.IProperty)
     {
-        if (!this.isPropertyShape(property)) { return; }
+        if (!RenderUtils.isPropertyShape(property)) { return; }
 
         const shape = property as RECORDING.IProperyShape;
         const layerState = this.layerManager.getLayerState(shape.layer);
@@ -234,162 +138,19 @@ export default class SceneController
         let entityData = this.entities.get(entity.id);
         if (!entityData) { return; }
 
-        if (property.type == "sphere")
+        const shapeConfig = shapeBuildConfig[property.type];
+
+        if (shapeConfig)
         {
-            let sphereProperty = property as RECORDING.IPropertySphere;
-
-            let sphere = this.spherePool.getSphere(sphereProperty.radius);
-            sphere.isPickable = true;
-            sphere.id = sphereProperty.id.toString();
-
-            sphere.position.set(sphereProperty.position.x, sphereProperty.position.y, sphereProperty.position.z);
-
-            sphere.material = this.materialPool.getMaterialByColor(sphereProperty.color);
-
-            entityData.properties.set(sphereProperty.id, sphere);
-            this.propertyToEntity.set(sphereProperty.id, entity.id);
-        }
-        else if (property.type == "capsule")
-        {
-            let capsuleProperty = property as RECORDING.IPropertyCapsule;
-
-            let capsule = this.capsulePool.getCapsule(capsuleProperty.height, capsuleProperty.radius);
-            capsule.isPickable = true;
-            capsule.id = capsuleProperty.id.toString();
-
-            capsule.position.set(capsuleProperty.position.x, capsuleProperty.position.y, capsuleProperty.position.z);
-
-            const direction = new BABYLON.Vector3(capsuleProperty.direction.x, capsuleProperty.direction.y, capsuleProperty.direction.z);
-            //capsule.lookAt(capsule.position.add(direction));
-            
-            let up = new BABYLON.Vector3(capsuleProperty.direction.x, capsuleProperty.direction.y, capsuleProperty.direction.z);
-            let forward = BABYLON.Vector3.Cross(up, new BABYLON.Vector3(1, 2, 3).normalize()).normalize();
-            let right = BABYLON.Vector3.Cross(up, forward).normalize();
-
-            let rotationMatrix = new BABYLON.Matrix();
-            rotationMatrix.setRow(0, new BABYLON.Vector4(right.x, right.y, right.z, 0));
-            rotationMatrix.setRow(1, new BABYLON.Vector4(up.x, up.y, up.z, 0));
-            rotationMatrix.setRow(2, new BABYLON.Vector4(forward.x, forward.y, forward.z, 0));
-            capsule.rotationQuaternion = new BABYLON.Quaternion();
-            capsule.rotationQuaternion.fromRotationMatrix(rotationMatrix);
-
-            capsule.material = this.materialPool.getMaterialByColor(capsuleProperty.color);
-
-            entityData.properties.set(capsuleProperty.id, capsule);
-            this.propertyToEntity.set(capsuleProperty.id, entity.id);
-        }
-        else if (property.type == "aabb")
-        {
-            let aabbProperty = property as RECORDING.IPropertyAABB;
-
-            let aabb = this.boxPool.getBox(aabbProperty.size);
-            aabb.isPickable = true;
-            aabb.id = aabbProperty.id.toString();
-
-            aabb.position.set(aabbProperty.position.x, aabbProperty.position.y, aabbProperty.position.z);
-
-            aabb.material = this.materialPool.getMaterialByColor(aabbProperty.color);
-
-            entityData.properties.set(aabbProperty.id, aabb);
-            this.propertyToEntity.set(aabbProperty.id, entity.id);
-        }
-        else if (property.type == "oobb")
-        {
-            let oobbProperty = property as RECORDING.IPropertyOOBB;
-
-            let oobb = this.boxPool.getBox(oobbProperty.size);
-            oobb.isPickable = true;
-            oobb.id = oobbProperty.id.toString();
-
-            oobb.position.set(oobbProperty.position.x, oobbProperty.position.y, oobbProperty.position.z);
-            let up = new BABYLON.Vector3(oobbProperty.up.x, oobbProperty.up.y, oobbProperty.up.z);
-            let forward = new BABYLON.Vector3(oobbProperty.forward.x, oobbProperty.forward.y, oobbProperty.forward.z);
-            let right = BABYLON.Vector3.Cross(up, forward);
-
-            let rotationMatrix = new BABYLON.Matrix();
-            rotationMatrix.setRow(0, new BABYLON.Vector4(right.x, right.y, right.z, 0));
-            rotationMatrix.setRow(1, new BABYLON.Vector4(up.x, up.y, up.z, 0));
-            rotationMatrix.setRow(2, new BABYLON.Vector4(forward.x, forward.y, forward.z, 0));
-            oobb.rotationQuaternion = new BABYLON.Quaternion();
-            oobb.rotationQuaternion.fromRotationMatrix(rotationMatrix);
-
-            oobb.material = this.materialPool.getMaterialByColor(oobbProperty.color);
-
-            entityData.properties.set(oobbProperty.id, oobb);
-            this.propertyToEntity.set(oobbProperty.id, entity.id);
-        }
-        else if (property.type == "plane")
-        {
-            const planeProperty = property as RECORDING.IPropertyPlane;
-            
-            let plane = this.planePool.getPlane(planeProperty.normal, planeProperty.length, planeProperty.width);
-            plane.isPickable = true;
-            plane.id = planeProperty.id.toString();
-
-            plane.position.set(planeProperty.position.x, planeProperty.position.y, planeProperty.position.z);
-
-            let right = new BABYLON.Vector3(planeProperty.up.x, planeProperty.up.y, planeProperty.up.z);
-            let forward = new BABYLON.Vector3(planeProperty.normal.x, planeProperty.normal.y, planeProperty.normal.z);
-            let up = BABYLON.Vector3.Cross(forward, right);
-
-            let rotationMatrix = new BABYLON.Matrix();
-            rotationMatrix.setRow(0, new BABYLON.Vector4(right.x, right.y, right.z, 0));
-            rotationMatrix.setRow(1, new BABYLON.Vector4(up.x, up.y, up.z, 0));
-            rotationMatrix.setRow(2, new BABYLON.Vector4(forward.x, forward.y, forward.z, 0));
-            plane.rotationQuaternion = new BABYLON.Quaternion();
-            plane.rotationQuaternion.fromRotationMatrix(rotationMatrix);
-
-            plane.material = this.materialPool.getMaterialByColor(planeProperty.color);
-
-            entityData.properties.set(planeProperty.id, plane);
-            this.propertyToEntity.set(planeProperty.id, entity.id);
-        }
-        else if (property.type == "line")
-        {
-            let lineProperty = property as RECORDING.IPropertyLine;
-
-            let lines = this.linePool.getLine(lineProperty.origin, lineProperty.destination, lineProperty.color);
-
-            lines.isPickable = false;
-            lines.id = lineProperty.id.toString();
-
-            entityData.properties.set(lineProperty.id, lines);
-        }
-        else if (property.type == "mesh")
-        {
-            const meshProperty = property as RECORDING.IPropertyMesh;
-
-            let customMesh = new BABYLON.Mesh("custom", this._scene);
-            customMesh.isPickable = true;
-            customMesh.id = meshProperty.id.toString();
-
-            let vertexData = new BABYLON.VertexData();
-            let normals: any[] = [];
-            BABYLON.VertexData.ComputeNormals(meshProperty.vertices, meshProperty.indices, normals, {
-                useRightHandedSystem: false
-            });
-
-            vertexData.positions = meshProperty.vertices;
-            vertexData.indices = meshProperty.indices;
-            vertexData.normals = normals;
-
-            vertexData.applyToMesh(customMesh);
-
-            customMesh.material = this.materialPool.getMaterialByColor(meshProperty.color);
-
-            entityData.properties.set(meshProperty.id, customMesh);
-            this.propertyToEntity.set(meshProperty.id, entity.id);
-
-            if (meshProperty.wireframe == true)
+            let mesh = shapeConfig.builder(shape, this.pools);
+            mesh.isPickable = shapeConfig.pickable;
+            if (shapeConfig.pickable)
             {
-                let wireframeMesh = new BABYLON.Mesh("customwire", this._scene);
-                vertexData.applyToMesh(wireframeMesh);
-                wireframeMesh.material = this.materialPool.getMaterialByColor({r: 0, g: 0, b: 0, a: 1});
-                wireframeMesh.material.wireframe = true;
-                wireframeMesh.parent = customMesh;
+                this.propertyToEntity.set(shape.id, entity.id);
             }
-
+            entityData.properties.set(shape.id, mesh);
         }
+
     }
 
     createEntity(entity: RECORDING.IEntity) : IEntityData
@@ -607,12 +368,7 @@ export default class SceneController
         const scene = new BABYLON.Scene(engine);
         this._scene = scene;
 
-        this.materialPool = new MaterialPool(this._scene);
-        this.capsulePool = new CapsulePool(this._scene);
-        this.spherePool = new SpherePool(this._scene);
-        this.boxPool = new BoxPool(this._scene);
-        this.planePool = new PlanePool(this._scene);
-        this.linePool = new LinePool(this._scene);
+        this.pools = new RenderPools(scene);
         this.layerManager = new LayerManager();
 
         // Gizmos
@@ -672,7 +428,7 @@ export default class SceneController
         light.intensity = 0.7;
 
         // Grid
-        var grid = BABYLON.Mesh.CreatePlane("plane", 100.0, scene);
+        var grid = BABYLON.Mesh.CreatePlane("plane", 10000.0, scene);
         grid.rotate(BABYLON.Axis.X, Math.PI / 2, BABYLON.Space.WORLD);
         grid.isPickable = false;
 
