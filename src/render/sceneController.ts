@@ -205,34 +205,7 @@ export default class SceneController
 
     getRadiusOfSelection()
     {
-        if (this.selectedEntity)
-        {
-            let radius = 6;
-
-            // Find a better way
-            /*for (let propertyMesh of this.selectedEntity.properties.values())
-            {
-                if (propertyMesh.getBoundingInfo().boundingSphere.radius > radius)
-                {
-                    //radius = propertyMesh.getBoundingInfo().boundingSphere.radius;
-                    //position = propertyMesh.getBoundingInfo().boundingSphere.centerWorld;
-                }
-            }*/
-
-            return radius;
-        }
-    }
-
-    getCameraPositionForTarget(targetPosition: BABYLON.Vector3, radius: number)
-    {
-        let meshToCamera = this._camera.position.subtract(targetPosition);
-        meshToCamera.y = Math.max(0, meshToCamera.y);
-        meshToCamera.normalize();
-        let targetPos = targetPosition.add(meshToCamera.scale(radius));
-        const distMeshToTarget = targetPos.subtract(targetPosition).length();
-        targetPos.y = targetPosition.y + distMeshToTarget * 0.3;
-
-        return targetPos;
+        return 6; // TODO: Maybe take into account the bounding box of the selected entity
     }
 
     moveCameraToSelection()
@@ -254,7 +227,7 @@ export default class SceneController
             targetPosition, 0, ease, () => { this._camera.lockedTarget = null; });
         targetTo.disposeOnEnd = true;
 
-        const targetPos = this.getCameraPositionForTarget(targetPosition, radius);
+        const targetPos = RenderUtils.getCameraPositionForTarget(this._camera, targetPosition, radius);
 
         let moveTo = BABYLON.Animation.CreateAndStartAnimation('moveTo', this._camera, 'position', 60, 20,
             this._camera.position,
@@ -489,7 +462,7 @@ export default class SceneController
         {
             const targetPosition = this.selectedEntity.mesh.position;
             const radius = this.getRadiusOfSelection();
-            const cameraPos = this.getCameraPositionForTarget(targetPosition, radius);
+            const cameraPos = RenderUtils.getCameraPositionForTarget(this._camera, targetPosition, radius);
 
             const meshToCamera = this._camera.position.subtract(targetPosition);
 
@@ -523,4 +496,4 @@ export default class SceneController
             this._camera.lockedTarget = null;
         }
     }
-} 
+}

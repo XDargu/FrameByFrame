@@ -51,3 +51,15 @@ export function setShapeOrientationFromUpAndFwd(mesh: BABYLON.Mesh, up: BABYLON.
     const right = BABYLON.Vector3.Cross(up, forward);
     setShapeOrientation(mesh, up, forward, right);
 }
+
+export function getCameraPositionForTarget(camera: BABYLON.Camera, targetPosition: BABYLON.Vector3, radius: number)
+{
+    let meshToCamera = camera.position.subtract(targetPosition);
+    meshToCamera.y = Math.max(0, meshToCamera.y);
+    meshToCamera.normalize();
+    let targetPos = targetPosition.add(meshToCamera.scale(radius));
+    const distMeshToTarget = targetPos.subtract(targetPosition).length();
+    targetPos.y = targetPosition.y + distMeshToTarget * 0.3;
+
+    return targetPos;
+}
