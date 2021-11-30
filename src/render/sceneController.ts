@@ -477,9 +477,6 @@ export default class SceneController
 
         this.selectionOutline = new OutlineEffect(scene, this._camera, selectionColor);
         this.hoverOutline = new OutlineEffect(scene, this._camera, hoverColor);
-
-        let antiAliasPostProcess = new BABYLON.FxaaPostProcess("fxaa", 1.0,  scene.activeCamera);
-        antiAliasPostProcess.samples = 2;
     }
 
     private updateCameraFollow()
