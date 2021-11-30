@@ -48,6 +48,10 @@ export class MaterialPool
 
     clear()
     {
+        for (let [hash, material] of this.pool)
+        {
+            this.scene.removeMaterial(material);
+        }
         this.pool.clear();
     }
 }

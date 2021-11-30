@@ -35,6 +35,15 @@ export default class RenderPools
             !this.linePool.freeMesh(mesh);
     }
 
+    getTotalPooledMeshes()
+    {
+        return this.capsulePool.getTotalMeshes() +
+            this.spherePool.getTotalMeshes() +
+            this.boxPool.getTotalMeshes() +
+            this.planePool.getTotalMeshes() +
+            this.linePool.getTotalMeshes();
+    }
+
     clear()
     {
         this.materialPool.clear();

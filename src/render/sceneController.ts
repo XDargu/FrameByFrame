@@ -304,11 +304,14 @@ export default class SceneController
             this.onDebugDataUpdated(`
                 FPS: ${this._engine.getFps().toFixed(2)}\n
                 Material Pool size: ${this.pools.materialPool.getPoolSize()}\n
+                Total materials: ${this._scene.materials.length}\n
                 Box Pool size: ${this.pools.boxPool.getTotalMeshes()}\n
                 Sphere Pool size: ${this.pools.spherePool.getTotalMeshes()}\n
                 Capsule Pool size: ${this.pools.capsulePool.getTotalMeshes()}\n
                 Line Pool size: ${this.pools.linePool.getTotalMeshes()}\n
                 Plane Pool size: ${this.pools.planePool.getTotalMeshes()}\n
+                Total pooled meshes: ${this.pools.getTotalPooledMeshes()}\n
+                Total meshes: ${this._scene.meshes.length}\n
             `);
         }
     }
@@ -523,5 +526,13 @@ export default class SceneController
     clear()
     {
         this.pools.clear();
+
+        for (let [id, entityData] of this.entities)
+        {
+            this._scene.removeMesh(entityData.mesh);
+        }
+        this.entities.clear();
+        this.propertyToEntity.clear();
+        console.log(this._scene.materials);
     }
 }

@@ -99,6 +99,13 @@ export class MeshPool
 
     clear()
     {
+        for (let [hash, meshes] of this.pool)
+        {
+            for (let pooledMesh of meshes)
+            {
+                this.scene.removeMesh(pooledMesh.mesh);
+            }
+        }
         this.pool.clear();
     }
 }
@@ -196,7 +203,7 @@ export class LinePool extends MeshPool
     getLine(origin: RECORDING.IVec3, end: RECORDING.IVec3, color: RECORDING.IColor): BABYLON.Mesh
     {
         const hash: string = "line";
-        let mesh = this.findMesh(hash, { origin: origin, end: end, color: color });
+        let mesh = this.findMesh(hash, { origin: origin, end: end, color: color }) as LinesMesh;
 
         let linePoints = [
             new BABYLON.Vector3(origin.x, origin.y, origin.z),
@@ -207,8 +214,7 @@ export class LinePool extends MeshPool
             new BABYLON.Color4(color.r, color.g, color.b, color.a),
             new BABYLON.Color4(color.r, color.g, color.b, color.a),
         ];
-
-        mesh = BABYLON.MeshBuilder.CreateLines(hash, {points: linePoints, colors: lineColors, instance: mesh as LinesMesh, updatable: true} );
+        mesh = BABYLON.MeshBuilder.CreateLines(hash, {points: linePoints, colors: lineColors, instance: mesh, updatable: true} );
         mesh.alwaysSelectAsActiveMesh = true;
         return mesh;
     }
