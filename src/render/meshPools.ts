@@ -233,4 +233,19 @@ export class LinePool extends MeshPool
 
         return BABYLON.MeshBuilder.CreateLines(hash, {points: linePoints, colors: lineColors, updatable: true} );
     }
+
+    clear()
+    {
+        // Babylon currently creates new materials for each instance of the line.
+        // This can be fixed in the next version (5.0), but for now we will have to manually free them here.
+        // Once that happens, we can use the material pool as well
+        for (let [hash, meshes] of this.pool)
+        {
+            for (let pooledMesh of meshes)
+            {
+                this.scene.removeMaterial(pooledMesh.mesh.material);
+            }
+        }
+        super.clear();
+    }
 }
