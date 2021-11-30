@@ -1222,10 +1222,28 @@ body {
 
 #central-content {
   flex: 1 1 auto;
+  position: relative;
 }
 
 #viewport {
   height: 100%;
+}
+
+#render-debug {
+  display: none;
+  position: absolute;
+  right: 0px;
+  font-size: 12px;
+  padding: 5px;
+  z-index: 1;
+  text-align: right;
+  white-space: pre-line;
+  line-height: 60%;
+  user-select: none;
+}
+
+#render-debug.enabled {
+  display: block;
 }
 
 /* Detail pane */

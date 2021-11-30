@@ -102,6 +102,12 @@ export default class Renderer {
         this.sceneController = new SceneController();
         this.sceneController.initialize(canvas);
         this.sceneController.onEntitySelected = this.onEntitySelectedOnScene.bind(this);
+        this.sceneController.onDebugDataUpdated = (data) => {
+            if (this.settings && this.settings.showRenderDebug)
+            {
+                document.getElementById("render-debug").textContent = data;
+            }
+        };
 
         this.selectedEntityId = null;
 
@@ -293,6 +299,10 @@ export default class Renderer {
                 {
                     this.layerController.setInitialState(LayerState.All);
                 }
+                if (this.settings && !this.settings.showRenderDebug)
+                {
+                    document.getElementById("render-debug").textContent = "";
+                }
             });
 
         if (this.settings && this.settings.showAllLayersOnStart)
@@ -386,6 +396,7 @@ export default class Renderer {
         this.areAllFramesWithEventsPending = false;
         this.unprocessedFiltersPending = true;
         this.recordedData.clear();
+        this.sceneController.clear();
         this.timeline.updateLength(this.recordedData.getSize());
         this.timeline.clearEvents();
         this.recordingOptions.setOptions([]);

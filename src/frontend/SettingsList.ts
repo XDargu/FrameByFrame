@@ -148,6 +148,12 @@ export class SettingsList
             this.settingsList.appendChild(group.fragment);
         }
 
+        {
+            let group = SettingsBuilder.createGroup("Debug");
+            SettingsBuilder.addBooleanSetting(group, "Show render debug info", settings.showRenderDebug, (value) => {settings.showRenderDebug = value; this.onSettingsChanged(); })
+            this.settingsList.appendChild(group.fragment);
+        }
+
         this.filterElements();
     }
 

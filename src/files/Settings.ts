@@ -6,6 +6,7 @@ export interface ISettings
     openEntityListOnSelection: boolean,
     followCurrentSelection: boolean,
     showAllLayersOnStart: boolean,
+    showRenderDebug: boolean,
 }
 
 export function createDefaultSettings() : ISettings
@@ -14,10 +15,12 @@ export function createDefaultSettings() : ISettings
         /* Connections */
         recordOnConnect: true,
         autoReconnect: true,
-        /* Viewer  */
+        /* Viewer */
         moveToEntityOnSelection: true,
         openEntityListOnSelection: true,
         followCurrentSelection: false,
         showAllLayersOnStart: true,
+        /* Debug */
+        showRenderDebug: false,
     };
 }

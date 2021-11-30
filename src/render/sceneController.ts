@@ -15,6 +15,11 @@ export interface IEntitySelectedCallback
     (id: number) : void
 }
 
+export interface IOnDebugDataUpdated
+{
+    (debugData: string) : void
+}
+
 interface IEntityData
 {
     mesh: BABYLON.Mesh;
@@ -71,6 +76,7 @@ export default class SceneController
     private entityMaterial: BABYLON.StandardMaterial;
 
     public onEntitySelected: IEntitySelectedCallback;
+    public onDebugDataUpdated: IOnDebugDataUpdated;
 
     private layerManager: LayerManager;
 
@@ -291,12 +297,29 @@ export default class SceneController
         this.layerManager.setLayerState(layer, state);
     }
 
+    updateDebugData()
+    {
+        if (this.onDebugDataUpdated)
+        {
+            this.onDebugDataUpdated(`
+                FPS: ${this._engine.getFps().toFixed(2)}\n
+                Material Pool size: ${this.pools.materialPool.getPoolSize()}\n
+                Box Pool size: ${this.pools.boxPool.getTotalMeshes()}\n
+                Sphere Pool size: ${this.pools.spherePool.getTotalMeshes()}\n
+                Capsule Pool size: ${this.pools.capsulePool.getTotalMeshes()}\n
+                Line Pool size: ${this.pools.linePool.getTotalMeshes()}\n
+                Plane Pool size: ${this.pools.planePool.getTotalMeshes()}\n
+            `);
+        }
+    }
+
     initialize(canvas: HTMLCanvasElement) {
         const engine = new BABYLON.Engine(canvas, false, { stencil: true });
         this.createScene(canvas, engine);
 
         engine.runRenderLoop(() => {
             this._scene.render();
+            this.updateDebugData();
         });
 
         window.addEventListener('resize', () => {
@@ -495,5 +518,10 @@ export default class SceneController
             this.isFollowingEntity = false;
             this._camera.lockedTarget = null;
         }
+    }
+
+    clear()
+    {
+        this.pools.clear();
     }
 }
