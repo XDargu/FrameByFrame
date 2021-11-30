@@ -34,4 +34,14 @@ export default class RenderPools
             !this.planePool.freeMesh(mesh) &&
             !this.linePool.freeMesh(mesh);
     }
+
+    clear()
+    {
+        this.materialPool.clear();
+        this.capsulePool.clear();
+        this.spherePool.clear();
+        this.boxPool.clear();
+        this.planePool.clear();
+        this.linePool.clear();
+    }
 }

@@ -96,6 +96,11 @@ export class MeshPool
         }
         return size;
     }
+
+    clear()
+    {
+        this.pool.clear();
+    }
 }
 
 export class CapsulePool extends MeshPool
