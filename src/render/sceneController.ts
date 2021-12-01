@@ -479,6 +479,12 @@ export default class SceneController
         this.hoverOutline = new OutlineEffect(scene, this._camera, hoverColor);
     }
 
+    setAntiAliasingSamples(samples: number)
+    {
+        this.selectionOutline.setAntiAliasingSamples(samples);
+        this.hoverOutline.setAntiAliasingSamples(samples);
+    }
+
     private updateCameraFollow()
     {
         if (this.selectedEntity && this._camera && this.selectedEntity.mesh && this.isFollowingEntity)

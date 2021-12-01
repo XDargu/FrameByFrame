@@ -165,6 +165,21 @@ body {
     margin-top: 3px;
 }
 
+#setting-list .basico-container {
+    display: flex;
+    flex-direction: column;
+}
+
+#settings-container,
+#settings {
+    flex: auto;
+}
+
+#settings .basico-dropdown {
+    width: 36px;
+    text-align: right;
+}
+
 /* Connection buttons */
 #connection-buttons {
     position: absolute;

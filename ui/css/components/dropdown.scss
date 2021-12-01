@@ -19,12 +19,19 @@
 .basico-dropdown-content {
     display: none;
     position: absolute;
+    cursor: pointer;
     left: 0;
     @include surface-elevation($list-elevation);
     min-width: 160px;
     font-size: 12px;
     box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
     z-index: 15;
+}
+
+.basico-dropdown-content.basico-right-align
+{
+    right: 0;
+    left: unset;
 }
   
 .basico-dropdown-content a {
@@ -51,4 +58,8 @@
 {
     @include text-highlight-high($on-primary-color);
     @include surface-elevation($button-elevation, $primary-color);
+}
+
+.basico-list-item .basico-dropdown {
+    float: right;
 }

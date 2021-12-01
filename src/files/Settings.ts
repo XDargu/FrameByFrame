@@ -7,6 +7,7 @@ export interface ISettings
     followCurrentSelection: boolean,
     showAllLayersOnStart: boolean,
     showRenderDebug: boolean,
+    antialiasingSamples: number,
 }
 
 export function createDefaultSettings() : ISettings
@@ -22,5 +23,6 @@ export function createDefaultSettings() : ISettings
         showAllLayersOnStart: true,
         /* Debug */
         showRenderDebug: false,
+        antialiasingSamples: 4,
     };
 }

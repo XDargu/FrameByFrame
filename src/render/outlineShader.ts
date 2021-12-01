@@ -47,7 +47,11 @@ export class OutlineEffect
         this.selectionRenderTarget.clearColor = new BABYLON.Color4(0, 0, 0, 0);
 
         this.selectionPostProcess = new OutlinePostProcess("Selection", camera, this.selectionRenderTarget, outlineColor, false);
-        this.selectionPostProcess.samples = 4;
+    }
+
+    setAntiAliasingSamples(samples: number)
+    {
+        this.selectionPostProcess.samples = samples;
     }
 
     clearSelection()

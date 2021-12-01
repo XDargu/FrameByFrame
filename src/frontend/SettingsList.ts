@@ -1,5 +1,4 @@
 import { ISettings } from "../files/Settings";
-import { ListControl } from "../ui/list";
 import { filterText } from "../utils/utils";
 
 export interface ISettingsChanged
@@ -34,6 +33,11 @@ interface IBooleanSettingCallback
     (value: boolean) : void
 }
 
+interface INumberSettingCallback
+{
+    (value: number) : void
+}
+
 const settingsLayout: ISettingsLayout =
 {
     recordOnConnect: { control: ControlType.Toggle, name: "Record on Connect" },
@@ -56,16 +60,28 @@ namespace SettingsBuilder
         fragment.appendChild(list);
 
         return { fragment: fragment, list: list };
+    }
 
-        /*<div class="basico-title">Connections</div>
-        <div class="basico-list">
-            <div class="basico-list-item basico-no-hover" data-list-value="Colliders">
-                <label class="basico-toggle">
-                    <input type="checkbox" data-layer-name="recordOnConnect"><span class="slider round"></span>
-                </label>
-                <div class="basico-text-oneline">Record on connect</div>
-            </div>
-        </div>*/
+    export function addNumberOptionsSetting(group: SettingsBuilderGroup, name: string, value: number, options: number[], callback: INumberSettingCallback)
+    {
+        group.list.appendChild(createNumberOptionsSetting(name, value, options, callback));
+    }
+
+    function createNumberOptionsSetting(name: string, value: number, options: number[], callback: INumberSettingCallback) : HTMLElement
+    {
+        let listItem: HTMLElement = document.createElement("div");
+        listItem.className = "basico-list-item basico-no-hover";
+
+        let dropdown: HTMLElement = createNumberDropdown(value, options, callback);
+
+        let textItem: HTMLElement = document.createElement("div");
+        textItem.className = "basico-text-oneline";
+        textItem.innerText = name;
+
+        listItem.append(dropdown, textItem);
+
+
+        return listItem;
     }
 
     export function addBooleanSetting(group: SettingsBuilderGroup, name: string, value: boolean, callback: IBooleanSettingCallback)
@@ -87,8 +103,41 @@ namespace SettingsBuilder
 
         listItem.appendChild(textItem);
 
-
         return listItem;
+    }
+
+    function createDropdownEntry(name: string) : HTMLElement
+    {
+        let entry = document.createElement("a");
+        entry.textContent = name;
+        return entry;
+    }
+
+    function createNumberDropdown(value: number, options: number[], callback: INumberSettingCallback): HTMLElement
+    {
+        const dropdown = document.createElement("div");
+        dropdown.className = "basico-dropdown";
+
+        const dropdownButton = document.createElement("button");
+        dropdownButton.className = "basico-dropdown-button";
+        dropdownButton.textContent = value.toString();
+        dropdown.appendChild(dropdownButton);
+
+        const dropdownContent = document.createElement("div");
+        dropdownContent.className = "basico-dropdown-content basico-right-align";
+        dropdown.appendChild(dropdownContent);
+
+        const entries = options.map((value) => {
+            let entry = createDropdownEntry(value.toString());
+            entry.onclick = () => {
+                dropdownButton.textContent = value.toString();
+                callback(value);
+            };
+            return entry;
+        });
+
+        dropdownContent.append(...entries);
+        return dropdown;
     }
 
     function createToggle(active: boolean, callback: IBooleanSettingCallback): HTMLLabelElement
@@ -151,6 +200,12 @@ export class SettingsList
         {
             let group = SettingsBuilder.createGroup("Debug");
             SettingsBuilder.addBooleanSetting(group, "Show render debug info", settings.showRenderDebug, (value) => {settings.showRenderDebug = value; this.onSettingsChanged(); })
+            this.settingsList.appendChild(group.fragment);
+        }
+
+        {
+            let group = SettingsBuilder.createGroup("Graphics");
+            SettingsBuilder.addNumberOptionsSetting(group, "Anti-aliasing samples", settings.antialiasingSamples, [1, 2, 4, 8, 16], (value) => {  settings.antialiasingSamples = value; this.onSettingsChanged(); });
             this.settingsList.appendChild(group.fragment);
         }
 

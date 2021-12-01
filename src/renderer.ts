@@ -16,7 +16,7 @@ import Timeline from './timeline/timeline';
 import { initWindowControls } from "./frontend/WindowControls";
 import { TreeControl } from "./ui/tree";
 import { Splitter } from "./ui/splitter";
-import { TabBorder, TabControl } from "./ui/tabs";
+import { TabBorder, TabControl, TabDisplay } from "./ui/tabs";
 import * as Shortcuts from "./frontend/Shortcuts";
 import * as RecordingButton from "./frontend/RecordingButton";
 import * as Filters from "./filters/filters";
@@ -167,7 +167,7 @@ export default class Renderer {
         this.controlTabs = new TabControl(
             <HTMLElement[]><any>document.getElementById("control-tabs").children,
             controlTabElements
-            , 0, TabBorder.Left
+            , 0, TabBorder.Left, TabDisplay.Flex
         );
 
         this.controlTabs.closeAllTabs();
@@ -303,12 +303,11 @@ export default class Renderer {
                 {
                     document.getElementById("render-debug").textContent = "";
                 }
+                if (this.settings && this.settings.antialiasingSamples)
+                {
+                    this.sceneController.setAntiAliasingSamples(this.settings.antialiasingSamples);
+                }
             });
-
-        if (this.settings && this.settings.showAllLayersOnStart)
-        {
-            this.layerController.setInitialState(LayerState.All);
-        }
 
         // Connection buttons
         this.connectionButtons = new ConnectionButtons(document.getElementById(`connection-buttons`), (id: ConnectionId) => {
@@ -352,8 +351,25 @@ export default class Renderer {
         this.connectionsList.addConnection("localhost", "23001", false);
     }
 
+    onSettingsLoaded(settings: ISettings)
+    {
+        if (settings.showAllLayersOnStart)
+        {
+            this.layerController.setInitialState(LayerState.All);
+        }
+        if (settings.antialiasingSamples)
+        {
+            this.sceneController.setAntiAliasingSamples(settings.antialiasingSamples);
+        }
+    }
+
     updateSettings(settings: ISettings)
     {
+        if (!this.settings)
+        {
+            this.onSettingsLoaded(settings);
+        }
+
         this.settings = settings;
         this.settingsList.setSettings(this.settings);
     }
