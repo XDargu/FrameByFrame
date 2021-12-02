@@ -105,6 +105,7 @@ export interface IFrameEntityData {
 
 export interface IFrameData {
 	entities: IFrameEntityData;
+	serverTime: number;
 	frameId: number;
 	elapsedTime: number;
 	tag: string;
@@ -458,6 +459,7 @@ export class NaiveRecordedData {
 		{
 			return { entities: [],
 				frameId: 0,
+				serverTime: 0,
 				elapsedTime: 0,
 				tag: ""
 			};
@@ -492,7 +494,7 @@ export class NaiveRecordedData {
 	addTestData(frames: number, entityAmount: number) {
 		for (let i=0; i<frames; ++i)
 		{
-			let frameData : IFrameData = { entities: {}, frameId: i, elapsedTime: 0.0166, tag: "" };
+			let frameData : IFrameData = { entities: {}, frameId: i, elapsedTime: 0.0166, serverTime: i, tag: "" };
 			
 			for (let j=0; j<entityAmount; ++j)
 			{
@@ -657,7 +659,7 @@ export class RecordedData {
 	}
 	
 	buildFrameData(frame : number) : IFrameData {
-		let frameData : IFrameData = { entities: {}, frameId: 0, elapsedTime: 0, tag: "" };
+		let frameData : IFrameData = { entities: {}, frameId: 0, elapsedTime: 0, serverTime: 0, tag: "" };
 		let tempPropertyData : IProperty = { type: null, value: null, name: null};
 		
 		const entityPropValIDs =  this.frameTable.entryIDs[frame];

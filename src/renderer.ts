@@ -438,6 +438,7 @@ export default class Renderer {
                     // Build frame
                     let frameToBuild: RECORDING.IFrameData = {
                         entities: {},
+                        serverTime: frame.serverTime,
                         frameId: frame.frameId,
                         elapsedTime: frame.elapsedTime,
                         tag: frame.tag,
