@@ -2663,6 +2663,10 @@ body {
   cursor: pointer;
 }
 
+.basico-dropdown-content.bottom {
+  bottom: 23px;
+}
+
 .filter-results-count {
   float: right;
   font-weight: bold;
@@ -2769,6 +2773,10 @@ body {
   font-size: 13px;
   text-align: left;
   cursor: pointer;
+}
+
+#filter-editing-list {
+  flex: auto;
 }
 
 .full-page {

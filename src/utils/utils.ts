@@ -108,6 +108,16 @@ export function toggleClasses(element: HTMLElement, class1: string, class2: stri
     }
 }
 
+export function setClass(element: HTMLElement, className: string, isActive: boolean)
+{
+    if (isActive) {
+        addUniqueClass(element, className);
+    }
+    else {
+        element.classList.remove(className);
+    }
+}
+
 export function filterText(filter: string, content: string)
 {
     return content.indexOf(filter) > -1;

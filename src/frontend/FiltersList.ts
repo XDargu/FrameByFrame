@@ -511,7 +511,7 @@ export default class FiltersList
 
     initializeDropwdon()
     {
-        let content = this.addDropdown.querySelector('.basico-dropdown-content');
+        let content = this.addDropdown.querySelector('.basico-dropdown-content') as HTMLElement;
         
         const createEventFilter = UI.createFilterCreationEntry("Event Filter");
         createEventFilter.onclick = () => { this.addEventFilter(); };
@@ -520,6 +520,11 @@ export default class FiltersList
         createPropertyFilter.onclick = () => { this.addPropertyFilter(); };
 
         content.append(createEventFilter, createPropertyFilter);
+
+        this.addDropdown.onmouseenter = () => {
+            const isNearBottom = window.innerHeight - this.addDropdown.getBoundingClientRect().bottom < 70;
+            Utils.setClass(content, "bottom", isNearBottom);
+        };
     }
 
     getFilters()
@@ -546,7 +551,7 @@ export default class FiltersList
 
         this.filters.set(filterId, { name: filterName, filter: filter, element: filterElement, visible: true});
         
-        this.filterContainer.appendChild(filterElement);
+        this.filterContainer.insertBefore(filterElement, this.addDropdown);
 
         Console.log(LogLevel.Verbose, LogChannel.Filters, "Filter added: " + filterName);
         this.callbacks.onFilterCreated(filterId, filterName, filter);
@@ -563,7 +568,7 @@ export default class FiltersList
 
         this.filters.set(filterId, { name: filterName, filter: filter, element: filterElement, visible: true});
         
-        this.filterContainer.appendChild(filterElement);
+        this.filterContainer.insertBefore(filterElement, this.addDropdown);
 
         Console.log(LogLevel.Verbose, LogChannel.Filters, "Filter added: " + filterName);
         this.callbacks.onFilterCreated(filterId, filterName, filter);
