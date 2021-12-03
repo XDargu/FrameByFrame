@@ -439,6 +439,7 @@ export default class Renderer {
                     let frameToBuild: RECORDING.IFrameData = {
                         entities: {},
                         serverTime: frame.serverTime,
+                        clientId: frame.clientId,
                         frameId: frame.frameId,
                         elapsedTime: frame.elapsedTime,
                         tag: frame.tag,
@@ -453,6 +454,7 @@ export default class Renderer {
                     }
 
                     this.recordedData.pushFrame(frameToBuild);
+
                     this.timeline.updateLength(this.recordedData.getSize());
                     this.unprocessedFramesWithEvents.push(this.recordedData.getSize() - 1);
                     this.unprocessedFiltersPending = true;
@@ -910,6 +912,7 @@ export default class Renderer {
     findFrameById(frameId: number) : number
     {
         // TODO: Make an index?
+        // TODO: Important: with multiple connections, frameId is no longer unique. FrameID + ClientID is unique. We need to update that.
         for (let i=0; i< this.recordedData.frameData.length; ++i)
         {
             if (this.recordedData.frameData[i].frameId === frameId)

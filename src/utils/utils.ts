@@ -120,3 +120,18 @@ export function pushUnique<Type>(array: Type[], value: Type)
         array.push(value);
     }
 }
+
+type Comparator<T> = (fromArray: T, value: T) => boolean;
+export function searchLastSortedInsertionPos<Type>(array: Array<Type>, value: Type, comparator: Comparator<Type>) : number
+{
+    let i = array.length - 1;
+    while (i >= 0 && comparator(array[i], value)) {
+        --i;
+    }
+    return i + 1;
+}
+
+export function insertSorted<Type>(array: Array<Type>, value: Type, comparator: Comparator<Type>)
+{
+    array.splice(searchLastSortedInsertionPos(array, value, comparator), 0, value);
+}
