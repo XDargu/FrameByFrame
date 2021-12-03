@@ -528,6 +528,7 @@ export default class SceneController
 
     clear()
     {
+        this.removeAllProperties();
         this.pools.clear();
 
         for (let [id, entityData] of this.entities)
