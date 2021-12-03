@@ -197,9 +197,12 @@ export class PlanePool extends MeshPool
 
 export class LinePool extends MeshPool
 {
+    private material: BABYLON.Material;
+
     constructor(scene: BABYLON.Scene)
     {
         super(scene);
+        this.material = null;
     }
 
     getLine(origin: RECORDING.IVec3, end: RECORDING.IVec3, color: RECORDING.IColor): BABYLON.Mesh
@@ -218,7 +221,11 @@ export class LinePool extends MeshPool
         ];
         // Custom createCustomLinesystem so we can pass materials around
         // Adapted form Babylon's updated mesh build from 5.0
-        mesh = createCustomLinesystem(hash, {lines: [linePoints], colors: [lineColors], instance: mesh, updatable: true, material: mesh.material }, this.scene );
+        if (this.material === null)
+        {
+            this.material = mesh.material;
+        }
+        mesh = createCustomLinesystem(hash, {lines: [linePoints], colors: [lineColors], instance: mesh, updatable: true, material: this.material }, this.scene );
         mesh.alwaysSelectAsActiveMesh = true;
         return mesh;
     }
@@ -235,18 +242,19 @@ export class LinePool extends MeshPool
             new BABYLON.Color4(args.color.r, args.color.g, args.color.b, args.color.a),
         ];
 
-        return createCustomLinesystem(hash, {lines: [linePoints], colors: [lineColors], updatable: true}, this.scene );
+        if (this.material === null)
+        {
+            let mesh = createCustomLinesystem(hash, {lines: [linePoints], colors: [lineColors], updatable: true}, this.scene );
+            this.material = mesh.material;
+            return mesh;
+        }
+        return createCustomLinesystem(hash, {lines: [linePoints], colors: [lineColors], updatable: true, material: this.material }, this.scene );
     }
 
     clear()
     {
-        // Currently not using a material pool here, so we need to remove the materials
-        for (let [hash, meshes] of this.pool)
-        {
-            for (let pooledMesh of meshes)
-            {
-                this.scene.removeMaterial(pooledMesh.mesh.material);
-            }
+        if (this.material) {
+            this.scene.removeMaterial(this.material);
         }
         super.clear();
     }
