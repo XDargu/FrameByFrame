@@ -1,7 +1,0 @@
-@import "../variables.scss";
-
-.basico-footer {
-    display: block;
-
-    @include surface-elevation($footer-elevation);
-}

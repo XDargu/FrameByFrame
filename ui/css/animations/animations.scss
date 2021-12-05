@@ -1,9 +1,0 @@
-@keyframes popout {
-    from{transform:scale(0)}
-    80%{transform:scale(1.08)}
-    to{transform:scale(1)}
-}
-
-.popout {
-    animation: popout 0.3s ease-out;
-}
