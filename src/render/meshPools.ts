@@ -1,7 +1,9 @@
 import * as BABYLON from 'babylonjs';
 import * as RECORDING from '../recording/RecordingData';
+import * as RenderUtils from '../render/renderUtils';
 import CreateCapsule from './capsule';
-import { LinesMesh } from 'babylonjs/Meshes/linesMesh';
+import { LinesMesh, } from 'babylonjs/Meshes/linesMesh';
+import { CustomLinesMesh, createCustomLinesystem } from './customLineMesh';
 
 export interface IPooledMesh
 {
@@ -96,6 +98,18 @@ export class MeshPool
         }
         return size;
     }
+
+    clear()
+    {
+        for (let [hash, meshes] of this.pool)
+        {
+            for (let pooledMesh of meshes)
+            {
+                this.scene.removeMesh(pooledMesh.mesh);
+            }
+        }
+        this.pool.clear();
+    }
 }
 
 export class CapsulePool extends MeshPool
@@ -183,15 +197,18 @@ export class PlanePool extends MeshPool
 
 export class LinePool extends MeshPool
 {
+    private material: BABYLON.Material;
+
     constructor(scene: BABYLON.Scene)
     {
         super(scene);
+        this.material = null;
     }
 
     getLine(origin: RECORDING.IVec3, end: RECORDING.IVec3, color: RECORDING.IColor): BABYLON.Mesh
     {
         const hash: string = "line";
-        let mesh = this.findMesh(hash, { origin: origin, end: end, color: color });
+        let mesh = this.findMesh(hash, { origin: origin, end: end, color: color }) as CustomLinesMesh;
 
         let linePoints = [
             new BABYLON.Vector3(origin.x, origin.y, origin.z),
@@ -202,8 +219,13 @@ export class LinePool extends MeshPool
             new BABYLON.Color4(color.r, color.g, color.b, color.a),
             new BABYLON.Color4(color.r, color.g, color.b, color.a),
         ];
-
-        mesh = BABYLON.MeshBuilder.CreateLines(hash, {points: linePoints, colors: lineColors, instance: mesh as LinesMesh, updatable: true} );
+        // Custom createCustomLinesystem so we can pass materials around
+        // Adapted form Babylon's updated mesh build from 5.0
+        if (this.material === null)
+        {
+            this.material = mesh.material;
+        }
+        mesh = createCustomLinesystem(hash, {lines: [linePoints], colors: [lineColors], instance: mesh, updatable: true, material: this.material }, this.scene );
         mesh.alwaysSelectAsActiveMesh = true;
         return mesh;
     }
@@ -211,8 +233,8 @@ export class LinePool extends MeshPool
     protected buildMesh(hash: string, args: any) : BABYLON.Mesh
     {
         let linePoints = [
-            new BABYLON.Vector3(args.origin.x, args.origin.y, args.origin.z),
-            new BABYLON.Vector3(args.end.x, args.end.y, args.end.z),
+            RenderUtils.createVec3(args.origin),
+            RenderUtils.createVec3(args.end)
         ];
 
         let lineColors = [
@@ -220,6 +242,20 @@ export class LinePool extends MeshPool
             new BABYLON.Color4(args.color.r, args.color.g, args.color.b, args.color.a),
         ];
 
-        return BABYLON.MeshBuilder.CreateLines(hash, {points: linePoints, colors: lineColors, updatable: true} );
+        if (this.material === null)
+        {
+            let mesh = createCustomLinesystem(hash, {lines: [linePoints], colors: [lineColors], updatable: true}, this.scene );
+            this.material = mesh.material;
+            return mesh;
+        }
+        return createCustomLinesystem(hash, {lines: [linePoints], colors: [lineColors], updatable: true, material: this.material }, this.scene );
+    }
+
+    clear()
+    {
+        if (this.material) {
+            this.scene.removeMaterial(this.material);
+        }
+        super.clear();
     }
 }

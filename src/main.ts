@@ -8,6 +8,8 @@ import { LogChannel, LogLevel, ILogAction } from "./frontend/ConsoleController";
 import * as Messaging from "./messaging/MessageDefinitions";
 let mainWindow: Electron.BrowserWindow;
 
+const shell = require('electron').shell;
+
 // File Manager
 let fileManager: FileManager;
 let menuBuilder: MenuBuilder;
@@ -59,6 +61,15 @@ function createWindow() {
   fileManager.initialize(onFileHistoryChanged, onSettingsChanged);
 
   mainWindow.webContents.once('dom-ready', onRendererReady);
+
+  // Open external links
+  mainWindow.webContents.on('will-navigate', function(event, url){
+    console.log("Opening: " + url);
+    if (url.startsWith('https:')) {
+      event.preventDefault();
+      shell.openExternal(url);
+    }
+  });
 }
 
 function onRendererReady()

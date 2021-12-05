@@ -16,7 +16,7 @@ import Timeline from './timeline/timeline';
 import { initWindowControls } from "./frontend/WindowControls";
 import { TreeControl } from "./ui/tree";
 import { Splitter } from "./ui/splitter";
-import { TabBorder, TabControl } from "./ui/tabs";
+import { TabBorder, TabControl, TabDisplay } from "./ui/tabs";
 import * as Shortcuts from "./frontend/Shortcuts";
 import * as RecordingButton from "./frontend/RecordingButton";
 import * as Filters from "./filters/filters";
@@ -102,6 +102,12 @@ export default class Renderer {
         this.sceneController = new SceneController();
         this.sceneController.initialize(canvas);
         this.sceneController.onEntitySelected = this.onEntitySelectedOnScene.bind(this);
+        this.sceneController.onDebugDataUpdated = (data) => {
+            if (this.settings && this.settings.showRenderDebug)
+            {
+                document.getElementById("render-debug").textContent = data;
+            }
+        };
 
         this.selectedEntityId = null;
 
@@ -161,7 +167,7 @@ export default class Renderer {
         this.controlTabs = new TabControl(
             <HTMLElement[]><any>document.getElementById("control-tabs").children,
             controlTabElements
-            , 0, TabBorder.Left
+            , 0, TabBorder.Left, TabDisplay.Flex
         );
 
         this.controlTabs.closeAllTabs();
@@ -293,12 +299,15 @@ export default class Renderer {
                 {
                     this.layerController.setInitialState(LayerState.All);
                 }
+                if (this.settings && !this.settings.showRenderDebug)
+                {
+                    document.getElementById("render-debug").textContent = "";
+                }
+                if (this.settings && this.settings.antialiasingSamples)
+                {
+                    this.sceneController.setAntiAliasingSamples(this.settings.antialiasingSamples);
+                }
             });
-
-        if (this.settings && this.settings.showAllLayersOnStart)
-        {
-            this.layerController.setInitialState(LayerState.All);
-        }
 
         // Connection buttons
         this.connectionButtons = new ConnectionButtons(document.getElementById(`connection-buttons`), (id: ConnectionId) => {
@@ -342,8 +351,25 @@ export default class Renderer {
         this.connectionsList.addConnection("localhost", "23001", false);
     }
 
+    onSettingsLoaded(settings: ISettings)
+    {
+        if (settings.showAllLayersOnStart)
+        {
+            this.layerController.setInitialState(LayerState.All);
+        }
+        if (settings.antialiasingSamples)
+        {
+            this.sceneController.setAntiAliasingSamples(settings.antialiasingSamples);
+        }
+    }
+
     updateSettings(settings: ISettings)
     {
+        if (!this.settings)
+        {
+            this.onSettingsLoaded(settings);
+        }
+
         this.settings = settings;
         this.settingsList.setSettings(this.settings);
     }
@@ -386,6 +412,7 @@ export default class Renderer {
         this.areAllFramesWithEventsPending = false;
         this.unprocessedFiltersPending = true;
         this.recordedData.clear();
+        this.sceneController.clear();
         this.timeline.updateLength(this.recordedData.getSize());
         this.timeline.clearEvents();
         this.recordingOptions.setOptions([]);
@@ -411,6 +438,8 @@ export default class Renderer {
                     // Build frame
                     let frameToBuild: RECORDING.IFrameData = {
                         entities: {},
+                        serverTime: frame.serverTime,
+                        clientId: frame.clientId,
                         frameId: frame.frameId,
                         elapsedTime: frame.elapsedTime,
                         tag: frame.tag,
@@ -425,6 +454,7 @@ export default class Renderer {
                     }
 
                     this.recordedData.pushFrame(frameToBuild);
+
                     this.timeline.updateLength(this.recordedData.getSize());
                     this.unprocessedFramesWithEvents.push(this.recordedData.getSize() - 1);
                     this.unprocessedFiltersPending = true;
@@ -882,6 +912,7 @@ export default class Renderer {
     findFrameById(frameId: number) : number
     {
         // TODO: Make an index?
+        // TODO: Important: with multiple connections, frameId is no longer unique. FrameID + ClientID is unique. We need to update that.
         for (let i=0; i< this.recordedData.frameData.length; ++i)
         {
             if (this.recordedData.frameData[i].frameId === frameId)

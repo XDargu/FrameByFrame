@@ -17,10 +17,15 @@ export class MaterialPool
         return this.getMaterial(color.r, color.g, color.b, color.a);
     }
 
+    private hash(r: number, g: number, b:number, a:number)
+    {
+        return r.toString() + g.toString() + b.toString() + a.toString();
+    }
+
     getMaterial(r: number, g: number, b:number, a:number) : BABYLON.StandardMaterial
     {
         // TODO: Do a proper hash not string based
-        const hash: string = r.toString() + g.toString() + b.toString() + a.toString();
+        const hash: string = this.hash(r, g, b, a);
         const cachedMaterial = this.pool.get(hash);
         if (cachedMaterial != undefined)
         {
@@ -39,5 +44,14 @@ export class MaterialPool
     getPoolSize() : number
     {
         return this.pool.size;
+    }
+
+    clear()
+    {
+        for (let [hash, material] of this.pool)
+        {
+            this.scene.removeMaterial(material);
+        }
+        this.pool.clear();
     }
 }

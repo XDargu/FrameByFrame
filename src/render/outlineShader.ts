@@ -49,6 +49,11 @@ export class OutlineEffect
         this.selectionPostProcess = new OutlinePostProcess("Selection", camera, this.selectionRenderTarget, outlineColor, false);
     }
 
+    setAntiAliasingSamples(samples: number)
+    {
+        this.selectionPostProcess.samples = samples;
+    }
+
     clearSelection()
     {
         this.selectionRenderTarget.renderList.length = 0;

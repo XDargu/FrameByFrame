@@ -10,6 +10,8 @@ export enum MessageType
 export interface IMessageFrameData {
 	entities: RECORDING.IEntity[];
 	frameId: number;
+	clientId: number;
+	serverTime: number;
 	elapsedTime: number;
 	tag: string;
 }

@@ -184,4 +184,101 @@ describe('Utils', () => {
     
   });
 
+  describe('searchLastSortedInsertionPos', () => {
+
+    const comparator = (fromArray: number, value: number) => { return fromArray > value; }
+
+    it('finds the correct index in a consecutive sorted array', () => {
+      const vector = [1, 2, 3, 4, 5, 6, 7];
+      const foundIndex = Utils.searchLastSortedInsertionPos(vector, 4, comparator);
+      expect(foundIndex).to.equal(4)
+    });
+
+    it('finds the correct index in non-consecutive a sorted array', () => {
+      const vector = [1, 3, 12, 55, 128];
+      const foundIndex = Utils.searchLastSortedInsertionPos(vector, 4, comparator);
+      expect(foundIndex).to.equal(2)
+    });
+
+    it('finds the correct index if it is the first item', () => {
+      const vector = [1, 3, 12, 55, 128];
+      const foundIndex = Utils.searchLastSortedInsertionPos(vector, 0, comparator);
+      expect(foundIndex).to.equal(0)
+    });
+
+    it('finds the correct index if it is the last item', () => {
+      const vector = [1, 3, 12, 55, 128];
+      const foundIndex = Utils.searchLastSortedInsertionPos(vector, 200, comparator);
+      expect(foundIndex).to.equal(5)
+    });
+
+    it('returns 0 on an empy array', () => {
+      const vector: number[] = [];
+      const foundIndex = Utils.searchLastSortedInsertionPos(vector, 200, comparator);
+      expect(foundIndex).to.equal(0)
+    });
+
+    it('returns 0 on the first element', () => {
+      const vector = [1, 2, 3];
+      const foundIndex = Utils.searchLastSortedInsertionPos(vector, 0, comparator);
+      expect(foundIndex).to.equal(0)
+    });
+
+    it('returns the last index on the last element', () => {
+      const vector = [1, 2, 3];
+      const foundIndex = Utils.searchLastSortedInsertionPos(vector, 3, comparator);
+      expect(foundIndex).to.equal(3)
+    });
+
+    it('returns 0 with an array of 1 item and a value smaller than it', () => {
+      const vector = [3];
+      const foundIndex = Utils.searchLastSortedInsertionPos(vector, 1, comparator);
+      expect(foundIndex).to.equal(0)
+    });
+
+    it('returns 1 with an array of 1 item and a value biffer than it', () => {
+      const vector = [3];
+      const foundIndex = Utils.searchLastSortedInsertionPos(vector, 5, comparator);
+      expect(foundIndex).to.equal(1)
+    });
+    
+  });
+
+  describe('insertSorted', () => {
+
+    const comparator = (fromArray: number, value: number) => { return fromArray > value; }
+
+    it('inserts into empty array', () => {
+      const vector: number[] = [];
+      Utils.insertSorted(vector, 2, comparator);
+      expect(vector.length).to.equal(1);
+      expect(vector).to.contain(2);
+    });
+
+    it('inserts into array with one item at the end', () => {
+      const vector = [1];
+      Utils.insertSorted(vector, 2, comparator);
+      expect(vector).deep.equal([1, 2]);
+    });
+
+    it('inserts into array with one item at the beginning', () => {
+      const vector = [5];
+      Utils.insertSorted(vector, 2, comparator);
+      expect(vector).deep.equal([2, 5]);
+    });
+
+    it('inserts into array with multiple items at the end', () => {
+      const vector = [2, 5, 7];
+      Utils.insertSorted(vector, 9, comparator);
+      expect(vector).deep.equal([2, 5, 7, 9]);
+    });
+
+    it('inserts into array with multiple items in the middle', () => {
+      const vector = [2, 5, 7];
+      Utils.insertSorted(vector, 6, comparator);
+      expect(vector).deep.equal([2, 5, 6, 7]);
+    });
+
+  });
+
 });

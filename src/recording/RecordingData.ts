@@ -1,3 +1,5 @@
+import * as Utils from '../utils/utils'
+
 export interface IVec3 {
 	x: number;
 	y: number;
@@ -105,6 +107,8 @@ export interface IFrameEntityData {
 
 export interface IFrameData {
 	entities: IFrameEntityData;
+	serverTime: number;
+	clientId: number;
 	frameId: number;
 	elapsedTime: number;
 	tag: string;
@@ -408,7 +412,9 @@ export class NaiveRecordedData {
 
 	pushFrame(frame: IFrameData)
 	{
-		this.frameData.push(frame);
+		Utils.insertSorted(this.frameData, frame, (value, frameData) => {
+			return value.serverTime > frameData.serverTime;
+		});
 
 		this.updateLayersOfFrame(frame);
 	}
@@ -452,13 +458,26 @@ export class NaiveRecordedData {
 
 	buildFrameData(frame : number) : IFrameData {
 		// Instead of building the frame data here we just set the propertyID (overriding previous ones)
+
+		// TODO: Build data merging different tags
+		// Find the last frames of each tag, and display those
+		// How to know when to stop searching for the previous tag?
+		// Which threshold to use for considering a tag way too old
+		// How to know we have all tags?
+		// Maybe have a config number for how many seconds can we search back?
+
+		// Idea: have an array of frameData instead of building one
+		// 
+
 		let frameData = this.frameData[frame];
 
 		if (!frameData)
 		{
 			return { entities: [],
 				frameId: 0,
+				serverTime: 0,
 				elapsedTime: 0,
+				clientId: 0,
 				tag: ""
 			};
 		}
@@ -492,7 +511,7 @@ export class NaiveRecordedData {
 	addTestData(frames: number, entityAmount: number) {
 		for (let i=0; i<frames; ++i)
 		{
-			let frameData : IFrameData = { entities: {}, frameId: i, elapsedTime: 0.0166, tag: "" };
+			let frameData : IFrameData = { entities: {}, frameId: i, elapsedTime: 0.0166, clientId: 0, serverTime: i, tag: "" };
 			
 			for (let j=0; j<entityAmount; ++j)
 			{
@@ -604,17 +623,7 @@ export class RecordedData {
 		this.eventTable = new EventTable();
 		this.eventDescrTable = new EventDescriptorTable();
 	}
-	
-	/* Property Data format:
-	 { type: "int", name: "Target ID", value: 122 }
-	 If it's a group:
-	 { type: "group", name: "Target ID", value: [
-		 { type: "int", name: "Target ID", value: 122 }
-		]
-	 }
-	 Property data is always a group type, the base one. Its name is root:
-	 { type: "group", name: "root", value: [...] }
-	 */
+
 	addProperties(frame: number, entity : IEntity) {
 		for (let i=0; i<entity.properties.length; ++i) {
 			this.addProperty(frame, entity.id, entity.properties[i], -1);
@@ -657,7 +666,7 @@ export class RecordedData {
 	}
 	
 	buildFrameData(frame : number) : IFrameData {
-		let frameData : IFrameData = { entities: {}, frameId: 0, elapsedTime: 0, tag: "" };
+		let frameData : IFrameData = { entities: {}, frameId: 0, elapsedTime: 0, clientId: 0, serverTime: 0, tag: "" };
 		let tempPropertyData : IProperty = { type: null, value: null, name: null};
 		
 		const entityPropValIDs =  this.frameTable.entryIDs[frame];
