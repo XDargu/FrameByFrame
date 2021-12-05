@@ -301,10 +301,25 @@ export default class SceneController
     {
         if (this.onDebugDataUpdated)
         {
+            let materialClasses = new Map<string, number>();
+            this._scene.materials.forEach((material) => {
+                let entry = materialClasses.get(material.getClassName());
+                if (entry) {
+                    materialClasses.set(material.getClassName(), entry + 1);
+                }
+                else {
+                    materialClasses.set(material.getClassName(), 1);
+                }
+            });
+            let detailsMaterials = '';
+            materialClasses.forEach((count, name) => {
+                detailsMaterials += `${name}: ${count}\n\n`;
+            });
+            
             this.onDebugDataUpdated(`
                 FPS: ${this._engine.getFps().toFixed(2)}\n
                 Material Pool size: ${this.pools.materialPool.getPoolSize()}\n
-                Total materials: ${this._scene.materials.length}\n
+                ${detailsMaterials}Total materials: ${this._scene.materials.length}\n
                 Box Pool size: ${this.pools.boxPool.getTotalMeshes()}\n
                 Sphere Pool size: ${this.pools.spherePool.getTotalMeshes()}\n
                 Capsule Pool size: ${this.pools.capsulePool.getTotalMeshes()}\n
