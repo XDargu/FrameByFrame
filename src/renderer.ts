@@ -674,9 +674,9 @@ export default class Renderer {
     {
         for (let entityID in frameData.entities) {
             const entity = frameData.entities[entityID];
-
+            const uniqueEntityID = Utils.toUniqueID(frameData.clientId, entity.id);
             NaiveRecordedData.visitEvents(entity.events, (event: RECORDING.IEvent) => {
-                this.timeline.addEvent(event.id, entityID, frameIdx, "#D6A3FF", 0);
+                this.timeline.addEvent(event.id, uniqueEntityID.toString(), frameIdx, "#D6A3FF", 0);
             });
         }
     }
@@ -931,7 +931,7 @@ export default class Renderer {
     logEntity(level: LogLevel, channel: LogChannel, message: string, frameId: number, entityId: number)
     {
         Console.log(level, channel, `${message} `, {
-            text: `${this.findEntityName(entityId)} (id: ${entityId.toString()}) (frameID: ${frameId.toString()})`,
+            text: `${this.findEntityName(entityId)} (id: ${Utils.getEntityIdUniqueId(entityId)}, clientId: ${Utils.getClientIdUniqueId(entityId)}) (frameID: ${frameId})`,
             tooltip: `Go to frame ${frameId.toString()} and select entity ${this.findEntityName(entityId)}`,
             callback: () => {
                 const frame = this.findFrameById(frameId)
@@ -971,6 +971,11 @@ export default class Renderer {
     }
 
     // Utils
+    findEntity(entityId: number) : RECORDING.IEntity
+    {
+        return this.frameData.entities[entityId];
+    }
+
     findEntityName(entityId: number) : string
     {
         const entity = this.frameData.entities[entityId];

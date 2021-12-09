@@ -281,4 +281,28 @@ describe('Utils', () => {
 
   });
 
+  describe('getEntityIdUniqueId', () => {
+
+    it('correctly returns same entityId after converting to unique', () => {
+      const entityId = 128;
+      const clientId = 7;
+      const uniqueId = Utils.toUniqueID(clientId, entityId);
+      const result = Utils.getEntityIdUniqueId(uniqueId);
+      expect(entityId).to.equal(result);
+    });
+
+  });
+
+  describe('getClientIdUniqueId', () => {
+
+    it('correctly returns same clientId after converting to unique', () => {
+      const entityId = 128;
+      const clientId = 7;
+      const uniqueId = Utils.toUniqueID(clientId, entityId);
+      const result = Utils.getClientIdUniqueId(uniqueId);
+      expect(clientId).to.equal(result);
+    });
+
+  });
+
 });

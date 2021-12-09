@@ -469,6 +469,8 @@ export class NaiveRecordedData {
 		// Idea: have an array of frameData instead of building one
 		// 
 
+		// Test
+
 		let frameData = this.frameData[frame];
 
 		if (!frameData)
@@ -482,15 +484,55 @@ export class NaiveRecordedData {
 			};
 		}
 
+		let dataPerClientID = new Map<number, IFrameData>();
+		dataPerClientID.set(frameData.clientId ? frameData.clientId : 0, frameData);
+		const maxPrevFrames = 10;
+		for (let i=0; i<maxPrevFrames; ++i)
+		{
+			const prevFrameData = this.frameData[frame - i - 1];
+			if (prevFrameData) {
+				const prevFrameClientId = prevFrameData.clientId ? prevFrameData.clientId : 0;
+				if (!dataPerClientID.has(prevFrameClientId)) {
+					dataPerClientID.set(prevFrameClientId, prevFrameData);
+				}
+			}
+		}
+
+		let mergedFrameData : IFrameData = {
+			entities: {},
+			serverTime: frameData.serverTime,
+			clientId: frameData.clientId,
+			frameId: frameData.frameId,
+			elapsedTime: frameData.elapsedTime,
+			tag: frameData.tag
+		};
+
+		// Merge all entities
+		for (let [clientID, frameData] of dataPerClientID)
+		{
+			for (let entityID in frameData.entities)
+			{
+				const entity = frameData.entities[entityID];
+				const uniqueID = Utils.toUniqueID(frameData.clientId, entity.id);
+				const parentUniqueID = entity.parentId == 0 ? 0 : Utils.toUniqueID(frameData.clientId, entity.parentId);
+				mergedFrameData.entities[uniqueID] = {
+					id: uniqueID,
+					parentId: parentUniqueID,
+					properties: entity.properties,
+					events: entity.events
+				};
+			}
+		}
+
 		let eventId = 1;
 		let propId = 1;
 		
-		for (let id in frameData.entities)
+		for (let id in mergedFrameData.entities)
 		{
-			NaiveRecordedData.visitProperties(frameData.entities[id].properties, (property: IProperty) => {
+			NaiveRecordedData.visitProperties(mergedFrameData.entities[id].properties, (property: IProperty) => {
 				property.id = propId++;
 			});
-			NaiveRecordedData.visitEvents(frameData.entities[id].events, (event: IEvent) => {
+			NaiveRecordedData.visitEvents(mergedFrameData.entities[id].events, (event: IEvent) => {
 				event.id = eventId++;
 
 				NaiveRecordedData.visitProperties([event.properties], (property: IProperty) => {
@@ -499,8 +541,7 @@ export class NaiveRecordedData {
 			});
 		}
 		
-
-		return frameData;
+		return mergedFrameData;
 	}
 
 	getSize()
