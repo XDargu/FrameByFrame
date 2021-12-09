@@ -489,7 +489,7 @@ export default class Renderer {
         this.layerController.setLayers(this.recordedData.layers);
 
         // Update frame counter
-        const frameText = (this.getFrameCount() > 0) ? (`Frame: ${frame + 1} / ${this.getFrameCount()} (Frame ID: ${this.frameData.frameId})`) : "No frames";
+        const frameText = (this.getFrameCount() > 0) ? (`Frame: ${frame + 1} / ${this.getFrameCount()} (Frame ID: ${this.frameData.frameId}, Tag: ${this.frameData.tag})`) : "No frames";
         document.getElementById("timeline-frame-counter").textContent = frameText;
 
         // Update entity list
