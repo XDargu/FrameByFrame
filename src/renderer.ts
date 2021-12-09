@@ -420,7 +420,7 @@ export default class Renderer {
         this.applyFrame(0);
     }
 
-    onMessageArrived(data: string) : void
+    onMessageArrived(id: ConnectionId, data: string) : void
     {        
         const message: NET_TYPES.IMessage = JSON.parse(data) as NET_TYPES.IMessage;
 
@@ -444,6 +444,9 @@ export default class Renderer {
                         elapsedTime: frame.elapsedTime,
                         tag: frame.tag,
                     };
+
+                    // Set client Id data
+                    this.connectionsList.setConnectionName(id, frame.tag);
 
                     // Add all entity data
                     const length = frame.entities.length;
