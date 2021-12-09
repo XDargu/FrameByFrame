@@ -64,7 +64,7 @@ function createWindow() {
 
   // Open external links
   mainWindow.webContents.on('will-navigate', function(event, url){
-    console.log("Opening: " + url);
+    logToConsole(LogLevel.Verbose, LogChannel.Default, "Opening: " + url);
     if (url.startsWith('https:')) {
       event.preventDefault();
       shell.openExternal(url);

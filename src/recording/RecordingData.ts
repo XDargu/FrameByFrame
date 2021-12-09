@@ -365,15 +365,20 @@ export class FrameTable {
 	}
 }
 
+export interface ClientData
+{
+	tag: string;
+}
+
 export class NaiveRecordedData {
 	frameData: IFrameData[];
 	layers: string[];
-	clientIds: number[];
+	clientIds: Map<number, ClientData>
 
 	constructor() {
 		this.frameData = [];
 		this.layers = [];
-		this.clientIds = [];
+		this.clientIds = new Map<number, ClientData>();
 	}
 
 	static getEntityName(entity: IEntity) : string
@@ -402,6 +407,10 @@ export class NaiveRecordedData {
 		{
 			this.updateLayersOfFrame(frame);
 			this.updateClientIDsOfFrame(frame);
+
+			// Fix legacy frames (just for testing)
+			if (frame.clientId == null) { frame.clientId = 0; }
+			if (frame.tag == null) { frame.tag = "Client"; }
 		}
 
 		console.log(this);
@@ -409,9 +418,9 @@ export class NaiveRecordedData {
 
 	clear()
 	{
-		this.frameData = [];
-		this.layers = [];
-		this.clientIds = [];
+		this.frameData.length = 0;
+		this.layers.length = 0;
+		this.clientIds.clear();
 	}
 
 	pushFrame(frame: IFrameData)
@@ -477,13 +486,13 @@ export class NaiveRecordedData {
 		}
 
 		let dataPerClientID = new Map<number, IFrameData>();
-		dataPerClientID.set(frameData.clientId ? frameData.clientId : 0, frameData);
+		dataPerClientID.set(frameData.clientId, frameData);
 		const maxPrevFrames = 10;
 		for (let i=0; i<maxPrevFrames; ++i)
 		{
 			const prevFrameData = this.frameData[frame - i - 1];
 			if (prevFrameData) {
-				const prevFrameClientId = prevFrameData.clientId ? prevFrameData.clientId : 0;
+				const prevFrameClientId = prevFrameData.clientId;
 				if (!dataPerClientID.has(prevFrameClientId)) {
 					dataPerClientID.set(prevFrameClientId, prevFrameData);
 				}
@@ -608,10 +617,17 @@ export class NaiveRecordedData {
 		}
 	}
 
+	getTagByClientId(clientId: number) : string
+	{
+		const data = this.clientIds.get(clientId);
+		return data?.tag;
+	}
+
 	private updateClientIDsOfFrame(frame: IFrameData)
 	{
-		if (!this.clientIds.includes(frame.clientId)) {
-			this.clientIds.push(frame.clientId);
+		if (!this.clientIds.has(frame.clientId))
+		{
+			this.clientIds.set(frame.clientId, { tag: frame.tag });
 		}
 	}
 

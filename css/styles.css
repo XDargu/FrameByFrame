@@ -2026,7 +2026,8 @@ body {
   padding-left: 0px; }
 
 #entity-list .basico-tree .basico-tree-item-wrapper {
-  display: flex; }
+  display: flex;
+  align-items: center; }
 
 #entity-list .basico-tree .basico-tree-item-toggle {
   flex: 0 0 20px; }
@@ -2034,7 +2035,8 @@ body {
 #entity-list .basico-tree .basico-tree-item-content {
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis; }
+  text-overflow: ellipsis;
+  flex: 1; }
 
 #entity-list .basico-tree .basico-tree-leaf .basico-tree-item-toggle {
   display: inline-block;

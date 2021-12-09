@@ -493,7 +493,7 @@ export default class Renderer {
         document.getElementById("timeline-frame-counter").textContent = frameText;
 
         // Update entity list
-        this.entityTree.setEntities(this.frameData.entities);
+        this.entityTree.setEntities(this.frameData.entities, this.recordedData);
 
         // Update renderer
         this.sceneController.hideAllEntities();
