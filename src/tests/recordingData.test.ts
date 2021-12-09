@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import * as Recording from "../recording/RecordingData"
+import * as Utils from "../utils/utils"
 
 describe('RecordingData', () => {
 
@@ -43,7 +44,7 @@ describe('RecordingData', () => {
 
         it('gets correct entity name', () => {
 
-            const firstEntityId = 1;
+            const firstEntityId = Utils.toUniqueID(0, 1);
 
             const entity = frameData.entities[firstEntityId];
             expect(entity).to.not.be.undefined;
@@ -55,7 +56,7 @@ describe('RecordingData', () => {
 
         it('gets entity position', () => {
 
-            const firstEntityId = 1;
+            const firstEntityId = Utils.toUniqueID(0, 1);
 
             const entity = frameData.entities[firstEntityId];
             expect(entity).to.not.be.undefined;
