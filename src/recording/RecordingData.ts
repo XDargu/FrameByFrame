@@ -368,10 +368,12 @@ export class FrameTable {
 export class NaiveRecordedData {
 	frameData: IFrameData[];
 	layers: string[];
+	clientIds: number[];
 
 	constructor() {
 		this.frameData = [];
 		this.layers = [];
+		this.clientIds = [];
 	}
 
 	static getEntityName(entity: IEntity) : string
@@ -388,7 +390,7 @@ export class NaiveRecordedData {
 
 	loadFromString(data: string)
 	{
-		let dataJson = JSON.parse(data);
+		const dataJson = JSON.parse(data);
 		this.frameData = dataJson.frameData;
 		this.layers = dataJson.layers;
 		if (this.layers == undefined)
@@ -399,6 +401,7 @@ export class NaiveRecordedData {
 		for (let frame of this.frameData)
 		{
 			this.updateLayersOfFrame(frame);
+			this.updateClientIDsOfFrame(frame);
 		}
 
 		console.log(this);
@@ -408,6 +411,7 @@ export class NaiveRecordedData {
 	{
 		this.frameData = [];
 		this.layers = [];
+		this.clientIds = [];
 	}
 
 	pushFrame(frame: IFrameData)
@@ -417,6 +421,7 @@ export class NaiveRecordedData {
 		});
 
 		this.updateLayersOfFrame(frame);
+		this.updateClientIDsOfFrame(frame);
 	}
 
 	static visitEntityProperties(entity: IEntity, callback: IPropertyVisitorCallback)
@@ -457,19 +462,6 @@ export class NaiveRecordedData {
 	}
 
 	buildFrameData(frame : number) : IFrameData {
-		// Instead of building the frame data here we just set the propertyID (overriding previous ones)
-
-		// TODO: Build data merging different tags
-		// Find the last frames of each tag, and display those
-		// How to know when to stop searching for the previous tag?
-		// Which threshold to use for considering a tag way too old
-		// How to know we have all tags?
-		// Maybe have a config number for how many seconds can we search back?
-
-		// Idea: have an array of frameData instead of building one
-		// 
-
-		// Test
 
 		let frameData = this.frameData[frame];
 
@@ -613,6 +605,13 @@ export class NaiveRecordedData {
 			}
 
 			this.pushFrame(frameData);
+		}
+	}
+
+	private updateClientIDsOfFrame(frame: IFrameData)
+	{
+		if (!this.clientIds.includes(frame.clientId)) {
+			this.clientIds.push(frame.clientId);
 		}
 	}
 
