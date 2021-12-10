@@ -43,23 +43,64 @@ export class PlaybackController {
         if (this.isPlaying) {
             this.elapsedTime += elapsedSeconds * this.playbackSpeedFactor;
 
-            // Check how many frames we have to skip
-            let currentFrame = this.renderer.getCurrentFrame();
-            let currentElapsedTime = this.renderer.getElapsedTimeOfFrame(currentFrame);
+            const nextFrame = this.findNextPlayableFrameSameClient() || this.findNextPlayableFrameAnyClient();
 
-            while (this.elapsedTime > currentElapsedTime && currentFrame < this.renderer.getFrameCount() - 1) {
-                currentFrame++;
-                this.elapsedTime -= currentElapsedTime;
-                currentElapsedTime = this.renderer.getElapsedTimeOfFrame(currentFrame);
-            }
-
-            this.renderer.applyFrame(currentFrame);
+            this.renderer.applyFrame(nextFrame);
 
             // Stop in the last frame
-            if (currentFrame == this.renderer.getFrameCount() - 1) {
+            if (nextFrame == this.renderer.getFrameCount() - 1) {
                 this.stopPlayback();
             }
         }
+    }
+
+    findNextPlayableFrameSameClient() : number
+    {
+        // Check how many frames we have to skip
+        let currentFrame = this.renderer.getCurrentFrame();
+        let currentElapsedTime = this.renderer.getElapsedTimeOfFrame(currentFrame);
+        const initialClientId = this.renderer.getClientIdOfFrame(currentFrame);
+        const initialServerTime = this.renderer.getServerTimeOfFrame(currentFrame);
+
+        let pendingElapsedTime = this.elapsedTime;
+
+        while (pendingElapsedTime > currentElapsedTime && currentFrame < this.renderer.getFrameCount() - 1) {
+            currentFrame++;
+
+            if (this.renderer.getClientIdOfFrame(currentFrame) == initialClientId) {
+                pendingElapsedTime -= currentElapsedTime;
+                currentElapsedTime = this.renderer.getElapsedTimeOfFrame(currentFrame);
+            }
+
+            if (this.renderer.getServerTimeOfFrame(currentFrame) - initialServerTime > 5000) {
+                return null;
+            }
+        }
+
+        this.elapsedTime = pendingElapsedTime;
+        return currentFrame;
+    }
+
+    findNextPlayableFrameAnyClient() : number
+    {
+        // Check how many frames we have to skip
+        let currentFrame = this.renderer.getCurrentFrame();
+        const initialServerTime = this.renderer.getServerTimeOfFrame(currentFrame);
+
+        let pendingElapsedTime = this.elapsedTime;
+
+        while (currentFrame < this.renderer.getFrameCount() - 1) {
+            currentFrame++;
+            const elapsedTimeInSeconds = (this.renderer.getServerTimeOfFrame(currentFrame) - initialServerTime) / 1000;
+
+            if (elapsedTimeInSeconds > pendingElapsedTime)
+            {
+                this.elapsedTime -= elapsedTimeInSeconds;
+                return currentFrame;
+            }
+        }
+
+        return this.renderer.getFrameCount() - 1;
     }
 
     updateUI() {

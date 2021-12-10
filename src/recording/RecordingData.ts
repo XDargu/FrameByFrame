@@ -130,6 +130,15 @@ export interface IEventVisitorCallback
     (id: IEvent) : VisitorResult | void
 }
 
+const emptyFrameData: IFrameData = {
+	entities: [],
+	frameId: 0,
+	serverTime: 0,
+	elapsedTime: 0,
+	clientId: 0,
+	tag: ""
+};
+
 export class PropertyTable {
 	types: any[];
 	names: string[];
@@ -470,19 +479,22 @@ export class NaiveRecordedData {
 		}
 	}
 
+	buildFrameDataHeader(frame: number) : IFrameData {
+		let frameData = this.frameData[frame];
+
+		if (!frameData) {
+			return emptyFrameData;
+		}
+
+		return frameData;
+	}
+
 	buildFrameData(frame : number) : IFrameData {
 
 		let frameData = this.frameData[frame];
 
-		if (!frameData)
-		{
-			return { entities: [],
-				frameId: 0,
-				serverTime: 0,
-				elapsedTime: 0,
-				clientId: 0,
-				tag: ""
-			};
+		if (!frameData) {
+			return emptyFrameData;
 		}
 
 		let dataPerClientID = new Map<number, IFrameData>();

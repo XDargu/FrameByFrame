@@ -790,7 +790,31 @@ export default class Renderer {
         }
         else
         {
-            return this.recordedData.buildFrameData(frame).elapsedTime;
+            return this.recordedData.buildFrameDataHeader(frame).elapsedTime;
+        }
+    }
+
+    getServerTimeOfFrame(frame: number)
+    {
+        if (frame == this.getCurrentFrame())
+        {
+            return this.frameData.serverTime;
+        }
+        else
+        {
+            return this.recordedData.buildFrameDataHeader(frame).serverTime;
+        }
+    }
+
+    getClientIdOfFrame(frame: number)
+    {
+        if (frame == this.getCurrentFrame())
+        {
+            return this.frameData.clientId;
+        }
+        else
+        {
+            return this.recordedData.buildFrameDataHeader(frame).clientId;
         }
     }
 
