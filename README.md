@@ -2,6 +2,8 @@
 
 [![Node.js CI](https://github.com/XDargu/FrameByFrame/actions/workflows/node.js.yml/badge.svg?branch=master)](https://github.com/XDargu/FrameByFrame/actions/workflows/node.js.yml)
 
+Documentation (in progress): https://xdargu.github.io/FrameByFrame/
+
 How to start developing:
 
 * Install NodeJS. Go to: https://nodejs.org/en/
