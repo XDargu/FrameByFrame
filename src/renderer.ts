@@ -420,7 +420,7 @@ export default class Renderer {
         this.applyFrame(0);
     }
 
-    onMessageArrived(data: string) : void
+    onMessageArrived(id: ConnectionId, data: string) : void
     {        
         const message: NET_TYPES.IMessage = JSON.parse(data) as NET_TYPES.IMessage;
 
@@ -444,6 +444,9 @@ export default class Renderer {
                         elapsedTime: frame.elapsedTime,
                         tag: frame.tag,
                     };
+
+                    // Set client Id data
+                    this.connectionsList.setConnectionName(id, frame.tag);
 
                     // Add all entity data
                     const length = frame.entities.length;
@@ -486,11 +489,11 @@ export default class Renderer {
         this.layerController.setLayers(this.recordedData.layers);
 
         // Update frame counter
-        const frameText = (this.getFrameCount() > 0) ? (`Frame: ${frame + 1} / ${this.getFrameCount()} (Frame ID: ${this.frameData.frameId})`) : "No frames";
+        const frameText = (this.getFrameCount() > 0) ? (`Frame: ${frame + 1} / ${this.getFrameCount()} (Frame ID: ${this.frameData.frameId}, Tag: ${this.frameData.tag})`) : "No frames";
         document.getElementById("timeline-frame-counter").textContent = frameText;
 
         // Update entity list
-        this.entityTree.setEntities(this.frameData.entities);
+        this.entityTree.setEntities(this.frameData.entities, this.recordedData);
 
         // Update renderer
         this.sceneController.hideAllEntities();
@@ -787,7 +790,31 @@ export default class Renderer {
         }
         else
         {
-            return this.recordedData.buildFrameData(frame).elapsedTime;
+            return this.recordedData.buildFrameDataHeader(frame).elapsedTime;
+        }
+    }
+
+    getServerTimeOfFrame(frame: number)
+    {
+        if (frame == this.getCurrentFrame())
+        {
+            return this.frameData.serverTime;
+        }
+        else
+        {
+            return this.recordedData.buildFrameDataHeader(frame).serverTime;
+        }
+    }
+
+    getClientIdOfFrame(frame: number)
+    {
+        if (frame == this.getCurrentFrame())
+        {
+            return this.frameData.clientId;
+        }
+        else
+        {
+            return this.recordedData.buildFrameDataHeader(frame).clientId;
         }
     }
 

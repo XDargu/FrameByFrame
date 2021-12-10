@@ -20,10 +20,10 @@ export function isHexColor(hex: string)
         && !isNaN(Number('0x' + hex.substr(1)))
 }
 
-const colors = ["#D6A3FF", "#EB7C2B", "#5DAEDC", "#DFC956", "#E5CF58"];
-export function colorFromHash(hash: number) : string
+const defaultColors = ["#D6A3FF", "#EB7C2B", "#5DAEDC", "#DFC956"];
+export function colorFromHash(hash: number, colors: string[] = defaultColors) : string
 {
-    return colors[Math.abs(hash) % colors.length];
+    return colors.length > 0 ? colors[Math.abs(hash) % colors.length] : defaultColors[0];
 }
 
 export function componentToHex(c: number)

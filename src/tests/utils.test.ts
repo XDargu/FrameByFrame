@@ -90,6 +90,11 @@ describe('Utils', () => {
       const val = Utils.colorFromHash(-23);
       expect(val).to.be.not.undefined;
     });
+
+    it('returns a value with an empty color table', () => {
+      const val = Utils.colorFromHash(6, []);
+      expect(val).to.be.not.undefined;
+    });
     
   });
 

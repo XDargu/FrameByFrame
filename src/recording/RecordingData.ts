@@ -130,6 +130,15 @@ export interface IEventVisitorCallback
     (id: IEvent) : VisitorResult | void
 }
 
+const emptyFrameData: IFrameData = {
+	entities: [],
+	frameId: 0,
+	serverTime: 0,
+	elapsedTime: 0,
+	clientId: 0,
+	tag: ""
+};
+
 export class PropertyTable {
 	types: any[];
 	names: string[];
@@ -365,13 +374,20 @@ export class FrameTable {
 	}
 }
 
+export interface ClientData
+{
+	tag: string;
+}
+
 export class NaiveRecordedData {
 	frameData: IFrameData[];
 	layers: string[];
+	clientIds: Map<number, ClientData>
 
 	constructor() {
 		this.frameData = [];
 		this.layers = [];
+		this.clientIds = new Map<number, ClientData>();
 	}
 
 	static getEntityName(entity: IEntity) : string
@@ -388,7 +404,7 @@ export class NaiveRecordedData {
 
 	loadFromString(data: string)
 	{
-		let dataJson = JSON.parse(data);
+		const dataJson = JSON.parse(data);
 		this.frameData = dataJson.frameData;
 		this.layers = dataJson.layers;
 		if (this.layers == undefined)
@@ -399,6 +415,11 @@ export class NaiveRecordedData {
 		for (let frame of this.frameData)
 		{
 			this.updateLayersOfFrame(frame);
+			this.updateClientIDsOfFrame(frame);
+
+			// Fix legacy frames (just for testing)
+			if (frame.clientId == null) { frame.clientId = 0; }
+			if (frame.tag == null) { frame.tag = "Client"; }
 		}
 
 		console.log(this);
@@ -406,8 +427,9 @@ export class NaiveRecordedData {
 
 	clear()
 	{
-		this.frameData = [];
-		this.layers = [];
+		this.frameData.length = 0;
+		this.layers.length = 0;
+		this.clientIds.clear();
 	}
 
 	pushFrame(frame: IFrameData)
@@ -417,6 +439,7 @@ export class NaiveRecordedData {
 		});
 
 		this.updateLayersOfFrame(frame);
+		this.updateClientIDsOfFrame(frame);
 	}
 
 	static visitEntityProperties(entity: IEntity, callback: IPropertyVisitorCallback)
@@ -456,42 +479,32 @@ export class NaiveRecordedData {
 		}
 	}
 
+	buildFrameDataHeader(frame: number) : IFrameData {
+		let frameData = this.frameData[frame];
+
+		if (!frameData) {
+			return emptyFrameData;
+		}
+
+		return frameData;
+	}
+
 	buildFrameData(frame : number) : IFrameData {
-		// Instead of building the frame data here we just set the propertyID (overriding previous ones)
-
-		// TODO: Build data merging different tags
-		// Find the last frames of each tag, and display those
-		// How to know when to stop searching for the previous tag?
-		// Which threshold to use for considering a tag way too old
-		// How to know we have all tags?
-		// Maybe have a config number for how many seconds can we search back?
-
-		// Idea: have an array of frameData instead of building one
-		// 
-
-		// Test
 
 		let frameData = this.frameData[frame];
 
-		if (!frameData)
-		{
-			return { entities: [],
-				frameId: 0,
-				serverTime: 0,
-				elapsedTime: 0,
-				clientId: 0,
-				tag: ""
-			};
+		if (!frameData) {
+			return emptyFrameData;
 		}
 
 		let dataPerClientID = new Map<number, IFrameData>();
-		dataPerClientID.set(frameData.clientId ? frameData.clientId : 0, frameData);
+		dataPerClientID.set(frameData.clientId, frameData);
 		const maxPrevFrames = 10;
 		for (let i=0; i<maxPrevFrames; ++i)
 		{
 			const prevFrameData = this.frameData[frame - i - 1];
 			if (prevFrameData) {
-				const prevFrameClientId = prevFrameData.clientId ? prevFrameData.clientId : 0;
+				const prevFrameClientId = prevFrameData.clientId;
 				if (!dataPerClientID.has(prevFrameClientId)) {
 					dataPerClientID.set(prevFrameClientId, prevFrameData);
 				}
@@ -613,6 +626,20 @@ export class NaiveRecordedData {
 			}
 
 			this.pushFrame(frameData);
+		}
+	}
+
+	getTagByClientId(clientId: number) : string
+	{
+		const data = this.clientIds.get(clientId);
+		return data?.tag;
+	}
+
+	private updateClientIDsOfFrame(frame: IFrameData)
+	{
+		if (!this.clientIds.has(frame.clientId))
+		{
+			this.clientIds.set(frame.clientId, { tag: frame.tag });
 		}
 	}
 

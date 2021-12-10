@@ -645,8 +645,11 @@ export default class Timeline {
     {
         const position : number = this.frame2canvas(this.currentFrame);;
 
-        const frameNumber = (this.currentFrame + 1).toString();
-        const frameTextWidth = this.ctx.measureText(frameNumber).width;
+        const eventLength = this.eventsPerFrame.get(this.currentFrame)?.length || 0;
+        const eventLabel = eventLength == 1 ? "event" : "events";
+        const eventText = eventLength == 0 ? "" : ` (${eventLength} ${eventLabel})`;
+        const markerText = `${this.currentFrame + 1}${eventText}`;
+        const frameTextWidth = this.ctx.measureText(markerText).width;
         const textPadding = 4;
         const rectPadding = 1;
         const rectHeight = Timeline.headerHeight - rectPadding * 2;
@@ -661,7 +664,7 @@ export default class Timeline {
         this.ctx.font = "8px Arial";
         this.ctx.fillStyle = "#C4C4C4";
         this.ctx.textBaseline = "middle";
-        this.ctx.fillText(frameNumber, position + rectWidth * 0.5 * rectInvert, rectPadding + rectHeight * 0.5);
+        this.ctx.fillText(markerText, position + rectWidth * 0.5 * rectInvert, rectPadding + rectHeight * 0.5);
 
         this.ctx.lineWidth = 1;
         this.ctx.strokeStyle = "#6DE080";
