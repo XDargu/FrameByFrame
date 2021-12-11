@@ -99,7 +99,9 @@ export default class Connection {
 	
 	disconnect(causedByUser: boolean) {
 		this.lastDisconnectionCausedByUser = causedByUser;
-		this.webSocket.close();
+		if (this.webSocket) {
+			this.webSocket.close();
+		}
 	}
 
 	isConnected(): boolean
