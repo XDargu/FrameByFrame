@@ -1,5 +1,10 @@
 import * as Utils from '../utils/utils'
 
+export enum RecordingFileType {
+	NaiveRecording,
+	RawFrames
+}
+
 export interface IVec3 {
 	x: number;
 	y: number;
@@ -90,6 +95,7 @@ export interface IEvent {
 	name: string;
 	tag: string;
 	properties: IPropertyGroup;
+	idx: number;
 	id?: number;
 }
 
@@ -379,7 +385,20 @@ export interface ClientData
 	tag: string;
 }
 
-export class NaiveRecordedData {
+export interface IRecordedData {
+	type: RecordingFileType;
+}
+
+export interface INaiveRecordedData extends IRecordedData {
+	version: number;
+	frameData: IFrameData[];
+	layers: string[];
+	clientIds: Map<number, ClientData>
+}
+
+export class NaiveRecordedData implements INaiveRecordedData {
+	readonly version: number = 1;
+	readonly type: RecordingFileType = RecordingFileType.NaiveRecording;
 	frameData: IFrameData[];
 	layers: string[];
 	clientIds: Map<number, ClientData>
@@ -402,9 +421,8 @@ export class NaiveRecordedData {
 		return (entity.properties[1] as IPropertyGroup).value[1].value as IVec3;
 	}
 
-	loadFromString(data: string)
+	loadFromData(dataJson: INaiveRecordedData)
 	{
-		const dataJson = JSON.parse(data);
 		this.frameData = dataJson.frameData;
 		this.layers = dataJson.layers;
 		if (this.layers == undefined)
@@ -597,7 +615,7 @@ export class NaiveRecordedData {
 						{ name: "Test number", type: "number", value: j }
 					];
 					var event = {
-						eventIdx: 0,
+						idx: 0,
 						name: "OnTestEvent",
 						tag: "FirstTest",
 						properties: {value: eventProperties, type: "group", name: "properties" }
@@ -611,7 +629,7 @@ export class NaiveRecordedData {
 						{ name: "Test other number", type: "number", value: j }
 					];
 					var event2 = {
-						eventIdx: 0,
+						idx: 0,
 						name: "OnOtherTestEvent",
 						tag: "OtherTest",
 						properties: {value: eventProperties2, type: "group", name: "properties" }

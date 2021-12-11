@@ -383,10 +383,35 @@ export default class Renderer {
     {
         this.openModal("Processing data");
         setTimeout(() => {
-            this.clear();
-
             try {
-                this.recordedData.loadFromString(data);
+                this.clear();
+                
+                const dataJson = JSON.parse(data) as RECORDING.IRecordedData;
+                // Used for legacy load, remove once not needed
+                const recordingData = dataJson as RECORDING.INaiveRecordedData;
+                switch(dataJson.type || recordingData.frameData)
+                {
+                    case RECORDING.RecordingFileType.RawFrames:
+                    {
+                        // Add trailing brackets
+                        const rawData = dataJson as NET_TYPES.IRawRecordingData;
+                        for (const frame of rawData.rawFrames)
+                        {
+                            this.addFrameData(frame);
+                        }
+                    }
+                    break;
+                    case RECORDING.RecordingFileType.NaiveRecording:
+                    {
+                        this.recordedData.loadFromData(dataJson as RECORDING.INaiveRecordedData);
+                    }
+                    break;
+                    default:
+                    {
+                        throw new Error('Unable to detect type of recording');
+                    }
+                }
+
                 this.timeline.updateLength(this.recordedData.getSize());
                 this.areAllFramesWithEventsPending = true;
                 this.unprocessedFramesWithEvents = [];
@@ -435,32 +460,10 @@ export default class Renderer {
                     if (!RecordingButton.isRecordingActive()) { return; }
                     let frame: NET_TYPES.IMessageFrameData = message.data as NET_TYPES.IMessageFrameData;
 
-                    // Build frame
-                    let frameToBuild: RECORDING.IFrameData = {
-                        entities: {},
-                        serverTime: frame.serverTime,
-                        clientId: frame.clientId,
-                        frameId: frame.frameId,
-                        elapsedTime: frame.elapsedTime,
-                        tag: frame.tag,
-                    };
-
                     // Set client Id data
                     this.connectionsList.setConnectionName(id, frame.tag);
-
-                    // Add all entity data
-                    const length = frame.entities.length;
-                    for (let i=0; i<length; ++i)
-                    {
-                        const entityData = frame.entities[i];
-                        frameToBuild.entities[entityData.id] = entityData;
-                    }
-
-                    this.recordedData.pushFrame(frameToBuild);
-
-                    this.timeline.updateLength(this.recordedData.getSize());
-                    this.unprocessedFramesWithEvents.push(this.recordedData.getSize() - 1);
-                    this.unprocessedFiltersPending = true;
+                    
+                    this.addFrameData(frame);
                     
                     break;
                 }
@@ -474,6 +477,33 @@ export default class Renderer {
                 break;
             }
         }
+    }
+
+    addFrameData(frame: NET_TYPES.IMessageFrameData)
+    {
+        // Build frame
+        let frameToBuild: RECORDING.IFrameData = {
+            entities: {},
+            serverTime: frame.serverTime,
+            clientId: frame.clientId,
+            frameId: frame.frameId,
+            elapsedTime: frame.elapsedTime,
+            tag: frame.tag,
+        };
+
+        // Add all entity data
+        const length = frame.entities.length;
+        for (let i=0; i<length; ++i)
+        {
+            const entityData = frame.entities[i];
+            frameToBuild.entities[entityData.id] = entityData;
+        }
+
+        this.recordedData.pushFrame(frameToBuild);
+
+        this.timeline.updateLength(this.recordedData.getSize());
+        this.unprocessedFramesWithEvents.push(this.recordedData.getSize() - 1);
+        this.unprocessedFiltersPending = true;
     }
 
     getNextPropertyId() : string
