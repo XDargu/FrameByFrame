@@ -387,9 +387,7 @@ export default class Renderer {
                 this.clear();
                 
                 const dataJson = JSON.parse(data) as RECORDING.IRecordedData;
-                // Used for legacy load, remove once not needed
-                const recordingData = dataJson as RECORDING.INaiveRecordedData;
-                switch(dataJson.type || recordingData.frameData)
+                switch(dataJson.type)
                 {
                     case RECORDING.RecordingFileType.RawFrames:
                     {
@@ -408,7 +406,14 @@ export default class Renderer {
                     break;
                     default:
                     {
-                        throw new Error('Unable to detect type of recording');
+                        // Used for legacy load, remove once not needed
+                        const recordingData = dataJson as RECORDING.INaiveRecordedData;
+                        if (recordingData.frameData) {
+                            this.recordedData.loadFromData(recordingData);
+                        }
+                        else {
+                            throw new Error('Unable to detect type of recording');
+                        }
                     }
                 }
 
