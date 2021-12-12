@@ -1,25 +1,9 @@
-import { ISettings } from "../files/Settings";
+import { createDefaultSettings, ISettings } from "../files/Settings";
 import { filterText } from "../utils/utils";
 
 export interface ISettingsChanged
 {
     () : void
-}
-
-enum ControlType
-{
-    Toggle
-}
-
-interface ISingleSettingLayout
-{
-    name: string;
-    control: ControlType;
-}
-
-interface ISettingsLayout
-{
-    [setting: string]: ISingleSettingLayout;
 }
 
 interface SettingsBuilderGroup
@@ -38,11 +22,10 @@ interface INumberSettingCallback
     (value: number) : void
 }
 
-const settingsLayout: ISettingsLayout =
+interface IStringSettingCallback
 {
-    recordOnConnect: { control: ControlType.Toggle, name: "Record on Connect" },
-    autoReconnect: { control: ControlType.Toggle, name: "Auto Re-connect" },
-};
+    (value: string) : void
+}
 
 namespace SettingsBuilder
 {
@@ -62,6 +45,32 @@ namespace SettingsBuilder
         return { fragment: fragment, list: list };
     }
 
+    export function addStringSetting(group: SettingsBuilderGroup, name: string, tooltip: string, placeholder: string, value: string, callback: IStringSettingCallback)
+    {
+        group.list.appendChild(createStringSetting(name, tooltip, placeholder, value, callback));
+    }
+
+    function createStringSetting(name: string, tooltip: string, placeholder: string, value: string, callback: IStringSettingCallback) : HTMLElement
+    {
+        let listItem: HTMLElement = document.createElement("div");
+        listItem.className = "basico-list-item basico-no-hover";
+
+        let input: HTMLInputElement = document.createElement("input");
+        input.className = "basico-input basico-small";
+        input.value = value;
+        input.placeholder = placeholder;
+        input.onkeyup = () => { callback(input.value); }
+
+        let textItem: HTMLElement = document.createElement("div");
+        textItem.className = "basico-text-oneline";
+        textItem.innerText = name;
+        textItem.title = tooltip;
+
+        listItem.append(textItem, input);
+
+        return listItem;
+    }
+
     export function addNumberOptionsSetting(group: SettingsBuilderGroup, name: string, value: number, options: number[], callback: INumberSettingCallback)
     {
         group.list.appendChild(createNumberOptionsSetting(name, value, options, callback));
@@ -78,7 +87,7 @@ namespace SettingsBuilder
         textItem.className = "basico-text-oneline";
         textItem.innerText = name;
 
-        listItem.append(dropdown, textItem);
+        listItem.append(textItem, dropdown);
 
 
         return listItem;
@@ -95,13 +104,12 @@ namespace SettingsBuilder
         listItem.className = "basico-list-item basico-no-hover";
 
         let toggle: HTMLElement = createToggle(value, callback);
-        listItem.appendChild(toggle);
 
         let textItem: HTMLElement = document.createElement("div");
         textItem.className = "basico-text-oneline";
         textItem.innerText = name;
 
-        listItem.appendChild(textItem);
+        listItem.append(textItem, toggle);
 
         return listItem;
     }
@@ -177,10 +185,12 @@ export class SettingsList
         this.searchFilter.onkeyup = () => { this.filterElements(); };
         this.filter = "";
         this.onSettingsChanged = onSettingsChanged;
-    }    
+    }
 
     setSettings(settings: ISettings)
     {
+        const defaultSettings = createDefaultSettings();
+
         this.settingsList.innerHTML = "";
         {
             let group = SettingsBuilder.createGroup("Connection");
@@ -198,14 +208,38 @@ export class SettingsList
         }
 
         {
-            let group = SettingsBuilder.createGroup("Debug");
-            SettingsBuilder.addBooleanSetting(group, "Show render debug info", settings.showRenderDebug, (value) => {settings.showRenderDebug = value; this.onSettingsChanged(); })
+            let group = SettingsBuilder.createGroup("Graphics");
+            SettingsBuilder.addNumberOptionsSetting(group, "Anti-aliasing samples", settings.antialiasingSamples, [1, 2, 4, 8, 16], (value) => {  settings.antialiasingSamples = value; this.onSettingsChanged(); });
             this.settingsList.appendChild(group.fragment);
         }
 
         {
-            let group = SettingsBuilder.createGroup("Graphics");
-            SettingsBuilder.addNumberOptionsSetting(group, "Anti-aliasing samples", settings.antialiasingSamples, [1, 2, 4, 8, 16], (value) => {  settings.antialiasingSamples = value; this.onSettingsChanged(); });
+            let group = SettingsBuilder.createGroup("Exporting");
+            SettingsBuilder.addStringSetting(group,
+                "Exporting name format",
+`Default name of a file when saving a recording.
+You can use the following formatting options:
+ - %h: Hour (hh)
+ - %m: Minute (mm)
+ - %s: Second (ss)
+ - %Y: Year (YYYY)
+ - %M: Month (MM)
+ - %D: Day (DD)
+ - %%: %
+`,
+                defaultSettings.exportNameFormat, settings.exportNameFormat,
+                (value) => {
+                    const format = value == "" ? defaultSettings.exportNameFormat : value;
+                    settings.exportNameFormat = format;
+                    this.onSettingsChanged();
+                }
+            );
+            this.settingsList.appendChild(group.fragment);
+        }
+
+        {
+            let group = SettingsBuilder.createGroup("Debug");
+            SettingsBuilder.addBooleanSetting(group, "Show render debug info", settings.showRenderDebug, (value) => {settings.showRenderDebug = value; this.onSettingsChanged(); })
             this.settingsList.appendChild(group.fragment);
         }
 
@@ -241,7 +275,7 @@ export class SettingsList
                 {
                     if (foundInTitle)
                     {
-                        settingElement.style.display = "block";
+                        settingElement.style.display = "flex";
                     }
                     else
                     {
@@ -250,7 +284,7 @@ export class SettingsList
                         {
                             const foundInSetting = this.filter == "" || filterText(this.filter, nameElement.innerText.toLowerCase());
                             foundInGroup = foundInGroup || foundInSetting;
-                            settingElement.style.display = foundInSetting ? "block" : "none";
+                            settingElement.style.display = foundInSetting ? "flex" : "none";
                         }
                     }
                 }

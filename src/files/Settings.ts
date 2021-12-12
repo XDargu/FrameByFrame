@@ -8,6 +8,7 @@ export interface ISettings
     showAllLayersOnStart: boolean,
     showRenderDebug: boolean,
     antialiasingSamples: number,
+    exportNameFormat: string,
 }
 
 export function createDefaultSettings() : ISettings
@@ -21,8 +22,11 @@ export function createDefaultSettings() : ISettings
         openEntityListOnSelection: true,
         followCurrentSelection: false,
         showAllLayersOnStart: true,
+        /* Export */
+        exportNameFormat: "recording_%Y-%M-%D_%h:%m:%s",
         /* Debug */
         showRenderDebug: false,
+        /* Graphics */
         antialiasingSamples: 4,
     };
 }

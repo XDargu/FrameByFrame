@@ -298,7 +298,7 @@ namespace UI
         propertyWrapper.appendChild(typeDropDown);
 
         const nameInput = document.createElement("input");
-        nameInput.className = "basico-input";
+        nameInput.className = "basico-input basico-small";
         nameInput.value = member.name;
         nameInput.onkeyup = () => {
             callbacks.onMemberNameChanged(id, getIndexOfProperty(nameInput), nameInput.value);
@@ -317,7 +317,7 @@ namespace UI
         filterWrapper.appendChild(propFilterDropdown);
 
         const filterInput = document.createElement("input");
-        filterInput.className = "basico-input";
+        filterInput.className = "basico-input basico-small";
         filterInput.value = member.value.toString(); // TODO: Different type of inputs depending on the type
         filterInput.onkeyup = () => {
             let value: string | number | boolean = filterInput.value;

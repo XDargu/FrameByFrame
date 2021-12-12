@@ -183,7 +183,8 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
   {
     case Messaging.MessageType.Save:
     {
-      fileManager.saveFile(arg.data as string);
+      const fileSaveData = arg.data as Messaging.ISaveFileData;
+      fileManager.saveFile(fileSaveData.name, fileSaveData.content);
       break;
     }
     case Messaging.MessageType.Load:

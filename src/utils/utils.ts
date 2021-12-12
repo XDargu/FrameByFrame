@@ -160,3 +160,36 @@ export function getClientIdUniqueId(uniqueId: number)
 {
     return uniqueId & 0xFF;
 }
+
+export function numberToPaddedString(value: number, padding: number) : string
+{
+    return value.toString().padStart(padding, '0');
+}
+
+interface IFormatTable
+{
+    [token: string] : string;
+}
+export function getFormattedString(format: string, formatTable: IFormatTable) : string
+{
+    const re = new RegExp(Object.keys(formatTable).join("|"),"gi");
+    return format.replace(re, function(matched){
+        return formatTable[matched];
+    });
+}
+
+export function getFormattedFilename(format: string) : string
+{
+    const date = new Date();
+    const formatTable : IFormatTable = {
+        '%h': numberToPaddedString(date.getHours(), 2),
+        '%m': numberToPaddedString(date.getMinutes(), 2),
+        '%s': numberToPaddedString(date.getSeconds(), 2),
+        '%D': numberToPaddedString(date.getDate(), 2),
+        '%M': numberToPaddedString(date.getMonth() + 1, 2),
+        '%Y': numberToPaddedString(date.getFullYear(), 4),
+        '%%': '%'
+    }
+
+    return getFormattedString(format, formatTable);
+}

@@ -1000,6 +1000,9 @@
 .basico-tabs-item .basico-input {
   height: 22px; }
 
+.basico-input.basico-small {
+  height: 22px; }
+
 html, body {
   padding: 0;
   margin: 0;
@@ -1140,24 +1143,6 @@ body {
 
 #entity-list .basico-form-field,
 #var-list .basico-form-field,
-#setting-list .basico-form-field {
-  display: block;
-  margin-bottom: 6px;
-  margin-top: 3px; }
-
-#setting-list .basico-container {
-  display: flex;
-  flex-direction: column; }
-
-#settings-container,
-#settings {
-  flex: auto; }
-
-#settings .basico-dropdown {
-  width: 36px;
-  text-align: right; }
-
-/* Connection buttons */
 #connection-buttons {
   position: absolute;
   right: 150px;
@@ -2214,7 +2199,7 @@ body {
   height: 26px; }
 
 .filter-property-wrapper .basico-dropdown-button {
-  height: 26px;
+  height: 22px;
   width: 70px;
   margin-right: 10px;
   font-size: 12px;
@@ -2522,5 +2507,37 @@ body {
 .filter-ticker-buttons > .basico-button:hover {
   color: white;
   background: #3F3447; }
+
+#setting-list .basico-form-field {
+  display: block;
+  margin-bottom: 6px;
+  margin-top: 3px; }
+
+#setting-list .basico-container {
+  display: flex;
+  flex-direction: column; }
+
+#settings-container,
+#settings {
+  flex: auto; }
+
+#settings .basico-dropdown {
+  width: 36px;
+  text-align: right; }
+
+#settings-container input {
+  width: 50%;
+  text-align: right; }
+
+#settings-container .basico-list,
+#settings-container .basico-title {
+  z-index: unset; }
+
+#settings-container .basico-list-item {
+  display: flex;
+  align-items: center; }
+
+#settings-container .basico-list-item .basico-text-oneline {
+  flex: 1; }
 
 /*# sourceMappingURL=styles.css.map */
