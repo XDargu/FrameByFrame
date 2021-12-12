@@ -310,4 +310,48 @@ describe('Utils', () => {
 
   });
 
+  describe('numberToPaddedString', () => {
+
+    it('returns correct number of leading zeroes', () => {
+      expect(Utils.numberToPaddedString(3, 2)).to.equal("03");
+      expect(Utils.numberToPaddedString(67, 4)).to.equal("0067");
+      expect(Utils.numberToPaddedString(5, 3)).to.equal("005");
+    });
+
+    it('returns no leading zeroes when not needed', () => {
+      expect(Utils.numberToPaddedString(35, 2)).to.equal("35");
+      expect(Utils.numberToPaddedString(1967, 4)).to.equal("1967");
+      expect(Utils.numberToPaddedString(543, 3)).to.equal("543");
+    });
+
+    it('returns entire number when padding is smaller', () => {
+      expect(Utils.numberToPaddedString(35, 1)).to.equal("35");
+      expect(Utils.numberToPaddedString(1967, 2)).to.equal("1967");
+      expect(Utils.numberToPaddedString(543, 2)).to.equal("543");
+    });
+  });
+
+  describe('getFormattedString', () => {
+
+    const formatTable = {
+      '%a': 'TEST',
+      '%BBb': 'FORMAT',
+      '%f56': 'TABLE',
+      '%%': '%'
+    }
+    
+    it('correctly returns a formatted name', () => {
+      const format = 'test_%a:%BBb_%f56_%a';
+      const result = Utils.getFormattedString(format, formatTable);
+      expect(result).to.equal('test_TEST:FORMAT_TABLE_TEST');
+    });
+
+    it('does not convert escape characters', () => {
+      const format = 'test_%a:%%a_%%%a';
+      const result = Utils.getFormattedString(format, formatTable);
+      expect(result).to.equal('test_TEST:%a_%TEST');
+    });
+
+  });
+
 });

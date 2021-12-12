@@ -30,12 +30,19 @@ export interface ILogData
     channel: LogChannel;
 }
 
+export interface ISaveFileData
+{
+    name: string;
+    content: string;
+}
+
+type MessageData = string | IClearResultData | ILogData | ISettings | ISaveFileData;
 export class Message
 {
     public type: MessageType;
-    public data: string | IClearResultData | ILogData | ISettings;
+    public data: MessageData;
 
-    constructor(type: MessageType, data: string | IClearResultData | ILogData | ISettings)
+    constructor(type: MessageType, data: MessageData)
     {
         this.type = type;
         this.data = data;

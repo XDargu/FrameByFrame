@@ -462,7 +462,7 @@ export default class Renderer {
 
                     // Set client Id data
                     this.connectionsList.setConnectionName(id, frame.tag);
-                    
+
                     this.addFrameData(frame);
                     
                     break;
@@ -880,7 +880,12 @@ export default class Renderer {
     
     onSaveFile()
     {
-        ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.Save, JSON.stringify(this.recordedData)));
+        ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.Save, 
+            {
+                name: Utils.getFormattedFilename(this.settings.exportNameFormat),
+                content: JSON.stringify(this.recordedData)
+            }
+        ));
     }
 
     onClearFile()

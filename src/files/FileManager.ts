@@ -190,10 +190,10 @@ export default class FileManager
         });
     }
 
-    saveFile(content: string)
+    saveFile(defaultName: string, content: string)
     {
         const options = {
-            defaultPath: app.getPath('documents') + '/recording.fbf',
+            defaultPath: `${app.getPath('documents')}/${defaultName}.fbf`,
             filters: [
                 { name: 'Recordings', extensions: ['fbf'] },
             ]

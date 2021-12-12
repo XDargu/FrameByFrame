@@ -159,26 +159,6 @@ body {
 
 #entity-list .basico-form-field,
 #var-list .basico-form-field,
-#setting-list .basico-form-field {
-    display: block;
-    margin-bottom: 6px;
-    margin-top: 3px;
-}
-
-#setting-list .basico-container {
-    display: flex;
-    flex-direction: column;
-}
-
-#settings-container,
-#settings {
-    flex: auto;
-}
-
-#settings .basico-dropdown {
-    width: 36px;
-    text-align: right;
-}
 
 /* Connection buttons */
 #connection-buttons {

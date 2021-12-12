@@ -1,0 +1,40 @@
+#setting-list .basico-form-field {
+    display: block;
+    margin-bottom: 6px;
+    margin-top: 3px;
+}
+
+#setting-list .basico-container {
+    display: flex;
+    flex-direction: column;
+}
+
+#settings-container,
+#settings {
+    flex: auto;
+}
+
+#settings .basico-dropdown {
+    width: 36px;
+    text-align: right;
+}
+
+#settings-container input {
+    width: 50%;
+    text-align: right;
+}
+
+#settings-container .basico-list,
+#settings-container .basico-title {
+    z-index: unset;
+}
+
+
+#settings-container .basico-list-item {
+    display: flex;
+    align-items: center;
+}
+
+#settings-container .basico-list-item .basico-text-oneline {
+    flex: 1;
+}
