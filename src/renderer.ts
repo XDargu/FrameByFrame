@@ -733,7 +733,9 @@ export default class Renderer {
                         for (let i=0; i<result.length; ++i)
                         {
                             const entry = result[i];
-                            this.timeline.addEvent(0, entry.entityId.toString(), entry.frameIdx, filterColor, 0);
+                            const clientId = this.recordedData.buildFrameDataHeader(entry.frameIdx).clientId;
+                            const uniqueEntityID = Utils.toUniqueID(clientId, entry.entityId);
+                            this.timeline.addEvent(0, uniqueEntityID.toString(), entry.frameIdx, filterColor, 0);
                         }
                     }
                 }
