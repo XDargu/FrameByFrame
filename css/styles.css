@@ -718,7 +718,7 @@
   margin: 0; }
 
 .basico-tree .basico-tree-item-wrapper {
-  display: block;
+  display: flex;
   cursor: pointer; }
 
 .basico-tree .basico-tree-item-wrapper:hover {
@@ -763,7 +763,7 @@
   display: inline-block; }
 
 .basico-tree .basico-tree-item-content {
-  display: inline-block;
+  display: flex;
   padding-bottom: 4px;
   padding-top: 4px; }
 
@@ -1073,7 +1073,7 @@ body {
 .property-group {
   display: flex;
   float: right;
-  width: 50%; }
+  width: 70%; }
 
 .property-group .property-primitive {
   margin: 0px 2px;
@@ -2195,7 +2195,7 @@ body {
 .filter-property-wrapper:last-child {
   margin-bottom: 0; }
 
-.filter-wrapper .basico-input {
+.filter-wrapper .basico-input:not(.basico-small) {
   height: 26px; }
 
 .filter-property-wrapper .basico-dropdown-button {
