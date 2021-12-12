@@ -45,12 +45,12 @@ namespace SettingsBuilder
         return { fragment: fragment, list: list };
     }
 
-    export function addStringSetting(group: SettingsBuilderGroup, name: string, placeholder: string, value: string, callback: IStringSettingCallback)
+    export function addStringSetting(group: SettingsBuilderGroup, name: string, tooltip: string, placeholder: string, value: string, callback: IStringSettingCallback)
     {
-        group.list.appendChild(createStringSetting(name, placeholder, value, callback));
+        group.list.appendChild(createStringSetting(name, tooltip, placeholder, value, callback));
     }
 
-    function createStringSetting(name: string, placeholder: string, value: string, callback: IStringSettingCallback) : HTMLElement
+    function createStringSetting(name: string, tooltip: string, placeholder: string, value: string, callback: IStringSettingCallback) : HTMLElement
     {
         let listItem: HTMLElement = document.createElement("div");
         listItem.className = "basico-list-item basico-no-hover";
@@ -64,6 +64,7 @@ namespace SettingsBuilder
         let textItem: HTMLElement = document.createElement("div");
         textItem.className = "basico-text-oneline";
         textItem.innerText = name;
+        textItem.title = tooltip;
 
         listItem.append(textItem, input);
 
@@ -214,12 +215,25 @@ export class SettingsList
 
         {
             let group = SettingsBuilder.createGroup("Exporting");
-            SettingsBuilder.addStringSetting(group, "Exporting name format", defaultSettings.exportNameFormat, settings.exportNameFormat,
-            (value) => {
-                const format = value == "" ? defaultSettings.exportNameFormat : value;
-                settings.exportNameFormat = format;
-                this.onSettingsChanged();
-            });
+            SettingsBuilder.addStringSetting(group,
+                "Exporting name format",
+`Default name of a file when saving a recording.
+You can use the following formatting options:
+ - %h: Hour (hh)
+ - %m: Minute (mm)
+ - %s: Second (ss)
+ - %Y: Year (YYYY)
+ - %M: Month (MM)
+ - %D: Day (DD)
+ - %%: %
+`,
+                defaultSettings.exportNameFormat, settings.exportNameFormat,
+                (value) => {
+                    const format = value == "" ? defaultSettings.exportNameFormat : value;
+                    settings.exportNameFormat = format;
+                    this.onSettingsChanged();
+                }
+            );
             this.settingsList.appendChild(group.fragment);
         }
 
