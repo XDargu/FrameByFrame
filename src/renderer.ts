@@ -702,7 +702,7 @@ export default class Renderer {
                 for (let i=0; i<selectedEntity.events.length; ++i)
                 {
                     const propertyGroup = selectedEntity.events[i].properties;
-                    this.buildSinglePropertyTree(eventTree, propertyGroup, 1, selectedEntity.events[i].name, selectedEntity.events[i].tag);
+                    this.buildSinglePropertyTree(eventTree, propertyGroup, 2, selectedEntity.events[i].name, selectedEntity.events[i].tag);
                 }
             }
         }
