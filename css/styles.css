@@ -1391,6 +1391,10 @@ body {
   background: #D2C7DB;
   color: #302935; }
 
+#properties .basico-tree .basico-tag,
+#events .basico-tree .basico-tag {
+  min-height: 12px; }
+
 .title-darker {
   border-top: 2px solid #5f516a;
   background: #2b2530; }
@@ -1567,6 +1571,10 @@ body {
   background: #D2C7DB;
   color: #302935; }
 
+#properties .basico-tree .basico-tag,
+#events .basico-tree .basico-tag {
+  min-height: 12px; }
+
 .title-darker {
   border-top: 2px solid #5f516a;
   background: #2b2530; }
@@ -1713,6 +1721,10 @@ body {
 #events .basico-tag {
   background: #D2C7DB;
   color: #302935; }
+
+#properties .basico-tree .basico-tag,
+#events .basico-tree .basico-tag {
+  min-height: 12px; }
 
 .title-darker {
   border-top: 2px solid #5f516a;
@@ -2138,6 +2150,10 @@ body {
   background: #D2C7DB;
   color: #302935; }
 
+#properties .basico-tree .basico-tag,
+#events .basico-tree .basico-tag {
+  min-height: 12px; }
+
 .title-darker {
   border-top: 2px solid #5f516a;
   background: #2b2530; }
@@ -2404,6 +2420,10 @@ body {
 #events .basico-tag {
   background: #D2C7DB;
   color: #302935; }
+
+#properties .basico-tree .basico-tag,
+#events .basico-tree .basico-tag {
+  min-height: 12px; }
 
 .title-darker {
   border-top: 2px solid #5f516a;

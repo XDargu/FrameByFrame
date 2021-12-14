@@ -19,6 +19,7 @@ export interface IMessageFrameData {
 	serverTime: number;
 	elapsedTime: number;
 	tag: string;
+	coordSystem?: RECORDING.ECoordinateSystem;
 }
 
 export interface IMessageRecordingOption

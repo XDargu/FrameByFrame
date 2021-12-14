@@ -493,8 +493,14 @@ export default class Renderer {
             clientId: frame.clientId,
             frameId: frame.frameId,
             elapsedTime: frame.elapsedTime,
-            tag: frame.tag,
+            tag: frame.tag
         };
+
+        // Optional values
+        if (frame.coordSystem != null)
+        {
+            frameToBuild.coordSystem = frame.coordSystem;
+        }
 
         // Add all entity data
         const length = frame.entities.length;
@@ -531,6 +537,7 @@ export default class Renderer {
         this.entityTree.setEntities(this.frameData.entities, this.recordedData);
 
         // Update renderer
+        this.sceneController.setCoordinateSystem(this.frameData.coordSystem ?? RECORDING.ECoordinateSystem.LeftHand);
         this.sceneController.hideAllEntities();
 
         for (let entityID in this.frameData.entities) {
