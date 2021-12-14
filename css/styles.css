@@ -1003,6 +1003,11 @@
 .basico-input.basico-small {
   height: 22px; }
 
+.basico-input::-webkit-outer-spin-button,
+.basico-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0; }
+
 html, body {
   padding: 0;
   margin: 0;

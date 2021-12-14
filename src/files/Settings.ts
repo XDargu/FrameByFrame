@@ -9,6 +9,7 @@ export interface ISettings
     showRenderDebug: boolean,
     antialiasingSamples: number,
     exportNameFormat: string,
+    defaultPort: string,
 }
 
 export function createDefaultSettings() : ISettings
@@ -17,6 +18,7 @@ export function createDefaultSettings() : ISettings
         /* Connections */
         recordOnConnect: true,
         autoReconnect: true,
+        defaultPort: "23001",
         /* Viewer */
         moveToEntityOnSelection: true,
         openEntityListOnSelection: true,
