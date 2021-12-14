@@ -289,25 +289,8 @@ export default class Renderer {
         // Create settings
         this.settingsList = new SettingsList(document.getElementById("settings"), 
             document.getElementById("settings-search") as HTMLInputElement,
-            () => { 
-                this.saveSettings();
-                if (this.settings && !this.settings.followCurrentSelection)
-                {
-                    this.sceneController.stopFollowEntity();
-                }
-                if (this.settings && this.settings.showAllLayersOnStart)
-                {
-                    this.layerController.setInitialState(LayerState.All);
-                }
-                if (this.settings && !this.settings.showRenderDebug)
-                {
-                    document.getElementById("render-debug").textContent = "";
-                }
-                if (this.settings && this.settings.antialiasingSamples)
-                {
-                    this.sceneController.setAntiAliasingSamples(this.settings.antialiasingSamples);
-                }
-            });
+            this.onSettingsChanged.bind(this)
+        );
 
         // Connection buttons
         this.connectionButtons = new ConnectionButtons(document.getElementById(`connection-buttons`), (id: ConnectionId) => {
@@ -347,11 +330,24 @@ export default class Renderer {
                 this.connectionButtons.onConnectionDisconnecting(id);
             },
         });
+    }
 
-        this.connectionsList.addConnection("localhost", "23001", false);
+    onSettingsChanged()
+    {
+        if (this.settings)
+        {
+            this.saveSettings();
+            this.applySettings(this.settings);
+        }
     }
 
     onSettingsLoaded(settings: ISettings)
+    {
+        this.applySettings(settings);
+        this.connectionsList.addConnection("localhost", settings.defaultPort, false);
+    }
+
+    applySettings(settings: ISettings)
     {
         if (settings.showAllLayersOnStart)
         {
@@ -360,6 +356,18 @@ export default class Renderer {
         if (settings.antialiasingSamples)
         {
             this.sceneController.setAntiAliasingSamples(settings.antialiasingSamples);
+        }
+        if (settings.defaultPort)
+        {
+            (document.getElementById("addConnectionPort") as HTMLInputElement).value = settings.defaultPort;
+        }
+        if (!settings.showRenderDebug)
+        {
+            document.getElementById("render-debug").textContent = "";
+        }
+        if (!settings.followCurrentSelection)
+        {
+            this.sceneController.stopFollowEntity();
         }
     }
 

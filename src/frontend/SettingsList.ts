@@ -45,6 +45,33 @@ namespace SettingsBuilder
         return { fragment: fragment, list: list };
     }
 
+    export function addNumberSetting(group: SettingsBuilderGroup, name: string, tooltip: string, placeholder: string, value: string, callback: IStringSettingCallback)
+    {
+        group.list.appendChild(createNumberSetting(name, tooltip, placeholder, value, callback));
+    }
+
+    function createNumberSetting(name: string, tooltip: string, placeholder: string, value: string, callback: IStringSettingCallback) : HTMLElement
+    {
+        let listItem: HTMLElement = document.createElement("div");
+        listItem.className = "basico-list-item basico-no-hover";
+
+        let input: HTMLInputElement = document.createElement("input");
+        input.className = "basico-input basico-small";
+        input.type = "number";
+        input.value = value;
+        input.placeholder = placeholder;
+        input.onkeyup = () => { callback(input.value); }
+
+        let textItem: HTMLElement = document.createElement("div");
+        textItem.className = "basico-text-oneline";
+        textItem.innerText = name;
+        textItem.title = tooltip;
+
+        listItem.append(textItem, input);
+
+        return listItem;
+    }
+
     export function addStringSetting(group: SettingsBuilderGroup, name: string, tooltip: string, placeholder: string, value: string, callback: IStringSettingCallback)
     {
         group.list.appendChild(createStringSetting(name, tooltip, placeholder, value, callback));
@@ -196,6 +223,16 @@ export class SettingsList
             let group = SettingsBuilder.createGroup("Connection");
             SettingsBuilder.addBooleanSetting(group, "Record on connect", settings.recordOnConnect, (value) => {settings.recordOnConnect = value; this.onSettingsChanged(); })
             SettingsBuilder.addBooleanSetting(group, "Auto re-connect", settings.autoReconnect, (value) => {settings.autoReconnect = value; this.onSettingsChanged(); })
+            SettingsBuilder.addNumberSetting(group,
+                "Default Port",
+                "",
+                defaultSettings.defaultPort, settings.defaultPort,
+                (value) => {
+                    const port = value == "" ? defaultSettings.defaultPort : value;
+                    settings.defaultPort = port;
+                    this.onSettingsChanged();
+                }
+            );
             this.settingsList.appendChild(group.fragment);
         }
         {

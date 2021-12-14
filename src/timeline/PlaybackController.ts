@@ -43,8 +43,8 @@ export class PlaybackController {
         if (this.isPlaying) {
             this.elapsedTime += elapsedSeconds * this.playbackSpeedFactor;
 
-            const nextFrame = this.findNextPlayableFrameSameClient() || this.findNextPlayableFrameAnyClient();
-
+            const nextPlayableFrame = this.findNextPlayableFrameSameClient() || this.findNextPlayableFrameAnyClient();
+            const nextFrame = Math.max(this.renderer.getCurrentFrame() + 1, nextPlayableFrame);
             this.renderer.applyFrame(nextFrame);
 
             // Stop in the last frame
