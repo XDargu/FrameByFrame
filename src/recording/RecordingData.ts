@@ -1,5 +1,11 @@
 import * as Utils from '../utils/utils'
 
+export enum ECoordinateSystem
+{
+    RightHand = 0,
+    LeftHand
+}
+
 export enum RecordingFileType {
 	NaiveRecording,
 	RawFrames
@@ -118,6 +124,7 @@ export interface IFrameData {
 	frameId: number;
 	elapsedTime: number;
 	tag: string;
+	coordSystem?: ECoordinateSystem;
 }
 
 export enum VisitorResult
@@ -142,7 +149,8 @@ const emptyFrameData: IFrameData = {
 	serverTime: 0,
 	elapsedTime: 0,
 	clientId: 0,
-	tag: ""
+	tag: "",
+	coordSystem: ECoordinateSystem.LeftHand
 };
 
 export class PropertyTable {
@@ -535,7 +543,8 @@ export class NaiveRecordedData implements INaiveRecordedData {
 			clientId: frameData.clientId,
 			frameId: frameData.frameId,
 			elapsedTime: frameData.elapsedTime,
-			tag: frameData.tag
+			tag: frameData.tag,
+			coordSystem: frameData.coordSystem
 		};
 
 		// Merge all entities
@@ -583,7 +592,7 @@ export class NaiveRecordedData implements INaiveRecordedData {
 	addTestData(frames: number, entityAmount: number) {
 		for (let i=0; i<frames; ++i)
 		{
-			let frameData : IFrameData = { entities: {}, frameId: i, elapsedTime: 0.0166, clientId: 0, serverTime: i, tag: "" };
+			let frameData : IFrameData = { entities: {}, frameId: i, elapsedTime: 0.0166, clientId: 0, serverTime: i, tag: "", coordSystem: ECoordinateSystem.LeftHand };
 			
 			for (let j=0; j<entityAmount; ++j)
 			{
@@ -752,7 +761,7 @@ export class RecordedData {
 	}
 	
 	buildFrameData(frame : number) : IFrameData {
-		let frameData : IFrameData = { entities: {}, frameId: 0, elapsedTime: 0, clientId: 0, serverTime: 0, tag: "" };
+		let frameData : IFrameData = { entities: {}, frameId: 0, elapsedTime: 0, clientId: 0, serverTime: 0, tag: "", coordSystem: ECoordinateSystem.LeftHand };
 		let tempPropertyData : IProperty = { type: null, value: null, name: null};
 		
 		const entityPropValIDs =  this.frameTable.entryIDs[frame];

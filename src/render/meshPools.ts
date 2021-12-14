@@ -1,7 +1,6 @@
 import * as BABYLON from 'babylonjs';
 import * as RECORDING from '../recording/RecordingData';
 import * as RenderUtils from '../render/renderUtils';
-import CreateCapsule from './capsule';
 import { LinesMesh, } from 'babylonjs/Meshes/linesMesh';
 import { CustomLinesMesh, createCustomLinesystem } from './customLineMesh';
 
@@ -15,11 +14,13 @@ export class MeshPool
 {
     protected pool: Map<string, IPooledMesh[]>;
     protected scene: BABYLON.Scene;
+    protected coordsSystem: RECORDING.ECoordinateSystem;
 
     constructor(scene: BABYLON.Scene)
     {
         this.pool = new Map<string, IPooledMesh[]>();
         this.scene = scene;
+        this.coordsSystem = RECORDING.ECoordinateSystem.RightHand;
     }
 
     protected findMesh(hash: string, args: any)
@@ -127,11 +128,12 @@ export class CapsulePool extends MeshPool
 
     protected buildMesh(hash: string, args: any) : BABYLON.Mesh
     {
-        return CreateCapsule(hash, {
-            height: args.height - (args.radius * 2),
+        return BABYLON.Mesh.CreateCapsule(hash, {
+            height: args.height,
             radius: args.radius,
             tessellation : 9,
-            capDetail : 5,
+            subdivisions: 2,
+            capSubdivisions: 6
         }, this.scene);
     }
 }
@@ -233,8 +235,8 @@ export class LinePool extends MeshPool
     protected buildMesh(hash: string, args: any) : BABYLON.Mesh
     {
         let linePoints = [
-            RenderUtils.createVec3(args.origin),
-            RenderUtils.createVec3(args.end)
+            RenderUtils.createVec3(args.origin, this.coordsSystem),
+            RenderUtils.createVec3(args.end, this.coordsSystem)
         ];
 
         let lineColors = [

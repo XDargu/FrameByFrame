@@ -28,7 +28,7 @@ interface IEntityData
 
 interface IPropertyBuilderFunction
 {
-    (shape: RECORDING.IProperyShape, pools: RenderPools) : BABYLON.Mesh
+    (shape: RECORDING.IProperyShape, pools: RenderPools, system: RECORDING.ECoordinateSystem) : BABYLON.Mesh
 }
 
 interface IPropertyBuilderConfigEntry
@@ -91,6 +91,9 @@ export default class SceneController
     private selectionOutline: OutlineEffect;
     private hoverOutline: OutlineEffect;
 
+    // Config
+    private coordSystem: RECORDING.ECoordinateSystem;
+
     removeAllProperties()
     {
         for (const [id, data] of this.entities)
@@ -123,7 +126,7 @@ export default class SceneController
 
         if (shapeConfig)
         {
-            let mesh = shapeConfig.builder(shape, this.pools);
+            let mesh = shapeConfig.builder(shape, this.pools, this.coordSystem);
             mesh.isPickable = shapeConfig.pickable;
             if (shapeConfig.pickable)
             {
@@ -143,6 +146,7 @@ export default class SceneController
         let entityData: IEntityData = { mesh: sphere, properties: new Map<number, BABYLON.Mesh>() };
         this.entities.set(entity.id, entityData);
         this.propertyToEntity.set(entity.id, entity.id);
+
         return entityData;
     }
 
@@ -154,7 +158,7 @@ export default class SceneController
             entityData = this.createEntity(entity);
         }
         
-        const postion = RECORDING.NaiveRecordedData.getEntityPosition(entity);
+        const postion = RenderUtils.createVec3(RECORDING.NaiveRecordedData.getEntityPosition(entity), this.coordSystem);
         entityData.mesh.position.set(postion.x, postion.y, postion.z);
         entityData.mesh.setEnabled(true);
     }
@@ -218,7 +222,7 @@ export default class SceneController
     {
         if (this.selectedEntity)
         {
-            let position = this.selectedEntity.mesh.position;
+            let position = this.selectedEntity.mesh.absolutePosition;
             this.moveCameraToPosition(position, this.getRadiusOfSelection());
         }
     }
@@ -269,6 +273,11 @@ export default class SceneController
         this.hoveredEntity = null;
 
         this.refreshOutlineTargets();
+    }
+
+    setCoordinateSystem(system: RECORDING.ECoordinateSystem)
+    {
+        this.coordSystem = system;
     }
 
     refreshOutlineTargets()
@@ -346,6 +355,7 @@ export default class SceneController
 
         this.entities = new Map<number, IEntityData>();
         this.propertyToEntity = new Map<number, number>();
+        this.setCoordinateSystem(RECORDING.ECoordinateSystem.LeftHand);
     }
 
     createScene(canvas: HTMLCanvasElement, engine: BABYLON.Engine) {
