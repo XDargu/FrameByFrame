@@ -64,6 +64,7 @@ The message should have the following format:
     "tag": unique client tag/name,
     "serverTime": absolute server time in milliseconds,
     "elapsedTime": time since last frame in seconds,
+    "coordSystem": coordinate system,
     "entities": {
         entity1Id: entity1Data,
         entity2Id: entity2Data
@@ -76,6 +77,7 @@ The message should have the following format:
 - `tag` is a string. It needs to be different for each client. It represents a human readable way of identifying a client.
 - `serverTime` is an integer. It should represent the absolute server time. It will be used for sorting frames when Frame by Frame is connected to multiple clients. This is vital for syncronizing frames correctly in multiplayer games.
 - `elapsedTime` is a number. It represents the time since the last frame, or delta time, in seconds. It will be used for playing back recordins in Frame by Frame.
+- `coordSystem` coordinate system of your game/engine. `0` for Right Hand, `1` for Left Hand.
 - `entities` is an object. The object contains entity data as key-values. The key is the unique entity id, and the value is the entity data. The entity data is documented in the [Entity Data section](#entity-data).
 
 For an example of a valid frame data object, go to [Example of Frame Data](#example-of-frame-data).
@@ -162,6 +164,7 @@ sphere, line, etc
     "tag": "Server",
     "serverTime": 4124566,
     "elapsedTime": 0.16666,
+    "coordSystem": 1,
     "entities": {
         304: {
             "id": 304,
