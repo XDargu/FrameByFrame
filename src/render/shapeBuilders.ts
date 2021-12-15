@@ -80,7 +80,6 @@ export function buildMeshShape(shape: RECORDING.IProperyShape, pools: RenderPool
     const meshProperty = shape as RECORDING.IPropertyMesh;
 
     let customMesh = new BABYLON.Mesh("custom", pools.scene);
-
     customMesh.isPickable = true;
     customMesh.id = meshProperty.id.toString();
 
@@ -90,14 +89,13 @@ export function buildMeshShape(shape: RECORDING.IProperyShape, pools: RenderPool
     if (system == RECORDING.ECoordinateSystem.RightHand)
     {
         vertices = [];
-        indices = [];
 
-        for (let i=0; i<vertices.length / 3; ++i)
+        for (let i=0; i<meshProperty.vertices.length / 3; ++i)
         {
             const idx = i * 3;
-            vertices.push(vertices[idx]);
-            vertices.push(vertices[idx + 2]);
-            vertices.push(vertices[idx + 1]);
+            vertices.push(meshProperty.vertices[idx]);
+            vertices.push(meshProperty.vertices[idx + 2]);
+            vertices.push(meshProperty.vertices[idx + 1]);
         }
     }
 
