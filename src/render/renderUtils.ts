@@ -1,5 +1,6 @@
 import * as BABYLON from 'babylonjs';
 import * as RECORDING from '../recording/RecordingData';
+import * as Utils from '../utils/utils';
 
 interface IVec3
 {
@@ -19,6 +20,11 @@ export function isPropertyShape(property: RECORDING.IProperty)
         property.type == "mesh";
 }
 
+export function createColor4(color: Utils.RGBColor01) : BABYLON.Color4
+{
+    return new BABYLON.Color4(color.r, color.g, color.b, 1);
+}
+
 export function createVec3(vec3: IVec3, system: RECORDING.ECoordinateSystem) : BABYLON.Vector3
 {
     switch(system)
@@ -27,7 +33,6 @@ export function createVec3(vec3: IVec3, system: RECORDING.ECoordinateSystem) : B
         case RECORDING.ECoordinateSystem.RightHand: return new BABYLON.Vector3(vec3.x, vec3.z, vec3.y);
         default: return new BABYLON.Vector3(vec3.x, vec3.y, vec3.z);
     }
-    
 }
 
 export function createVec4(vec3: IVec3) : BABYLON.Vector4

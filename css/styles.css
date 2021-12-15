@@ -2550,7 +2550,6 @@ body {
   text-align: right; }
 
 #settings-container input {
-  width: 50%;
   text-align: right; }
 
 #settings-container .basico-list,
@@ -2563,5 +2562,30 @@ body {
 
 #settings-container .basico-list-item .basico-text-oneline {
   flex: 1; }
+
+#settings-container input[type=color] {
+  padding: 0;
+  background: none;
+  cursor: pointer; }
+
+#settings-container input[type=color]:focus {
+  padding: 0;
+  background: none;
+  cursor: pointer; }
+
+#settings-container input[type=color]::-webkit-color-swatch-wrapper {
+  padding: 0; }
+
+#settings-container input[type=color]::-webkit-color-swatch {
+  border: none; }
+
+#settings-container .setting-value-wrapper {
+  width: 50%;
+  display: flex;
+  flex-direction: row-reverse; }
+
+#settings-container .setting-reset-button {
+  margin-left: 5px;
+  padding: 3px 5px; }
 
 /*# sourceMappingURL=styles.css.map */

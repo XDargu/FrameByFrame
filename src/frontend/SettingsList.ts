@@ -27,6 +27,11 @@ interface IStringSettingCallback
     (value: string) : void
 }
 
+interface IColorSettingCallback
+{
+    (value: string) : void
+}
+
 namespace SettingsBuilder
 {
     export function createGroup(name: string) : SettingsBuilderGroup
@@ -45,31 +50,85 @@ namespace SettingsBuilder
         return { fragment: fragment, list: list };
     }
 
-    export function addNumberSetting(group: SettingsBuilderGroup, name: string, tooltip: string, placeholder: string, value: string, callback: IStringSettingCallback)
+    export function addColorSetting(group: SettingsBuilderGroup, name: string, tooltip: string, value: string, defaultValue: string, callback: IColorSettingCallback)
     {
-        group.list.appendChild(createNumberSetting(name, tooltip, placeholder, value, callback));
+        group.list.appendChild(createColorSetting(name, tooltip, value, defaultValue, callback));
     }
 
-    function createNumberSetting(name: string, tooltip: string, placeholder: string, value: string, callback: IStringSettingCallback) : HTMLElement
+    function createInput(type: string, value: string, placeholder?: string) : HTMLInputElement
     {
-        let listItem: HTMLElement = document.createElement("div");
-        listItem.className = "basico-list-item basico-no-hover";
-
         let input: HTMLInputElement = document.createElement("input");
         input.className = "basico-input basico-small";
-        input.type = "number";
+        input.type = type;
         input.value = value;
-        input.placeholder = placeholder;
-        input.onkeyup = () => { callback(input.value); }
+        if (input.placeholder != null) {
+            input.placeholder = placeholder;
+        }
+        return input;
+    }
 
+    function createTextItem(name: string, tooltip: string) : HTMLElement
+    {
         let textItem: HTMLElement = document.createElement("div");
         textItem.className = "basico-text-oneline";
         textItem.innerText = name;
         textItem.title = tooltip;
+        return textItem;
+    }
 
-        listItem.append(textItem, input);
+    function createListItem(textContent: Node, ...nodes: (Node | string)[]) : HTMLElement
+    {
+        let listItem: HTMLElement = document.createElement("div");
+        listItem.className = "basico-list-item basico-no-hover";
+
+        let contentWrapper = document.createElement("div");
+        contentWrapper.className = "setting-value-wrapper";
+        contentWrapper.append(...nodes.reverse());
+
+        listItem.append(textContent, contentWrapper);
 
         return listItem;
+    }
+
+    function createResetButton() : HTMLButtonElement
+    {
+        let resetButton: HTMLButtonElement = document.createElement("button");
+        resetButton.className = "basico-button basico-small setting-reset-button";
+        resetButton.title = "Restore to default value";
+
+        let icon: HTMLElement = document.createElement("i");
+        icon.className = "fa fa-undo";
+        resetButton.append(icon);
+
+        return resetButton;
+    }
+
+    function createColorSetting(name: string, tooltip: string, value: string, defaultValue: string, callback: IColorSettingCallback) : HTMLElement
+    {
+        let input = createInput("color", value);
+        input.oninput = () => { callback(input.value); }
+
+        let resetButton = createResetButton();
+        resetButton.onclick = () => { input.value = defaultValue; callback(defaultValue); };
+
+        let textItem = createTextItem(name, tooltip);
+
+        return createListItem(textItem, input, resetButton);
+    }
+
+    export function addNumberSetting(group: SettingsBuilderGroup, name: string, tooltip: string, placeholder: number, value: number, callback: IStringSettingCallback)
+    {
+        group.list.appendChild(createNumberSetting(name, tooltip, placeholder, value, callback));
+    }
+
+    function createNumberSetting(name: string, tooltip: string, placeholder: number, value: number, callback: IStringSettingCallback) : HTMLElement
+    {
+        let input = createInput("number", value.toString(), placeholder.toString());
+        input.oninput = () => { callback(input.value == "" ? placeholder.toString() : input.value); }
+
+        let textItem = createTextItem(name, tooltip);
+
+        return createListItem(textItem, input);
     }
 
     export function addStringSetting(group: SettingsBuilderGroup, name: string, tooltip: string, placeholder: string, value: string, callback: IStringSettingCallback)
@@ -79,23 +138,12 @@ namespace SettingsBuilder
 
     function createStringSetting(name: string, tooltip: string, placeholder: string, value: string, callback: IStringSettingCallback) : HTMLElement
     {
-        let listItem: HTMLElement = document.createElement("div");
-        listItem.className = "basico-list-item basico-no-hover";
+        let input = createInput("text", value, placeholder);
+        input.oninput = () => { callback(input.value); }
 
-        let input: HTMLInputElement = document.createElement("input");
-        input.className = "basico-input basico-small";
-        input.value = value;
-        input.placeholder = placeholder;
-        input.onkeyup = () => { callback(input.value); }
+        let textItem = createTextItem(name, tooltip);
 
-        let textItem: HTMLElement = document.createElement("div");
-        textItem.className = "basico-text-oneline";
-        textItem.innerText = name;
-        textItem.title = tooltip;
-
-        listItem.append(textItem, input);
-
-        return listItem;
+        return createListItem(textItem, input);
     }
 
     export function addNumberOptionsSetting(group: SettingsBuilderGroup, name: string, value: number, options: number[], callback: INumberSettingCallback)
@@ -105,19 +153,10 @@ namespace SettingsBuilder
 
     function createNumberOptionsSetting(name: string, value: number, options: number[], callback: INumberSettingCallback) : HTMLElement
     {
-        let listItem: HTMLElement = document.createElement("div");
-        listItem.className = "basico-list-item basico-no-hover";
+        let dropdown = createNumberDropdown(value, options, callback);
+        let textItem = createTextItem(name, "");
 
-        let dropdown: HTMLElement = createNumberDropdown(value, options, callback);
-
-        let textItem: HTMLElement = document.createElement("div");
-        textItem.className = "basico-text-oneline";
-        textItem.innerText = name;
-
-        listItem.append(textItem, dropdown);
-
-
-        return listItem;
+        return createListItem(textItem, dropdown);
     }
 
     export function addBooleanSetting(group: SettingsBuilderGroup, name: string, value: boolean, callback: IBooleanSettingCallback)
@@ -127,18 +166,10 @@ namespace SettingsBuilder
 
     function createBooleanSetting(name: string, value: boolean, callback: IBooleanSettingCallback) : HTMLElement
     {
-        let listItem: HTMLElement = document.createElement("div");
-        listItem.className = "basico-list-item basico-no-hover";
+        let toggle = createToggle(value, callback);
+        let textItem = createTextItem(name, "");
 
-        let toggle: HTMLElement = createToggle(value, callback);
-
-        let textItem: HTMLElement = document.createElement("div");
-        textItem.className = "basico-text-oneline";
-        textItem.innerText = name;
-
-        listItem.append(textItem, toggle);
-
-        return listItem;
+        return createListItem(textItem, toggle);
     }
 
     function createDropdownEntry(name: string) : HTMLElement
@@ -226,10 +257,9 @@ export class SettingsList
             SettingsBuilder.addNumberSetting(group,
                 "Default Port",
                 "",
-                defaultSettings.defaultPort, settings.defaultPort,
+                Number.parseInt(defaultSettings.defaultPort), Number.parseInt(defaultSettings.defaultPort),
                 (value) => {
-                    const port = value == "" ? defaultSettings.defaultPort : value;
-                    settings.defaultPort = port;
+                    settings.defaultPort = value;
                     this.onSettingsChanged();
                 }
             );
@@ -241,6 +271,32 @@ export class SettingsList
             SettingsBuilder.addBooleanSetting(group, "Open entity list on selection", settings.openEntityListOnSelection, (value) => {settings.openEntityListOnSelection = value; this.onSettingsChanged(); })
             SettingsBuilder.addBooleanSetting(group, "Follow selected entity", settings.followCurrentSelection, (value) => {settings.followCurrentSelection = value; this.onSettingsChanged(); })
             SettingsBuilder.addBooleanSetting(group, "Show all layers on start", settings.showAllLayersOnStart, (value) => {settings.showAllLayersOnStart = value; this.onSettingsChanged(); })
+            SettingsBuilder.addColorSetting(group, "Background Color", "Changes the background color of the viewer", settings.backgroundColor, defaultSettings.backgroundColor, (value) => {settings.backgroundColor = value; this.onSettingsChanged(); })
+            this.settingsList.appendChild(group.fragment);
+        }
+
+        {
+            let group = SettingsBuilder.createGroup("Grid");
+            SettingsBuilder.addNumberSetting(group,
+                "Grid height",
+                "Changes the height of the grid on the viewer",
+                defaultSettings.gridHeight,
+                settings.gridHeight,
+                (value) => {
+                    settings.gridHeight = Number.parseFloat(value);
+                    this.onSettingsChanged();
+                }
+            );
+            SettingsBuilder.addNumberSetting(group,
+                "Grid spacing",
+                "Changes the spacing between the grid lines",
+                defaultSettings.gridSpacing,
+                settings.gridSpacing,
+                (value) => {
+                    settings.gridSpacing = Number.parseFloat(value);
+                    this.onSettingsChanged();
+                }
+            );
             this.settingsList.appendChild(group.fragment);
         }
 
