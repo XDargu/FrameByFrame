@@ -1,12 +1,18 @@
 import * as BABYLON from 'babylonjs';
 import * as RECORDING from '../recording/RecordingData';
 import * as Utils from '../utils/utils';
+import { IEntityRenderData } from './commonTypes';
 
 interface IVec3
 {
     x: number;
     y: number;
     z: number;
+}
+
+export function getRadiusOfEntity(entity: IEntityRenderData)
+{
+    return 6; // TODO: Maybe take into account the bounding box of the selected entity
 }
 
 export function isPropertyShape(property: RECORDING.IProperty)
