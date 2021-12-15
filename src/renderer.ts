@@ -121,7 +121,6 @@ export default class Renderer {
         this.playbackController = new PlaybackController(this, this.timeline);
 
         this.recordedData = new RECORDING.NaiveRecordedData();
-        //this.recordedData.addTestData();
 
         this.timeline.updateLength(this.recordedData.getSize());
 
@@ -435,6 +434,16 @@ export default class Renderer {
                 {
                     this.layerController.setAllLayersState(LayerState.All);
                 }
+                
+                // Select any first entity
+                setTimeout(() => {
+                    for (let entity in this.frameData.entities)
+                    {
+                        this.selectEntity(this.frameData.entities[entity].id);
+                        break;
+                    }
+                }, 200);
+                
             }
             catch (error)
             {
@@ -923,7 +932,7 @@ export default class Renderer {
     // Recent files callbacks
     onRecentFileClicked(path: string)
     {
-        this.openModal("Loading File");
+        this.openModal("Opening File");
         ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.Load, path));
     }
 

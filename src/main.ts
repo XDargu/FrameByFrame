@@ -110,7 +110,7 @@ function onOpenFileClicked()
   fileManager.openFile((pathName: string, content: string) => {
     mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.FileOpened, pathName));
     mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
-  }, () => {
+  }, (pathName: string) => {
     mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LongOperationOngoing, "Opening File"));
   });
 }
@@ -122,6 +122,7 @@ function onExportFileClicked()
 
 function onOpenRecentFileClicked(pathName : string)
 {
+  mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LongOperationOngoing, "Opening File"));
   fileManager.loadFile(pathName, (pathName: string, content: string) => {
     mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.FileOpened, pathName));
     mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));

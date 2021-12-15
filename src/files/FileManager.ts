@@ -4,7 +4,7 @@ import { createDefaultSettings, ISettings } from "./Settings";
 
 export interface IFileAcceptedCallback
 {
-    () : void
+    (path: string) : void
 }
 
 export interface IOpenFileCallback
@@ -163,31 +163,30 @@ export default class FileManager
                 return;
             }
 
-            acceptedCallback();
+            acceptedCallback(paths[0]);
 
             this.loadFile(paths[0], callback);
         });
     }
 
-    loadFile(path: string, callback: IOpenFileCallback)
+    async loadFile(path: string, callback: IOpenFileCallback)
     {
-        fs.readFile(path, 'utf-8', (err, data) => {
-            if(err){
-                const options = {
-                    type: 'error',
-                    buttons: ['OK'],
-                    title: 'Error reading file',
-                    message: 'An error ocurred reading the file',
-                    detail: err.message,
-                    checkboxChecked: false,
-                  };
-                dialog.showMessageBox(null, options);
-                return;
-            }
-    
+        try {
+            const data = await fs.promises.readFile(path, 'utf8')
             this.updateHistory(path);
             callback(path, data);
-        });
+        }
+        catch(err) {
+            const options = {
+                type: 'error',
+                buttons: ['OK'],
+                title: 'Error reading file',
+                message: 'An error ocurred reading the file',
+                detail: err.message,
+                checkboxChecked: false,
+              };
+            dialog.showMessageBox(null, options);
+        }
     }
 
     saveFile(defaultName: string, content: string)
