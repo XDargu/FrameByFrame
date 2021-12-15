@@ -2534,8 +2534,7 @@ body {
 
 #setting-list .basico-form-field {
   display: block;
-  margin-bottom: 6px;
-  margin-top: 3px; }
+  margin-bottom: 6px; }
 
 #setting-list .basico-container {
   display: flex;
@@ -2587,5 +2586,8 @@ body {
 #settings-container .setting-reset-button {
   margin-left: 5px;
   padding: 3px 5px; }
+
+#setting-search-wrapper {
+  flex-shrink: 0; }
 
 /*# sourceMappingURL=styles.css.map */
