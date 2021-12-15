@@ -20,6 +20,11 @@ export interface IOnDebugDataUpdated
     (debugData: string) : void
 }
 
+interface ISceneKeyboardFunctions
+{
+    [type: string] : () => void;
+}
+
 interface IEntityData
 {
     mesh: BABYLON.Mesh;
@@ -93,6 +98,8 @@ export default class SceneController
 
     // Config
     private coordSystem: RECORDING.ECoordinateSystem;
+    private cameraMinSpeed: number = 5;
+    private cameraMaxSpeed: number = 15;
 
     removeAllProperties()
     {
@@ -379,15 +386,41 @@ export default class SceneController
         //const camera = new BABYLON.ArcRotateCamera("Camera", 3 * Math.PI / 2, Math.PI / 8, 50, BABYLON.Vector3.Zero(), scene);
         this._camera = new BABYLON.UniversalCamera("UniversalCamera", new BABYLON.Vector3(10, 10, -10), scene);
         this._camera.inertia = 0;
-        this._camera.speed = 10;
+        this._camera.speed = this.cameraMinSpeed;
         this._camera.angularSensibility = 500;
 
         // Manually add inputs here for WASD
-        let keyboardInputs: any = this._camera.inputs.attached['keyboard'];
-        keyboardInputs.keysDown = [83];
-        keyboardInputs.keysUp = [87];
-        keyboardInputs.keysLeft = [65];
-        keyboardInputs.keysRight = [68];
+        this._camera.keysDown = [83];
+        this._camera.keysUp = [87];
+        this._camera.keysLeft = [65];
+        this._camera.keysRight = [68];
+
+        const keyControlsUp : ISceneKeyboardFunctions = {
+            "Shift": () => { this._camera.speed = this.cameraMinSpeed; }
+        }
+
+        const keyControlsDown : ISceneKeyboardFunctions = {
+            "Shift": () => { this._camera.speed = this.cameraMaxSpeed; }
+        }
+
+        scene.onKeyboardObservable.add((kbInfo) =>
+        {
+            switch(kbInfo.type)
+            {
+                case BABYLON.KeyboardEventTypes.KEYDOWN:
+                    {
+                        const func = keyControlsDown[kbInfo.event.key];
+                        if (func) { func(); }
+                    }
+                    break;
+                case BABYLON.KeyboardEventTypes.KEYUP:
+                    {
+                        const func = keyControlsUp[kbInfo.event.key];
+                        if (func) { func(); }
+                    }
+                    break;
+            }
+        });
 
         // Move forward with mouse wheel
         let zoomCallback = (evt: WheelEvent) => {
