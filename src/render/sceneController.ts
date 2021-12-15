@@ -89,6 +89,7 @@ export default class SceneController
 
     // Gizmos
     private axisGizmo: AxisGizmo;
+    private grid: BABYLON.Mesh;
 
     private isFollowingEntity: boolean;
 
@@ -460,11 +461,11 @@ export default class SceneController
         light.intensity = 0.7;
 
         // Grid
-        var grid = BABYLON.Mesh.CreatePlane("plane", 10000.0, scene);
-        grid.rotate(BABYLON.Axis.X, Math.PI / 2, BABYLON.Space.WORLD);
-        grid.isPickable = false;
+        this.grid = BABYLON.Mesh.CreatePlane("plane", 10000.0, scene);
+        this.grid.rotate(BABYLON.Axis.X, Math.PI / 2, BABYLON.Space.WORLD);
+        this.grid.isPickable = false;
 
-        var groundMaterial = new GridMaterial("groundMaterial", scene);
+        let groundMaterial = new GridMaterial("groundMaterial", scene);
         groundMaterial.majorUnitFrequency = 5;
         groundMaterial.minorUnitVisibility = 0.45;
         groundMaterial.gridRatio = 1;
@@ -473,7 +474,7 @@ export default class SceneController
         groundMaterial.lineColor = new BABYLON.Color3(0.5, 0.5, 0.5);
         groundMaterial.opacity = 0.5;
 
-        grid.material = groundMaterial;
+        this.grid.material = groundMaterial;
 
         this.entityMaterial = new BABYLON.StandardMaterial("entityMaterial", scene);
         this.entityMaterial.diffuseColor = new BABYLON.Color3(1, 1, 1);
@@ -582,6 +583,22 @@ export default class SceneController
             this.isFollowingEntity = false;
             this._camera.lockedTarget = null;
         }
+    }
+
+    public setBackgroundColor(hexColor: string)
+    {
+        console.log(hexColor);
+        this._scene.clearColor = RenderUtils.createColor4(Utils.RgbToRgb01(Utils.hexToRgb(hexColor)));
+    }
+
+    public setGridHeight(height: number)
+    {
+        this.grid.position.y = height;
+    }
+
+    public setGridSpacing(spacing: number)
+    {
+        (this.grid.material as GridMaterial).gridRatio = spacing;
     }
 
     clear()

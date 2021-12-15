@@ -352,10 +352,6 @@ export default class Renderer {
         {
             this.layerController.setInitialState(LayerState.All);
         }
-        if (settings.antialiasingSamples)
-        {
-            this.sceneController.setAntiAliasingSamples(settings.antialiasingSamples);
-        }
         if (settings.defaultPort)
         {
             (document.getElementById("addConnectionPort") as HTMLInputElement).value = settings.defaultPort;
@@ -368,6 +364,11 @@ export default class Renderer {
         {
             this.sceneController.stopFollowEntity();
         }
+
+        this.sceneController.setGridHeight(settings.gridHeight);
+        this.sceneController.setGridSpacing(settings.gridSpacing);
+        this.sceneController.setBackgroundColor(settings.backgroundColor);
+        this.sceneController.setAntiAliasingSamples(settings.antialiasingSamples);
     }
 
     updateSettings(settings: ISettings)

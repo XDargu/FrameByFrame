@@ -1,15 +1,24 @@
 export interface ISettings
 {
+    /* Connections */
     recordOnConnect: boolean,
     autoReconnect: boolean,
+    defaultPort: string,
+    /* Viewer */
     moveToEntityOnSelection: boolean,
     openEntityListOnSelection: boolean,
     followCurrentSelection: boolean,
     showAllLayersOnStart: boolean,
-    showRenderDebug: boolean,
-    antialiasingSamples: number,
+    backgroundColor: string,
+    /* Grid */
+    gridHeight: number,
+    gridSpacing: number,
+    /* Export */
     exportNameFormat: string,
-    defaultPort: string,
+    /* Debug */
+    showRenderDebug: boolean,
+    /* Graphics */
+    antialiasingSamples: number,
 }
 
 export function createDefaultSettings() : ISettings
@@ -24,6 +33,10 @@ export function createDefaultSettings() : ISettings
         openEntityListOnSelection: true,
         followCurrentSelection: false,
         showAllLayersOnStart: true,
+        backgroundColor: "#33334C",
+        /* Grid */
+        gridHeight: 0,
+        gridSpacing: 1,
         /* Export */
         exportNameFormat: "recording_%Y-%M-%D_%h:%m:%s",
         /* Debug */
