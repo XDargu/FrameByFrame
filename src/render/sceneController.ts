@@ -13,6 +13,7 @@ import CameraControl from './cameraControl';
 import SceneOutline from './sceneOutline';
 import SceneGrid from './sceneGrid';
 import SceneEntitySelection, { IEntitySelectedCallback } from './sceneEntitySelection';
+import ScenePropertySelection from './scenePropertySelection';
 import { CorePropertyTypes } from '../types/typeRegistry';
 
 export interface IOnDebugDataUpdated
@@ -55,8 +56,8 @@ export default class SceneController
     private cameraControl: CameraControl;
     private sceneEntityData: SceneEntityData;
 
-    private entityMaterial: BABYLON.StandardMaterial;
     private entitySelection: SceneEntitySelection;
+    private propertySelection: ScenePropertySelection;
 
     public onDebugDataUpdated: IOnDebugDataUpdated;
 
@@ -91,6 +92,8 @@ export default class SceneController
         this.entitySelection = new SceneEntitySelection(onEntitySelected, this.sceneEntityData, this.outline);
         this.entitySelection.initialize(this._scene, this._canvas);
 
+        this.propertySelection = new ScenePropertySelection(this.sceneEntityData, this.pools);
+
         this.setCoordinateSystem(RECORDING.ECoordinateSystem.LeftHand);
     }
 
@@ -122,10 +125,6 @@ export default class SceneController
         light.intensity = 0.7;
 
         this.grid = new SceneGrid(scene);
-
-        this.entityMaterial = new BABYLON.StandardMaterial("entityMaterial", scene);
-        this.entityMaterial.diffuseColor = new BABYLON.Color3(1, 1, 1);
-        this.entityMaterial.alpha = 0.8;
 
         // TODO: Maybe move to settings?
         const selectionColor = Utils.RgbToRgb01(Utils.hexToRgb("#6DE080"));
@@ -180,7 +179,7 @@ export default class SceneController
     createEntity(entity: RECORDING.IEntity) : IEntityRenderData
     {
         let sphere = BABYLON.Mesh.CreateSphere("entitySphere", 10.0, 0.1, this._scene);
-        sphere.material = this.entityMaterial;
+        sphere.material = this.pools.materialPool.getMaterial(1, 1, 1, 0.8);;
         sphere.isPickable = true;
         sphere.id = entity.id.toString();
         let entityData: IEntityRenderData = { mesh: sphere, properties: new Map<number, BABYLON.Mesh>() };
@@ -239,6 +238,17 @@ export default class SceneController
             const position = selectedEntity.mesh.absolutePosition;
             this.cameraControl.moveCameraToPosition(position, RenderUtils.getRadiusOfEntity(selectedEntity));
         }
+    }
+
+    showProperty(propertyId: number)
+    {
+        this.propertySelection.showProperty(propertyId);
+    }
+
+    // TODO: Find a better name
+    hideProperty(propertyId: number)
+    {
+        this.propertySelection.hideProperty(propertyId);
     }
 
     updateLayerStatus(layer: string, state: LayerState)
