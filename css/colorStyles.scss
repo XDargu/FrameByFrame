@@ -15,10 +15,12 @@ $light-selection: #5F516A; // hsl(274, 13%, 37%)
 $text-color: #C4C4C4;
 $text-color-dark: #918B95;
 $text-color-darker: #424242;
+$text-color-light: #EEEEEE;
 
 $form-background: #D2C7DB; // hsl(273, 22%, 82%)
 $form-background-focus: #ECDDF9; // hsl(272, 70%, 92%)
 $form-accent: #BA92D9; // hsl(274, 48%, 71%)
+$form-background-dark: #4f435a;
 
 $light-text: #eee;
 
@@ -161,11 +163,16 @@ $recording-button: #DE0000;
     font-size: 8px;
 }
 
-#properties .basico-tag,
-#events .basico-tag
+#properties .basico-tree,
+#events .basico-tree
 {
-    background: $form-background;
-    color: $darker-background;
+    color: $text-color-light;
+}
+
+.basico-tag.property-primitive  {
+    background: $form-background-dark;
+    color: $text-color-light;
+    font-weight: 100;
 }
 
 #properties .basico-tree .basico-tag,
