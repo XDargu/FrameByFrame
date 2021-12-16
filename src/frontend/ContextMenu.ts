@@ -1,5 +1,5 @@
 export interface IContextMenuCallback {
-    () : void
+    (element: HTMLElement) : void
 }
 
 export interface IContextMenuItem {
@@ -8,13 +8,13 @@ export interface IContextMenuItem {
     callback: IContextMenuCallback;
 }
 
-function createMenuItem(item: IContextMenuItem)
+function createMenuItem(element: HTMLElement, item: IContextMenuItem)
 {
     let li = document.createElement("li");
     let link = document.createElement("a");
     link.href = "#";
     link.textContent = item.text;
-    link.onclick = () => { item.callback(); };
+    link.onclick = () => { item.callback(element); };
 
     if (item.icon != null)
     {
@@ -28,7 +28,7 @@ function createMenuItem(item: IContextMenuItem)
     return li;
 }
 
-function createContextMenu(posX:  number, posY: number, items: IContextMenuItem[])
+function createContextMenu(posX:  number, posY: number, element: HTMLElement, items: IContextMenuItem[])
 {
     let menu = document.getElementById("contextMenu");
     menu.style.display = 'block';
@@ -40,7 +40,7 @@ function createContextMenu(posX:  number, posY: number, items: IContextMenuItem[
     let list = document.createElement("ul");
     list.className = "menu";
 
-    const menuItems = items.map((item) => { return createMenuItem(item); })
+    const menuItems = items.map((item) => { return createMenuItem(element, item); })
     list.append(...menuItems);
 
     menu.append(list);
@@ -56,6 +56,6 @@ function createContextMenu(posX:  number, posY: number, items: IContextMenuItem[
 export function addContextMenu(element: HTMLElement, items: IContextMenuItem[])
 {
     element.oncontextmenu = (ev: MouseEvent) => {
-        createContextMenu(ev.pageX, ev.pageY, items);
+        createContextMenu(ev.pageX, ev.pageY, element, items);
     }; 
 }

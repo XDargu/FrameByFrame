@@ -27,6 +27,7 @@ import FiltersList, { FilterId } from "./frontend/FiltersList";
 import * as Utils from "./utils/utils";
 import FilterTickers from "./frontend/FilterTickers";
 import EntityPropertiesBuilder from "./frontend/EntityPropertiesBuilder";
+import { CorePropertyTypes } from "./types/typeRegistry";
 
 enum TabIndices
 {
@@ -101,8 +102,12 @@ export default class Renderer {
         this.selectedEntityId = null;
 
         this.entityPropsBuilder = new EntityPropertiesBuilder(
-            this.onPropertyHover.bind(this),
-            this.onPropertyStopHovering.bind(this)
+        {
+            onPropertyHover: this.onPropertyHover.bind(this),
+            onPropertyStopHovering: this.onPropertyStopHovering.bind(this),
+            onCreateFilterFromProperty: this.onCreateFilterFromProperty.bind(this),
+            onCreateFilterFromEvent: this.onCreateFilterFromEvent.bind(this)
+        }
         );
 
         let connectionsListElement: HTMLElement = document.getElementById(`connectionsList`);
@@ -787,6 +792,28 @@ export default class Renderer {
     onPropertyStopHovering(propertyId: number)
     {
         this.sceneController.hideProperty(propertyId);
+    }
+
+    onCreateFilterFromProperty(propertyId: number)
+    {
+        const eventData = NaiveRecordedData.findPropertyIdInEvents(this.frameData, propertyId);
+        if (eventData != null)
+        {
+            this.filterList.addFilter(new Filters.EventFilter(eventData.resultEvent.name, eventData.resultEvent.tag, Filters.createMemberFilterFromProperty(eventData.resultProp)));
+            this.controlTabs.openTabByIndex(TabIndices.Filters);
+        }
+        else
+        {
+            const property: RECORDING.IProperty = NaiveRecordedData.findPropertyIdInProperties(this.frameData, propertyId);
+            this.filterList.addFilter(new Filters.PropertyFilter("", Filters.createMemberFilterFromProperty(property)));
+            this.controlTabs.openTabByIndex(TabIndices.Filters);
+        }
+    }
+
+    onCreateFilterFromEvent(name: string, tag: string)
+    {
+        this.filterList.addFilter(new Filters.EventFilter(name, tag, []));
+        this.controlTabs.openTabByIndex(TabIndices.Filters);
     }
 
     // Timeline callbacks
