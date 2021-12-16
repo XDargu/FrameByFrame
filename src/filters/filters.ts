@@ -1,5 +1,6 @@
 import { filterText } from "../utils/utils";
 import * as RECORDING from "../recording/RecordingData";
+import { CorePropertyTypes } from "../types/typeRegistry";
 
 export enum FilterType
 {
@@ -297,20 +298,22 @@ export namespace Common
 
     export function filterProperty(property: RECORDING.IProperty, filters: MemberFilter[]) : boolean
     {
+        const Type = CorePropertyTypes;
+
         switch (property.type)
         {
-            case "string": return filterPropertyString(property, filters);
-            case "number": return filterPropertyNumber(property, filters);
-            case "boolean": return filterPropertyBoolean(property, filters);
-            case "group": return filterPropertyGroup(property as RECORDING.IPropertyGroup, filters);
-            case "sphere": return filterPropertySphere(property as RECORDING.IPropertySphere, filters);
-            case "line": return filterPropertyLine(property as RECORDING.IPropertyLine, filters);
-            case "plane": return filterPropertyPlane(property as RECORDING.IPropertyPlane, filters);
-            case "aabb": return filterPropertyAABB(property as RECORDING.IPropertyAABB, filters);
-            case "oobb": return filterPropertyOOBB(property as RECORDING.IPropertyOOBB, filters);
-            case "capsule": return filterPropertyCapsule(property as RECORDING.IPropertyCapsule, filters);
-            case "mesh": return filterPropertyMesh(property as RECORDING.IPropertyMesh, filters);
-            case "vec3": return filterPropertyVec3(property, filters);
+            case Type.String: return filterPropertyString(property, filters);
+            case Type.Number: return filterPropertyNumber(property, filters);
+            case Type.Bool: return filterPropertyBoolean(property, filters);
+            case Type.Group: return filterPropertyGroup(property as RECORDING.IPropertyGroup, filters);
+            case Type.Sphere: return filterPropertySphere(property as RECORDING.IPropertySphere, filters);
+            case Type.Line: return filterPropertyLine(property as RECORDING.IPropertyLine, filters);
+            case Type.Plane: return filterPropertyPlane(property as RECORDING.IPropertyPlane, filters);
+            case Type.AABB: return filterPropertyAABB(property as RECORDING.IPropertyAABB, filters);
+            case Type.OOBB: return filterPropertyOOBB(property as RECORDING.IPropertyOOBB, filters);
+            case Type.Capsule: return filterPropertyCapsule(property as RECORDING.IPropertyCapsule, filters);
+            case Type.Mesh: return filterPropertyMesh(property as RECORDING.IPropertyMesh, filters);
+            case Type.Vec3: return filterPropertyVec3(property, filters);
         }
 
         return false;

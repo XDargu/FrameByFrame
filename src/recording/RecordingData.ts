@@ -1,3 +1,4 @@
+import { CorePropertyTypes } from '../types/typeRegistry';
 import * as Utils from '../utils/utils'
 
 export enum ECoordinateSystem
@@ -9,6 +10,18 @@ export enum ECoordinateSystem
 export enum RecordingFileType {
 	NaiveRecording,
 	RawFrames
+}
+
+export function isPropertyShape(property: IProperty)
+{
+    const Type = CorePropertyTypes;
+    return property.type == Type.Sphere || 
+        property.type == Type.Line ||
+        property.type == Type.Plane ||
+        property.type == Type.AABB ||
+        property.type == Type.OOBB ||
+        property.type == Type.Capsule ||
+        property.type == Type.Mesh;
 }
 
 export interface IVec3 {
@@ -600,48 +613,48 @@ export class NaiveRecordedData implements INaiveRecordedData {
 
 				var entity : IEntity = { id: entityID, parentId: 0, properties: [], events: [] };
 				
-				var propertyGroup = { type: "group", name: "properties", value: [
-					{ type: "int", name: "Target ID", value: 122 },
-					{ type: "string", name: "Target Name", value: "Player" },
-					{ type: "float", name: "Target Distance", value: j },
-					{ type: "group", name: "Target Info", value: [
-						{ type: "float", name: "Target Radius", value: i },
-						{ type: "float", name: "Target Length", value: Math.random() * 20 }
+				var propertyGroup = { type: CorePropertyTypes.Group, name: "properties", value: [
+					{ type: CorePropertyTypes.Number, name: "Target ID", value: 122 },
+					{ type: CorePropertyTypes.String, name: "Target Name", value: "Player" },
+					{ type: CorePropertyTypes.Number, name: "Target Distance", value: j },
+					{ type: CorePropertyTypes.Group, name: "Target Info", value: [
+						{ type: CorePropertyTypes.Number, name: "Target Radius", value: i },
+						{ type: CorePropertyTypes.Number, name: "Target Length", value: Math.random() * 20 }
 						] }
 					]
 				};
 
-				var specialGroup = { type: "group", name: "special", value: [
-					{ type: "string", name: "Name", value: "My Entity Name " + entityID },
-					{ type: "vec3", name: "Position", value: { x: Math.random() * 10, y: Math.random() * 10, z: Math.random() * 10} }
+				var specialGroup = { type: CorePropertyTypes.Group, name: "special", value: [
+					{ type: CorePropertyTypes.String, name: "Name", value: "My Entity Name " + entityID },
+					{ type: CorePropertyTypes.Vec3, name: "Position", value: { x: Math.random() * 10, y: Math.random() * 10, z: Math.random() * 10} }
 					]
 				};
 
 				if (i % 2 == 0)
 				{
 					var eventProperties = [
-						{ name: "Test string", type: "string", value: "eventProp" + i },
-						{ name: "Test number", type: "number", value: j }
+						{ name: "Test string", type: CorePropertyTypes.String, value: "eventProp" + i },
+						{ name: "Test number", type: CorePropertyTypes.Number, value: j }
 					];
 					var event = {
 						idx: 0,
 						name: "OnTestEvent",
 						tag: "FirstTest",
-						properties: {value: eventProperties, type: "group", name: "properties" }
+						properties: {value: eventProperties, type: CorePropertyTypes.Group, name: "properties" }
 					};
 					entity.events.push(event);
 				}
 				else
 				{
 					var eventProperties2 = [
-						{ name: "Test other string", type: "string", value: "eventProp" + i },
-						{ name: "Test other number", type: "number", value: j }
+						{ name: "Test other string", type: CorePropertyTypes.String, value: "eventProp" + i },
+						{ name: "Test other number", type: CorePropertyTypes.Number, value: j }
 					];
 					var event2 = {
 						idx: 0,
 						name: "OnOtherTestEvent",
 						tag: "OtherTest",
-						properties: {value: eventProperties2, type: "group", name: "properties" }
+						properties: {value: eventProperties2, type: CorePropertyTypes.Group, name: "properties" }
 					};
 					entity.events.push(event2);
 				}
@@ -738,7 +751,7 @@ export class RecordedData {
 		const propertyID = this.propertyTable.registerEntry(propertyData.type, propertyData.name, parentID);
 		
 		// Register children if it's a group
-		if (propertyData.type == "group") {
+		if (propertyData.type == CorePropertyTypes.Group) {
 			let propertyGroup = propertyData as IPropertyGroup;
 			for (let i=0; i<propertyGroup.value.length; i++) {
 				this.addProperty(frame, entityID, propertyGroup.value[i], propertyID);
@@ -809,7 +822,7 @@ export class RecordedData {
 				}
 				else {
 					const parentName = this.propertyTable.names[currentParentID];
-					tempPropertyData = { type: "group", name: parentName, value: [tempPropertyData] };
+					tempPropertyData = { type: CorePropertyTypes.Group, name: parentName, value: [tempPropertyData] };
 					
 					entityData.groupMap[currentParentID] = tempPropertyData;
 				}

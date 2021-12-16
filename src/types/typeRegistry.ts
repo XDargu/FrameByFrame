@@ -5,6 +5,24 @@ export enum EPrimitiveType
     Boolean
 }
 
+export enum CorePropertyTypes {
+	Group = "group",
+	Comment = "comment",
+	/* Types */
+	Number = "number",
+	String = "string",
+	Bool = "boolean",
+	Vec3 = "vec3",
+	/* Shapes */
+	Sphere = "sphere",
+	Capsule = "capsule",
+	AABB = "aabb",
+	OOBB = "oobb",
+	Plane = "plane",
+	Line = "line",
+	Mesh = "mesh"
+}
+
 export interface ITypeLayout
 {
     [nameId: string] : EPrimitiveType

@@ -28,6 +28,7 @@ import { EntityTree } from "./frontend/EntityTree";
 import FiltersList, { FilterId } from "./frontend/FiltersList";
 import * as Utils from "./utils/utils";
 import FilterTickers from "./frontend/FilterTickers";
+import { CorePropertyTypes } from "./types/typeRegistry";
 
 const { shell } = require('electron');
 
@@ -100,8 +101,7 @@ export default class Renderer {
     initialize(canvas: HTMLCanvasElement) {
 
         this.sceneController = new SceneController();
-        this.sceneController.initialize(canvas);
-        this.sceneController.onEntitySelected = this.onEntitySelectedOnScene.bind(this);
+        this.sceneController.initialize(canvas, this.onEntitySelectedOnScene.bind(this));
         this.sceneController.onDebugDataUpdated = (data) => {
             if (this.settings && this.settings.showRenderDebug)
             {
@@ -641,7 +641,7 @@ export default class Renderer {
         for (let i=0; i<propertyGroup.value.length; ++i)
         {
             const property = propertyGroup.value[i];
-            if (property.type == "group" && depth < 2)
+            if (property.type == CorePropertyTypes.Group && depth < 2)
             {
                 propsToBuild.push(property);
             }

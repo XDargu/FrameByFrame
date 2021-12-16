@@ -1,6 +1,7 @@
 import * as BABYLON from 'babylonjs';
 import * as RECORDING from '../recording/RecordingData';
 import * as Utils from '../utils/utils';
+import { IEntityRenderData } from './commonTypes';
 
 interface IVec3
 {
@@ -9,15 +10,9 @@ interface IVec3
     z: number;
 }
 
-export function isPropertyShape(property: RECORDING.IProperty)
+export function getRadiusOfEntity(entity: IEntityRenderData)
 {
-    return property.type == "sphere" || 
-        property.type == "line"||
-        property.type == "plane" ||
-        property.type == "aabb" ||
-        property.type == "oobb" ||
-        property.type == "capsule" ||
-        property.type == "mesh";
+    return 6; // TODO: Maybe take into account the bounding box of the selected entity
 }
 
 export function createColor4(color: Utils.RGBColor01) : BABYLON.Color4
