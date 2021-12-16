@@ -5,7 +5,6 @@ import { Console, ConsoleWindow, ILogAction, LogChannel, LogLevel } from "./fron
 import FileListController from "./frontend/FileListController";
 import { ConnectionId } from './network/conectionsManager';
 import { getLayerStateName, LayerController, LayerState } from "./frontend/LayersController";
-import { PropertyTreeController } from "./frontend/PropertyTreeController";
 import * as Messaging from "./messaging/MessageDefinitions";
 import { initMessageHandling } from "./messaging/RendererMessageHandler";
 import * as NET_TYPES from './network/types';
@@ -14,7 +13,6 @@ import SceneController from './render/sceneController';
 import { PlaybackController } from "./timeline/PlaybackController";
 import Timeline from './timeline/timeline';
 import { initWindowControls } from "./frontend/WindowControls";
-import { TreeControl } from "./ui/tree";
 import { Splitter } from "./ui/splitter";
 import { TabBorder, TabControl, TabDisplay } from "./ui/tabs";
 import * as Shortcuts from "./frontend/Shortcuts";
@@ -28,16 +26,7 @@ import { EntityTree } from "./frontend/EntityTree";
 import FiltersList, { FilterId } from "./frontend/FiltersList";
 import * as Utils from "./utils/utils";
 import FilterTickers from "./frontend/FilterTickers";
-import { CorePropertyTypes } from "./types/typeRegistry";
-
-const { shell } = require('electron');
-
-
-interface PropertyTreeGroup
-{
-    propertyTree: TreeControl;
-    propertyTreeController: PropertyTreeController;
-}
+import EntityPropertiesBuilder from "./frontend/EntityPropertiesBuilder";
 
 enum TabIndices
 {
@@ -64,7 +53,6 @@ export default class Renderer {
     private layerController: LayerController;
     private recordingOptions: RecordingOptions;
     private selectedEntityId: number;
-    private propertyGroups: PropertyTreeGroup[];
     private leftPaneSplitter: Splitter;
     private rightPaneSplitter: Splitter;
     private detailPaneSplitter: Splitter;
@@ -72,6 +60,7 @@ export default class Renderer {
     private consoleSplitter: Splitter;
     private filterList: FiltersList;
     private filterTickers: FilterTickers;
+    private entityPropsBuilder: EntityPropertiesBuilder;
 
     // Networking
     private connectionsList: ConnectionsList;
@@ -111,6 +100,11 @@ export default class Renderer {
 
         this.selectedEntityId = null;
 
+        this.entityPropsBuilder = new EntityPropertiesBuilder(
+            this.onPropertyHover.bind(this),
+            this.onPropertyStopHovering.bind(this)
+        );
+
         let connectionsListElement: HTMLElement = document.getElementById(`connectionsList`);
         this.connectionsList = new ConnectionsList(connectionsListElement, this.onMessageArrived.bind(this));
         this.connectionsList.initialize();
@@ -130,7 +124,6 @@ export default class Renderer {
         let recentFilesWelcomeElement = document.getElementById("recent-files-welcome").querySelector("ul");
         this.recentFilesController = new FileListController(recentFilesListElement, recentFilesWelcomeElement, this.onRecentFileClicked.bind(this))
 
-        this.propertyGroups = [];
         this.unprocessedFramesWithEvents = [];
         this.areAllFramesWithEventsPending = false;
         this.unprocessedFiltersPending = false;
@@ -626,114 +619,10 @@ export default class Renderer {
         this.onEntitySelected(entityId);
     }
 
-    buildSinglePropertyTree(treeParent: HTMLElement, propertyGroup: RECORDING.IPropertyGroup, depth: number, nameOverride: string = undefined, tag: string = undefined)
-    {
-        const isSpecialProperties = propertyGroup.name == "special" && depth == 0;
-        const isDefaultProperties = propertyGroup.name == "properties" && depth == 0;
-        const name = isSpecialProperties ? "Basic Information"
-            : isDefaultProperties ? "Uncategorized"
-            : nameOverride != undefined ? nameOverride
-            : propertyGroup.name;
-
-        let propsToBuild = [];
-        let propsToAdd = [];
-
-        for (let i=0; i<propertyGroup.value.length; ++i)
-        {
-            const property = propertyGroup.value[i];
-            if (property.type == CorePropertyTypes.Group && depth < 2)
-            {
-                propsToBuild.push(property);
-            }
-            else
-            {
-                propsToAdd.push(property);
-            }
-        }
-
-        for (let i=0; i<propsToBuild.length; ++i)
-        {
-            this.buildSinglePropertyTree(treeParent, propsToBuild[i] as RECORDING.IPropertyGroup, depth + 1);
-        }
-
-        if (propsToAdd.length > 0)
-        {
-            let titleElement = document.createElement("div");
-            titleElement.classList.add("basico-title");
-
-            let nameElement = document.createElement("span");
-            nameElement.innerText = name;
-            titleElement.append(nameElement);
-            
-            if (tag)
-            {
-                let tagElement = document.createElement("div");
-                tagElement.innerText = tag;
-                tagElement.classList.add("basico-tag");
-                tagElement.style.background = Utils.colorFromHash(Utils.hashCode(tag));
-                titleElement.append(tagElement);
-            }
-
-            let treeElement = document.createElement("div");
-            treeElement.classList.add("basico-tree");
-            let ul = document.createElement("ul");
-            treeElement.appendChild(ul);
-
-            if (isSpecialProperties)
-            {
-                treeParent.prepend(treeElement);
-                treeParent.prepend(titleElement);
-            }
-            else
-            {
-                treeParent.appendChild(titleElement);
-                treeParent.appendChild(treeElement);   
-            }
-
-            let propertyTree = new TreeControl(treeElement);
-            let propertyTreeController = new PropertyTreeController(propertyTree, 
-                this.onPropertyHover.bind(this),
-                this.onPropertyStopHovering.bind(this)
-                );
-
-            this.propertyGroups.push({propertyTree: propertyTree, propertyTreeController: propertyTreeController});
-
-
-            for (let i=0; i<propsToAdd.length; ++i)
-            {
-                propertyTreeController.addToPropertyTree(propertyTree.root, propsToAdd[i]);
-            }
-        }
-    }
-
     buildPropertyTree()
     {
-        // TODO: Instead of destroying everything, reuse/pool the already existing ones!
-        let propertyTree = document.getElementById('properties');
-        let eventTree = document.getElementById('events');
-
-        propertyTree.innerHTML = "";
-        eventTree.innerHTML = "";
-        this.propertyGroups = [];
-
-        if (this.selectedEntityId != null)
-        {
-            const selectedEntity = this.frameData.entities[this.selectedEntityId];
-            if (selectedEntity)
-            {
-                for (let i=0; i<selectedEntity.properties.length; ++i)
-                {
-                    const propertyGroup = selectedEntity.properties[i] as RECORDING.IPropertyGroup;
-                    this.buildSinglePropertyTree(propertyTree, propertyGroup, 0);
-                }
-
-                for (let i=0; i<selectedEntity.events.length; ++i)
-                {
-                    const propertyGroup = selectedEntity.events[i].properties;
-                    this.buildSinglePropertyTree(eventTree, propertyGroup, 2, selectedEntity.events[i].name, selectedEntity.events[i].tag);
-                }
-            }
-        }
+        const selectedEntity = this.selectedEntityId != null ? this.frameData.entities[this.selectedEntityId] : null;
+        this.entityPropsBuilder.buildPropertyTree(selectedEntity);
     }
 
     updateFrameDataEvents(frameData: RECORDING.IFrameData, frameIdx: number)
