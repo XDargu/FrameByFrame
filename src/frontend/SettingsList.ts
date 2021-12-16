@@ -257,7 +257,7 @@ export class SettingsList
             SettingsBuilder.addNumberSetting(group,
                 "Default Port",
                 "",
-                Number.parseInt(defaultSettings.defaultPort), Number.parseInt(defaultSettings.defaultPort),
+                Number.parseInt(defaultSettings.defaultPort), Number.parseInt(settings.defaultPort),
                 (value) => {
                     settings.defaultPort = value;
                     this.onSettingsChanged();
