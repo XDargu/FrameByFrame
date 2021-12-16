@@ -241,5 +241,9 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
       fileManager.updateSettings(arg.data as ISettings);
       break;
     }
+    case Messaging.MessageType.OpenInExplorer:
+    {
+      shell.showItemInFolder(path.resolve(arg.data as string))
+    }
   }
 })

@@ -29,13 +29,13 @@
 #console
 {
     background: $dark-background;
-    color: $light-text;
+    color: $text-color-light;
 }
 
 #console .basico-tabs
 {
     background: $dark-heading;
-    color: $light-text;
+    color: $text-color-light;
 }
 
 #console .basico-tabs-item
@@ -52,7 +52,7 @@
 #console .basico-tabs-item .basico-tabs-selected
 {
     background: none;
-    color: $light-text;
+    color: $text-color-light;
 }
 
 #console-levels .basico-dropdown-content i

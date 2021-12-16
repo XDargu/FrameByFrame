@@ -122,7 +122,7 @@ export default class Renderer {
 
         let recentFilesListElement = document.getElementById(`recentFilesList`);
         let recentFilesWelcomeElement = document.getElementById("recent-files-welcome").querySelector("ul");
-        this.recentFilesController = new FileListController(recentFilesListElement, recentFilesWelcomeElement, this.onRecentFileClicked.bind(this))
+        this.recentFilesController = new FileListController(recentFilesListElement, recentFilesWelcomeElement, this.onRecentFileClicked.bind(this), this.onRecentFileOpenInExplorer.bind(this) );
 
         this.unprocessedFramesWithEvents = [];
         this.areAllFramesWithEventsPending = false;
@@ -838,6 +838,11 @@ export default class Renderer {
     {
         this.openModal("Opening File");
         ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.Load, path));
+    }
+
+    onRecentFileOpenInExplorer(path: string)
+    {
+        ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.OpenInExplorer, path));
     }
 
     // Layer callbacks
