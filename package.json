@@ -9,6 +9,12 @@
     "fileAssociations": {
       "ext": "fbf",
       "name": "Frame by Frame File"
+    },
+    "win": {
+      "target": ["portable", "nsis"]
+    },
+    "portable": {
+        "artifactName": "framebyframe_portable.exe"
     }
   },
   "scripts": {
