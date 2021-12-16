@@ -543,36 +543,40 @@ export default class FiltersList
 
     addEventFilter()
     {
-        const filterId = FilterIdGenerator.nextId();
-        const filter = new EventFilter("", "", []);
-        const filterName = "Filter " + filterId;
-
-        const filterElement = UI.createEventFilter(filterId, filterName, filter, this.eventFilterCallbacks);
-
-        this.filters.set(filterId, { name: filterName, filter: filter, element: filterElement, visible: true});
-        
-        this.filterContainer.insertBefore(filterElement, this.addDropdown);
-
-        Console.log(LogLevel.Verbose, LogChannel.Filters, "Filter added: " + filterName);
-        this.callbacks.onFilterCreated(filterId, filterName, filter);
-        this.onFilterChanged(filterId);
+        this.addFilter(new EventFilter("", "", []));
     }
 
     addPropertyFilter()
     {
+        this.addFilter(new PropertyFilter("", []));
+    }
+
+    addFilter(filter: Filter)
+    {
         const filterId = FilterIdGenerator.nextId();
-        const filter = new PropertyFilter("", []);
         const filterName = "Filter " + filterId;
 
-        const filterElement = UI.createPropertyFilter(filterId, filterName, filter, this.propertyFilterCallbacks);
+        let filterElement = null;
+        switch(filter.type)
+        {
+            case FilterType.Property:
+                filterElement = UI.createPropertyFilter(filterId, filterName, filter as PropertyFilter, this.propertyFilterCallbacks);
+                break;
+            case FilterType.Event:
+                filterElement = UI.createEventFilter(filterId, filterName, filter as EventFilter, this.eventFilterCallbacks);
+                break;
+        }
 
-        this.filters.set(filterId, { name: filterName, filter: filter, element: filterElement, visible: true});
-        
-        this.filterContainer.insertBefore(filterElement, this.addDropdown);
+        if (filterElement)
+        {
+            this.filters.set(filterId, { name: filterName, filter: filter, element: filterElement, visible: true});
+            
+            this.filterContainer.insertBefore(filterElement, this.addDropdown);
 
-        Console.log(LogLevel.Verbose, LogChannel.Filters, "Filter added: " + filterName);
-        this.callbacks.onFilterCreated(filterId, filterName, filter);
-        this.onFilterChanged(filterId);
+            Console.log(LogLevel.Verbose, LogChannel.Filters, "Filter added: " + filterName);
+            this.callbacks.onFilterCreated(filterId, filterName, filter);
+            this.onFilterChanged(filterId);
+        }
     }
 
     setFilterVisibility(id: FilterId, visible: boolean)

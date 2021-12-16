@@ -44,7 +44,7 @@ export interface IPropertyCustomType {
 export interface IProperty {
 	type: string;
 	name?: string;
-	value: string | number | IVec3 | IPropertyCustomType | IProperty[];
+	value: string | number | boolean | IVec3 | IPropertyCustomType | IProperty[];
 	id?: number;
 }
 
@@ -148,12 +148,12 @@ export enum VisitorResult
 
 export interface IPropertyVisitorCallback
 {
-    (id: IProperty) : VisitorResult | void
+    (property: IProperty) : VisitorResult | void
 }
 
 export interface IEventVisitorCallback
 {
-    (id: IEvent) : VisitorResult | void
+    (event: IEvent) : VisitorResult | void
 }
 
 const emptyFrameData: IFrameData = {
@@ -479,6 +479,56 @@ export class NaiveRecordedData implements INaiveRecordedData {
 
 		this.updateLayersOfFrame(frame);
 		this.updateClientIDsOfFrame(frame);
+	}
+
+	static findPropertyIdInProperties(frameData: IFrameData, propertyId: number) : IProperty
+	{
+		let result: IProperty = null;
+		for (let entityID in frameData.entities)
+		{
+			const entity = frameData.entities[entityID];
+
+			NaiveRecordedData.visitEntityProperties(entity, (property) => {
+				if (property.id == propertyId)
+				{
+					result = property;
+					return VisitorResult.Stop;
+				}
+			});
+
+			if (result != null) {
+				return result;
+			}
+		}
+
+		return null;
+	}
+
+	static findPropertyIdInEvents(frameData: IFrameData, propertyId: number)
+	{
+		let resultProp: IProperty = null;
+		let resultEvent: IEvent = null;
+		for (let entityID in frameData.entities)
+		{
+			const entity = frameData.entities[entityID];
+
+			NaiveRecordedData.visitEvents(entity.events, (event) => {
+				NaiveRecordedData.visitProperties([event.properties], (property) => {
+					if (property.id == propertyId)
+					{
+						resultEvent = event;
+						resultProp = property;
+						return VisitorResult.Stop;
+					}
+				});
+			});
+
+			if (resultEvent != null) {
+				return { resultEvent, resultProp };
+			}
+		}
+
+		return null;
 	}
 
 	static visitEntityProperties(entity: IEntity, callback: IPropertyVisitorCallback)

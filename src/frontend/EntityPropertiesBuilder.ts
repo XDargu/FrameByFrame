@@ -2,7 +2,8 @@ import * as RECORDING from '../recording/RecordingData';
 import * as Utils from "../utils/utils";
 import { CorePropertyTypes } from "../types/typeRegistry";
 import { TreeControl } from "../ui/tree";
-import { IPropertyHoverCallback, PropertyTreeController } from "../frontend/PropertyTreeController";
+import { ICreateFilterFromPropCallback, IPropertyHoverCallback, PropertyTreeController } from "../frontend/PropertyTreeController";
+import { addContextMenu } from './ContextMenu';
 
 interface PropertyTreeGroup
 {
@@ -10,17 +11,28 @@ interface PropertyTreeGroup
     propertyTreeController: PropertyTreeController;
 }
 
+export interface ICreateFilterFromEventCallback
+{
+    (name: string, tag: string) : void
+}
+
+export interface EntityPropertiesBuilderCallbacks
+{
+    onPropertyHover: IPropertyHoverCallback;
+    onPropertyStopHovering: IPropertyHoverCallback;
+    onCreateFilterFromProperty: ICreateFilterFromPropCallback;
+    onCreateFilterFromEvent: ICreateFilterFromEventCallback;
+}
+
 export default class EntityPropertiesBuilder
 {
     private propertyGroups: PropertyTreeGroup[];
-    private onPropertyHover: IPropertyHoverCallback;
-    private onPropertyStopHovering: IPropertyHoverCallback;
+    private callbacks: EntityPropertiesBuilderCallbacks;
 
-    constructor(onPropertyHover: IPropertyHoverCallback, onPropertyStopHovering: IPropertyHoverCallback)
+    constructor(callbacks: EntityPropertiesBuilderCallbacks)
     {
         this.propertyGroups = [];
-        this.onPropertyHover = onPropertyHover;
-        this.onPropertyStopHovering = onPropertyStopHovering;
+        this.callbacks = callbacks;
     }
 
     buildSinglePropertyTreeBlock(treeParent: HTMLElement, propertyGroup: RECORDING.IPropertyGroup, name: string, tag: string = null, ignoreChildren: boolean = false, shouldPrepend: boolean = false)
@@ -46,6 +58,11 @@ export default class EntityPropertiesBuilder
                 tagElement.classList.add("basico-tag");
                 tagElement.style.background = Utils.colorFromHash(Utils.hashCode(tag));
                 titleElement.append(tagElement);
+
+                const contextMenuItems = [
+                    { text: "Create event filter", icon: "fa-plus-square", callback: () => {this.callbacks.onCreateFilterFromEvent(name, tag); } },
+                ];
+                addContextMenu(titleElement, contextMenuItems);
             }
 
             let treeElement = document.createElement("div");
@@ -64,8 +81,9 @@ export default class EntityPropertiesBuilder
 
             let propertyTree = new TreeControl(treeElement);
             let propertyTreeController = new PropertyTreeController(propertyTree, 
-                this.onPropertyHover,
-                this.onPropertyStopHovering
+                this.callbacks.onPropertyHover,
+                this.callbacks.onPropertyStopHovering,
+                this.callbacks.onCreateFilterFromProperty
             );
 
             this.propertyGroups.push({propertyTree: propertyTree, propertyTreeController: propertyTreeController});

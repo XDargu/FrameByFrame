@@ -1,8 +1,13 @@
 import * as RECORDING from '../recording/RecordingData';
 import * as TREE from '../ui/tree';
 import * as TypeSystem from "../types/typeRegistry";
+import { addContextMenu } from './ContextMenu';
 
 export interface IPropertyHoverCallback {
+    (propertyId: number) : void;
+}
+
+export interface ICreateFilterFromPropCallback {
     (propertyId: number) : void;
 }
 
@@ -64,18 +69,25 @@ export class PropertyTreeController {
 
     onPropertyHover: IPropertyHoverCallback;
     onPropertyStopHovering: IPropertyHoverCallback;
+    onCreateFilterFromProperty: ICreateFilterFromPropCallback;
 
-    constructor(propertyTree: TREE.TreeControl, onPropertyHover: IPropertyHoverCallback, onPropertyStopHovering: IPropertyHoverCallback) {
+    // Context menu
+    private readonly contextMenuItems = [
+        { text: "Create filter from property", icon: "fa-plus-square", callback: this.onAddFilter.bind(this) },
+    ];
+
+    constructor(propertyTree: TREE.TreeControl, onPropertyHover: IPropertyHoverCallback, onPropertyStopHovering: IPropertyHoverCallback, onCreateFilterFromProperty: ICreateFilterFromPropCallback) {
         this.propertyTree = propertyTree;
         this.typeRegistry = TypeSystem.TypeRegistry.getInstance();
         this.onPropertyHover = onPropertyHover;
         this.onPropertyStopHovering = onPropertyStopHovering;
+        this.onCreateFilterFromProperty = onCreateFilterFromProperty;
     }
 
     addValueToPropertyTree(parent: HTMLElement, name: string, content: HTMLElement[], propertyId: number = null)
     {
         const elements = [UI.wrapPropertyName(name), UI.wrapPropertyGroup(content)];
-        this.propertyTree.addItem(parent, elements, {
+        const listItem = this.propertyTree.addItem(parent, elements, {
             value:  propertyId == null ? null : propertyId.toString(),
             selectable: false,
             callbacks: {
@@ -84,6 +96,8 @@ export class PropertyTreeController {
                 onItemMouseOut: this.onPropertyMouseLeave.bind(this),
             }
         });
+
+        addContextMenu(listItem, this.contextMenuItems);
     }
 
     addCustomTypeToPropertyTree(parent: HTMLElement, property: RECORDING.IProperty, type: TypeSystem.IType) {
@@ -181,6 +195,7 @@ export class PropertyTreeController {
                             let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
                             this.addVec3(addedItem, "Position", sphere.position, property.id);
                             this.addNumber(addedItem, "Radius", sphere.radius, property.id);
+                            addContextMenu(addedItem, this.contextMenuItems);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Capsule:
@@ -192,6 +207,7 @@ export class PropertyTreeController {
                             this.addVec3(addedItem, "Direction", capsule.direction, property.id);
                             this.addNumber(addedItem, "Radius", capsule.radius, property.id);
                             this.addNumber(addedItem, "Height", capsule.height, property.id);
+                            addContextMenu(addedItem, this.contextMenuItems);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.AABB:
@@ -201,6 +217,7 @@ export class PropertyTreeController {
                             let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
                             this.addVec3(addedItem, "Position", aabb.position, property.id);
                             this.addVec3(addedItem, "Size", aabb.size, property.id);
+                            addContextMenu(addedItem, this.contextMenuItems);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.OOBB:
@@ -212,6 +229,7 @@ export class PropertyTreeController {
                             this.addVec3(addedItem, "Size", oobb.size, property.id);
                             this.addVec3(addedItem, "Forward", oobb.forward, property.id);
                             this.addVec3(addedItem, "Up", oobb.up, property.id);
+                            addContextMenu(addedItem, this.contextMenuItems);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Plane:
@@ -224,6 +242,7 @@ export class PropertyTreeController {
                             this.addVec3(addedItem, "Up", plane.up, property.id);
                             this.addNumber(addedItem, "Width", plane.width, property.id);
                             this.addNumber(addedItem, "Length", plane.length, property.id);
+                            addContextMenu(addedItem, this.contextMenuItems);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Line:
@@ -233,6 +252,7 @@ export class PropertyTreeController {
                             let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
                             this.addVec3(addedItem, "Origin", line.origin, property.id);
                             this.addVec3(addedItem, "Destination", line.destination, property.id);
+                            addContextMenu(addedItem, this.contextMenuItems);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Mesh:
@@ -267,6 +287,15 @@ export class PropertyTreeController {
         if (propertyId != null)
         {
             this.onPropertyStopHovering(Number.parseInt(propertyId));
+        }
+    }
+
+    onAddFilter(item: HTMLElement)
+    {
+        const propertyId = this.propertyTree.getValueOfItem(item);
+        if (propertyId != null)
+        {
+            this.onCreateFilterFromProperty(Number.parseInt(propertyId));
         }
     }
 }
