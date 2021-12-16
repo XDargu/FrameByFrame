@@ -8,15 +8,11 @@ import * as ShapeBuilders from '../render/shapeBuilders';
 import { AxisGizmo } from './gizmos';
 import RenderPools from './renderPools';
 import LayerManager from './layerManager';
-import { IEntityRenderData } from './commonTypes';
+import { IEntityRenderData, SceneEntityData } from './commonTypes';
 import CameraControl from './cameraControl';
 import SceneOutline from './sceneOutline';
 import SceneGrid from './sceneGrid';
-
-export interface IEntitySelectedCallback
-{
-    (id: number) : void
-}
+import SceneEntitySelection, { IEntitySelectedCallback } from './sceneEntitySelection';
 
 export interface IOnDebugDataUpdated
 {
@@ -55,25 +51,12 @@ export default class SceneController
     private _engine: BABYLON.Engine;
     private _scene: BABYLON.Scene;
 
-    /* Basic ideas regarding scenes:
-     - Entities are registered and added to a map by id
-     - Shapes rendered by entities (as part of their properties) will be added to those entities, and will be stored in a map by property ID
-     - Shapes, materials, etc. Should be stored in pools to reduce overhead if possible.
-     - Instead of creating and destroying entities constantly, we can just move them around, and maybe hide the ones that doesn´t exist in the current frame
-    */
-
     private cameraControl: CameraControl;
-
-    private entities: Map<number, IEntityRenderData>;
-    private propertyToEntity: Map<number, number>;
-
-    private selectedEntityId: number;
-    private selectedEntity: IEntityRenderData;
-    private hoveredEntity: IEntityRenderData;
+    private sceneEntityData: SceneEntityData;
 
     private entityMaterial: BABYLON.StandardMaterial;
+    private entitySelection: SceneEntitySelection;
 
-    public onEntitySelected: IEntitySelectedCallback;
     public onDebugDataUpdated: IOnDebugDataUpdated;
 
     private layerManager: LayerManager;
@@ -89,184 +72,7 @@ export default class SceneController
     // Config
     private coordSystem: RECORDING.ECoordinateSystem;
 
-    removeAllProperties()
-    {
-        for (const [id, data] of this.entities)
-        {
-            for (let [propId, propertyMesh] of data.properties)
-            {
-                if (this.pools.tryFreeMesh(propertyMesh))
-                {
-                    this._scene.removeMesh(propertyMesh, true);
-                }
-            }
-            data.properties.clear();
-        }
-    }
-
-    addProperty(entity: RECORDING.IEntity, property: RECORDING.IProperty)
-    {
-        if (!RenderUtils.isPropertyShape(property)) { return; }
-
-        const shape = property as RECORDING.IProperyShape;
-        const layerState = this.layerManager.getLayerState(shape.layer);
-        
-        if (layerState == LayerState.Off) { return; }
-        if (layerState == LayerState.Selected && this.selectedEntityId != entity.id) { return; }
-        
-        let entityData = this.entities.get(entity.id);
-        if (!entityData) { return; }
-
-        const shapeConfig = shapeBuildConfig[property.type];
-
-        if (shapeConfig)
-        {
-            let mesh = shapeConfig.builder(shape, this.pools, this.coordSystem);
-            mesh.isPickable = shapeConfig.pickable;
-            if (shapeConfig.pickable)
-            {
-                this.propertyToEntity.set(shape.id, entity.id);
-            }
-            entityData.properties.set(shape.id, mesh);
-        }
-
-    }
-
-    createEntity(entity: RECORDING.IEntity) : IEntityRenderData
-    {
-        let sphere = BABYLON.Mesh.CreateSphere("sphere", 10.0, 0.1, this._scene);
-        sphere.material = this.entityMaterial;
-        sphere.isPickable = true;
-        sphere.id = entity.id.toString();
-        let entityData: IEntityRenderData = { mesh: sphere, properties: new Map<number, BABYLON.Mesh>() };
-        this.entities.set(entity.id, entityData);
-        this.propertyToEntity.set(entity.id, entity.id);
-
-        return entityData;
-    }
-
-    setEntity(entity: RECORDING.IEntity)
-    {
-        let entityData = this.entities.get(entity.id);
-        if (!entityData)
-        {
-            entityData = this.createEntity(entity);
-        }
-        
-        const postion = RenderUtils.createVec3(RECORDING.NaiveRecordedData.getEntityPosition(entity), this.coordSystem);
-        entityData.mesh.position.set(postion.x, postion.y, postion.z);
-        entityData.mesh.setEnabled(true);
-    }
-
-    hideAllEntities()
-    {
-        for (let data of this.entities.values())
-        {
-            data.mesh.setEnabled(false);
-        }
-    }
-
-    private applySelectionMaterial(entity: IEntityRenderData)
-    {
-        this.axisGizmo.attachToMesh(entity.mesh);
-    }
-
-    private applyHoverMaterial(entity: IEntityRenderData)
-    {
-    }
-
-    private restoreEntityMaterial(entity: IEntityRenderData)
-    {
-    }
-
-    markEntityAsHovered(id: number)
-    {
-        this.onEntityHovered(id);
-    }
-
-    unmarkEntityAsHovered(id: number)
-    {
-        this.onEntityStopHovered();
-    }
-
-    markEntityAsSelected(id: number)
-    {
-        this.selectedEntityId = id;
-        let storedMesh = this.entities.get(id);
-        if (storedMesh)
-        {
-            // Restore previous entity material
-            if (this.selectedEntity)
-            {
-                this.restoreEntityMaterial(this.selectedEntity);
-            }
-
-            this.selectedEntity = storedMesh;
-            this.cameraControl.setSelectedEntity(storedMesh);
-            this.applySelectionMaterial(this.selectedEntity);
-
-            this.refreshOutlineTargets();
-        }
-    }
-
-    moveCameraToSelection()
-    {
-        if (this.selectedEntity)
-        {
-            let position = this.selectedEntity.mesh.absolutePosition;
-            this.cameraControl.moveCameraToPosition(position, RenderUtils.getRadiusOfEntity(this.selectedEntity));
-        }
-    }
-
-    private onEntityHovered(id: number)
-    {
-        let storedMesh = this.entities.get(id);
-        if (storedMesh)
-        {
-            // Restore previous entity material
-            if (this.hoveredEntity && this.hoveredEntity != this.selectedEntity)
-            {
-                this.restoreEntityMaterial(this.hoveredEntity);
-            }
-
-            this.hoveredEntity = storedMesh;
-            this.applyHoverMaterial(this.hoveredEntity);
-        }
-
-        this.refreshOutlineTargets();
-    }
-
-    private onEntityStopHovered()
-    {
-        // Restore previous entity material
-        if (this.hoveredEntity && this.hoveredEntity != this.selectedEntity)
-        {
-            this.restoreEntityMaterial(this.hoveredEntity);
-        }
-        this.hoveredEntity = null;
-
-        this.refreshOutlineTargets();
-    }
-
-    refreshOutlineTargets()
-    {
-        this.outline.refreshOutlineTargets(this.selectedEntity, this.hoveredEntity);
-    }
-
-    updateLayerStatus(layer: string, state: LayerState)
-    {
-        this.layerManager.setLayerState(layer, state);
-    }
-
-    updateDebugData()
-    {
-        if (this.onDebugDataUpdated)
-        {
-            this.onDebugDataUpdated(DebugUtils.createDebugData(this._scene, this._engine, this.pools));
-        }
-    }
-
-    initialize(canvas: HTMLCanvasElement) {
+    initialize(canvas: HTMLCanvasElement, onEntitySelected: IEntitySelectedCallback) {
         const engine = new BABYLON.Engine(canvas, false, { stencil: true });
         this.createScene(canvas, engine);
 
@@ -279,12 +85,15 @@ export default class SceneController
             engine.resize();
         });
 
-        this.entities = new Map<number, IEntityRenderData>();
-        this.propertyToEntity = new Map<number, number>();
+        this.sceneEntityData = new SceneEntityData();
+
+        this.entitySelection = new SceneEntitySelection(onEntitySelected, this.sceneEntityData, this.outline);
+        this.entitySelection.initialize(this._scene, this._canvas);
+
         this.setCoordinateSystem(RECORDING.ECoordinateSystem.LeftHand);
     }
 
-    createScene(canvas: HTMLCanvasElement, engine: BABYLON.Engine) {
+    private createScene(canvas: HTMLCanvasElement, engine: BABYLON.Engine) {
         this._canvas = canvas;
 
         this._engine = engine;
@@ -317,50 +126,128 @@ export default class SceneController
         this.entityMaterial.diffuseColor = new BABYLON.Color3(1, 1, 1);
         this.entityMaterial.alpha = 0.8;
 
-        // Mouse picking
-        // We need this to let the system select invisible meshes
-        scene.pointerDownPredicate = function(mesh) {
-            return mesh.isPickable;
-        }
-
-        scene.pointerMovePredicate = function(mesh) {
-            return mesh.isPickable;
-        }
-
-        //When pointer down event is raised
-        scene.onPointerDown = (evt, pickResult) => {
-            // if the click hits the ground object, we change the impact position
-            if (pickResult.hit && evt.button == 0) {
-                const entityId: number = this.propertyToEntity.get(parseInt(pickResult.pickedMesh.id));
-                this.onEntitySelected(entityId);
-            }
-        };
-
-        scene.onPointerMove = (evt, pickInfo) => {
-            if (pickInfo.hit) {
-                const entityId: number = this.propertyToEntity.get(parseInt(pickInfo.pickedMesh.id));
-                if (!this.selectedEntity || this.selectedEntityId != entityId) {
-                    this.onEntityHovered(entityId);
-                }
-                if (this.selectedEntityId && this.hoveredEntity && this.selectedEntityId == entityId)
-                {
-                    this.onEntityStopHovered();
-                }
-                canvas.style.cursor = "pointer";
-            }
-            else {
-                if (this.selectedEntity != this.hoveredEntity)
-                {
-                    this.onEntityStopHovered();
-                }
-            }
-        };
-
         // TODO: Maybe move to settings?
         const selectionColor = Utils.RgbToRgb01(Utils.hexToRgb("#6DE080"));
         const hoverColor = Utils.RgbToRgb01(Utils.hexToRgb("#8442B9"));
 
         this.outline = new SceneOutline(scene, this.cameraControl.getCamera(), selectionColor, hoverColor);
+    }
+
+    removeAllProperties()
+    {
+        for (const [id, data] of this.sceneEntityData.entities)
+        {
+            for (let [propId, propertyMesh] of data.properties)
+            {
+                if (this.pools.tryFreeMesh(propertyMesh))
+                {
+                    this._scene.removeMesh(propertyMesh, true);
+                }
+            }
+            data.properties.clear();
+        }
+    }
+
+    addProperty(entity: RECORDING.IEntity, property: RECORDING.IProperty)
+    {
+        if (!RenderUtils.isPropertyShape(property)) { return; }
+
+        const shape = property as RECORDING.IProperyShape;
+        const layerState = this.layerManager.getLayerState(shape.layer);
+        
+        if (layerState == LayerState.Off) { return; }
+        if (layerState == LayerState.Selected && this.entitySelection.getSelectedEntityId() != entity.id) { return; }
+        
+        const entityData = this.sceneEntityData.getEntityById(entity.id);
+        if (!entityData) { return; }
+
+        const shapeConfig = shapeBuildConfig[property.type];
+
+        if (shapeConfig)
+        {
+            let mesh = shapeConfig.builder(shape, this.pools, this.coordSystem);
+            mesh.isPickable = shapeConfig.pickable;
+            if (shapeConfig.pickable)
+            {
+                this.sceneEntityData.setEntityProperty(shape.id, entity.id);
+            }
+            entityData.properties.set(shape.id, mesh);
+        }
+
+    }
+
+    createEntity(entity: RECORDING.IEntity) : IEntityRenderData
+    {
+        let sphere = BABYLON.Mesh.CreateSphere("sphere", 10.0, 0.1, this._scene);
+        sphere.material = this.entityMaterial;
+        sphere.isPickable = true;
+        sphere.id = entity.id.toString();
+        let entityData: IEntityRenderData = { mesh: sphere, properties: new Map<number, BABYLON.Mesh>() };
+        this.sceneEntityData.setEntityData(entity.id, entityData);
+        this.sceneEntityData.setEntityProperty(entity.id, entity.id);
+
+        return entityData;
+    }
+
+    setEntity(entity: RECORDING.IEntity)
+    {
+        let entityData = this.sceneEntityData.getEntityById(entity.id);
+        if (!entityData)
+        {
+            entityData = this.createEntity(entity);
+        }
+        
+        const position = RenderUtils.createVec3(RECORDING.NaiveRecordedData.getEntityPosition(entity), this.coordSystem);
+        entityData.mesh.position.set(position.x, position.y, position.z);
+        entityData.mesh.setEnabled(true);
+    }
+
+    hideAllEntities()
+    {
+        for (let data of this.sceneEntityData.entities.values())
+        {
+            data.mesh.setEnabled(false);
+        }
+    }
+
+    markEntityAsHovered(id: number)
+    {
+        this.entitySelection.markEntityAsHovered(id);
+    }
+
+    unmarkEntityAsHovered(id: number)
+    {
+        this.entitySelection.unmarkEntityAsHovered(id);
+    }
+
+    markEntityAsSelected(id: number)
+    {
+        if (this.entitySelection.markEntityAsSelected(id))
+        {
+            const selectedEntity = this.entitySelection.getSelectedEntity();
+            this.axisGizmo.attachToMesh(selectedEntity.mesh);
+            this.cameraControl.setSelectedEntity(selectedEntity);
+        }
+    }
+
+    moveCameraToSelection()
+    {
+        const selectedEntity = this.entitySelection.getSelectedEntity();
+        if (selectedEntity)
+        {
+            const position = selectedEntity.mesh.absolutePosition;
+            this.cameraControl.moveCameraToPosition(position, RenderUtils.getRadiusOfEntity(selectedEntity));
+        }
+    }
+
+    updateLayerStatus(layer: string, state: LayerState)
+    {
+        this.layerManager.setLayerState(layer, state);
+    }
+
+    refreshOutlineTargets()
+    {
+        this.entitySelection.refreshOutlineTargets();
     }
 
     followEntity()
@@ -403,12 +290,19 @@ export default class SceneController
         this.removeAllProperties();
         this.pools.clear();
 
-        for (let [id, entityData] of this.entities)
+        for (let [id, entityData] of this.sceneEntityData.entities)
         {
             this._scene.removeMesh(entityData.mesh);
         }
-        this.entities.clear();
-        this.propertyToEntity.clear();
-        console.log(this._scene.materials);
+
+        this.sceneEntityData.clear();
+    }
+
+    private updateDebugData()
+    {
+        if (this.onDebugDataUpdated)
+        {
+            this.onDebugDataUpdated(DebugUtils.createDebugData(this._scene, this._engine, this.pools));
+        }
     }
 }

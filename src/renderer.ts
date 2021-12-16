@@ -100,8 +100,7 @@ export default class Renderer {
     initialize(canvas: HTMLCanvasElement) {
 
         this.sceneController = new SceneController();
-        this.sceneController.initialize(canvas);
-        this.sceneController.onEntitySelected = this.onEntitySelectedOnScene.bind(this);
+        this.sceneController.initialize(canvas, this.onEntitySelectedOnScene.bind(this));
         this.sceneController.onDebugDataUpdated = (data) => {
             if (this.settings && this.settings.showRenderDebug)
             {
