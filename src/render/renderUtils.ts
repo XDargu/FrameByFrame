@@ -15,17 +15,6 @@ export function getRadiusOfEntity(entity: IEntityRenderData)
     return 6; // TODO: Maybe take into account the bounding box of the selected entity
 }
 
-export function isPropertyShape(property: RECORDING.IProperty)
-{
-    return property.type == "sphere" || 
-        property.type == "line"||
-        property.type == "plane" ||
-        property.type == "aabb" ||
-        property.type == "oobb" ||
-        property.type == "capsule" ||
-        property.type == "mesh";
-}
-
 export function createColor4(color: Utils.RGBColor01) : BABYLON.Color4
 {
     return new BABYLON.Color4(color.r, color.g, color.b, 1);

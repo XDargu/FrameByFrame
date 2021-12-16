@@ -119,7 +119,8 @@ export class PropertyTreeController {
             value:  property.id.toString(),
             selectable: false,
         };
-        if (property.type == "group") {
+
+        if (property.type == TypeSystem.CorePropertyTypes.Group) {
             let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
             const propertyGroup = property as RECORDING.IPropertyGroup;
 
@@ -130,69 +131,99 @@ export class PropertyTreeController {
         // Find type
         else {
             const type = this.typeRegistry.findType(property.type);
-            if (type) {
+            if (type)
+            {
                 this.addCustomTypeToPropertyTree(parent, property, type);
             }
-            else if (property.type == "comment") {
+            else if (property.type == TypeSystem.CorePropertyTypes.Comment)
+            {
                 let comment = document.createElement("div");
                 comment.classList.add("property-comment");
                 comment.textContent = property.value as string;
-                let addedItem = this.propertyTree.addItem(parent, [comment], {
+
+                this.propertyTree.addItem(parent, [comment], {
                     value:  property.id.toString(),
                     selectable: false,
                 });
             }
-            else if (property.type == "sphere") {
-                const sphere = property as RECORDING.IPropertySphere;
+            else if (RECORDING.isPropertyShape(property))
+            {
+                if (property.name.length > 0)
+                {
+                    switch(property.type)
+                    {
+                        case TypeSystem.CorePropertyTypes.Sphere:
+                        {
+                            const sphere = property as RECORDING.IPropertySphere;
 
-                let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
-                this.addVec3(addedItem, "Position", sphere.position);
-                this.addNumber(addedItem, "Radius", sphere.radius);
+                            let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
+                            this.addVec3(addedItem, "Position", sphere.position);
+                            this.addNumber(addedItem, "Radius", sphere.radius);
+                            break;
+                        }
+                        case TypeSystem.CorePropertyTypes.Capsule:
+                        {
+                            const capsule = property as RECORDING.IPropertyCapsule;
+
+                            let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
+                            this.addVec3(addedItem, "Position", capsule.position);
+                            this.addVec3(addedItem, "Direction", capsule.direction);
+                            this.addNumber(addedItem, "Radius", capsule.radius);
+                            this.addNumber(addedItem, "Height", capsule.height);
+                            break;
+                        }
+                        case TypeSystem.CorePropertyTypes.AABB:
+                        {
+                            const aabb = property as RECORDING.IPropertyAABB;
+
+                            let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
+                            this.addVec3(addedItem, "Position", aabb.position);
+                            this.addVec3(addedItem, "Size", aabb.size);
+                            break;
+                        }
+                        case TypeSystem.CorePropertyTypes.OOBB:
+                        {
+                            const oobb = property as RECORDING.IPropertyOOBB;
+
+                            let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
+                            this.addVec3(addedItem, "Position", oobb.position);
+                            this.addVec3(addedItem, "Size", oobb.size);
+                            this.addVec3(addedItem, "Forward", oobb.forward);
+                            this.addVec3(addedItem, "Up", oobb.up);
+                            break;
+                        }
+                        case TypeSystem.CorePropertyTypes.Plane:
+                        {
+                            const plane = property as RECORDING.IPropertyPlane;
+
+                            let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
+                            this.addVec3(addedItem, "Position", plane.position);
+                            this.addVec3(addedItem, "Normal", plane.normal);
+                            this.addVec3(addedItem, "Up", plane.up);
+                            this.addNumber(addedItem, "Width", plane.width);
+                            this.addNumber(addedItem, "Length", plane.length);
+                            break;
+                        }
+                        case TypeSystem.CorePropertyTypes.Line:
+                        {
+                            const line = property as RECORDING.IPropertyLine;
+
+                            let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
+                            this.addVec3(addedItem, "Origin", line.origin);
+                            this.addVec3(addedItem, "Destination", line.destination);
+                            break;
+                        }
+                        case TypeSystem.CorePropertyTypes.Mesh:
+                        {
+                            let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
+                            // Ignore vertices/indices
+                            break;
+                        }
+                    }
+                }
             }
-            else if (property.type == "capsule") {
-                const capsule = property as RECORDING.IPropertyCapsule;
-
-                let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
-                this.addVec3(addedItem, "Position", capsule.position);
-                this.addVec3(addedItem, "Direction", capsule.direction);
-                this.addNumber(addedItem, "Radius", capsule.radius);
-                this.addNumber(addedItem, "Height", capsule.height);
-            }
-            else if (property.type == "aabb") {
-                const aabb = property as RECORDING.IPropertyAABB;
-
-                let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
-                this.addVec3(addedItem, "Position", aabb.position);
-                this.addVec3(addedItem, "Size", aabb.size);
-            }
-            else if (property.type == "oobb") {
-                const oobb = property as RECORDING.IPropertyOOBB;
-
-                let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
-                this.addVec3(addedItem, "Position", oobb.position);
-                this.addVec3(addedItem, "Size", oobb.size);
-                this.addVec3(addedItem, "Forward", oobb.forward);
-                this.addVec3(addedItem, "Up", oobb.up);
-            }
-            else if (property.type == "plane") {
-                const plane = property as RECORDING.IPropertyPlane;
-
-                let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
-                this.addVec3(addedItem, "Position", plane.position);
-                this.addVec3(addedItem, "Normal", plane.normal);
-                this.addVec3(addedItem, "Up", plane.up);
-                this.addNumber(addedItem, "Width", plane.width);
-                this.addNumber(addedItem, "Length", plane.length);
-            }
-            else if (property.type == "line") {
-                const line = property as RECORDING.IPropertyLine;
-
-                let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
-                this.addVec3(addedItem, "Origin", line.origin);
-                this.addVec3(addedItem, "Destination", line.destination);
-            }
-
-            else {
+            else
+            {
                 const primitiveType = TypeSystem.buildPrimitiveType(property.type);
                 const value = primitiveType ? this.getPrimitiveTypeAsString(property.value, primitiveType) : property.value as string;
                 const content = this.wrapPrimitiveType(value);

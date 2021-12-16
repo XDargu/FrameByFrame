@@ -13,6 +13,7 @@ import CameraControl from './cameraControl';
 import SceneOutline from './sceneOutline';
 import SceneGrid from './sceneGrid';
 import SceneEntitySelection, { IEntitySelectedCallback } from './sceneEntitySelection';
+import { CorePropertyTypes } from '../types/typeRegistry';
 
 export interface IOnDebugDataUpdated
 {
@@ -35,14 +36,14 @@ interface IPropertyBuilderConfig
     [type: string] : IPropertyBuilderConfigEntry;
 }
 
-const shapeBuildConfig : IPropertyBuilderConfig = {
-    "sphere": { builder: ShapeBuilders.buildSphereShape, pickable: true},
-    "capsule": { builder: ShapeBuilders.buildCapsuleShape, pickable: true},
-    "aabb": { builder: ShapeBuilders.buildAABBShape, pickable: true},
-    "oobb": { builder: ShapeBuilders.buildOOBBShape, pickable: true},
-    "plane": { builder: ShapeBuilders.buildPlaneShape, pickable: true},
-    "line": { builder: ShapeBuilders.buildLinesShape, pickable: false},
-    "mesh": { builder: ShapeBuilders.buildMeshShape, pickable: true},
+const shapeBuildConfig : IPropertyBuilderConfig  = {
+    [CorePropertyTypes.Sphere]: { builder: ShapeBuilders.buildSphereShape, pickable: true},
+    [CorePropertyTypes.Capsule]: { builder: ShapeBuilders.buildCapsuleShape, pickable: true},
+    [CorePropertyTypes.AABB]: { builder: ShapeBuilders.buildAABBShape, pickable: true},
+    [CorePropertyTypes.OOBB]: { builder: ShapeBuilders.buildOOBBShape, pickable: true},
+    [CorePropertyTypes.Plane]: { builder: ShapeBuilders.buildPlaneShape, pickable: true},
+    [CorePropertyTypes.Line]: { builder: ShapeBuilders.buildLinesShape, pickable: false},
+    [CorePropertyTypes.Mesh]: { builder: ShapeBuilders.buildMeshShape, pickable: true},
 }
 
 export default class SceneController
@@ -150,7 +151,7 @@ export default class SceneController
 
     addProperty(entity: RECORDING.IEntity, property: RECORDING.IProperty)
     {
-        if (!RenderUtils.isPropertyShape(property)) { return; }
+        if (!RECORDING.isPropertyShape(property)) { return; }
 
         const shape = property as RECORDING.IProperyShape;
         const layerState = this.layerManager.getLayerState(shape.layer);
@@ -178,7 +179,7 @@ export default class SceneController
 
     createEntity(entity: RECORDING.IEntity) : IEntityRenderData
     {
-        let sphere = BABYLON.Mesh.CreateSphere("sphere", 10.0, 0.1, this._scene);
+        let sphere = BABYLON.Mesh.CreateSphere("entitySphere", 10.0, 0.1, this._scene);
         sphere.material = this.entityMaterial;
         sphere.isPickable = true;
         sphere.id = entity.id.toString();
