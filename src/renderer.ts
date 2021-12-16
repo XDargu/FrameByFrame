@@ -691,7 +691,10 @@ export default class Renderer {
             }
 
             let propertyTree = new TreeControl(treeElement);
-            let propertyTreeController = new PropertyTreeController(propertyTree);
+            let propertyTreeController = new PropertyTreeController(propertyTree, 
+                this.onPropertyHover.bind(this),
+                this.onPropertyStopHovering.bind(this)
+                );
 
             this.propertyGroups.push({propertyTree: propertyTree, propertyTreeController: propertyTreeController});
 
@@ -884,6 +887,17 @@ export default class Renderer {
     {
         this.recentFilesController.updateRecentFiles(paths);
 
+    }
+
+    // Property tree callbacks
+    onPropertyHover(propertyId: number)
+    {
+        this.sceneController.showProperty(propertyId);
+    }
+
+    onPropertyStopHovering(propertyId: number)
+    {
+        this.sceneController.hideProperty(propertyId);
     }
 
     // Timeline callbacks
