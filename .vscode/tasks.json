@@ -29,7 +29,6 @@
         {
             "label": "Build",
             "type": "shell",
-            "dependsOrder": "sequence",
             "dependsOn": ["Sass Compile", "Npm build"],
             "group": "build"
         },
