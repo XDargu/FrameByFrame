@@ -32,8 +32,6 @@ function createContextMenu(posX:  number, posY: number, element: HTMLElement, it
 {
     let menu = document.getElementById("contextMenu");
     menu.style.display = 'block';
-    menu.style.left = posX + "px";
-    menu.style.top = posY + "px";
 
     // TODO: Reuse existing items if we can?
     menu.innerHTML = "";
@@ -45,12 +43,21 @@ function createContextMenu(posX:  number, posY: number, element: HTMLElement, it
 
     menu.append(list);
 
+    const isNearRight = (window.innerWidth - posX) < menu.offsetWidth;
+    const isNearBottom = (window.innerHeight - posY) < menu.offsetHeight;
+
+    const x = isNearRight ? posX - menu.offsetWidth : posX;
+    const y = isNearBottom ? posY - menu.offsetHeight : posY;
+    
+    menu.style.left = x + "px";
+    menu.style.top = y + "px";
+
     const hideMenu = () => {
         document.getElementById("contextMenu").style.display = "none";
         document.removeEventListener("click", hideMenu);        
     };
 
-    document.addEventListener("click", hideMenu);
+    document.addEventListener("click", hideMenu, { passive: true });
 }
 
 export function addContextMenu(element: HTMLElement, items: IContextMenuItem[])
