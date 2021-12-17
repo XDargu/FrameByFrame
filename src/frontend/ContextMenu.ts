@@ -63,6 +63,6 @@ function createContextMenu(posX:  number, posY: number, element: HTMLElement, it
 export function addContextMenu(element: HTMLElement, items: IContextMenuItem[])
 {
     element.oncontextmenu = (ev: MouseEvent) => {
-        createContextMenu(ev.pageX, ev.pageY, element, items);
+        createContextMenu(ev.pageX, ev.pageY, ev.target as HTMLElement, items);
     }; 
 }

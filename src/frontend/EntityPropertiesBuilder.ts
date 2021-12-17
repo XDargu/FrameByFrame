@@ -29,6 +29,10 @@ export default class EntityPropertiesBuilder
     private propertyGroups: PropertyTreeGroup[];
     private callbacks: EntityPropertiesBuilderCallbacks;
 
+    private readonly contextMenuItems = [
+        { text: "Create filter from property", icon: "fa-plus-square", callback: this.onAddFilter.bind(this) },
+    ];
+
     constructor(callbacks: EntityPropertiesBuilderCallbacks)
     {
         this.propertyGroups = [];
@@ -92,6 +96,8 @@ export default class EntityPropertiesBuilder
             {
                 propertyTreeController.addToPropertyTree(propertyTree.root, propsToAdd[i]);
             }
+
+            addContextMenu(treeElement, this.contextMenuItems);
         }
     }
 
@@ -146,6 +152,17 @@ export default class EntityPropertiesBuilder
         {
             this.buildPropertiesPropertyTrees(propertyTree, entity.properties);
             this.buildEventsPropertyTree(eventTree, entity.events);
+        }
+    }
+
+    private onAddFilter(item: HTMLElement)
+    {
+        const treeElement = item.closest("li[data-tree-value]");
+        console.log(treeElement)
+        const propertyId = treeElement.getAttribute('data-tree-value');
+        if (propertyId != null)
+        {
+            this.callbacks.onCreateFilterFromProperty(Number.parseInt(propertyId));
         }
     }
 }
