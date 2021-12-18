@@ -24,6 +24,12 @@ export interface ITimelineEvent {
     color: Utils.RGBColor;
 }
 
+export interface ITimelineMarker {
+    name: string,
+    frame: number,
+    color: string;
+}
+
 type TEventsPerFrame = Map<number, ITimelineEvent[]>;
 
 export function findEventOfEntityId(eventList: ITimelineEvent[], entityId: string)
@@ -112,6 +118,8 @@ export default class Timeline {
 
     private hoveredEvent: ITimelineEvent;
 
+    // Markers
+    private markers: ITimelineMarker[];
 
     // Time control
     private timeStampLastUpdate: number;
@@ -144,6 +152,8 @@ export default class Timeline {
         this.eventColors = [];
         this.timeStampLastUpdate = 0;
 
+        this.markers = [];
+
         canvas.addEventListener("mousemove", this.onMouseMove.bind(this));
         canvas.addEventListener("mousedown", this.onMouseDown.bind(this));
         canvas.addEventListener("mouseup", this.onMouseUp.bind(this));
@@ -164,6 +174,7 @@ export default class Timeline {
     clear()
     {
         this.clearEvents();
+        this.clearMarkers();
         this.length = 0;
         this.currentFrame = 0;
 
@@ -177,6 +188,11 @@ export default class Timeline {
     setSelectedEntity(entityId: number)
     {
         this.selectedEntityId = entityId;
+    }
+
+    addMarker(name: string, frame: number, color: string)
+    {
+        this.markers.push({ name: name, frame: frame, color: color });
     }
 
     addEvent(id: TimelineEventId, entityId: string, frame : number, color : string, type: TimelineEventTypeId)
@@ -211,7 +227,12 @@ export default class Timeline {
     {
         this.events.clear();
         this.eventsPerFrame.clear();
-        this.eventColors = [];
+        this.eventColors.length = 0;
+    }
+
+    clearMarkers()
+    {
+        this.markers.length = 0;
     }
 
     setFrameClickedCallback(callback : ITimelineFrameClickedCallback)
@@ -408,6 +429,7 @@ export default class Timeline {
         this.ctx.fillRect(0,0,this.width,this.height);
 
         this.renderHeader();
+        this.renderCustomMarkers();
         this.renderEvents(false, 0.3);
         this.renderEvents(true, 1);
         this.renderMarker();
@@ -684,6 +706,35 @@ export default class Timeline {
         this.ctx.lineTo(position, this.height);
         this.ctx.stroke();
         this.ctx.closePath();
+    }
+
+    private renderCustomMarkers()
+    {
+        this.ctx.textAlign = "center";
+        this.ctx.font = "10px Arial";
+        this.ctx.textBaseline = "bottom";
+
+        for (let i=0; i<this.markers.length; ++i)
+        {
+            const marker = this.markers[i];
+            const position : number = this.frame2canvas(marker.frame);
+
+            this.ctx.strokeStyle = marker.color;
+            this.ctx.fillStyle = marker.color;
+
+            this.ctx.beginPath();
+            this.ctx.moveTo(position, 0);
+            this.ctx.lineTo(position, this.height);
+            this.ctx.stroke();
+            this.ctx.closePath();
+
+            const frameTextWidth = this.ctx.measureText(marker.name).width;
+            const textPadding = 2;
+            const rectWidth = frameTextWidth + textPadding * 2;
+            const rectInvert = (rectWidth + position < this.width) ? 1  : -1;
+
+            this.ctx.fillText(marker.name, position + rectWidth * 0.5 * rectInvert, this.height - textPadding);
+        }
     }
 
     frame2canvas(frame : number) : number
