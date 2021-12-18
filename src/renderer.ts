@@ -12,7 +12,7 @@ import * as RECORDING from './recording/RecordingData';
 import SceneController from './render/sceneController';
 import { PlaybackController } from "./timeline/PlaybackController";
 import Timeline from './timeline/timeline';
-import { initWindowControls } from "./frontend/WindowControls";
+import { initWindowControls } from "./frontend/WindowControls"; 
 import { Splitter } from "./ui/splitter";
 import { TabBorder, TabControl, TabDisplay } from "./ui/tabs";
 import * as Shortcuts from "./frontend/Shortcuts";
@@ -28,6 +28,8 @@ import * as Utils from "./utils/utils";
 import FilterTickers from "./frontend/FilterTickers";
 import EntityPropertiesBuilder from "./frontend/EntityPropertiesBuilder";
 import { CorePropertyTypes } from "./types/typeRegistry";
+import PendingFrames from "./utils/pendingFrames";
+import { LIB_VERSION } from "./version";
 
 enum TabIndices
 {
@@ -77,9 +79,11 @@ export default class Renderer {
     private playbackController: PlaybackController;
 
     // Timeline optimization
-    private unprocessedFramesWithEvents: number[];
-    private areAllFramesWithEventsPending: boolean;
+    private pendingEvents: PendingFrames;
     private unprocessedFiltersPending: boolean;
+
+    // Markers
+    private pendingMarkers: PendingFrames;
     
     // Others
     private timeoutFilter: any;
@@ -129,9 +133,13 @@ export default class Renderer {
         let recentFilesWelcomeElement = document.getElementById("recent-files-welcome").querySelector("ul");
         this.recentFilesController = new FileListController(recentFilesListElement, recentFilesWelcomeElement, this.onRecentFileClicked.bind(this), this.onRecentFileOpenInExplorer.bind(this) );
 
-        this.unprocessedFramesWithEvents = [];
-        this.areAllFramesWithEventsPending = false;
+        let versionText = document.getElementById(`version-text`);
+        versionText.textContent = `Version: ${LIB_VERSION || "Unknown"}`;
+        
+        this.pendingEvents = new PendingFrames();
         this.unprocessedFiltersPending = false;
+
+        this.pendingMarkers = new PendingFrames();
 
         this.applyFrame(0);
     }
@@ -424,9 +432,10 @@ export default class Renderer {
                 }
 
                 this.timeline.updateLength(this.recordedData.getSize());
-                this.areAllFramesWithEventsPending = true;
-                this.unprocessedFramesWithEvents = [];
+                this.pendingEvents.markAllPending();
+                this.pendingMarkers.markAllPending();
                 this.unprocessedFiltersPending = true;
+
                 this.applyFrame(0);
                 this.controlTabs.openTabByIndex(TabIndices.EntityList);
                 if (this.settings.showAllLayersOnStart)
@@ -454,8 +463,8 @@ export default class Renderer {
 
     clear()
     {
-        this.unprocessedFramesWithEvents = [];
-        this.areAllFramesWithEventsPending = false;
+        this.pendingMarkers.clear();
+        this.pendingEvents.clear();
         this.unprocessedFiltersPending = true;
         this.recordedData.clear();
         this.sceneController.clear();
@@ -529,7 +538,8 @@ export default class Renderer {
         this.recordedData.pushFrame(frameToBuild);
 
         this.timeline.updateLength(this.recordedData.getSize());
-        this.unprocessedFramesWithEvents.push(this.recordedData.getSize() - 1);
+        this.pendingEvents.pushPending(this.recordedData.getSize() - 1);
+        this.pendingMarkers.pushPending(this.recordedData.getSize() - 1);
         this.unprocessedFiltersPending = true;
     }
 
@@ -578,6 +588,9 @@ export default class Renderer {
 
         // Update events
         this.updateTimelineEvents();
+
+        // Update markers
+        this.updateTimelineMarkers();
 
         // Rebuild property tree
         this.buildPropertyTree();
@@ -672,31 +685,42 @@ export default class Renderer {
         }
         else
         {
-            if (this.areAllFramesWithEventsPending)
+            if (this.pendingEvents.areAllFramesPending())
             {
                 this.timeline.clearEvents();
-                for (let i=0; i<this.recordedData.frameData.length; ++i)
-                {
-                    const frameData = this.recordedData.frameData[i];
-                    this.updateFrameDataEvents(frameData, i);
-                }
-            }
-            else
-            {
-                for (let i=0; i<this.unprocessedFramesWithEvents.length; ++i)
-                {
-                    const frameIdx = this.unprocessedFramesWithEvents[i];
-                    const frameData = this.recordedData.frameData[frameIdx];
-
-                    this.updateFrameDataEvents(frameData, frameIdx);
-                }
             }
 
-            this.areAllFramesWithEventsPending = false;
-            this.unprocessedFramesWithEvents = [];
+            this.pendingEvents.forEachPendingFrame(this.recordedData, this.updateFrameDataEvents.bind(this));
+            this.pendingEvents.clear();
         }
 
         this.playbackController.updateUI();
+    }
+
+    updateFrameDataMarkers(frameData: RECORDING.IFrameData, frameIdx: number)
+    {
+        if (frameIdx > 0)
+        {
+            const prevFrameData = this.recordedData.buildFrameDataHeader(frameIdx - 1);
+            if (prevFrameData.clientId == frameData.clientId)
+            {
+                if (frameData.frameId - prevFrameData.frameId > 1)
+                {
+                    this.timeline.addMarker("Interruption", frameIdx, "#ffa500");
+                }
+            }
+        }
+    }
+    
+    updateTimelineMarkers()
+    {
+        if (this.pendingMarkers.areAllFramesPending())
+        {
+            this.timeline.clearMarkers();
+        }
+        
+        this.pendingMarkers.forEachPendingFrame(this.recordedData, this.updateFrameDataMarkers.bind(this));
+        this.pendingMarkers.clear();
     }
 
     renderProperties()
@@ -915,8 +939,7 @@ export default class Renderer {
         const filters = this.filterList.getFilters();
         if (filters.size == 0)
         {
-            this.unprocessedFramesWithEvents = [];
-            this.areAllFramesWithEventsPending = true;
+            this.pendingEvents.markAllPending();
         }
 
         clearTimeout(this.timeoutFilter);

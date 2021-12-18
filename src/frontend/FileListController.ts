@@ -45,6 +45,7 @@ export default class FileListController
                 // Context menu
                 const config = [
                     { text: "Show in explorer", icon: "fa-folder-open", callback: () => { this.onFileOpenInExplorer(recentFileElement.getAttribute("data-path")); } },
+                    { text: "Copy path", icon: "fa-copy", callback: () => { require('electron').clipboard.writeText(recentFileElement.getAttribute("data-path")); } },
                 ];
                 addContextMenu(recentFileElement, config);
             }

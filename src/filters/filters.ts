@@ -91,7 +91,7 @@ export function createMemberFilterFromProperty(property: RECORDING.IProperty): M
         case CorePropertyTypes.Bool: return createMemberFilterOfType(property.type, property.name, property.value as boolean);
         case CorePropertyTypes.Number: return createMemberFilterOfType(property.type, property.name, property.value as number);
         case CorePropertyTypes.String: return createMemberFilterOfType(property.type, property.name, property.value as string);
-        case CorePropertyTypes.Vec3: createMemberFilterOfType(property.type, property.name, property.value as RECORDING.IVec3);
+        case CorePropertyTypes.Vec3: return createMemberFilterOfType(property.type, property.name, property.value as RECORDING.IVec3);
 
         // Shapes
         case CorePropertyTypes.Sphere:

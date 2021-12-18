@@ -29,6 +29,11 @@ export default class EntityPropertiesBuilder
     private propertyGroups: PropertyTreeGroup[];
     private callbacks: EntityPropertiesBuilderCallbacks;
 
+    private readonly contextMenuItems = [
+        { text: "Copy value", icon: "fa-copy", callback: this.onCopyValue.bind(this) },
+        { text: "Create filter from property", icon: "fa-plus-square", callback: this.onAddFilter.bind(this) },
+    ];
+
     constructor(callbacks: EntityPropertiesBuilderCallbacks)
     {
         this.propertyGroups = [];
@@ -92,6 +97,8 @@ export default class EntityPropertiesBuilder
             {
                 propertyTreeController.addToPropertyTree(propertyTree.root, propsToAdd[i]);
             }
+
+            addContextMenu(treeElement, this.contextMenuItems);
         }
     }
 
@@ -147,5 +154,39 @@ export default class EntityPropertiesBuilder
             this.buildPropertiesPropertyTrees(propertyTree, entity.properties);
             this.buildEventsPropertyTree(eventTree, entity.events);
         }
+    }
+
+    private onAddFilter(item: HTMLElement)
+    {
+        const treeElement = item.closest("li[data-tree-value]");
+        const propertyId = treeElement.getAttribute('data-tree-value');
+        if (propertyId != null)
+        {
+            this.callbacks.onCreateFilterFromProperty(Number.parseInt(propertyId));
+        }
+    }
+
+    private onCopyValue(item: HTMLElement)
+    {
+        const { clipboard } = require('electron');
+
+        const treeElement = item.closest("li[data-tree-value]");
+        
+        const groups = treeElement.querySelectorAll(".property-group");
+
+        let text = "";
+        groups.forEach((group) => {
+
+            const primitives = group.querySelectorAll(".property-primitive");
+            primitives.forEach((primitive) => {
+                text += primitive.textContent;
+                if (primitive.nextSibling)
+                    text += ", ";
+            });
+            if (group.nextSibling)
+                text += "\n";
+        });
+
+        clipboard.writeText(text);
     }
 }
