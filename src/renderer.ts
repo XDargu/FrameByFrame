@@ -29,6 +29,7 @@ import FilterTickers from "./frontend/FilterTickers";
 import EntityPropertiesBuilder from "./frontend/EntityPropertiesBuilder";
 import { CorePropertyTypes } from "./types/typeRegistry";
 import PendingFrames from "./utils/pendingFrames";
+import { LIB_VERSION } from "./version";
 
 enum TabIndices
 {
@@ -131,6 +132,9 @@ export default class Renderer {
         let recentFilesListElement = document.getElementById(`recentFilesList`);
         let recentFilesWelcomeElement = document.getElementById("recent-files-welcome").querySelector("ul");
         this.recentFilesController = new FileListController(recentFilesListElement, recentFilesWelcomeElement, this.onRecentFileClicked.bind(this), this.onRecentFileOpenInExplorer.bind(this) );
+
+        let versionText = document.getElementById(`version-text`);
+        versionText.textContent = `Version: ${LIB_VERSION || "Unknown"}`;
         
         this.pendingEvents = new PendingFrames();
         this.unprocessedFiltersPending = false;
