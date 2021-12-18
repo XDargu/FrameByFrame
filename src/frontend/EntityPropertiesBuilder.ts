@@ -30,6 +30,7 @@ export default class EntityPropertiesBuilder
     private callbacks: EntityPropertiesBuilderCallbacks;
 
     private readonly contextMenuItems = [
+        { text: "Copy value", icon: "fa-copy", callback: this.onCopyValue.bind(this) },
         { text: "Create filter from property", icon: "fa-plus-square", callback: this.onAddFilter.bind(this) },
     ];
 
@@ -158,11 +159,34 @@ export default class EntityPropertiesBuilder
     private onAddFilter(item: HTMLElement)
     {
         const treeElement = item.closest("li[data-tree-value]");
-        console.log(treeElement)
         const propertyId = treeElement.getAttribute('data-tree-value');
         if (propertyId != null)
         {
             this.callbacks.onCreateFilterFromProperty(Number.parseInt(propertyId));
         }
+    }
+
+    private onCopyValue(item: HTMLElement)
+    {
+        const { clipboard } = require('electron');
+
+        const treeElement = item.closest("li[data-tree-value]");
+        
+        const groups = treeElement.querySelectorAll(".property-group");
+
+        let text = "";
+        groups.forEach((group) => {
+
+            const primitives = group.querySelectorAll(".property-primitive");
+            primitives.forEach((primitive) => {
+                text += primitive.textContent;
+                if (primitive.nextSibling)
+                    text += ", ";
+            });
+            if (group.nextSibling)
+                text += "\n";
+        });
+
+        clipboard.writeText(text);
     }
 }
