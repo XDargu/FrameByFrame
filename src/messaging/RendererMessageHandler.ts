@@ -16,7 +16,7 @@ export function initMessageHandling(renderer: Renderer)
         {
             case Messaging.MessageType.OpenResult:
             {
-                renderer.loadData(arg.data as string)
+                renderer.loadCompressedData(arg.data as string)
                 break;
             }
             case Messaging.MessageType.ClearResult:
@@ -33,10 +33,20 @@ export function initMessageHandling(renderer: Renderer)
                 renderer.onSaveFile();
                 break;
             }
+            case Messaging.MessageType.SavePathResult:
+            {
+                const pathName = arg.data as string;
+                Console.log(LogLevel.Information, LogChannel.Files, `Saving file file `, {
+                    text: pathName,
+                    tooltip: "Open file in explorer",
+                    callback: () => { shell.showItemInFolder(path.resolve(pathName)); }
+                });
+                renderer.saveToPath(pathName);
+                break;
+            }
             case Messaging.MessageType.UpdateRecentFiles:
             {
                 const recentFiles = (arg.data as string).split(",");
-                console.log(recentFiles);
                 renderer.updateRecentFiles(recentFiles);
                 break;
             }

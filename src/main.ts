@@ -182,10 +182,18 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
 
   switch(arg.type)
   {
-    case Messaging.MessageType.Save:
+    case Messaging.MessageType.RequestSavePath:
+    {
+      const request = arg.data as Messaging.IRequestSavePathData;
+      fileManager.getSaveLocation(request.defaultName, (path: string) => {
+        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.SavePathResult, path));
+      });
+      break;
+    }
+    case Messaging.MessageType.SaveToFile:
     {
       const fileSaveData = arg.data as Messaging.ISaveFileData;
-      fileManager.saveFile(fileSaveData.name, fileSaveData.content);
+      fileManager.saveToFile(fileSaveData.path, fileSaveData.content)
       break;
     }
     case Messaging.MessageType.Load:

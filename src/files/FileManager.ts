@@ -189,6 +189,25 @@ export default class FileManager
         }
     }
 
+    async getSaveLocation(defaultName: string, callback: ((path: string) => void))
+    {
+        const options = {
+            defaultPath: `${app.getPath('documents')}/${defaultName}.fbf`,
+            filters: [
+                { name: 'Recordings', extensions: ['fbf'] },
+            ]
+        }
+
+        dialog.showSaveDialog(null, options, (path: string) => {
+            if (path === undefined){
+                console.log("You didn't save the file");
+                return;
+            }
+
+            callback(path);
+        });
+    }
+
     saveFile(defaultName: string, content: string)
     {
         const options = {
@@ -204,14 +223,19 @@ export default class FileManager
                 return;
             }
 
-            fs.writeFile(path, content, (err) => {
-                if(err){
-                    console.log("An error ocurred creating the file "+ err.message)
-                }
+            this.saveToFile(path, content);
+        });
+    }
 
-                this.updateHistory(path);
-                console.log("The file has been succesfully saved");
-            });
+    saveToFile(path: string, content: string)
+    {
+        fs.writeFile(path, content, (err) => {
+            if(err){
+                console.log("An error ocurred creating the file "+ err.message)
+            }
+
+            this.updateHistory(path);
+            console.log("The file has been succesfully saved");
         });
     }
 

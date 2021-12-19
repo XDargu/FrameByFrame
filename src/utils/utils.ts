@@ -193,3 +193,14 @@ export function getFormattedFilename(format: string) : string
 
     return getFormattedString(format, formatTable);
 }
+
+export function runAsync(callback: Function)
+{
+    setTimeout(callback, 0);
+}
+
+export function nextTick() {
+    return new Promise(function(resolve) {
+        runAsync(resolve);
+    });
+ }

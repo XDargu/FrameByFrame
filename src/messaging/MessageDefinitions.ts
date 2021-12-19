@@ -3,7 +3,9 @@ import { ConsoleWindow, LogLevel, ILogAction, LogChannel } from "../frontend/Con
 
 export enum MessageType { // TODO: Maybe rename these to make clear the direction of the messge (main->render or render->main)
     RequestSave,
-    Save,
+    RequestSavePath,
+    SavePathResult,
+    SaveToFile,
     Load, // Load specific file
     Open, // Open file prompt
     OpenResult,
@@ -31,13 +33,18 @@ export interface ILogData
     channel: LogChannel;
 }
 
-export interface ISaveFileData
+export interface IRequestSavePathData
 {
-    name: string;
-    content: string;
+    defaultName: string;
 }
 
-type MessageData = string | IClearResultData | ILogData | ISettings | ISaveFileData;
+export interface ISaveFileData
+{
+    content: string;
+    path: string;
+}
+
+type MessageData = string | IClearResultData | ILogData | ISettings | ISaveFileData | IRequestSavePathData;
 export class Message
 {
     public type: MessageType;
