@@ -169,24 +169,16 @@ export default class FileManager
         });
     }
 
+    doesFileExist(path: string)
+    {
+        return fs.existsSync(path);
+    }
+
     async loadFile(path: string, callback: IOpenFileCallback)
     {
-        try {
-            const data = await fs.promises.readFile(path, 'utf8')
-            this.updateHistory(path);
-            callback(path, data);
-        }
-        catch(err) {
-            const options = {
-                type: 'error',
-                buttons: ['OK'],
-                title: 'Error reading file',
-                message: 'An error ocurred reading the file',
-                detail: err.message,
-                checkboxChecked: false,
-              };
-            dialog.showMessageBox(null, options);
-        }
+        const data = await fs.promises.readFile(path, 'utf8')
+        this.addPathToHistory(path);
+        callback(path, data);
     }
 
     async getSaveLocation(defaultName: string, callback: ((path: string) => void))
@@ -234,7 +226,7 @@ export default class FileManager
                 console.log("An error ocurred creating the file "+ err.message)
             }
 
-            this.updateHistory(path);
+            this.addPathToHistory(path);
             console.log("The file has been succesfully saved");
         });
     }
@@ -292,7 +284,7 @@ export default class FileManager
         });
     }
 
-    updateHistory(path : string)
+    addPathToHistory(path : string)
     {
         // Limit recent paths to 15
         const index = this.pathHistory.paths.indexOf(path);
@@ -321,5 +313,28 @@ export default class FileManager
                 }
             }
         });
+    }
+
+    removePathFromHistory(path: string)
+    {
+        const index = this.pathHistory.paths.indexOf(path);
+        if (index !== -1) {
+            this.pathHistory.paths.splice(index, 1);
+
+            updateConfigFile({
+                dir: this.historyDir,
+                file: this.historyFile,
+                data: this.pathHistory,
+                onError: (err) => {
+                    displayError(err, 'Error saving recent files', 'An error ocurred saving the list of recent files');
+                },
+                onSuccess: () => {
+                    if (this.onHistoryChangedCallback)
+                    {
+                        this.onHistoryChangedCallback(this.pathHistory.paths);
+                    }
+                }
+            });
+        }
     }
 }
