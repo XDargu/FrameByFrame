@@ -906,7 +906,7 @@ export default class Renderer {
         
         try {
             this.openModal("Serializing data");
-            await Utils.nextTick();
+            await Utils.delay(10);
             const data = JSON.stringify(this.recordedData);
             this.openModal("Compressing data");
             const buffer = await do_zip(data);

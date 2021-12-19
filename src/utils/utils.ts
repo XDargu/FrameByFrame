@@ -203,4 +203,10 @@ export function nextTick() {
     return new Promise(function(resolve) {
         runAsync(resolve);
     });
- }
+}
+
+export function delay(time: number) {
+    return new Promise(function(resolve) {
+        setTimeout(resolve, time);
+    });
+}
