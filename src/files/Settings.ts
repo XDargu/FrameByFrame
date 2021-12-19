@@ -38,7 +38,7 @@ export function createDefaultSettings() : ISettings
         gridHeight: 0,
         gridSpacing: 1,
         /* Export */
-        exportNameFormat: "recording_%Y-%M-%D_%h:%m:%s",
+        exportNameFormat: "recording_%Y-%M-%D_%h_%m_%s",
         /* Debug */
         showRenderDebug: false,
         /* Graphics */

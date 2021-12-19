@@ -16,7 +16,15 @@ export function initMessageHandling(renderer: Renderer)
         {
             case Messaging.MessageType.OpenResult:
             {
-                renderer.loadCompressedData(arg.data as string)
+                const result = arg.data as string;
+                if (result)
+                {
+                    renderer.loadCompressedData(result);
+                }
+                else
+                {
+                    renderer.closeModal();
+                }
                 break;
             }
             case Messaging.MessageType.ClearResult:

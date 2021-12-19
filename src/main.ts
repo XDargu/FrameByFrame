@@ -199,10 +199,43 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
     case Messaging.MessageType.Load:
     {
       const filePath = arg.data as string;
-      fileManager.loadFile(filePath, (pathName: string, content: string) => {
-        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.FileOpened, pathName));
-        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
-      });
+      try {
+        if (fileManager.doesFileExist(filePath))
+        {
+          fileManager.loadFile(filePath, (pathName: string, content: string) => {
+            event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.FileOpened, pathName));
+            event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
+          });
+        }
+        else
+        {
+          const options = {
+            type: 'question',
+            buttons: ['Keep file', 'Remove from recent'],
+            title: 'File does not exist',
+            message: 'Looks like the file has been removed. Do you want to remove it from the recent file list?',
+          };
+        dialog.showMessageBox(null, options, (response) => {
+          const souldRemove: boolean = response == 1;
+          if (souldRemove) {
+            fileManager.removePathFromHistory(filePath);
+          }
+        });
+        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, null));
+        }
+      }
+      catch(err) {
+          const options = {
+              type: 'error',
+              buttons: ['OK'],
+              title: 'Error reading file',
+              message: 'An error ocurred reading the file',
+              detail: err.message,
+              checkboxChecked: false,
+            };
+          dialog.showMessageBox(null, options);
+          event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, null));
+      }
       break;
     }
     case Messaging.MessageType.Open:
