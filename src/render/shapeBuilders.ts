@@ -10,7 +10,7 @@ export function setShapeCommonData(mesh: BABYLON.Mesh, propertyId: number, posit
     mesh.position.set(position.x, position.y, position.z);
 }
 
-export function buildSphereShape(shape: RECORDING.IProperyShape, pools: RenderPools, system: RECORDING.ECoordinateSystem) : BABYLON.Mesh
+export function buildSphereShape(shape: RECORDING.IProperyShape, pools: RenderPools, pivotPos: BABYLON.Vector3, system: RECORDING.ECoordinateSystem) : BABYLON.Mesh
 {
     const sphereProperty = shape as RECORDING.IPropertySphere;
 
@@ -20,7 +20,7 @@ export function buildSphereShape(shape: RECORDING.IProperyShape, pools: RenderPo
     return sphere;
 }
 
-export function buildCapsuleShape(shape: RECORDING.IProperyShape, pools: RenderPools, system: RECORDING.ECoordinateSystem) : BABYLON.Mesh
+export function buildCapsuleShape(shape: RECORDING.IProperyShape, pools: RenderPools, pivotPos: BABYLON.Vector3, system: RECORDING.ECoordinateSystem) : BABYLON.Mesh
 {
     const capsuleProperty = shape as RECORDING.IPropertyCapsule;
 
@@ -31,7 +31,7 @@ export function buildCapsuleShape(shape: RECORDING.IProperyShape, pools: RenderP
     return capsule;
 }
 
-export function buildAABBShape(shape: RECORDING.IProperyShape, pools: RenderPools, system: RECORDING.ECoordinateSystem) : BABYLON.Mesh
+export function buildAABBShape(shape: RECORDING.IProperyShape, pools: RenderPools, pivotPos: BABYLON.Vector3, system: RECORDING.ECoordinateSystem) : BABYLON.Mesh
 {
     const aabbProperty = shape as RECORDING.IPropertyAABB;
 
@@ -41,7 +41,7 @@ export function buildAABBShape(shape: RECORDING.IProperyShape, pools: RenderPool
     return aabb;
 }
 
-export function buildOOBBShape(shape: RECORDING.IProperyShape, pools: RenderPools, system: RECORDING.ECoordinateSystem) : BABYLON.Mesh
+export function buildOOBBShape(shape: RECORDING.IProperyShape, pools: RenderPools, pivotPos: BABYLON.Vector3, system: RECORDING.ECoordinateSystem) : BABYLON.Mesh
 {
     const oobbProperty = shape as RECORDING.IPropertyOOBB;
 
@@ -52,7 +52,7 @@ export function buildOOBBShape(shape: RECORDING.IProperyShape, pools: RenderPool
     return oobb;
 }
 
-export function buildPlaneShape(shape: RECORDING.IProperyShape, pools: RenderPools, system: RECORDING.ECoordinateSystem) : BABYLON.Mesh
+export function buildPlaneShape(shape: RECORDING.IProperyShape, pools: RenderPools, pivotPos: BABYLON.Vector3, system: RECORDING.ECoordinateSystem) : BABYLON.Mesh
 {
     const planeProperty = shape as RECORDING.IPropertyPlane;
         
@@ -63,7 +63,7 @@ export function buildPlaneShape(shape: RECORDING.IProperyShape, pools: RenderPoo
     return plane;
 }
 
-export function buildLinesShape(shape: RECORDING.IProperyShape, pools: RenderPools, system: RECORDING.ECoordinateSystem) : BABYLON.Mesh
+export function buildLinesShape(shape: RECORDING.IProperyShape, pools: RenderPools, pivotPos: BABYLON.Vector3, system: RECORDING.ECoordinateSystem) : BABYLON.Mesh
 {
     const lineProperty = shape as RECORDING.IPropertyLine;
 
@@ -75,7 +75,7 @@ export function buildLinesShape(shape: RECORDING.IProperyShape, pools: RenderPoo
     return lines;
 }
 
-export function buildArrowShape(shape: RECORDING.IProperyShape, pools: RenderPools, system: RECORDING.ECoordinateSystem) : BABYLON.Mesh
+export function buildArrowShape(shape: RECORDING.IProperyShape, pools: RenderPools, pivotPos: BABYLON.Vector3, system: RECORDING.ECoordinateSystem) : BABYLON.Mesh
 {
     const arrowProperty = shape as RECORDING.IPropertyArrow;
 
@@ -87,7 +87,23 @@ export function buildArrowShape(shape: RECORDING.IProperyShape, pools: RenderPoo
     return lines;
 }
 
-export function buildMeshShape(shape: RECORDING.IProperyShape, pools: RenderPools, system: RECORDING.ECoordinateSystem) : BABYLON.Mesh
+export function buildVectorwShape(shape: RECORDING.IProperyShape, pools: RenderPools, pivotPos: BABYLON.Vector3, system: RECORDING.ECoordinateSystem) : BABYLON.Mesh
+{
+    const vectorProperty = shape as RECORDING.IPropertyVector;
+
+    let lines = pools.arrowPool.getArrow(
+        pivotPos,
+        RenderUtils.createVec3(vectorProperty.vector, system).addInPlace(pivotPos),
+        vectorProperty.color
+    );
+
+    lines.isPickable = false;
+    lines.id = vectorProperty.id.toString();
+
+    return lines;
+}
+
+export function buildMeshShape(shape: RECORDING.IProperyShape, pools: RenderPools, pivotPos: BABYLON.Vector3, system: RECORDING.ECoordinateSystem) : BABYLON.Mesh
 {
     const meshProperty = shape as RECORDING.IPropertyMesh;
 

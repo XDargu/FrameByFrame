@@ -21,6 +21,7 @@ export enum CorePropertyTypes {
 	Plane = "plane",
 	Line = "line",
     Arrow = "arrow",
+    Vector = "vector",
 	Mesh = "mesh"
 }
 
