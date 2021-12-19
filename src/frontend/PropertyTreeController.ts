@@ -251,6 +251,14 @@ export class PropertyTreeController {
                             this.addVec3(addedItem, "Destination", arrow.destination, property.id);
                             break;
                         }
+                        case TypeSystem.CorePropertyTypes.Vector:
+                        {
+                            const vector = property as RECORDING.IPropertyVector;
+
+                            let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
+                            this.addVec3(addedItem, "Vector", vector.vector, property.id);
+                            break;
+                        }
                         case TypeSystem.CorePropertyTypes.Mesh:
                         {
                             let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);

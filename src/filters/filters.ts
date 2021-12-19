@@ -157,6 +157,13 @@ export function createMemberFilterFromProperty(property: RECORDING.IProperty): M
                 ...createMemberFilterOfType(CorePropertyTypes.Vec3, "Destination", arrow.destination),
             ];
         }
+        case CorePropertyTypes.Vector:
+        {
+            const vector = property as RECORDING.IPropertyVector;
+            return [
+                ...createMemberFilterOfType(CorePropertyTypes.Vec3, "Vector", vector.vector)
+            ];
+        }
     }
 
     return [];
@@ -311,6 +318,10 @@ export namespace Common {
             filterVec3("destination", property.destination, filters);
     }
 
+    export function filterPropertyVector(property: RECORDING.IPropertyVector, filters: MemberFilter[]): boolean {
+        return filterVec3("vector", property.vector, filters);
+    }
+
     export function filterPropertyPlane(property: RECORDING.IPropertyPlane, filters: MemberFilter[]): boolean {
         return filterNumber("length", property.length, filters) ||
             filterNumber("width", property.width, filters) ||
@@ -353,6 +364,7 @@ export namespace Common {
             case Type.Sphere: return filterPropertySphere(property as RECORDING.IPropertySphere, filters);
             case Type.Line: return filterPropertyLine(property as RECORDING.IPropertyLine, filters);
             case Type.Arrow: return filterPropertyArrow(property as RECORDING.IPropertyArrow, filters);
+            case Type.Vector: return filterPropertyVector(property as RECORDING.IPropertyVector, filters);
             case Type.Plane: return filterPropertyPlane(property as RECORDING.IPropertyPlane, filters);
             case Type.AABB: return filterPropertyAABB(property as RECORDING.IPropertyAABB, filters);
             case Type.OOBB: return filterPropertyOOBB(property as RECORDING.IPropertyOOBB, filters);

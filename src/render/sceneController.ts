@@ -23,7 +23,7 @@ export interface IOnDebugDataUpdated
 
 interface IPropertyBuilderFunction
 {
-    (shape: RECORDING.IProperyShape, pools: RenderPools, system: RECORDING.ECoordinateSystem) : BABYLON.Mesh
+    (shape: RECORDING.IProperyShape, pools: RenderPools, pivotPos: BABYLON.Vector3, system: RECORDING.ECoordinateSystem) : BABYLON.Mesh
 }
 
 interface IPropertyBuilderConfigEntry
@@ -45,6 +45,7 @@ const shapeBuildConfig : IPropertyBuilderConfig  = {
     [CorePropertyTypes.Plane]: { builder: ShapeBuilders.buildPlaneShape, pickable: true},
     [CorePropertyTypes.Line]: { builder: ShapeBuilders.buildLinesShape, pickable: false},
     [CorePropertyTypes.Arrow]: { builder: ShapeBuilders.buildArrowShape, pickable: false},
+    [CorePropertyTypes.Vector]: { builder: ShapeBuilders.buildVectorwShape, pickable: false},
     [CorePropertyTypes.Mesh]: { builder: ShapeBuilders.buildMeshShape, pickable: true},
 }
 
@@ -166,7 +167,7 @@ export default class SceneController
 
         if (shapeConfig)
         {
-            let mesh = shapeConfig.builder(shape, this.pools, this.coordSystem);
+            let mesh = shapeConfig.builder(shape, this.pools, entityData.mesh.position, this.coordSystem);
             mesh.isPickable = shapeConfig.pickable;
             if (shapeConfig.pickable)
             {

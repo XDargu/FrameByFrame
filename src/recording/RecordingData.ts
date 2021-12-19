@@ -18,6 +18,7 @@ export function isPropertyShape(property: IProperty)
     return property.type == Type.Sphere || 
         property.type == Type.Line ||
 		property.type == Type.Arrow ||
+		property.type == Type.Vector ||
         property.type == Type.Plane ||
         property.type == Type.AABB ||
         property.type == Type.OOBB ||
@@ -100,6 +101,11 @@ export interface IPropertyLine extends IProperyShape {
 export interface IPropertyArrow extends IProperyShape {
 	origin: IVec3;
 	destination: IVec3;
+	value: string;
+}
+
+export interface IPropertyVector extends IProperyShape {
+	vector: IVec3;
 	value: string;
 }
 
