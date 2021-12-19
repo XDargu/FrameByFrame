@@ -44,6 +44,7 @@ const shapeBuildConfig : IPropertyBuilderConfig  = {
     [CorePropertyTypes.OOBB]: { builder: ShapeBuilders.buildOOBBShape, pickable: true},
     [CorePropertyTypes.Plane]: { builder: ShapeBuilders.buildPlaneShape, pickable: true},
     [CorePropertyTypes.Line]: { builder: ShapeBuilders.buildLinesShape, pickable: false},
+    [CorePropertyTypes.Arrow]: { builder: ShapeBuilders.buildArrowShape, pickable: false},
     [CorePropertyTypes.Mesh]: { builder: ShapeBuilders.buildMeshShape, pickable: true},
 }
 
@@ -139,7 +140,7 @@ export default class SceneController
         {
             for (let [propId, propertyMesh] of data.properties)
             {
-                if (this.pools.tryFreeMesh(propertyMesh))
+                if (!this.pools.tryFreeMesh(propertyMesh))
                 {
                     this._scene.removeMesh(propertyMesh, true);
                 }

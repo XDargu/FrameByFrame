@@ -75,6 +75,18 @@ export function buildLinesShape(shape: RECORDING.IProperyShape, pools: RenderPoo
     return lines;
 }
 
+export function buildArrowShape(shape: RECORDING.IProperyShape, pools: RenderPools, system: RECORDING.ECoordinateSystem) : BABYLON.Mesh
+{
+    const arrowProperty = shape as RECORDING.IPropertyArrow;
+
+    let lines = pools.arrowPool.getArrow(RenderUtils.createVec3(arrowProperty.origin, system), RenderUtils.createVec3(arrowProperty.destination, system), arrowProperty.color);
+
+    lines.isPickable = false;
+    lines.id = arrowProperty.id.toString();
+
+    return lines;
+}
+
 export function buildMeshShape(shape: RECORDING.IProperyShape, pools: RenderPools, system: RECORDING.ECoordinateSystem) : BABYLON.Mesh
 {
     const meshProperty = shape as RECORDING.IPropertyMesh;

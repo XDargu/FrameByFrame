@@ -25,6 +25,7 @@ export function createDebugData(scene: BABYLON.Scene, engine: BABYLON.Engine, po
         Sphere Pool size: ${pools.spherePool.getTotalMeshes()}\n
         Capsule Pool size: ${pools.capsulePool.getTotalMeshes()}\n
         Line Pool size: ${pools.linePool.getTotalMeshes()}\n
+        Arrow Pool size: ${pools.arrowPool.getTotalMeshes()}\n
         Plane Pool size: ${pools.planePool.getTotalMeshes()}\n
         Total pooled meshes: ${pools.getTotalPooledMeshes()}\n
         Total meshes: ${scene.meshes.length}\n
