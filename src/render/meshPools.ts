@@ -213,8 +213,8 @@ abstract class GenericLinePool<Args> extends MeshPool
 
         let mesh = this.findMesh(hash, args) as CustomLinesMesh;
 
-        const linePoints = this.GetPoints(args);
-        const lineColors = this.GetColors(args);
+        const linePoints = this.getPoints(args);
+        const lineColors = this.getColors(args);
         // Custom createCustomLinesystem so we can pass materials around
         // Adapted form Babylon's updated mesh build from 5.0
         if (this.material === null)
@@ -228,8 +228,8 @@ abstract class GenericLinePool<Args> extends MeshPool
 
     protected buildMesh(hash: string, args: Args) : BABYLON.Mesh
     {
-        const linePoints = this.GetPoints(args);
-        const lineColors = this.GetColors(args);
+        const linePoints = this.getPoints(args);
+        const lineColors = this.getColors(args);
 
         if (this.material === null)
         {
@@ -240,8 +240,8 @@ abstract class GenericLinePool<Args> extends MeshPool
         return createCustomLinesystem(hash, {lines: linePoints, colors: lineColors, updatable: true, material: this.material }, this.scene );
     }
 
-    abstract GetPoints(args: Args) : BABYLON.Vector3[][];
-    abstract GetColors(args: Args) : BABYLON.Color4[][];
+    abstract getPoints(args: Args) : BABYLON.Vector3[][];
+    abstract getColors(args: Args) : BABYLON.Color4[][];
     abstract getHash(args: Args) : string;
 
     clear()
@@ -267,7 +267,7 @@ export class LinePool extends GenericLinePool<LineArgs>
         return this.getLineInternal(args);
     }
 
-    GetPoints(args: LineArgs)
+    getPoints(args: LineArgs)
     {
         return [[
             RenderUtils.createVec3Raw(args.origin),
@@ -275,7 +275,7 @@ export class LinePool extends GenericLinePool<LineArgs>
         ]];
     }
 
-    GetColors(args: LineArgs)
+    getColors(args: LineArgs)
     {
         const col = RenderUtils.createColor4Rec(args.color);
         return [[ col, col ]];
@@ -301,7 +301,7 @@ export class ArrowPool extends GenericLinePool<LineArgs>
         return this.getLineInternal(args);
     }
 
-    GetPoints(args: ArrowArgs)
+    getPoints(args: ArrowArgs)
     {
         const origin = RenderUtils.createVec3Raw(args.origin);
         const end = RenderUtils.createVec3Raw(args.end);
@@ -320,7 +320,7 @@ export class ArrowPool extends GenericLinePool<LineArgs>
         return [[ origin, end ], [ right, end, left ]];
     }
 
-    GetColors(args: ArrowArgs)
+    getColors(args: ArrowArgs)
     {
         const col = RenderUtils.createColor4Rec(args.color);
         return [[ col, col ], [col, col, col]];
