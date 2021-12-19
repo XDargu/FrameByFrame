@@ -197,7 +197,7 @@ export class PlanePool extends MeshPool
     }
 }
 
-export class LinePool extends MeshPool
+abstract class GenericLinePool<Args> extends MeshPool
 {
     private material: BABYLON.Material;
 
@@ -206,52 +206,43 @@ export class LinePool extends MeshPool
         super(scene);
         this.material = null;
     }
-
-    getLine(origin: RECORDING.IVec3, end: RECORDING.IVec3, color: RECORDING.IColor): BABYLON.Mesh
+    
+    protected getLineInternal(args: Args) : BABYLON.Mesh
     {
-        const hash: string = "line";
-        let mesh = this.findMesh(hash, { origin: origin, end: end, color: color }) as CustomLinesMesh;
+        const hash: string = this.getHash(args);
 
-        let linePoints = [
-            new BABYLON.Vector3(origin.x, origin.y, origin.z),
-            new BABYLON.Vector3(end.x, end.y, end.z),
-        ];
+        let mesh = this.findMesh(hash, args) as CustomLinesMesh;
 
-        let lineColors = [
-            new BABYLON.Color4(color.r, color.g, color.b, color.a),
-            new BABYLON.Color4(color.r, color.g, color.b, color.a),
-        ];
+        const linePoints = this.GetPoints(args);
+        const lineColors = this.GetColors(args);
         // Custom createCustomLinesystem so we can pass materials around
         // Adapted form Babylon's updated mesh build from 5.0
         if (this.material === null)
         {
             this.material = mesh.material;
         }
-        mesh = createCustomLinesystem(hash, {lines: [linePoints], colors: [lineColors], instance: mesh, updatable: true, material: this.material }, this.scene );
+        mesh = createCustomLinesystem(hash, {lines: linePoints, colors: lineColors, instance: mesh, updatable: true, material: this.material }, this.scene );
         mesh.alwaysSelectAsActiveMesh = true;
         return mesh;
     }
 
-    protected buildMesh(hash: string, args: any) : BABYLON.Mesh
+    protected buildMesh(hash: string, args: Args) : BABYLON.Mesh
     {
-        let linePoints = [
-            RenderUtils.createVec3(args.origin, this.coordsSystem),
-            RenderUtils.createVec3(args.end, this.coordsSystem)
-        ];
-
-        let lineColors = [
-            new BABYLON.Color4(args.color.r, args.color.g, args.color.b, args.color.a),
-            new BABYLON.Color4(args.color.r, args.color.g, args.color.b, args.color.a),
-        ];
+        const linePoints = this.GetPoints(args);
+        const lineColors = this.GetColors(args);
 
         if (this.material === null)
         {
-            let mesh = createCustomLinesystem(hash, {lines: [linePoints], colors: [lineColors], updatable: true}, this.scene );
+            let mesh = createCustomLinesystem(hash, {lines: linePoints, colors: lineColors, updatable: true}, this.scene );
             this.material = mesh.material;
             return mesh;
         }
-        return createCustomLinesystem(hash, {lines: [linePoints], colors: [lineColors], updatable: true, material: this.material }, this.scene );
+        return createCustomLinesystem(hash, {lines: linePoints, colors: lineColors, updatable: true, material: this.material }, this.scene );
     }
+
+    abstract GetPoints(args: Args) : BABYLON.Vector3[][];
+    abstract GetColors(args: Args) : BABYLON.Color4[][];
+    abstract getHash(args: Args) : string;
 
     clear()
     {
@@ -259,5 +250,84 @@ export class LinePool extends MeshPool
             this.scene.removeMaterial(this.material);
         }
         super.clear();
+    }
+}
+
+type LineArgs = { origin: RECORDING.IVec3, end: RECORDING.IVec3, color: RECORDING.IColor };
+export class LinePool extends GenericLinePool<LineArgs>
+{
+    constructor(scene: BABYLON.Scene)
+    {
+        super(scene);
+    }
+
+    getLine(origin: RECORDING.IVec3, end: RECORDING.IVec3, color: RECORDING.IColor): BABYLON.Mesh
+    {
+        const args: LineArgs = { origin: origin, end: end, color: color };
+        return this.getLineInternal(args);
+    }
+
+    GetPoints(args: LineArgs)
+    {
+        return [[
+            RenderUtils.createVec3Raw(args.origin),
+            RenderUtils.createVec3Raw(args.end)
+        ]];
+    }
+
+    GetColors(args: LineArgs)
+    {
+        const col = RenderUtils.createColor4Rec(args.color);
+        return [[ col, col ]];
+    }
+
+    getHash(args: LineArgs)
+    {
+        return "line";
+    }
+}
+
+type ArrowArgs = { origin: RECORDING.IVec3, end: RECORDING.IVec3, color: RECORDING.IColor };
+export class ArrowPool extends GenericLinePool<LineArgs>
+{
+    constructor(scene: BABYLON.Scene)
+    {
+        super(scene);
+    }
+
+    getArrow(origin: RECORDING.IVec3, end: RECORDING.IVec3, color: RECORDING.IColor): BABYLON.Mesh
+    {
+        const args: ArrowArgs = { origin: origin, end: end, color: color };
+        return this.getLineInternal(args);
+    }
+
+    GetPoints(args: ArrowArgs)
+    {
+        const origin = RenderUtils.createVec3Raw(args.origin);
+        const end = RenderUtils.createVec3Raw(args.end);
+
+        const dir = end.subtract(origin).normalize();
+        const isUp = Math.abs(dir.x) < 0.01 && Math.abs(dir.z) < 0.01; // Using epsilon to avoid issues with small numbers
+
+        const right = isUp ? BABYLON.Vector3.Right() : dir.cross(BABYLON.Vector3.Up()).normalize(); // Normalizing here prevents scaling issues with small numbers
+        const left = right.scale(-1);
+
+        dir.scaleInPlace(0.2);
+
+        right.scaleInPlace(0.2).addInPlace(end).subtractInPlace(dir);
+        left.scaleInPlace(0.2).addInPlace(end).subtractInPlace(dir);
+
+        return [[ origin, end ], [ right, end, left ]];
+    }
+
+    GetColors(args: ArrowArgs)
+    {
+        const col = RenderUtils.createColor4Rec(args.color);
+        return [[ col, col ], [col, col, col]];
+    }
+
+    getHash(args: ArrowArgs)
+    {
+        return "arrow";
     }
 }

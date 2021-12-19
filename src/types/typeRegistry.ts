@@ -20,6 +20,7 @@ export enum CorePropertyTypes {
 	OOBB = "oobb",
 	Plane = "plane",
 	Line = "line",
+    Arrow = "arrow",
 	Mesh = "mesh"
 }
 

@@ -1,6 +1,6 @@
 import * as BABYLON from 'babylonjs';
 import { MaterialPool } from './materialPool';
-import { BoxPool, CapsulePool, LinePool, PlanePool, SpherePool } from './meshPools';
+import { ArrowPool, BoxPool, CapsulePool, LinePool, MeshPool, PlanePool, SpherePool } from './meshPools';
 
 export default class RenderPools
 {
@@ -12,6 +12,9 @@ export default class RenderPools
     boxPool: BoxPool;
     planePool: PlanePool;
     linePool: LinePool;
+    arrowPool: ArrowPool;
+
+    pools: MeshPool[];
 
     scene: BABYLON.Scene;
     
@@ -24,33 +27,30 @@ export default class RenderPools
         this.boxPool = new BoxPool(scene);
         this.planePool = new PlanePool(scene);
         this.linePool = new LinePool(scene);
+        this.arrowPool = new ArrowPool(scene);
+
+        this.pools = [this.capsulePool, this.spherePool, this.boxPool, this.planePool, this.linePool, this.arrowPool];
     }
 
     tryFreeMesh(mesh: BABYLON.Mesh) : boolean
     {
-        return !this.capsulePool.freeMesh(mesh) &&
-            !this.spherePool.freeMesh(mesh) &&
-            !this.boxPool.freeMesh(mesh) &&
-            !this.planePool.freeMesh(mesh) &&
-            !this.linePool.freeMesh(mesh);
+        for (let pool of this.pools)
+        {
+            if (pool.freeMesh(mesh))
+                return true;
+        }
+        return false;
     }
 
-    getTotalPooledMeshes()
+    getTotalPooledMeshes() : number
     {
-        return this.capsulePool.getTotalMeshes() +
-            this.spherePool.getTotalMeshes() +
-            this.boxPool.getTotalMeshes() +
-            this.planePool.getTotalMeshes() +
-            this.linePool.getTotalMeshes();
+        return this.pools.reduce((totalSoFar, pool) => { return totalSoFar + pool.getTotalMeshes(); }, 0);
     }
 
     clear()
     {
-        this.materialPool.clear();
-        this.capsulePool.clear();
-        this.spherePool.clear();
-        this.boxPool.clear();
-        this.planePool.clear();
-        this.linePool.clear();
+        this.pools.forEach((pool) => {
+            pool.clear();
+        });
     }
 }

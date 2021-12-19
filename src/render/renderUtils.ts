@@ -15,9 +15,19 @@ export function getRadiusOfEntity(entity: IEntityRenderData)
     return 6; // TODO: Maybe take into account the bounding box of the selected entity
 }
 
+export function createColor4Rec(color: RECORDING.IColor) : BABYLON.Color4
+{
+    return new BABYLON.Color4(color.r, color.g, color.b, color.a);
+}
+
 export function createColor4(color: Utils.RGBColor01) : BABYLON.Color4
 {
     return new BABYLON.Color4(color.r, color.g, color.b, 1);
+}
+
+export function createVec3Raw(vec3: IVec3) : BABYLON.Vector3
+{
+    return new BABYLON.Vector3(vec3.x, vec3.y, vec3.z);
 }
 
 export function createVec3(vec3: IVec3, system: RECORDING.ECoordinateSystem) : BABYLON.Vector3
