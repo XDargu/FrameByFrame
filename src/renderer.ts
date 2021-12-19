@@ -31,6 +31,8 @@ import { CorePropertyTypes } from "./types/typeRegistry";
 import PendingFrames from "./utils/pendingFrames";
 import { LIB_VERSION } from "./version";
 
+const zlib = require('zlib');
+
 enum TabIndices
 {
     EntityList = 0,
@@ -393,72 +395,98 @@ export default class Renderer {
         ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.SaveSettings, this.settings));
     }
 
-    loadData(data: string)
+    loadJsonData(data: string) : boolean
     {
-        this.openModal("Processing data");
-        setTimeout(() => {
-            try {
-                this.clear();
-                
-                const dataJson = JSON.parse(data) as RECORDING.IRecordedData;
-                switch(dataJson.type)
-                {
-                    case RECORDING.RecordingFileType.RawFrames:
-                    {
-                        // Add trailing brackets
-                        const rawData = dataJson as NET_TYPES.IRawRecordingData;
-                        for (const frame of rawData.rawFrames)
-                        {
-                            this.addFrameData(frame);
-                        }
-                    }
-                    break;
-                    case RECORDING.RecordingFileType.NaiveRecording:
-                    {
-                        this.recordedData.loadFromData(dataJson as RECORDING.INaiveRecordedData);
-                    }
-                    break;
-                    default:
-                    {
-                        // Used for legacy load, remove once not needed
-                        const recordingData = dataJson as RECORDING.INaiveRecordedData;
-                        if (recordingData.frameData) {
-                            this.recordedData.loadFromData(recordingData);
-                        }
-                        else {
-                            throw new Error('Unable to detect type of recording');
-                        }
-                    }
-                }
+        try
+        {
+            const dataJson = JSON.parse(data) as RECORDING.IRecordedData;
 
-                this.timeline.updateLength(this.recordedData.getSize());
-                this.pendingEvents.markAllPending();
-                this.pendingMarkers.markAllPending();
-                this.unprocessedFiltersPending = true;
-
-                this.applyFrame(0);
-                this.controlTabs.openTabByIndex(TabIndices.EntityList);
-                if (this.settings.showAllLayersOnStart)
-                {
-                    this.layerController.setAllLayersState(LayerState.All);
-                }
-                
-                // Select any first entity
-                setTimeout(() => {
-                    for (let entity in this.frameData.entities)
-                    {
-                        this.selectEntity(this.frameData.entities[entity].id);
-                        break;
-                    }
-                }, 200);
-                
-            }
-            catch (error)
+            switch(dataJson.type)
             {
-                Console.log(LogLevel.Error, LogChannel.Files, "Error loading file: " + error.message)
+                case RECORDING.RecordingFileType.RawFrames:
+                {
+                    // Add trailing brackets
+                    const rawData = dataJson as NET_TYPES.IRawRecordingData;
+                    for (const frame of rawData.rawFrames)
+                    {
+                        this.addFrameData(frame);
+                    }
+                }
+                break;
+                case RECORDING.RecordingFileType.NaiveRecording:
+                {
+                    this.recordedData.loadFromData(dataJson as RECORDING.INaiveRecordedData);
+                }
+                break;
+                default:
+                {
+                    // Used for legacy load, remove once not needed
+                    const recordingData = dataJson as RECORDING.INaiveRecordedData;
+                    if (recordingData.frameData) {
+                        this.recordedData.loadFromData(recordingData);
+                    }
+                    else {
+                        throw new Error('Unable to detect type of recording');
+                    }
+                }
+            }
+
+            this.timeline.updateLength(this.recordedData.getSize());
+            this.pendingEvents.markAllPending();
+            this.pendingMarkers.markAllPending();
+            this.unprocessedFiltersPending = true;
+
+            this.applyFrame(0);
+            this.controlTabs.openTabByIndex(TabIndices.EntityList);
+            if (this.settings.showAllLayersOnStart)
+            {
+                this.layerController.setAllLayersState(LayerState.All);
+            }
+            
+            // Select any first entity
+            Utils.runAsync(() => {
+                for (let entity in this.frameData.entities)
+                {
+                    this.selectEntity(this.frameData.entities[entity].id);
+                    break;
+                }
+            });
+
+            return true;
+        }
+        catch(error)
+        {
+            Console.log(LogLevel.Error, LogChannel.Files, "Error loading file: " + error.message);
+        }
+
+        return false;
+    }
+
+    async loadCompressedData(data: string)
+    {
+        const { promisify } = require('util');
+        const do_unzip = promisify(zlib.unzip);
+
+        this.openModal("Processing data");
+        try {
+            const inputBuffer = Buffer.from(data, 'base64');
+            const buffer = await do_unzip(inputBuffer);
+
+            this.openModal("Parsing file");
+            await Utils.nextTick();
+            this.loadJsonData(buffer.toString('utf8'));
+            this.closeModal();
+        }
+        catch (error)
+        {
+            this.openModal("Parsing file");
+            await Utils.nextTick();
+            if (!this.loadJsonData(data))
+            {
+                Console.log(LogLevel.Error, LogChannel.Files, "Error uncompressing file: " + error.message);
             }
             this.closeModal();
-        }, 1);
+        }
     }
 
     clear()
@@ -866,12 +894,37 @@ export default class Renderer {
     
     onSaveFile()
     {
-        ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.Save, 
-            {
-                name: Utils.getFormattedFilename(this.settings.exportNameFormat),
-                content: JSON.stringify(this.recordedData)
-            }
-        ));
+        ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.RequestSavePath, {
+            defaultName: Utils.getFormattedFilename(this.settings.exportNameFormat)
+        }));
+    }
+
+    async saveToPath(path: string)
+    {
+        const { promisify } = require('util');
+        const do_zip = promisify(zlib.gzip);
+        
+        try {
+            this.openModal("Serializing data");
+            await Utils.nextTick();
+            const data = JSON.stringify(this.recordedData);
+            this.openModal("Compressing data");
+            const buffer = await do_zip(data);
+
+            ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.SaveToFile, 
+                {
+                    content: buffer.toString('base64'),
+                    path: path
+                }
+            ));
+
+            this.closeModal();
+        }
+        catch (error)
+        {
+            Console.log(LogLevel.Error, LogChannel.Files, "Error compressing file");
+            this.closeModal();
+        }
     }
 
     onClearFile()
