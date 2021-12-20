@@ -2,7 +2,7 @@ import * as RECORDING from '../recording/RecordingData';
 import * as Utils from "../utils/utils";
 import { CorePropertyTypes } from "../types/typeRegistry";
 import { TreeControl } from "../ui/tree";
-import { ICreateFilterFromPropCallback, IPropertyHoverCallback, PropertyTreeController } from "../frontend/PropertyTreeController";
+import { ICreateFilterFromPropCallback, IGoToEntityCallback, IIsEntityInFrame, IPropertyHoverCallback, PropertyTreeController } from "../frontend/PropertyTreeController";
 import { addContextMenu } from './ContextMenu';
 
 interface PropertyTreeGroup
@@ -22,6 +22,8 @@ export interface EntityPropertiesBuilderCallbacks
     onPropertyStopHovering: IPropertyHoverCallback;
     onCreateFilterFromProperty: ICreateFilterFromPropCallback;
     onCreateFilterFromEvent: ICreateFilterFromEventCallback;
+    onGoToEntity: IGoToEntityCallback;
+    isEntityInFrame: IIsEntityInFrame;
 }
 
 export default class EntityPropertiesBuilder
@@ -85,10 +87,13 @@ export default class EntityPropertiesBuilder
             }
 
             let propertyTree = new TreeControl(treeElement);
-            let propertyTreeController = new PropertyTreeController(propertyTree, 
-                this.callbacks.onPropertyHover,
-                this.callbacks.onPropertyStopHovering,
-                this.callbacks.onCreateFilterFromProperty
+            let propertyTreeController = new PropertyTreeController(propertyTree,
+                {
+                    onPropertyHover: this.callbacks.onPropertyHover,
+                    onPropertyStopHovering: this.callbacks.onPropertyStopHovering,
+                    onGoToEntity: this.callbacks.onGoToEntity,
+                    isEntityInFrame: this.callbacks.isEntityInFrame
+                }
             );
 
             this.propertyGroups.push({propertyTree: propertyTree, propertyTreeController: propertyTreeController});

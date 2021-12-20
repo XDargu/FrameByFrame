@@ -1,7 +1,15 @@
 import * as RECORDING from '../recording/RecordingData';
 import * as TREE from '../ui/tree';
 import * as TypeSystem from "../types/typeRegistry";
-import { addContextMenu } from './ContextMenu';
+
+export interface IGoToEntityCallback {
+    (entityId: number) : void;
+}
+
+export interface IIsEntityInFrame
+{
+    (id: number) : boolean
+}
 
 export interface IPropertyHoverCallback {
     (propertyId: number) : void;
@@ -9,6 +17,13 @@ export interface IPropertyHoverCallback {
 
 export interface ICreateFilterFromPropCallback {
     (propertyId: number) : void;
+}
+
+interface PropertyTreeControllerCallbacks {
+    onPropertyHover: IPropertyHoverCallback;
+    onPropertyStopHovering: IPropertyHoverCallback;
+    onGoToEntity: IGoToEntityCallback;
+    isEntityInFrame: IIsEntityInFrame;
 }
 
 namespace UI
@@ -59,7 +74,28 @@ namespace UI
 
     export function getLayoutOfPrimitiveType(value: any, primitiveType: TypeSystem.EPrimitiveType)
     {
-        return wrapPrimitiveType(getPrimitiveTypeAsString(value, TypeSystem.EPrimitiveType.Number));
+        return wrapPrimitiveType(getPrimitiveTypeAsString(value, primitiveType));
+    }
+
+    export function createGoToEntityButton(id: number, callback: IGoToEntityCallback, isEnabled: boolean) : HTMLButtonElement
+    {
+        let resetButton: HTMLButtonElement = document.createElement("button");
+        resetButton.className = "basico-button basico-small";
+
+        let icon: HTMLElement = document.createElement("i");
+        icon.className = "fa fa-arrow-circle-right";
+        resetButton.append(icon);
+
+        if (isEnabled) {
+            resetButton.title = "Go to entity";
+            resetButton.onclick = () => { callback(id); };
+        }
+        else {
+            resetButton.title = "Entity unavailable";
+            resetButton.disabled = true;
+        }
+
+        return resetButton;
     }
 }
 
@@ -67,16 +103,12 @@ export class PropertyTreeController {
     propertyTree: TREE.TreeControl;
     typeRegistry: TypeSystem.TypeRegistry;
 
-    onPropertyHover: IPropertyHoverCallback;
-    onPropertyStopHovering: IPropertyHoverCallback;
-    onCreateFilterFromProperty: ICreateFilterFromPropCallback;
+    callbacks: PropertyTreeControllerCallbacks;
 
-    constructor(propertyTree: TREE.TreeControl, onPropertyHover: IPropertyHoverCallback, onPropertyStopHovering: IPropertyHoverCallback, onCreateFilterFromProperty: ICreateFilterFromPropCallback) {
+    constructor(propertyTree: TREE.TreeControl, callbacks: PropertyTreeControllerCallbacks) {
         this.propertyTree = propertyTree;
         this.typeRegistry = TypeSystem.TypeRegistry.getInstance();
-        this.onPropertyHover = onPropertyHover;
-        this.onPropertyStopHovering = onPropertyStopHovering;
-        this.onCreateFilterFromProperty = onCreateFilterFromProperty;
+        this.callbacks = callbacks;
     }
 
     addValueToPropertyTree(parent: HTMLElement, name: string, content: HTMLElement[], propertyId: number = null)
@@ -105,6 +137,17 @@ export class PropertyTreeController {
         }
 
         this.addValueToPropertyTree(parent, property.name, content, property.id);
+    }
+
+    addEntityRef(parent: HTMLElement, name: string, value: RECORDING.IEntityRef, propertyId: number = null)
+    {
+        const content = [
+            UI.getLayoutOfPrimitiveType(value.name, TypeSystem.EPrimitiveType.String),
+            //UI.getLayoutOfPrimitiveType(value.id, TypeSystem.EPrimitiveType.Number), // Don't display id for now, too noisy
+            UI.createGoToEntityButton(value.id, this.callbacks.onGoToEntity, this.callbacks.isEntityInFrame(value.id))
+        ];
+
+        this.addValueToPropertyTree(parent, name, content, propertyId);
     }
 
     addVec3(parent: HTMLElement, name: string, value: RECORDING.IVec3, propertyId: number = null)
@@ -174,6 +217,10 @@ export class PropertyTreeController {
                     value:  property.id.toString(),
                     selectable: false,
                 });
+            }
+            else if (property.type == TypeSystem.CorePropertyTypes.EntityRef)
+            {
+                this.addEntityRef(parent, property.name, property.value as RECORDING.IEntityRef, property.id);
             }
             else if (RECORDING.isPropertyShape(property))
             {
@@ -282,7 +329,7 @@ export class PropertyTreeController {
         const propertyId = this.propertyTree.getValueOfItem(item);
         if (propertyId != null)
         {
-            this.onPropertyHover(Number.parseInt(propertyId));
+            this.callbacks.onPropertyHover(Number.parseInt(propertyId));
         }
     }
 
@@ -290,7 +337,7 @@ export class PropertyTreeController {
         const propertyId = this.propertyTree.getValueOfItem(item);
         if (propertyId != null)
         {
-            this.onPropertyStopHovering(Number.parseInt(propertyId));
+            this.callbacks.onPropertyStopHovering(Number.parseInt(propertyId));
         }
     }
 

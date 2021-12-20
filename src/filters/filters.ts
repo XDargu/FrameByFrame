@@ -68,7 +68,7 @@ export function getDefaultValuePerMemberType(type: MemberFilterType): string | b
     }
 }
 
-function createMemberFilterOfType(type: CorePropertyTypes, name: string, value: string | number | boolean | RECORDING.IVec3 ) : MemberFilter[]
+function createMemberFilterOfType(type: CorePropertyTypes, name: string, value: string | number | boolean | RECORDING.IVec3 | RECORDING.IEntityRef ) : MemberFilter[]
 {
     switch (type) {
         case CorePropertyTypes.Bool: return [{ name: name, type: MemberFilterType.Boolean, value: value as boolean, mode: FilterMode.Equals }];
@@ -79,6 +79,10 @@ function createMemberFilterOfType(type: CorePropertyTypes, name: string, value: 
             { name: name + ".y", type: MemberFilterType.Number, value: (value as RECORDING.IVec3).y, mode: FilterMode.Similar },
             { name: name + ".z", type: MemberFilterType.Number, value: (value as RECORDING.IVec3).z, mode: FilterMode.Similar }
         ];
+        case CorePropertyTypes.EntityRef: return [
+            { name: name + ".name", type: MemberFilterType.String, value: (value as RECORDING.IEntityRef).name, mode: FilterMode.Equals },
+            { name: name + ".id", type: MemberFilterType.Number, value: (value as RECORDING.IEntityRef).id, mode: FilterMode.Equals },
+        ]
     }
 
     return [];
@@ -92,6 +96,7 @@ export function createMemberFilterFromProperty(property: RECORDING.IProperty): M
         case CorePropertyTypes.Number: return createMemberFilterOfType(property.type, property.name, property.value as number);
         case CorePropertyTypes.String: return createMemberFilterOfType(property.type, property.name, property.value as string);
         case CorePropertyTypes.Vec3: return createMemberFilterOfType(property.type, property.name, property.value as RECORDING.IVec3);
+        case CorePropertyTypes.EntityRef: return createMemberFilterOfType(property.type, property.name, property.value as RECORDING.IEntityRef);
 
         // Shapes
         case CorePropertyTypes.Sphere:
@@ -284,6 +289,26 @@ export namespace Common {
         return false;
     }
 
+    export function filterPropertyEntityRef(property: RECORDING.IProperty, filters: MemberFilter[]): boolean {
+        const name = property.name.toLowerCase();
+        const value = property.value as RECORDING.IEntityRef;
+
+        return filterEntityRef(name, value, filters);
+    }
+
+    export function filterEntityRef(name: string, ref: RECORDING.IEntityRef, filters: MemberFilter[]): boolean {
+        const entityId = name + ".id";
+        const entityName = name + ".name";
+
+        for (let i = 0; i < filters.length; ++i) {
+            if (applyFilterString(entityName, ref.name, filters[i]) ||
+                applyFilterNumber(entityId, ref.id, filters[i])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     export function filterVec3(name: string, value: RECORDING.IVec3, filters: MemberFilter[]): boolean {
         const nameX = name + ".x";
         const nameY = name + ".y";
@@ -360,6 +385,7 @@ export namespace Common {
             case Type.String: return filterPropertyString(property, filters);
             case Type.Number: return filterPropertyNumber(property, filters);
             case Type.Bool: return filterPropertyBoolean(property, filters);
+            case Type.EntityRef: return filterPropertyEntityRef(property, filters);
             case Type.Group: return filterPropertyGroup(property as RECORDING.IPropertyGroup, filters);
             case Type.Sphere: return filterPropertySphere(property as RECORDING.IPropertySphere, filters);
             case Type.Line: return filterPropertyLine(property as RECORDING.IPropertyLine, filters);

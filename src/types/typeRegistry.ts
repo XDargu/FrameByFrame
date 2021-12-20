@@ -13,6 +13,7 @@ export enum CorePropertyTypes {
 	String = "string",
 	Bool = "boolean",
 	Vec3 = "vec3",
+    EntityRef = "eref",
 	/* Shapes */
 	Sphere = "sphere",
 	Capsule = "capsule",
