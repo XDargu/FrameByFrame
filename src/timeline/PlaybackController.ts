@@ -1,6 +1,5 @@
-import { LogLevel } from "../frontend/ConsoleController";
-import { LogChannel } from "../frontend/ConsoleController";
-import { Console } from "../frontend/ConsoleController";
+import * as Utils from '../utils/utils';
+import { LogLevel, LogChannel, Console } from "../frontend/ConsoleController";
 import Renderer from "../renderer";
 import Timeline, { findEventOfEntityId, ITimelineEvent } from "./timeline";
 
@@ -43,12 +42,13 @@ export class PlaybackController {
         if (this.isPlaying) {
             this.elapsedTime += elapsedSeconds * this.playbackSpeedFactor;
 
+            const lastFrame = this.renderer.getFrameCount() - 1;
             const nextPlayableFrame = this.findNextPlayableFrameSameClient() || this.findNextPlayableFrameAnyClient();
-            const nextFrame = Math.max(this.renderer.getCurrentFrame() + 1, nextPlayableFrame);
+            const nextFrame = Utils.clamp(nextPlayableFrame, this.renderer.getCurrentFrame() + 1, lastFrame);
             this.renderer.applyFrame(nextFrame);
 
             // Stop in the last frame
-            if (nextFrame == this.renderer.getFrameCount() - 1) {
+            if (nextFrame == lastFrame) {
                 this.stopPlayback();
             }
         }
