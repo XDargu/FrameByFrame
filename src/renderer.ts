@@ -108,12 +108,16 @@ export default class Renderer {
         this.selectedEntityId = null;
 
         this.entityPropsBuilder = new EntityPropertiesBuilder(
-        {
-            onPropertyHover: this.onPropertyHover.bind(this),
-            onPropertyStopHovering: this.onPropertyStopHovering.bind(this),
-            onCreateFilterFromProperty: this.onCreateFilterFromProperty.bind(this),
-            onCreateFilterFromEvent: this.onCreateFilterFromEvent.bind(this)
-        }
+            {
+                onPropertyHover: this.onPropertyHover.bind(this),
+                onPropertyStopHovering: this.onPropertyStopHovering.bind(this),
+                onCreateFilterFromProperty: this.onCreateFilterFromProperty.bind(this),
+                onCreateFilterFromEvent: this.onCreateFilterFromEvent.bind(this),
+                // Note: twe need to convert to uniqueID here, because the ids are coming from the recording
+                // As an alternative, we could re-create the entityrefs when building the frame data
+                onGoToEntity: (id) => { this.selectEntity(Utils.toUniqueID(this.frameData.clientId, id)); },
+                isEntityInFrame: (id) => { return this.frameData?.entities[Utils.toUniqueID(this.frameData.clientId, id)] != undefined; }
+            }
         );
 
         let connectionsListElement: HTMLElement = document.getElementById(`connectionsList`);

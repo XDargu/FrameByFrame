@@ -43,10 +43,15 @@ export interface IPropertyCustomType {
 	[nameId: string] : string | number | boolean;
 }
 
+export interface IEntityRef {
+	name: string;
+	id: number;
+}
+
 export interface IProperty {
 	type: string;
 	name?: string;
-	value: string | number | boolean | IVec3 | IPropertyCustomType | IProperty[];
+	value: string | number | boolean | IVec3 | IPropertyCustomType | IEntityRef | IProperty[];
 	id?: number;
 }
 
