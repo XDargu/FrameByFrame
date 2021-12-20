@@ -416,6 +416,7 @@ export default class Renderer {
                 case RECORDING.RecordingFileType.NaiveRecording:
                 {
                     this.recordedData.loadFromData(dataJson as RECORDING.INaiveRecordedData);
+                    this.sceneController.addNavMeshTriangle(this.recordedData.navMeshTriangles);
                 }
                 break;
                 default:
@@ -424,6 +425,7 @@ export default class Renderer {
                     const recordingData = dataJson as RECORDING.INaiveRecordedData;
                     if (recordingData.frameData) {
                         this.recordedData.loadFromData(recordingData);
+                        this.sceneController.addNavMeshTriangle(this.recordedData.navMeshTriangles);
                     }
                     else {
                         throw new Error('Unable to detect type of recording');
@@ -564,6 +566,7 @@ export default class Renderer {
         }
 
         this.recordedData.pushFrame(frameToBuild);
+        this.recordedData.addNavMeshTriangles(frame.navmeshTriangles);
 
         this.timeline.updateLength(this.recordedData.getSize());
         this.pendingEvents.pushPending(this.recordedData.getSize() - 1);

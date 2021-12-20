@@ -143,6 +143,12 @@ export interface IFrameEntityData {
 	[key:number]: IEntity;
 }
 
+export interface INavMeshTriangle {
+	v1: IVec3;
+	v2: IVec3;
+	v3: IVec3;
+}
+
 export interface IFrameData {
 	entities: IFrameEntityData;
 	serverTime: number;
@@ -435,12 +441,14 @@ export class NaiveRecordedData implements INaiveRecordedData {
 	readonly type: RecordingFileType = RecordingFileType.NaiveRecording;
 	frameData: IFrameData[];
 	layers: string[];
-	clientIds: Map<number, ClientData>
+	clientIds: Map<number, ClientData>;
+	navMeshTriangles: INavMeshTriangle[];
 
 	constructor() {
 		this.frameData = [];
 		this.layers = [];
 		this.clientIds = new Map<number, ClientData>();
+		this.navMeshTriangles = [];
 	}
 
 	static getEntityName(entity: IEntity) : string
@@ -481,6 +489,7 @@ export class NaiveRecordedData implements INaiveRecordedData {
 	{
 		this.frameData.length = 0;
 		this.layers.length = 0;
+		this.navMeshTriangles.length = 0;
 		this.clientIds.clear();
 	}
 
@@ -492,6 +501,11 @@ export class NaiveRecordedData implements INaiveRecordedData {
 
 		this.updateLayersOfFrame(frame);
 		this.updateClientIDsOfFrame(frame);
+	}
+
+	addNavMeshTriangles(navmeshTriangles: INavMeshTriangle[])
+	{
+		this.navMeshTriangles.push(...navmeshTriangles);
 	}
 
 	static findPropertyIdInProperties(frameData: IFrameData, propertyId: number) : IProperty

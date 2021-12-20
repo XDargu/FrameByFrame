@@ -20,6 +20,7 @@ export interface IMessageFrameData {
 	elapsedTime: number;
 	tag: string;
 	coordSystem?: RECORDING.ECoordinateSystem;
+	navmeshTriangles: RECORDING.INavMeshTriangle[];
 }
 
 export interface IMessageRecordingOption

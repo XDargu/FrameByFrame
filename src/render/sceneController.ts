@@ -63,6 +63,10 @@ export default class SceneController
 
     public onDebugDataUpdated: IOnDebugDataUpdated;
 
+    // NavMesh
+    private navMeshTriangles: RECORDING.INavMeshTriangle[];
+    private navMesh: BABYLON.Mesh;
+
     private layerManager: LayerManager;
 
     private pools: RenderPools;
@@ -133,6 +137,48 @@ export default class SceneController
         const hoverColor = Utils.RgbToRgb01(Utils.hexToRgb("#8442B9"));
 
         this.outline = new SceneOutline(scene, this.cameraControl.getCamera(), selectionColor, hoverColor);
+    }
+
+    addNavMeshTriangle(triangles: RECORDING.INavMeshTriangle[])
+    {
+        this.navMeshTriangles.push(...triangles);
+
+        const elements = this.navMeshTriangles.length * 3 * 3;
+        
+        let vertices = Array.from(Array(elements).keys())
+        let indices = new Array(elements);
+
+        for (let i=0; i<this.navMeshTriangles.length; ++i)
+        {
+            const triangle = this.navMeshTriangles[i];
+
+            vertices.push(triangle.v1.x);
+            vertices.push(triangle.v1.y);
+            vertices.push(triangle.v1.z);
+
+            vertices.push(triangle.v2.x);
+            vertices.push(triangle.v2.y);
+            vertices.push(triangle.v2.z);
+
+            vertices.push(triangle.v3.x);
+            vertices.push(triangle.v3.y);
+            vertices.push(triangle.v3.z);
+        }
+
+        const navMesh: RECORDING.IPropertyMesh = {
+            vertices: vertices,
+            indices: indices,
+            wireframe: true,
+            value: "",
+            layer: "NavMesh",
+            color: { r: 1, g: 0.34, b: 0.2, a: 0.5},
+            type: "mesh"
+        };
+
+        this._scene.removeMesh(this.navMesh, true);
+        const mesh = ShapeBuilders.buildMeshShape(navMesh, this.pools, BABYLON.Vector3.Zero(), this.coordSystem);
+        this._scene.addMesh(this.navMesh);
+        this.navMesh = mesh;
     }
 
     removeAllProperties()
@@ -309,6 +355,7 @@ export default class SceneController
         }
 
         this.sceneEntityData.clear();
+        this.navMeshTriangles.length = 0;
     }
 
     private updateDebugData()
