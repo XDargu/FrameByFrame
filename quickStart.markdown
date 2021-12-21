@@ -30,6 +30,6 @@ description: "Learn how to quickly start using Frame by Frame"
 1. Download and install the latest Frame by Frame release
 2. Open the tool and click the recording button
 
-![Recording Button](/assets/img/ConnectionButton.png "Recording Button")
+![Recording Button](/images/ConnectionButton.png "Recording Button")
 
 3. Select what you want to record
