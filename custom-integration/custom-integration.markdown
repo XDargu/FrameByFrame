@@ -3,7 +3,7 @@
 # To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
 
 layout: default
-nav_order: 4
+nav_order: 6
 title: Custom Integrations
 description: "How to make a custom integration to Frame by Frame"
 has_children: true
