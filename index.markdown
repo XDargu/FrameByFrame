@@ -18,11 +18,17 @@ Frame by Frame is a visual debugging and recording tool that helps you find bugs
 
 ---
 
+![Recording Button](/FrameByFrame/assets/images/screenshots/ExampleScreen.png)
+
 ## Getting started
 Frame by Frame is an external tool that connects to your game engine of choice. Once connected, the engine can send information to Frame by Frame, that will be recorded. There are plugins for popular game engines that handle the connection and are already configured to send useful data.
 
 ### Installing Frame by Frame
 Download the latest release of Frame by Frame and install it.
+
+[Get Frame by Frame 0.2.1](https://github.com/XDargu/FrameByFrame/releases/tag/v0.2.1){: .btn .btn-primary .fs-3 .mb-4 .mb-md-0 .mr-2 }
+
+[Get older versions of Frame by Frame](https://github.com/XDargu/FrameByFrame/releases)
 
 ### Using Frame by Frame with Unity
 TODO: Link to Unity plugin, explain the steps, link to doc page
