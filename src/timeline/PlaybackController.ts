@@ -3,6 +3,12 @@ import { LogLevel, LogChannel, Console } from "../frontend/ConsoleController";
 import Renderer from "../renderer";
 import Timeline, { findEventOfEntityId, ITimelineEvent } from "./timeline";
 
+interface PlaybackResult
+{
+    nextFrame: number;
+    nextElapsedTime: number;
+}
+
 export class PlaybackController {
 
     private renderer: Renderer;
@@ -43,8 +49,9 @@ export class PlaybackController {
             this.elapsedTime += elapsedSeconds * this.playbackSpeedFactor;
 
             const lastFrame = this.renderer.getFrameCount() - 1;
-            const nextPlayableFrame = this.findNextPlayableFrameSameClient() || this.findNextPlayableFrameAnyClient();
-            const nextFrame = Utils.clamp(nextPlayableFrame, this.renderer.getCurrentFrame() + 1, lastFrame);
+            const playbackResult = this.findNextPlayableFrameSameClient() || this.findNextPlayableFrameAnyClient();
+            this.elapsedTime = playbackResult.nextElapsedTime;
+            const nextFrame = Utils.clamp(playbackResult.nextFrame, this.renderer.getCurrentFrame(), lastFrame);
             this.renderer.applyFrame(nextFrame);
 
             // Stop in the last frame
@@ -54,7 +61,7 @@ export class PlaybackController {
         }
     }
 
-    findNextPlayableFrameSameClient() : number
+    findNextPlayableFrameSameClient() : PlaybackResult
     {
         // Check how many frames we have to skip
         let currentFrame = this.renderer.getCurrentFrame();
@@ -77,11 +84,10 @@ export class PlaybackController {
             }
         }
 
-        this.elapsedTime = pendingElapsedTime;
-        return currentFrame;
+        return { nextFrame: currentFrame, nextElapsedTime: pendingElapsedTime};
     }
 
-    findNextPlayableFrameAnyClient() : number
+    findNextPlayableFrameAnyClient() : PlaybackResult
     {
         // Check how many frames we have to skip
         let currentFrame = this.renderer.getCurrentFrame();
@@ -95,12 +101,12 @@ export class PlaybackController {
 
             if (elapsedTimeInSeconds > pendingElapsedTime)
             {
-                this.elapsedTime -= elapsedTimeInSeconds;
-                return currentFrame;
+                pendingElapsedTime -= elapsedTimeInSeconds;
+                return { nextFrame: currentFrame, nextElapsedTime: pendingElapsedTime};
             }
         }
 
-        return this.renderer.getFrameCount() - 1;
+        return { nextFrame: this.renderer.getFrameCount() - 1, nextElapsedTime: this.elapsedTime};
     }
 
     updateUI() {
