@@ -3,9 +3,10 @@
 # To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
 
 layout: default
-nav_order: 3
+nav_order: 4
 title: Using Frame by Frame
 description: "How to use Frame by Frame"
+permalink: usage
 has_children: true
 ---
 
@@ -14,5 +15,3 @@ has_children: true
 
 Learn how to use Frame by Frame, visualize the data of your game and find issues in no time.
 {: .fs-6 .fw-300 }
-
----

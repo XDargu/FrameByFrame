@@ -21,14 +21,19 @@ parent: Using Frame by Frame
 ---
 
 ## Connecting to the game
-1. Make sure the game is running and listening to Frame by Frame requests. You can do that by using one of the available plugins or doing it yourself.
 
-2. Press the Connection button on the top right.
+1. Make sure the game is running and listening to Frame by Frame requests. If you haven integrated Frame by Frame, check out how to do it for [Unity](/FrameByFrame/unity/), Unreal Engine or [yourself](/FrameByFrame/custom-integrations/). 
 
-3. Frame by Frame should start recording automatically. The Recording options panel will open so you can activate what information you want to record.
+2. Press the Connection button on the top right. When Frame by Frame connects to the game, the recording button will change color:
+
+![Recording Button Enabled](/FrameByFrame/assets/images/RecordingButtonActive.png)
+
+3. Frame by Frame should start recording automatically. The [Recording options panel](#recording-options) will open so you can activate what information you want to record.
 
 ## Recording options
 Recording options filter what you want to record. They control what information is sent from the game to Frame by Frame.
+
+![Frame by Frame Recording Options](/FrameByFrame/assets/images/screenshots/RecordingOptions.png)
 
 ## Entities
 All recorded information in Frame by Frame is attached to an Entity. Entities are just a way of representing the owner of that specific data. Most popular game engines have the concept of entities or a similar one, so the information should map reasonably well.

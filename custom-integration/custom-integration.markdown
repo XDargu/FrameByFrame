@@ -6,6 +6,7 @@ layout: default
 nav_order: 6
 title: Custom Integrations
 description: "How to make a custom integration to Frame by Frame"
+permalink: custom-integrations
 has_children: true
 ---
 

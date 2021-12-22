@@ -24,7 +24,7 @@ Frame by Frame makes much easier to find bugs in your gameplay, especially with 
 
 Connect to any game or engine, Frame by Frame can be integrated with anything. If you are using a popular game engine like [Unity](/FrameByFrame/Unity) or [Unreal Engine](/FrameByFrame/Unity) you can try the integration plugins. Or you can [integrate Frame by Frame on your own](/FrameByFrame/custom-integration/custom-integration/).
 
-![Recording Button](/FrameByFrame/assets/images/screenshots/ExampleScreen.png)
+![Frame by Frame Screenshot](/FrameByFrame/assets/images/screenshots/ExampleScreen.png)
 *Example of a Frame by Frame capture. In this capture we can see the frame when the destination position of an AI agent was changed, as well as its current path, position, collider, etc.*
 
 ## Getting started
