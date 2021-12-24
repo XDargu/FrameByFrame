@@ -53,6 +53,12 @@ Examples of properties are:
  - Velocity
  - Etc.
 
+Properties are always grouped. Properties with the same group will be displayed in Frame by Frame inside a box titled the name of the group.
+
+Properties can also contain groups inside groups.
+
+![Frame by Frame Properties](/FrameByFrame/assets/images/screenshots/Properties.png)
+
 ### Events
 Events contain information of something that happens at an specific point in time.
 
@@ -63,4 +69,12 @@ Examples of events are:
  - Entity Spawned
  - Etc.
 
+Events contain properties inside, and can contian groups of properties.
+
+Events also have a tag, that is displayed in the right of the event title bar.
+
+![Frame by Frame Events](/FrameByFrame/assets/images/screenshots/Events.png)
+
 Events show up in the timeline automatically.
+
+![Frame by Frame Timeline](/FrameByFrame/assets/images/screenshots/Timeline.png)

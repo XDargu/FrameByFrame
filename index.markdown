@@ -20,7 +20,11 @@ Frame by Frame is a visual debugging and recording tool that helps you find bugs
 
 Frame by Frame is a tool that lets you capture a representation of the game state and gives you the ability to review it. You can record and examine data in real time, or you can log the data to a file and import it later on.
 
-Frame by Frame makes much easier to find bugs in your gameplay, especially with hard to track or hard to reproduce bugs. Enable what you need to record, reproduce the issue and review the state of your game frame by frame. You can find bugs caused by single frame events and scrub through the recording easily with the help of filters.	
+Frame by Frame makes much easier to find bugs in your gameplay, especially with hard to track or hard to reproduce bugs. Enable what you need to record, reproduce the issue and review the state of your game frame by frame. You can find bugs caused by single frame events and scrub through the recording easily with the help of filters.
+
+After all, games and 3D applications are often based around spacial behaviour, queries and logic, so bugs and issues are often spatial in nature. On top of that, with a main loop running many times every second, bugs and issues can also be temporal in nature, with the cause often rooted in a single frame or event. Frame by Frame makes finding such issues easier and faster.
+
+Store your recordings and examine them later on. Let each member of the team do what they do best: QA can find and record bugs, developers can examine recordings and fix them.
 
 Connect to any game or engine, Frame by Frame can be integrated with anything. If you are using a popular game engine like [Unity](/FrameByFrame/Unity) or [Unreal Engine](/FrameByFrame/Unity) you can try the integration plugins. Or you can [integrate Frame by Frame on your own](/FrameByFrame/custom-integration/custom-integration/).
 
