@@ -745,7 +745,7 @@ export class NaiveRecordedData implements INaiveRecordedData {
 
 	private updateClientIDsOfFrame(frame: IFrameData)
 	{
-		if (!this.clientIds.has(frame.clientId))
+		if (frame.clientId != undefined && !this.clientIds.has(frame.clientId))
 		{
 			this.clientIds.set(frame.clientId, { tag: frame.tag });
 		}
