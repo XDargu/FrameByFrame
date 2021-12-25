@@ -403,6 +403,7 @@ export default class Renderer {
     {
         try
         {
+            this.clear();
             const dataJson = JSON.parse(data) as RECORDING.IRecordedData;
 
             switch(dataJson.type)
@@ -759,6 +760,7 @@ export default class Renderer {
     {
         let sceneController = this.sceneController;
         sceneController.removeAllProperties();
+        sceneController.hideAllLabels();
 
         for (let entityID in this.frameData.entities) {
             const entity = this.frameData.entities[entityID];
@@ -772,6 +774,8 @@ export default class Renderer {
                     sceneController.addProperty(entity, eventProperty);
                 });
             });
+
+            sceneController.updateEntityLabel(entity);
         }
 
         sceneController.refreshOutlineTargets();

@@ -4,6 +4,7 @@ export interface IEntityRenderData
 {
     mesh: BABYLON.Mesh;
     properties: Map<number, BABYLON.Mesh>;
+    label: BABYLON.Mesh;
 }
 
 export class SceneEntityData

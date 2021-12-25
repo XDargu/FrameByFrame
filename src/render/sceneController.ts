@@ -1,6 +1,6 @@
 import * as BABYLON from 'babylonjs';
 import * as RECORDING from '../recording/RecordingData';
-import { LayerState } from '../frontend/LayersController';
+import { CoreLayers, LayerState } from '../frontend/LayersController';
 import * as Utils from '../utils/utils';
 import * as RenderUtils from '../render/renderUtils';
 import * as DebugUtils from '../render/debugUtils';
@@ -15,6 +15,7 @@ import SceneGrid from './sceneGrid';
 import SceneEntitySelection, { IEntitySelectedCallback } from './sceneEntitySelection';
 import ScenePropertySelection from './scenePropertySelection';
 import { CorePropertyTypes } from '../types/typeRegistry';
+import TextLabels from './textLabel';
 
 export interface IOnDebugDataUpdated
 {
@@ -67,6 +68,8 @@ export default class SceneController
 
     private pools: RenderPools;
 
+    private labels: TextLabels;
+
     // Gizmos
     private axisGizmo: AxisGizmo;
     private grid: SceneGrid;
@@ -79,6 +82,8 @@ export default class SceneController
     initialize(canvas: HTMLCanvasElement, onEntitySelected: IEntitySelectedCallback) {
         const engine = new BABYLON.Engine(canvas, false, { stencil: true });
         this.createScene(canvas, engine);
+
+        this.labels = new TextLabels(this._scene);
 
         engine.runRenderLoop(() => {
             this._scene.render();
@@ -150,15 +155,24 @@ export default class SceneController
         }
     }
 
+    hideAllLabels()
+    {
+        for (const [id, data] of this.sceneEntityData.entities)
+        {
+            data.label.setEnabled(false);
+        }
+    }
+
     addProperty(entity: RECORDING.IEntity, property: RECORDING.IProperty)
     {
         if (!RECORDING.isPropertyShape(property)) { return; }
 
         const shape = property as RECORDING.IProperyShape;
-        const layerState = this.layerManager.getLayerState(shape.layer);
-        
-        if (layerState == LayerState.Off) { return; }
-        if (layerState == LayerState.Selected && this.entitySelection.getSelectedEntityId() != entity.id) { return; }
+
+        if (!this.isLayerActiveForEntity(shape.layer, entity.id))
+        {
+            return;
+        }
         
         const entityData = this.sceneEntityData.getEntityById(entity.id);
         if (!entityData) { return; }
@@ -184,7 +198,8 @@ export default class SceneController
         sphere.material = this.pools.materialPool.getMaterial(1, 1, 1, 0.8);;
         sphere.isPickable = true;
         sphere.id = entity.id.toString();
-        let entityData: IEntityRenderData = { mesh: sphere, properties: new Map<number, BABYLON.Mesh>() };
+        const labelMesh = this.labels.buildLabel(RECORDING.NaiveRecordedData.getEntityName(entity));
+        let entityData: IEntityRenderData = { mesh: sphere, label: labelMesh, properties: new Map<number, BABYLON.Mesh>() };
         this.sceneEntityData.setEntityData(entity.id, entityData);
         this.sceneEntityData.setEntityProperty(entity.id, entity.id);
 
@@ -202,6 +217,35 @@ export default class SceneController
         const position = RenderUtils.createVec3(RECORDING.NaiveRecordedData.getEntityPosition(entity), this.coordSystem);
         entityData.mesh.position.set(position.x, position.y, position.z);
         entityData.mesh.setEnabled(true);
+
+        this.updateEntityLabelInternal(entityData, position, entity.id);
+    }
+
+    updateEntityLabel(entity: RECORDING.IEntity)
+    {
+        let entityData = this.sceneEntityData.getEntityById(entity.id);
+        if (entityData)
+        {
+            const position = RenderUtils.createVec3(RECORDING.NaiveRecordedData.getEntityPosition(entity), this.coordSystem);
+
+            this.updateEntityLabelInternal(entityData, position, entity.id);
+        }
+    }
+
+    private updateEntityLabelInternal(entityData: IEntityRenderData, position: BABYLON.Vector3, entityId: number)
+    {
+        entityData.label.position.set(position.x, position.y + 2, position.z);
+        entityData.label.setEnabled(this.isLayerActiveForEntity(CoreLayers.EntityNames, entityId));
+    }
+
+    private isLayerActiveForEntity(layer: string, entityId: number)
+    {
+        const layerState = this.layerManager.getLayerState(layer);
+        
+        if (layerState == LayerState.Off) { return false; }
+        if (layerState == LayerState.Selected && this.entitySelection.getSelectedEntityId() != entityId) { return false; }
+
+        return true;
     }
 
     hideAllEntities()
@@ -306,6 +350,10 @@ export default class SceneController
         for (let [id, entityData] of this.sceneEntityData.entities)
         {
             this._scene.removeMesh(entityData.mesh);
+            //this._scene.removeMaterial(entityData.label.material);
+            //entityData.label.material.dispose();
+            this._scene.removeMesh(entityData.label);
+            //entityData.label.dispose();
         }
 
         this.sceneEntityData.clear();
