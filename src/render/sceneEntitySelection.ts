@@ -1,4 +1,5 @@
 import * as BABYLON from 'babylonjs';
+import * as Utils from '../utils/utils';
 import { IEntityRenderData, SceneEntityData } from './commonTypes';
 import SceneOutline from './sceneOutline';
 
@@ -15,12 +16,16 @@ export default class SceneEntitySelection
     private outline: SceneOutline;
     public onEntitySelected: IEntitySelectedCallback;
     private sceneEntityData: SceneEntityData;
+    private selectionColor: Utils.RGBColor01;
+    private hoverColor: Utils.RGBColor01
 
-    constructor(onEntitySelected: IEntitySelectedCallback, sceneEntityData: SceneEntityData, outline: SceneOutline)
+    constructor(onEntitySelected: IEntitySelectedCallback, sceneEntityData: SceneEntityData, outline: SceneOutline, selectionColor: Utils.RGBColor01, hoverColor: Utils.RGBColor01)
     {
         this.onEntitySelected = onEntitySelected;
         this.outline = outline;
         this.sceneEntityData = sceneEntityData;
+        this.selectionColor = selectionColor;
+        this.hoverColor = hoverColor;
     }
 
     initialize(scene: BABYLON.Scene, canvas: HTMLCanvasElement)
@@ -124,7 +129,11 @@ export default class SceneEntitySelection
             }
 
             this.hoveredEntity = storedMesh;
-            this.applyHoverMaterial(this.hoveredEntity);
+
+            if (this.hoveredEntity != this.selectedEntity)
+            {
+                this.applyHoverMaterial(this.hoveredEntity);
+            }
         }
 
         this.refreshOutlineTargets();
@@ -144,16 +153,24 @@ export default class SceneEntitySelection
 
     private applySelectionMaterial(entity: IEntityRenderData)
     {
-        // Nothing for now
+        (entity.label.material as BABYLON.StandardMaterial).emissiveColor.set(
+            this.selectionColor.r,
+            this.selectionColor.g,
+            this.selectionColor.b
+        );
     }
 
     private applyHoverMaterial(entity: IEntityRenderData)
     {
-        // Nothing for now
+        (entity.label.material as BABYLON.StandardMaterial).emissiveColor.set(
+            this.hoverColor.r,
+            this.hoverColor.g,
+            this.hoverColor.b
+        );
     }
 
     private restoreEntityMaterial(entity: IEntityRenderData)
     {
-        // Nothing for now
+        (entity.label.material as BABYLON.StandardMaterial).emissiveColor.set(1, 1, 1);
     }
 }

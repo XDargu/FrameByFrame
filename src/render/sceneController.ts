@@ -50,6 +50,10 @@ const shapeBuildConfig : IPropertyBuilderConfig  = {
     [CorePropertyTypes.Mesh]: { builder: ShapeBuilders.buildMeshShape, pickable: true},
 }
 
+// TODO: Maybe move to settings?
+const selectionColor = Utils.RgbToRgb01(Utils.hexToRgb("#6DE080"));
+const hoverColor = Utils.RgbToRgb01(Utils.hexToRgb("#8442B9"));
+
 export default class SceneController
 {
     private _canvas: HTMLCanvasElement;
@@ -96,7 +100,7 @@ export default class SceneController
 
         this.sceneEntityData = new SceneEntityData();
 
-        this.entitySelection = new SceneEntitySelection(onEntitySelected, this.sceneEntityData, this.outline);
+        this.entitySelection = new SceneEntitySelection(onEntitySelected, this.sceneEntityData, this.outline, selectionColor, hoverColor);
         this.entitySelection.initialize(this._scene, this._canvas);
 
         this.propertySelection = new ScenePropertySelection(this.sceneEntityData, this.pools);
@@ -132,10 +136,6 @@ export default class SceneController
         light.intensity = 0.7;
 
         this.grid = new SceneGrid(scene);
-
-        // TODO: Maybe move to settings?
-        const selectionColor = Utils.RgbToRgb01(Utils.hexToRgb("#6DE080"));
-        const hoverColor = Utils.RgbToRgb01(Utils.hexToRgb("#8442B9"));
 
         this.outline = new SceneOutline(scene, this.cameraControl.getCamera(), selectionColor, hoverColor);
     }
@@ -234,8 +234,13 @@ export default class SceneController
 
     private updateEntityLabelInternal(entityData: IEntityRenderData, position: BABYLON.Vector3, entityId: number)
     {
-        entityData.label.position.set(position.x, position.y + 2, position.z);
-        entityData.label.setEnabled(this.isLayerActiveForEntity(CoreLayers.EntityNames, entityId));
+        const isEnabled = this.isLayerActiveForEntity(CoreLayers.EntityNames, entityId);
+        if (isEnabled)
+        {
+            const boundingBox = RenderUtils.getBoundingBoxOfEntity(entityData);
+            entityData.label.position.set(position.x, boundingBox.boundingBox.maximumWorld.y + 0.2, position.z);
+        }
+        entityData.label.setEnabled(isEnabled);
     }
 
     private isLayerActiveForEntity(layer: string, entityId: number)
