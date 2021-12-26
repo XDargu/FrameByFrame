@@ -300,7 +300,10 @@ export default class Renderer {
         // Create settings
         this.settingsList = new SettingsList(document.getElementById("settings"), 
             document.getElementById("settings-search") as HTMLInputElement,
-            this.onSettingsChanged.bind(this)
+            this.onSettingsChanged.bind(this),
+            () => {
+                this.sceneController.purgePools();
+            }
         );
 
         // Connection buttons

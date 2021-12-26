@@ -6,6 +6,11 @@ export interface ISettingsChanged
     () : void
 }
 
+export interface IButtonCallback
+{
+    () : void
+}
+
 interface SettingsBuilderGroup
 {
     fragment: DocumentFragment;
@@ -32,6 +37,11 @@ interface IColorSettingCallback
     (value: string) : void
 }
 
+interface IButtonSettingCallback
+{
+    () : void
+}
+
 namespace SettingsBuilder
 {
     export function createGroup(name: string) : SettingsBuilderGroup
@@ -48,6 +58,11 @@ namespace SettingsBuilder
         fragment.appendChild(list);
 
         return { fragment: fragment, list: list };
+    }
+
+    export function addButtonSetting(group: SettingsBuilderGroup, name: string, tooltip: string, callback: IButtonSettingCallback)
+    {
+        group.list.appendChild(createButtonSetting(name, tooltip, callback));
     }
 
     export function addColorSetting(group: SettingsBuilderGroup, name: string, tooltip: string, value: string, defaultValue: string, callback: IColorSettingCallback)
@@ -101,6 +116,24 @@ namespace SettingsBuilder
         resetButton.append(icon);
 
         return resetButton;
+    }
+
+    function createButton(text: string, tooltip: string) : HTMLButtonElement
+    {
+        let button: HTMLButtonElement = document.createElement("button");
+        button.className = "basico-button basico-small";
+        button.title = tooltip;
+        button.innerText = text;
+
+        return button;
+    }
+
+    function createButtonSetting(name: string, tooltip: string, callback: IButtonSettingCallback) : HTMLElement
+    {
+        let button = createButton(name, tooltip);
+        button.onclick = () => { callback(); };
+
+        return createListItem(button);
     }
 
     function createColorSetting(name: string, tooltip: string, value: string, defaultValue: string, callback: IColorSettingCallback) : HTMLElement
@@ -232,17 +265,19 @@ namespace SettingsBuilder
 export class SettingsList
 {
     private onSettingsChanged: ISettingsChanged;
+    private onPurgePools: IButtonCallback;
     private settingsList: HTMLElement;
     private searchFilter: HTMLInputElement;
     private filter: string;
 
-    constructor(settingsList: HTMLElement, searchFilter: HTMLInputElement, onSettingsChanged: ISettingsChanged)
+    constructor(settingsList: HTMLElement, searchFilter: HTMLInputElement, onSettingsChanged: ISettingsChanged, onPurgePools: IButtonCallback)
     {
         this.settingsList = settingsList;
         this.searchFilter = searchFilter;
         this.searchFilter.onkeyup = () => { this.filterElements(); };
         this.filter = "";
         this.onSettingsChanged = onSettingsChanged;
+        this.onPurgePools = onPurgePools;
     }
 
     setSettings(settings: ISettings)
@@ -334,6 +369,8 @@ You can use the following formatting options:
             let group = SettingsBuilder.createGroup("Debug");
             SettingsBuilder.addBooleanSetting(group, "Show render debug info", settings.showRenderDebug, (value) => {settings.showRenderDebug = value; this.onSettingsChanged(); })
             this.settingsList.appendChild(group.fragment);
+
+            SettingsBuilder.addButtonSetting(group, "Purge pools", "Empty mesh and material pools", this.onPurgePools);
         }
 
         this.filterElements();

@@ -347,6 +347,11 @@ export default class SceneController
         this.coordSystem = system;
     }
 
+    purgePools()
+    {
+        this.pools.clear();
+    }
+
     clear()
     {
         this.removeAllProperties();
@@ -355,10 +360,8 @@ export default class SceneController
         for (let [id, entityData] of this.sceneEntityData.entities)
         {
             this._scene.removeMesh(entityData.mesh);
-            //this._scene.removeMaterial(entityData.label.material);
-            //entityData.label.material.dispose();
+            this._scene.removeMaterial(entityData.label.material);
             this._scene.removeMesh(entityData.label);
-            //entityData.label.dispose();
         }
 
         this.sceneEntityData.clear();
