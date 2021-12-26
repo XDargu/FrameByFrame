@@ -31,6 +31,9 @@ parent: Using Frame by Frame
  - **Follow selected entity**: If enabled, the camera will follow the selected entity on the viewer when it moves. Useful when there is an entity that moves quickly and you need to focus on it. For example, an AI charater or a player running around.
  - **Show all layers on start**: If enabled, all layers will be set automatically to `all` when opening a recording.
  - **Background color**: Controls the background color of the viewer. Click on the button on the right to reset to the default value.
+ - **Selection color**: Controls the color of the outline of a selected entity. Click on the button on the right to reset to the default value.
+ - **Hover color**: Controls the color of the outline of a hovered entity. Click on the button on the right to reset to the default value.
+  - **Outline width**: Controls the width of the outline of selected and hovered entities. Click on the button on the right to reset to the default value.
 
 ## Grid
  - **Grid height**: Determines at which height should the grid be rendered. By default is zero, but your game might have levels with a different height, and the grid might appear very far away.
@@ -50,4 +53,5 @@ parent: Using Frame by Frame
     - %%: % (Escape character)
 
 ## Debug
- - **Show render debug info**: Eanble to display debug information on the viewer.
+ - **Show render debug info**: Enable to display debug information on the viewer.
+ - **Purge Pools**: Click on this button to clear all material and mesh pools. It will remove all meshes currently visible as well. Changing the current frame will reload them.
