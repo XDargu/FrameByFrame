@@ -117,6 +117,20 @@ export default class SceneEntitySelection
         this.outline.refreshOutlineTargets(this.selectedEntity, this.hoveredEntity);
     }
 
+    setColors(selectionColor: Utils.RGBColor01, hoverColor: Utils.RGBColor01)
+    {
+        this.selectionColor = selectionColor;
+        this.hoverColor = hoverColor;
+        if (this.selectedEntity)
+        {
+            this.applySelectionMaterial(this.selectedEntity);
+        }
+        if (this.hoveredEntity)
+        {
+            this.applyHoverMaterial(this.hoveredEntity);
+        }
+    }
+
     private onEntityHovered(id: number)
     {
         let storedMesh = this.sceneEntityData.getEntityById(id);

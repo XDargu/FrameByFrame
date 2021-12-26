@@ -1,3 +1,4 @@
+import * as Utils from '../utils/utils';
 import { createDefaultSettings, ISettings } from "../files/Settings";
 import { filterText } from "../utils/utils";
 
@@ -145,6 +146,29 @@ namespace SettingsBuilder
         resetButton.onclick = () => { input.value = defaultValue; callback(defaultValue); };
 
         let textItem = createTextItem(name, tooltip);
+
+        return createListItem(textItem, input, resetButton);
+    }
+
+    export function addRangeSetting(group: SettingsBuilderGroup, name: string, tooltip: string, min: number, max: number, step: number, value: number, defaultValue: number, callback: INumberSettingCallback)
+    {
+        group.list.appendChild(createRangeSetting(name, tooltip, min, max, step, value, defaultValue, callback));
+    }
+
+    function createRangeSetting(name: string, tooltip: string, min: number, max: number, step: number, value: number, defaultValue: number, callback: INumberSettingCallback) : HTMLElement
+    {
+        let input = createInput("range", value.toString());
+        input.className = "basico-slider";
+        input.min = min.toString();
+        input.max = max.toString();
+        input.step = step.toString();
+        input.value = value.toString();
+        input.oninput = () => { callback( Utils.clamp(Number.parseFloat(input.value), min, max)); }
+
+        let textItem = createTextItem(name, tooltip);
+
+        let resetButton = createResetButton();
+        resetButton.onclick = () => { input.value = defaultValue.toString(); callback(defaultValue); };
 
         return createListItem(textItem, input, resetButton);
     }
@@ -307,6 +331,19 @@ export class SettingsList
             SettingsBuilder.addBooleanSetting(group, "Follow selected entity", settings.followCurrentSelection, (value) => {settings.followCurrentSelection = value; this.onSettingsChanged(); })
             SettingsBuilder.addBooleanSetting(group, "Show all layers on start", settings.showAllLayersOnStart, (value) => {settings.showAllLayersOnStart = value; this.onSettingsChanged(); })
             SettingsBuilder.addColorSetting(group, "Background Color", "Changes the background color of the viewer", settings.backgroundColor, defaultSettings.backgroundColor, (value) => {settings.backgroundColor = value; this.onSettingsChanged(); })
+            SettingsBuilder.addColorSetting(group, "Selection Color", "Changes the color of the outline of selected entities of the viewer", settings.selectionColor, defaultSettings.selectionColor, (value) => {settings.selectionColor = value; this.onSettingsChanged(); })
+            SettingsBuilder.addColorSetting(group, "Hover Color", "Changes color of the outline of hovered entities of the viewer", settings.hoverColor, defaultSettings.hoverColor, (value) => {settings.hoverColor = value; this.onSettingsChanged(); })
+            SettingsBuilder.addRangeSetting(group,
+                "Outline width",
+                "Changes the width of the selection and hover outline",
+                0, 3, 0.1,
+                settings.selectionOutlineWidth,
+                defaultSettings.selectionOutlineWidth,
+                (value) => {
+                    settings.selectionOutlineWidth = value;
+                    this.onSettingsChanged();
+                }
+            );
             this.settingsList.appendChild(group.fragment);
         }
 

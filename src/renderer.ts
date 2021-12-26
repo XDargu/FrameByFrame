@@ -20,7 +20,7 @@ import * as RecordingButton from "./frontend/RecordingButton";
 import * as Filters from "./filters/filters";
 import { NaiveRecordedData } from "./recording/RecordingData";
 import { RecordingOptions } from "./frontend/RecordingOptions";
-import { ISettings } from "./files/Settings";
+import { createDefaultSettings, ISettings } from "./files/Settings";
 import { SettingsList } from "./frontend/SettingsList";
 import { EntityTree } from "./frontend/EntityTree";
 import FiltersList, { FilterId } from "./frontend/FiltersList";
@@ -96,8 +96,16 @@ export default class Renderer {
 
     initialize(canvas: HTMLCanvasElement) {
 
+        const defaultSettings = createDefaultSettings();
+
         this.sceneController = new SceneController();
-        this.sceneController.initialize(canvas, this.onEntitySelectedOnScene.bind(this));
+        this.sceneController.initialize(
+            canvas,
+            this.onEntitySelectedOnScene.bind(this),
+            defaultSettings.selectionColor,
+            defaultSettings.hoverColor,
+            defaultSettings.selectionOutlineWidth
+        );
         this.sceneController.onDebugDataUpdated = (data) => {
             if (this.settings && this.settings.showRenderDebug)
             {
@@ -384,6 +392,8 @@ export default class Renderer {
         this.sceneController.setGridSpacing(settings.gridSpacing);
         this.sceneController.setBackgroundColor(settings.backgroundColor);
         this.sceneController.setAntiAliasingSamples(settings.antialiasingSamples);
+        this.sceneController.setOutlineColors(settings.selectionColor, settings.hoverColor);
+        this.sceneController.setOutlineWidth(settings.selectionOutlineWidth);
     }
 
     updateSettings(settings: ISettings)

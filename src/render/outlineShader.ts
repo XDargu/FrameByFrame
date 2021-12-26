@@ -2,17 +2,34 @@ import * as BABYLON from 'babylonjs';
 import * as Utils from '../utils/utils';
 
 class OutlinePostProcess extends BABYLON.PostProcess{
-    constructor(name: string, camera: BABYLON.Camera, renderTarget: BABYLON.RenderTargetTexture,  outlineColor: Utils.RGBColor01, stripes: boolean)
-    {
-        super(name, "Selection", ["screenSize", "color", "stripes"], ["selectionSampler"], 1, camera);
 
+    private outlineColor: Utils.RGBColor01;
+    private outlineWidth: number;
+
+    constructor(name: string, camera: BABYLON.Camera, renderTarget: BABYLON.RenderTargetTexture, outlineColor: Utils.RGBColor01, outlineWidth: number, stripes: boolean)
+    {
+        super(name, "Selection", ["screenSize", "color", "outlineWidth", "stripes"], ["selectionSampler"], 1, camera);
+        
+        this.outlineWidth = outlineWidth;
+        this.outlineColor = outlineColor;
         this.onApply = effect => {
             effect.setTexture("selectionSampler", renderTarget);
             effect.setFloat2("screenSize", this.width, this.height);
+            effect.setFloat("outlineWidth", this.outlineWidth);
             effect.setFloat("stripes", stripes ? 0 : 1);
-            effect.setColor3("color", outlineColor);
+            effect.setColor3("color", this.outlineColor);
         };
 
+    }
+
+    setColor(outlineColor: Utils.RGBColor01)
+    {
+        this.outlineColor = outlineColor;
+    }
+
+    setWidth(outlineWidth: number)
+    {
+        this.outlineWidth = outlineWidth;
     }
 }
 
@@ -39,14 +56,14 @@ export class OutlineEffect
     private selectionRenderTarget: BABYLON.RenderTargetTexture;
     private selectionPostProcess: OutlinePostProcess;
 
-    constructor(scene: BABYLON.Scene, camera: BABYLON.Camera, outlineColor: Utils.RGBColor01)
+    constructor(scene: BABYLON.Scene, camera: BABYLON.Camera, outlineColor: Utils.RGBColor01, outlineWidth: number)
     {
         this.selectionRenderTarget = new BABYLON.RenderTargetTexture("test", 1024, scene, true);
         this.selectionRenderTarget.activeCamera = camera;
         scene.customRenderTargets.push(this.selectionRenderTarget);
         this.selectionRenderTarget.clearColor = new BABYLON.Color4(0, 0, 0, 0);
 
-        this.selectionPostProcess = new OutlinePostProcess("Selection", camera, this.selectionRenderTarget, outlineColor, false);
+        this.selectionPostProcess = new OutlinePostProcess("Selection", camera, this.selectionRenderTarget, outlineColor, outlineWidth, false);
     }
 
     setAntiAliasingSamples(samples: number)
@@ -62,6 +79,16 @@ export class OutlineEffect
     addMesh(mesh: BABYLON.Mesh)
     {
         this.selectionRenderTarget.renderList.push(mesh);
+    }
+
+    setColor(outlineColor: Utils.RGBColor01)
+    {
+        this.selectionPostProcess.setColor(outlineColor);
+    }
+
+    setWidth(outlineWidth: number)
+    {
+        this.selectionPostProcess.setWidth(outlineWidth);
     }
 }
 
@@ -113,7 +140,7 @@ const outlineShader: string = `
 
     // Parameters
     uniform vec2 screenSize;
-    uniform float threshold;
+    uniform float outlineWidth;
     uniform vec3 color;
     uniform float stripes;
 
@@ -128,7 +155,7 @@ const outlineShader: string = `
     int samples = 5;
     int init = -((samples - 1) / 2);
     int end = (samples - 1) / 2;
-    float width =1.0;
+    float width = max(outlineWidth, 0.01);
 
     for (int x=init; x<=end; ++x)
     {
@@ -161,7 +188,7 @@ const outlineShader: string = `
 
     float maskedSelection = valMin * 0.1 * max(stripes, stripeMask);
 
-    float outline = val-valMin;
+    float outline = outlineWidth > 0.0 ? val-valMin : 0.0;
 
     float selectionValue = 0.1;
     float effect = max(outline, maskedSelection);

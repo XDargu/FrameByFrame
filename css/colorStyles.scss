@@ -105,6 +105,18 @@ $recording-button: #DE0000;
     border-bottom: 3px solid $form-accent;
 }
 
+.basico-slider {
+    background: #574D5F;
+}
+  
+.basico-slider::-webkit-slider-thumb {
+    background: $soft-primary;
+}
+  
+.basico-slider::-moz-range-thumb {
+    background: $soft-primary;
+}
+
 #control-tabs, #control-tabs .basico-tabs-item
 {
     background: $darker-background;

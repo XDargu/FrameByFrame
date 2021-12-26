@@ -10,6 +10,9 @@ export interface ISettings
     followCurrentSelection: boolean,
     showAllLayersOnStart: boolean,
     backgroundColor: string,
+    selectionColor: string,
+    hoverColor: string,
+    selectionOutlineWidth: number,
     /* Grid */
     gridHeight: number,
     gridSpacing: number,
@@ -34,6 +37,9 @@ export function createDefaultSettings() : ISettings
         followCurrentSelection: false,
         showAllLayersOnStart: true,
         backgroundColor: "#33334C",
+        selectionColor: "#6DE080",
+        hoverColor: "#8442B9",
+        selectionOutlineWidth: 1,
         /* Grid */
         gridHeight: 0,
         gridSpacing: 1,

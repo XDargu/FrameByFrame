@@ -50,10 +50,6 @@ const shapeBuildConfig : IPropertyBuilderConfig  = {
     [CorePropertyTypes.Mesh]: { builder: ShapeBuilders.buildMeshShape, pickable: true},
 }
 
-// TODO: Maybe move to settings?
-const selectionColor = Utils.RgbToRgb01(Utils.hexToRgb("#6DE080"));
-const hoverColor = Utils.RgbToRgb01(Utils.hexToRgb("#8442B9"));
-
 export default class SceneController
 {
     private _canvas: HTMLCanvasElement;
@@ -83,9 +79,15 @@ export default class SceneController
     // Config
     private coordSystem: RECORDING.ECoordinateSystem;
 
-    initialize(canvas: HTMLCanvasElement, onEntitySelected: IEntitySelectedCallback) {
+    initialize(canvas: HTMLCanvasElement, onEntitySelected: IEntitySelectedCallback, selectionColor: string, hoverColor: string, outlineWidth: number) {
+
+        const selectionColor01 = Utils.RgbToRgb01(Utils.hexToRgb(selectionColor));
+        const hoverColor01 = Utils.RgbToRgb01(Utils.hexToRgb(hoverColor));
+
         const engine = new BABYLON.Engine(canvas, false, { stencil: true });
         this.createScene(canvas, engine);
+
+        this.outline = new SceneOutline(this._scene, this.cameraControl.getCamera(), selectionColor01, hoverColor01, outlineWidth);
 
         this.labels = new TextLabels(this._scene);
 
@@ -100,7 +102,7 @@ export default class SceneController
 
         this.sceneEntityData = new SceneEntityData();
 
-        this.entitySelection = new SceneEntitySelection(onEntitySelected, this.sceneEntityData, this.outline, selectionColor, hoverColor);
+        this.entitySelection = new SceneEntitySelection(onEntitySelected, this.sceneEntityData, this.outline, selectionColor01, hoverColor01);
         this.entitySelection.initialize(this._scene, this._canvas);
 
         this.propertySelection = new ScenePropertySelection(this.sceneEntityData, this.pools);
@@ -136,8 +138,6 @@ export default class SceneController
         light.intensity = 0.7;
 
         this.grid = new SceneGrid(scene);
-
-        this.outline = new SceneOutline(scene, this.cameraControl.getCamera(), selectionColor, hoverColor);
     }
 
     removeAllProperties()
@@ -345,6 +345,20 @@ export default class SceneController
     setCoordinateSystem(system: RECORDING.ECoordinateSystem)
     {
         this.coordSystem = system;
+    }
+
+    setOutlineColors(selectionColor: string, hoverColor: string)
+    {
+        const selectionColor01 = Utils.RgbToRgb01(Utils.hexToRgb(selectionColor));
+        const hoverColor01 = Utils.RgbToRgb01(Utils.hexToRgb(hoverColor));
+
+        this.entitySelection.setColors(selectionColor01, hoverColor01);
+        this.outline.setColors(selectionColor01, hoverColor01);
+    }
+
+    setOutlineWidth(outlineWidth: number)
+    {
+        this.outline.setWidth(outlineWidth);
     }
 
     purgePools()
