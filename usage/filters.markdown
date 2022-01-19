@@ -79,14 +79,14 @@ You can create multiple filters at the same time. Each one of them will be repre
 
 When filtering properties, you will need to select the type of the property you want to filter, as well as the comparison mode.
 
-To change the type or the mode, hover over the currently selected one and a dropdown should appear with all available options. Keep in mind that the available modes depend of the type. Some modes are unique to certain types. For example, the *less* and *more* modes can be used for numbers, but not for strings.
+To change the type or the mode, hover over the currently selected one and a dropdown should appear with all available options. Keep in mind that the available modes depend of the type. Some modes are unique to certain types. For example, the `less` and `more` modes can be used for numbers, but not for strings.
 
 ![Frame by Frame Filter Modes](/FrameByFrame/assets/images/screenshots/FilterModes.png)
 
 The available types are:
- - Number
- - String
- - Boolean
+ - **Number**: use for any numerical data, including complex types like vectors. LEarn how to further filter these types in the [advanced filter usage section](#advanced-filter-usage).
+ - **String**: any text data.
+ - **Boolean**: these values can only be `true` or `false`.
 
 The comparison modes are:
  - Equal
