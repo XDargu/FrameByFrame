@@ -202,7 +202,8 @@ export default class Renderer {
         );
 
         const consoleElement = document.getElementById("default-console").children[0] as HTMLElement;
-        this.consoleWindow = new ConsoleWindow(consoleElement, LogLevel.Verbose);
+        const consoleSearch = document.getElementById("console-search") as HTMLInputElement;
+        this.consoleWindow = new ConsoleWindow(consoleElement, consoleSearch, LogLevel.Verbose);
         Console.setCallbacks((logLevel: LogLevel, channel: LogChannel, ...message: (string | ILogAction)[]) => {this.consoleWindow.log(logLevel, channel, ...message)});
 
         // Create timeline callbacks
