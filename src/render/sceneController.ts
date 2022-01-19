@@ -79,9 +79,15 @@ export default class SceneController
     // Config
     private coordSystem: RECORDING.ECoordinateSystem;
 
-    initialize(canvas: HTMLCanvasElement, onEntitySelected: IEntitySelectedCallback) {
+    initialize(canvas: HTMLCanvasElement, onEntitySelected: IEntitySelectedCallback, selectionColor: string, hoverColor: string, outlineWidth: number) {
+
+        const selectionColor01 = Utils.RgbToRgb01(Utils.hexToRgb(selectionColor));
+        const hoverColor01 = Utils.RgbToRgb01(Utils.hexToRgb(hoverColor));
+
         const engine = new BABYLON.Engine(canvas, false, { stencil: true });
         this.createScene(canvas, engine);
+
+        this.outline = new SceneOutline(this._scene, this.cameraControl.getCamera(), selectionColor01, hoverColor01, outlineWidth);
 
         this.labels = new TextLabels(this._scene);
 
@@ -96,7 +102,7 @@ export default class SceneController
 
         this.sceneEntityData = new SceneEntityData();
 
-        this.entitySelection = new SceneEntitySelection(onEntitySelected, this.sceneEntityData, this.outline);
+        this.entitySelection = new SceneEntitySelection(onEntitySelected, this.sceneEntityData, this.outline, selectionColor01, hoverColor01);
         this.entitySelection.initialize(this._scene, this._canvas);
 
         this.propertySelection = new ScenePropertySelection(this.sceneEntityData, this.pools);
@@ -132,12 +138,6 @@ export default class SceneController
         light.intensity = 0.7;
 
         this.grid = new SceneGrid(scene);
-
-        // TODO: Maybe move to settings?
-        const selectionColor = Utils.RgbToRgb01(Utils.hexToRgb("#6DE080"));
-        const hoverColor = Utils.RgbToRgb01(Utils.hexToRgb("#8442B9"));
-
-        this.outline = new SceneOutline(scene, this.cameraControl.getCamera(), selectionColor, hoverColor);
     }
 
     removeAllProperties()
@@ -234,8 +234,13 @@ export default class SceneController
 
     private updateEntityLabelInternal(entityData: IEntityRenderData, position: BABYLON.Vector3, entityId: number)
     {
-        entityData.label.position.set(position.x, position.y + 2, position.z);
-        entityData.label.setEnabled(this.isLayerActiveForEntity(CoreLayers.EntityNames, entityId));
+        const isEnabled = this.isLayerActiveForEntity(CoreLayers.EntityNames, entityId);
+        if (isEnabled)
+        {
+            const boundingBox = RenderUtils.getBoundingBoxOfEntity(entityData);
+            entityData.label.position.set(position.x, boundingBox.boundingBox.maximumWorld.y + 0.2, position.z);
+        }
+        entityData.label.setEnabled(isEnabled);
     }
 
     private isLayerActiveForEntity(layer: string, entityId: number)
@@ -342,6 +347,25 @@ export default class SceneController
         this.coordSystem = system;
     }
 
+    setOutlineColors(selectionColor: string, hoverColor: string)
+    {
+        const selectionColor01 = Utils.RgbToRgb01(Utils.hexToRgb(selectionColor));
+        const hoverColor01 = Utils.RgbToRgb01(Utils.hexToRgb(hoverColor));
+
+        this.entitySelection.setColors(selectionColor01, hoverColor01);
+        this.outline.setColors(selectionColor01, hoverColor01);
+    }
+
+    setOutlineWidth(outlineWidth: number)
+    {
+        this.outline.setWidth(outlineWidth);
+    }
+
+    purgePools()
+    {
+        this.pools.clear();
+    }
+
     clear()
     {
         this.removeAllProperties();
@@ -350,10 +374,8 @@ export default class SceneController
         for (let [id, entityData] of this.sceneEntityData.entities)
         {
             this._scene.removeMesh(entityData.mesh);
-            //this._scene.removeMaterial(entityData.label.material);
-            //entityData.label.material.dispose();
+            this._scene.removeMaterial(entityData.label.material);
             this._scene.removeMesh(entityData.label);
-            //entityData.label.dispose();
         }
 
         this.sceneEntityData.clear();

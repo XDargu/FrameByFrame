@@ -1,7 +1,13 @@
+import * as Utils from '../utils/utils';
 import { createDefaultSettings, ISettings } from "../files/Settings";
 import { filterText } from "../utils/utils";
 
 export interface ISettingsChanged
+{
+    () : void
+}
+
+export interface IButtonCallback
 {
     () : void
 }
@@ -32,6 +38,11 @@ interface IColorSettingCallback
     (value: string) : void
 }
 
+interface IButtonSettingCallback
+{
+    () : void
+}
+
 namespace SettingsBuilder
 {
     export function createGroup(name: string) : SettingsBuilderGroup
@@ -48,6 +59,11 @@ namespace SettingsBuilder
         fragment.appendChild(list);
 
         return { fragment: fragment, list: list };
+    }
+
+    export function addButtonSetting(group: SettingsBuilderGroup, name: string, tooltip: string, callback: IButtonSettingCallback)
+    {
+        group.list.appendChild(createButtonSetting(name, tooltip, callback));
     }
 
     export function addColorSetting(group: SettingsBuilderGroup, name: string, tooltip: string, value: string, defaultValue: string, callback: IColorSettingCallback)
@@ -103,6 +119,24 @@ namespace SettingsBuilder
         return resetButton;
     }
 
+    function createButton(text: string, tooltip: string) : HTMLButtonElement
+    {
+        let button: HTMLButtonElement = document.createElement("button");
+        button.className = "basico-button basico-small";
+        button.title = tooltip;
+        button.innerText = text;
+
+        return button;
+    }
+
+    function createButtonSetting(name: string, tooltip: string, callback: IButtonSettingCallback) : HTMLElement
+    {
+        let button = createButton(name, tooltip);
+        button.onclick = () => { callback(); };
+
+        return createListItem(button);
+    }
+
     function createColorSetting(name: string, tooltip: string, value: string, defaultValue: string, callback: IColorSettingCallback) : HTMLElement
     {
         let input = createInput("color", value);
@@ -112,6 +146,29 @@ namespace SettingsBuilder
         resetButton.onclick = () => { input.value = defaultValue; callback(defaultValue); };
 
         let textItem = createTextItem(name, tooltip);
+
+        return createListItem(textItem, input, resetButton);
+    }
+
+    export function addRangeSetting(group: SettingsBuilderGroup, name: string, tooltip: string, min: number, max: number, step: number, value: number, defaultValue: number, callback: INumberSettingCallback)
+    {
+        group.list.appendChild(createRangeSetting(name, tooltip, min, max, step, value, defaultValue, callback));
+    }
+
+    function createRangeSetting(name: string, tooltip: string, min: number, max: number, step: number, value: number, defaultValue: number, callback: INumberSettingCallback) : HTMLElement
+    {
+        let input = createInput("range", value.toString());
+        input.className = "basico-slider";
+        input.min = min.toString();
+        input.max = max.toString();
+        input.step = step.toString();
+        input.value = value.toString();
+        input.oninput = () => { callback( Utils.clamp(Number.parseFloat(input.value), min, max)); }
+
+        let textItem = createTextItem(name, tooltip);
+
+        let resetButton = createResetButton();
+        resetButton.onclick = () => { input.value = defaultValue.toString(); callback(defaultValue); };
 
         return createListItem(textItem, input, resetButton);
     }
@@ -232,17 +289,19 @@ namespace SettingsBuilder
 export class SettingsList
 {
     private onSettingsChanged: ISettingsChanged;
+    private onPurgePools: IButtonCallback;
     private settingsList: HTMLElement;
     private searchFilter: HTMLInputElement;
     private filter: string;
 
-    constructor(settingsList: HTMLElement, searchFilter: HTMLInputElement, onSettingsChanged: ISettingsChanged)
+    constructor(settingsList: HTMLElement, searchFilter: HTMLInputElement, onSettingsChanged: ISettingsChanged, onPurgePools: IButtonCallback)
     {
         this.settingsList = settingsList;
         this.searchFilter = searchFilter;
         this.searchFilter.onkeyup = () => { this.filterElements(); };
         this.filter = "";
         this.onSettingsChanged = onSettingsChanged;
+        this.onPurgePools = onPurgePools;
     }
 
     setSettings(settings: ISettings)
@@ -272,6 +331,19 @@ export class SettingsList
             SettingsBuilder.addBooleanSetting(group, "Follow selected entity", settings.followCurrentSelection, (value) => {settings.followCurrentSelection = value; this.onSettingsChanged(); })
             SettingsBuilder.addBooleanSetting(group, "Show all layers on start", settings.showAllLayersOnStart, (value) => {settings.showAllLayersOnStart = value; this.onSettingsChanged(); })
             SettingsBuilder.addColorSetting(group, "Background Color", "Changes the background color of the viewer", settings.backgroundColor, defaultSettings.backgroundColor, (value) => {settings.backgroundColor = value; this.onSettingsChanged(); })
+            SettingsBuilder.addColorSetting(group, "Selection Color", "Changes the color of the outline of selected entities of the viewer", settings.selectionColor, defaultSettings.selectionColor, (value) => {settings.selectionColor = value; this.onSettingsChanged(); })
+            SettingsBuilder.addColorSetting(group, "Hover Color", "Changes color of the outline of hovered entities of the viewer", settings.hoverColor, defaultSettings.hoverColor, (value) => {settings.hoverColor = value; this.onSettingsChanged(); })
+            SettingsBuilder.addRangeSetting(group,
+                "Outline width",
+                "Changes the width of the selection and hover outline",
+                0, 3, 0.1,
+                settings.selectionOutlineWidth,
+                defaultSettings.selectionOutlineWidth,
+                (value) => {
+                    settings.selectionOutlineWidth = value;
+                    this.onSettingsChanged();
+                }
+            );
             this.settingsList.appendChild(group.fragment);
         }
 
@@ -334,6 +406,8 @@ You can use the following formatting options:
             let group = SettingsBuilder.createGroup("Debug");
             SettingsBuilder.addBooleanSetting(group, "Show render debug info", settings.showRenderDebug, (value) => {settings.showRenderDebug = value; this.onSettingsChanged(); })
             this.settingsList.appendChild(group.fragment);
+
+            SettingsBuilder.addButtonSetting(group, "Purge pools", "Empty mesh and material pools", this.onPurgePools);
         }
 
         this.filterElements();

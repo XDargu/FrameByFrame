@@ -15,6 +15,25 @@ export function getRadiusOfEntity(entity: IEntityRenderData)
     return 6; // TODO: Maybe take into account the bounding box of the selected entity
 }
 
+export function getBoundingBoxOfEntity(entity: IEntityRenderData) : BABYLON.BoundingInfo
+{
+    let boundingInfo = entity.mesh.getBoundingInfo();
+    let min = boundingInfo.boundingBox.minimumWorld;
+    let max = boundingInfo.boundingBox.maximumWorld;
+
+    for (let child of entity.properties.values())
+    {
+        if (child.name !== "line" && child.name !== "arrow")
+        {
+            boundingInfo = child.getBoundingInfo();
+            min = BABYLON.Vector3.Minimize(min, boundingInfo.boundingBox.minimumWorld);
+            max = BABYLON.Vector3.Maximize(max, boundingInfo.boundingBox.maximumWorld);
+        }
+    }
+
+    return new BABYLON.BoundingInfo(min, max);
+}
+
 export function createColor4Rec(color: RECORDING.IColor) : BABYLON.Color4
 {
     return new BABYLON.Color4(color.r, color.g, color.b, color.a);

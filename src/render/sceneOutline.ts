@@ -8,7 +8,7 @@ export default class SceneOutline
     private selectionOutline: OutlineEffect;
     private hoverOutline: OutlineEffect;
 
-    constructor(scene: BABYLON.Scene, camera: BABYLON.Camera, selectionColor: Utils.RGBColor01, hoverColor: Utils.RGBColor01)
+    constructor(scene: BABYLON.Scene, camera: BABYLON.Camera, selectionColor: Utils.RGBColor01, hoverColor: Utils.RGBColor01, outlineWidth: number)
     {
         // Outline post-process effect
         // We can do this for outline with depth
@@ -18,8 +18,8 @@ export default class SceneOutline
 
         BABYLON.Effect.ShadersStore["SelectionFragmentShader"] = getOutlineShader();
 
-        this.selectionOutline = new OutlineEffect(scene, camera, selectionColor);
-        this.hoverOutline = new OutlineEffect(scene, camera, hoverColor);
+        this.selectionOutline = new OutlineEffect(scene, camera, selectionColor, outlineWidth);
+        this.hoverOutline = new OutlineEffect(scene, camera, hoverColor, outlineWidth);
     }
 
     refreshOutlineTargets(selectedEntity: IEntityRenderData, hoveredEntity: IEntityRenderData)
@@ -47,5 +47,17 @@ export default class SceneOutline
     {
         this.selectionOutline.setAntiAliasingSamples(samples);
         this.hoverOutline.setAntiAliasingSamples(samples);
+    }
+
+    setColors(selectionColor: Utils.RGBColor01, hoverColor: Utils.RGBColor01)
+    {
+        this.selectionOutline.setColor(selectionColor);
+        this.hoverOutline.setColor(hoverColor);
+    }
+
+    setWidth(outlineWidth: number)
+    {
+        this.selectionOutline.setWidth(outlineWidth);
+        this.hoverOutline.setWidth(outlineWidth);
     }
 }

@@ -1,7 +1,6 @@
 import * as RECORDING from '../recording/RecordingData';
 import * as TREE from '../ui/tree';
 import * as Utils from "../utils/utils";
-import { filterText } from "../utils/utils";
 
 const clientLabelColors = ["#D6A3FF", "#6DE080", "#EB7C2B", "#5DAEDC", "#DFC956"];
 
@@ -236,7 +235,7 @@ export class EntityTree {
         for (const [entityID, cachedData] of this.cachedItemsById)
         {
             const wrapper = cachedData.element.children[0] as HTMLElement;
-            const visible = this.filter == "" || filterText(this.filter, cachedData.name.toLowerCase()) || this.entityTree.isItemSelected(wrapper);
+            const visible = this.filter == "" || Utils.filterText(this.filter, cachedData.name.toLowerCase()) || this.entityTree.isItemSelected(wrapper);
 
             cachedData.element.style.display = visible ? "block" : "none";
 

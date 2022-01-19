@@ -20,7 +20,7 @@ import * as RecordingButton from "./frontend/RecordingButton";
 import * as Filters from "./filters/filters";
 import { NaiveRecordedData } from "./recording/RecordingData";
 import { RecordingOptions } from "./frontend/RecordingOptions";
-import { ISettings } from "./files/Settings";
+import { createDefaultSettings, ISettings } from "./files/Settings";
 import { SettingsList } from "./frontend/SettingsList";
 import { EntityTree } from "./frontend/EntityTree";
 import FiltersList, { FilterId } from "./frontend/FiltersList";
@@ -96,8 +96,16 @@ export default class Renderer {
 
     initialize(canvas: HTMLCanvasElement) {
 
+        const defaultSettings = createDefaultSettings();
+
         this.sceneController = new SceneController();
-        this.sceneController.initialize(canvas, this.onEntitySelectedOnScene.bind(this));
+        this.sceneController.initialize(
+            canvas,
+            this.onEntitySelectedOnScene.bind(this),
+            defaultSettings.selectionColor,
+            defaultSettings.hoverColor,
+            defaultSettings.selectionOutlineWidth
+        );
         this.sceneController.onDebugDataUpdated = (data) => {
             if (this.settings && this.settings.showRenderDebug)
             {
@@ -194,7 +202,8 @@ export default class Renderer {
         );
 
         const consoleElement = document.getElementById("default-console").children[0] as HTMLElement;
-        this.consoleWindow = new ConsoleWindow(consoleElement, LogLevel.Verbose);
+        const consoleSearch = document.getElementById("console-search") as HTMLInputElement;
+        this.consoleWindow = new ConsoleWindow(consoleElement, consoleSearch, LogLevel.Verbose);
         Console.setCallbacks((logLevel: LogLevel, channel: LogChannel, ...message: (string | ILogAction)[]) => {this.consoleWindow.log(logLevel, channel, ...message)});
 
         // Create timeline callbacks
@@ -300,7 +309,10 @@ export default class Renderer {
         // Create settings
         this.settingsList = new SettingsList(document.getElementById("settings"), 
             document.getElementById("settings-search") as HTMLInputElement,
-            this.onSettingsChanged.bind(this)
+            this.onSettingsChanged.bind(this),
+            () => {
+                this.sceneController.purgePools();
+            }
         );
 
         // Connection buttons
@@ -381,6 +393,8 @@ export default class Renderer {
         this.sceneController.setGridSpacing(settings.gridSpacing);
         this.sceneController.setBackgroundColor(settings.backgroundColor);
         this.sceneController.setAntiAliasingSamples(settings.antialiasingSamples);
+        this.sceneController.setOutlineColors(settings.selectionColor, settings.hoverColor);
+        this.sceneController.setOutlineWidth(settings.selectionOutlineWidth);
     }
 
     updateSettings(settings: ISettings)
