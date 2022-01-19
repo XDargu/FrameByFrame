@@ -1,9 +1,6 @@
 ---
-# Feel free to add content and custom Front Matter to this file.
-# To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
-
 layout: default
-nav_order: 1
+nav_order: 3
 title: Data Format
 description: "Description of the data format of Frame by Frame custom integrations"
 parent: Custom Integrations

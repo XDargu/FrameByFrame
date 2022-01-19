@@ -3,7 +3,7 @@
 # To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
 
 layout: default
-nav_order: 6
+nav_order: 5
 title: Unity Plugin
 description: "Frame by Frame Unity plugin"
 ---
@@ -19,4 +19,10 @@ Connect Frame by Frame to Unity easily with the free plugin.
 ---
 
 ## Getting started
-asdasd
+
+## Quick start guide
+
+## Plugin installation
+## What does the plugin include
+## How to record custom information
+## Detailed API documentation

@@ -26,7 +26,7 @@ parent: Using Frame by Frame
 
 2. Press the Connection button on the top right. When Frame by Frame connects to the game, the recording button will change color:
 
-![Recording Button Enabled](/FrameByFrame/assets/images/RecordingButtonActive.png)
+    ![Recording Button Enabled](/FrameByFrame/assets/images/RecordingButtonActive.png)
 
 3. Frame by Frame should start recording automatically. The [Recording options panel](#recording-options) will open so you can activate what information you want to record.
 

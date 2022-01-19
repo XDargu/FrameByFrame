@@ -20,13 +20,13 @@ Frame by Frame is a visual debugging and recording tool that helps you find bugs
 
 Frame by Frame is a tool that lets you capture a representation of the game state and gives you the ability to review it. You can record and examine data in real time, or you can log the data to a file and import it later on.
 
-Frame by Frame makes much easier to find bugs in your gameplay, especially with hard to track or hard to reproduce bugs. Enable what you need to record, reproduce the issue and review the state of your game frame by frame. You can find bugs caused by single frame events and scrub through the recording easily with the help of filters.
+Quickly find bugs in your gameplay, especially with hard to track or hard to reproduce bugs. Enable what you need to record, reproduce the issue and review the state of your game frame by frame. You can find bugs caused by single frame events and scrub through the recording easily with the help of filters.
 
 After all, games and 3D applications are often based around spacial behaviour, queries and logic, so bugs and issues are often spatial in nature. On top of that, with a main loop running many times every second, bugs and issues can also be temporal in nature, with the cause often rooted in a single frame or event. Frame by Frame makes finding such issues easier and faster.
 
 Store your recordings and examine them later on. Let each member of the team do what they do best: QA can find and record bugs, developers can examine recordings and fix them.
 
-Connect to any game or engine, Frame by Frame can be integrated with anything. If you are using a popular game engine like [Unity](/FrameByFrame/Unity) or [Unreal Engine](/FrameByFrame/Unity) you can try the integration plugins. Or you can [integrate Frame by Frame on your own](/FrameByFrame/custom-integration/custom-integration/).
+Connect to any game or engine, Frame by Frame can be integrated with anything. If you are using a popular game engine like [Unity](/FrameByFrame/Unity) or [Unreal Engine](/FrameByFrame/Unity) you can try the integration plugins. Or you can [integrate Frame by Frame on your own](/FrameByFrame/custom-integrations/).
 
 ![Frame by Frame Screenshot](/FrameByFrame/assets/images/screenshots/ExampleScreen.png)
 *Example of a Frame by Frame capture. In this capture we can see the frame when the destination position of an AI agent was changed, as well as its current path, position, collider, etc.*
@@ -41,60 +41,10 @@ Download the latest release of Frame by Frame and install it.
 [Get older versions of Frame by Frame](https://github.com/XDargu/FrameByFrame/releases)
 
 ### Using Frame by Frame with Unity
-TODO: Link to Unity plugin, explain the steps, link to doc page
+Get the free Unity Plugin and learn how to use it [here](/FrameByFrame/unity/).
 
 ### Using Frame by Frame with Unreal Engine
-TODO: Link to Unreal Engine plugin, explain the steps, link to doc page
+The Unreal Engine plugin is not yet available.
 
-### Using Frame by Frame with your custom C++ engine
-TODO: Link to C++ plugin, link to doc page
-
-
-## Pending documentation:
-
-- Home
-- Quick Start Guide
-- User Interface
-	- Status Bar
-	- Playback Bar
-	- Timeline
-	- 3D viewer
-	- Entity List
-		- Entities
-		- Layers
-	- Entity Data
-		- Properties
-		- Events
-- Using Frame by Frame
-	- Recording
-		- Recording options
-		- Properties
-		- Events
-	- Navigation
-		- Moving through a recording
-		- Playback
-		- Events
-	- Visualization
-		- 3D Viewer (description, controls...)
-		- Layers
-	- Saving and loading
-	- Filters
-		- What are filters
-		- Property filters
-		- Event filters
-	- Recording Multiplayer games
-	- Settings
-- Unity
-	- Plugin installation
-	- What does the plugin include
-	- How to record custom information
-	- Quick start guide
-	- Detailed API documentation
-- Unreal
-	- Same as Unity
-- Connecting to Frame by Frame manually
-	- Network Protocols
-		- Sending Recording Data
-		- Sending Recording Options
-     
-  
+### Using Frame by Frame with your custom engine
+If you want to add Frame by Frame to your own 3D application, visit the [Custom Integrations section](/FrameByFrame/custom-integrations).
