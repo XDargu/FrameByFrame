@@ -210,3 +210,14 @@ export function delay(time: number) {
         setTimeout(resolve, time);
     });
 }
+
+export function clampElementToScreen(pageX: number, pageY: number, element: HTMLElement, offsetX: number = 0, offsetY: number = 0)
+{
+    const isNearRight = (window.innerWidth - pageX) < element.offsetWidth + offsetX;
+    const isNearBottom = (window.innerHeight - pageY) < element.offsetHeight + offsetY;
+
+    const x = isNearRight ? pageX - element.offsetWidth - offsetX : pageX + offsetX;
+    const y = isNearBottom ? pageY - element.offsetHeight - offsetY : pageY + offsetY;
+
+    return {x: x, y: y};
+}

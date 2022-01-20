@@ -1,3 +1,5 @@
+import * as Utils from '../utils/utils';
+
 export interface IContextMenuCallback {
     (element: HTMLElement) : void
 }
@@ -43,14 +45,10 @@ function createContextMenu(posX:  number, posY: number, element: HTMLElement, it
 
     menu.append(list);
 
-    const isNearRight = (window.innerWidth - posX) < menu.offsetWidth;
-    const isNearBottom = (window.innerHeight - posY) < menu.offsetHeight;
-
-    const x = isNearRight ? posX - menu.offsetWidth : posX;
-    const y = isNearBottom ? posY - menu.offsetHeight : posY;
+    const clampedPos = Utils.clampElementToScreen(posX, posY, menu);
     
-    menu.style.left = x + "px";
-    menu.style.top = y + "px";
+    menu.style.left = clampedPos.x + "px";
+    menu.style.top = clampedPos.y + "px";
 
     const hideMenu = () => {
         document.getElementById("contextMenu").style.display = "none";

@@ -395,6 +395,8 @@ export default class Renderer {
         this.sceneController.setAntiAliasingSamples(settings.antialiasingSamples);
         this.sceneController.setOutlineColors(settings.selectionColor, settings.hoverColor);
         this.sceneController.setOutlineWidth(settings.selectionOutlineWidth);
+
+        this.timeline.setPopupActive(settings.showEventPopup);
     }
 
     updateSettings(settings: ISettings)
@@ -696,7 +698,7 @@ export default class Renderer {
             const entity = frameData.entities[entityID];
             const uniqueEntityID = Utils.toUniqueID(frameData.clientId, entity.id);
             NaiveRecordedData.visitEvents(entity.events, (event: RECORDING.IEvent) => {
-                this.timeline.addEvent(event.id, uniqueEntityID.toString(), frameIdx, "#D6A3FF", 0);
+                this.timeline.addEvent(event.id, uniqueEntityID.toString(), frameIdx, "#D6A3FF", event.name, 0);
             });
         }
     }
@@ -722,7 +724,7 @@ export default class Renderer {
                             const entry = result[i];
                             const clientId = this.recordedData.buildFrameDataHeader(entry.frameIdx).clientId;
                             const uniqueEntityID = Utils.toUniqueID(clientId, entry.entityId);
-                            this.timeline.addEvent(0, uniqueEntityID.toString(), entry.frameIdx, filterColor, 0);
+                            this.timeline.addEvent(i, uniqueEntityID.toString(), entry.frameIdx, filterColor, "Filtered result", 0);
                         }
                     }
                 }
@@ -803,6 +805,7 @@ export default class Renderer {
         this.timeline.setFrameClickedCallback(this.onTimelineClicked.bind(this));
         this.timeline.setEventClickedCallback(this.onTimelineEventClicked.bind(this));
         this.timeline.setTimelineUpdatedCallback(this.onTimelineUpdated.bind(this));
+        this.timeline.setGetEntityNameCallback((entity) => { return this.findEntityName(Number.parseInt(entity)); });
     }
 
     getCurrentFrame()
