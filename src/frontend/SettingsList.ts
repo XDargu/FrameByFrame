@@ -348,6 +348,12 @@ export class SettingsList
         }
 
         {
+            let group = SettingsBuilder.createGroup("Timeline");
+            SettingsBuilder.addBooleanSetting(group, "Show event popup", settings.showEventPopup, (value) => {settings.showEventPopup = value; this.onSettingsChanged(); })
+            this.settingsList.appendChild(group.fragment);
+        }
+
+        {
             let group = SettingsBuilder.createGroup("Grid");
             SettingsBuilder.addNumberSetting(group,
                 "Grid height",

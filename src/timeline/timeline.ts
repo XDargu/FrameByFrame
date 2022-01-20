@@ -16,12 +16,18 @@ interface IEventClickedCallback {
 	(entityId: string, frame: number) : void;
 }
 
+export interface IGetEntityName
+{
+    (entityId: string) : string
+}
+
 export interface ITimelineEvent {
     entityId: string;
     typeId: TimelineEventTypeId;
     id: TimelineEventId;
     frame: number;
     color: Utils.RGBColor;
+    label: string;
 }
 
 export interface ITimelineMarker {
@@ -66,6 +72,73 @@ function findEventOfEntityIdAndColor(eventList: ITimelineEvent[], entityId: stri
         }
     }
     return undefined;
+}
+
+class EventPopup {
+
+    private popup: HTMLElement;
+    private hideTimeout: NodeJS.Timeout;
+    private getEntityName: IGetEntityName;
+    private isActive: boolean;
+
+    constructor(popup: HTMLElement)
+    {
+        this.popup = popup;
+        console.log(popup);
+        this.hideTimeout = null;
+    }
+
+    showAtPosition(x: number, y: number, events: ITimelineEvent[], onEventClicked: IEventClickedCallback)
+    {
+        if (!this.isActive) { return; }
+
+        clearTimeout(this.hideTimeout);
+        this.hideTimeout = null;
+
+        Utils.setClass(this.popup, "hidden", false);
+
+        this.popup.innerHTML = "";
+        for (let i=0; i<events.length; ++i)
+        {
+            const event = events[i];
+            let p = document.createElement("p");
+            const name = this.getEntityName ? ` - ${this.getEntityName(event.entityId)}` : "";
+            p.textContent = event.label + name;
+            p.onclick = () => {
+                onEventClicked(event.entityId, event.frame);
+            };
+            this.popup.appendChild(p);
+        }
+
+        const clampedPos = Utils.clampElementToScreen(x, y, this.popup, -10, 10);
+
+        this.popup.style.left = (clampedPos.x) + "px";
+        this.popup.style.top = (clampedPos.y) + "px";
+    }
+
+    hide()
+    {
+        if (this.hideTimeout == null)
+        {
+            this.hideTimeout = setTimeout(() => {
+                Utils.setClass(this.popup, "hidden", true);
+            }, 200);
+        }
+    }
+
+    setGetEntityNameCallback(callback: IGetEntityName)
+    {
+        this.getEntityName = callback;
+    }
+
+    setActive(isActive: boolean)
+    {
+        this.isActive = isActive;
+        if (!isActive)
+        {
+            this.hide();
+        }
+    }
 }
 
 export default class Timeline {
@@ -118,6 +191,8 @@ export default class Timeline {
 
     private hoveredEvent: ITimelineEvent;
 
+    private popup: EventPopup;
+
     // Markers
     private markers: ITimelineMarker[];
 
@@ -126,6 +201,7 @@ export default class Timeline {
 
     constructor(canvas : HTMLCanvasElement, wrapper: HTMLElement)
     {
+        this.popup = new EventPopup(document.getElementById("eventPopup"));
         this.canvas = canvas;
         this.ctx = this.canvas.getContext("2d");
 
@@ -195,9 +271,9 @@ export default class Timeline {
         this.markers.push({ name: name, frame: frame, color: color });
     }
 
-    addEvent(id: TimelineEventId, entityId: string, frame : number, color : string, type: TimelineEventTypeId)
+    addEvent(id: TimelineEventId, entityId: string, frame : number, color : string, label: string, type: TimelineEventTypeId)
     {
-        const event: ITimelineEvent = {id: id, entityId: entityId, frame: frame, color: Utils.hexToRgb(color), typeId: type};
+        const event: ITimelineEvent = {id: id, entityId: entityId, frame: frame, color: Utils.hexToRgb(color), typeId: type, label: label};
         this.events.set(id, event);
 
         let events = this.eventsPerFrame.get(frame);
@@ -250,6 +326,16 @@ export default class Timeline {
         this.onEventClicked = callback;
     }
 
+    setGetEntityNameCallback(callback: IGetEntityName)
+    {
+        this.popup.setGetEntityNameCallback(callback);
+    }
+
+    setPopupActive(isActive: boolean)
+    {
+        this.popup.setActive(isActive);
+    }
+
     private disableEvent(event : any) {
         event.preventDefault();
     }
@@ -258,6 +344,7 @@ export default class Timeline {
     {
         this.dragging = false;
         this.pressing = false;
+        this.popup.hide();
     }
 
     private onMouseDown(event : MouseEvent)
@@ -378,6 +465,18 @@ export default class Timeline {
 
         const cursorStyle = this.hoveredEvent ? "pointer" : "auto";
         this.canvas.style.cursor = cursorStyle;
+
+        if (this.hoveredEvent && !this.dragging)
+        {
+            const events = this.eventsPerFrame.get(this.hoveredEvent.frame);
+
+            const pageY = this.canvas.offsetTop + Timeline.eventHeight;
+            this.popup.showAtPosition(event.pageX, pageY, events, this.onEventClicked);
+        }
+        else
+        {
+            this.popup.hide();
+        }
     }
 
     private onMouseWheel(event : any)

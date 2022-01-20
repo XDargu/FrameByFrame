@@ -13,6 +13,8 @@ export interface ISettings
     selectionColor: string,
     hoverColor: string,
     selectionOutlineWidth: number,
+    /* Timeline */
+    showEventPopup: boolean,
     /* Grid */
     gridHeight: number,
     gridSpacing: number,
@@ -40,6 +42,8 @@ export function createDefaultSettings() : ISettings
         selectionColor: "#6DE080",
         hoverColor: "#8442B9",
         selectionOutlineWidth: 1,
+        /* Timeline */
+        showEventPopup: true,
         /* Grid */
         gridHeight: 0,
         gridSpacing: 1,
