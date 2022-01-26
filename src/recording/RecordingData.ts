@@ -23,7 +23,9 @@ export function isPropertyShape(property: IProperty)
         property.type == Type.AABB ||
         property.type == Type.OOBB ||
         property.type == Type.Capsule ||
-        property.type == Type.Mesh;
+        property.type == Type.Mesh ||
+		property.type == Type.Path ||
+		property.type == Type.Triangle;
 }
 
 export interface IVec3 {
@@ -118,6 +120,18 @@ export interface IPropertyMesh extends IProperyShape {
 	vertices: number[];
 	indices?: number[];
 	wireframe?: boolean;
+	value: string;
+}
+
+export interface IPropertyPath extends IProperyShape {
+	points: IVec3[];
+	value: string;
+}
+
+export interface IPropertyTriangle extends IProperyShape {
+	p1: IVec3;
+	p2: IVec3;
+	p3: IVec3;
 	value: string;
 }
 

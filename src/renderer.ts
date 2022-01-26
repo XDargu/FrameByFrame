@@ -774,27 +774,34 @@ export default class Renderer {
 
     renderProperties()
     {
-        let sceneController = this.sceneController;
-        sceneController.removeAllProperties();
-        sceneController.hideAllLabels();
+        try
+        {
+            let sceneController = this.sceneController;
+            sceneController.removeAllProperties();
+            sceneController.hideAllLabels();
 
-        for (let entityID in this.frameData.entities) {
-            const entity = this.frameData.entities[entityID];
+            for (let entityID in this.frameData.entities) {
+                const entity = this.frameData.entities[entityID];
 
-            NaiveRecordedData.visitEntityProperties(entity, (property: RECORDING.IProperty) => {
-                sceneController.addProperty(entity, property);
-            });
-
-            NaiveRecordedData.visitEvents(entity.events, (event: RECORDING.IEvent) => {
-                NaiveRecordedData.visitProperties([event.properties], (eventProperty: RECORDING.IProperty) => {
-                    sceneController.addProperty(entity, eventProperty);
+                NaiveRecordedData.visitEntityProperties(entity, (property: RECORDING.IProperty) => {
+                    sceneController.addProperty(entity, property);
                 });
-            });
 
-            sceneController.updateEntityLabel(entity);
+                NaiveRecordedData.visitEvents(entity.events, (event: RECORDING.IEvent) => {
+                    NaiveRecordedData.visitProperties([event.properties], (eventProperty: RECORDING.IProperty) => {
+                        sceneController.addProperty(entity, eventProperty);
+                    });
+                });
+
+                sceneController.updateEntityLabel(entity);
+            }
+
+            sceneController.refreshOutlineTargets();
         }
-
-        sceneController.refreshOutlineTargets();
+        catch (error)
+        {
+            Console.log(LogLevel.Error, LogChannel.Files, "Error rendering scene: " + error.message);
+        }
     }
 
     initializeTimeline()

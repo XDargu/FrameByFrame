@@ -152,3 +152,57 @@ export function buildMeshShape(shape: RECORDING.IProperyShape, pools: RenderPool
 
     return customMesh;
 }
+
+export function buildPathShape(shape: RECORDING.IProperyShape, pools: RenderPools, pivotPos: BABYLON.Vector3, system: RECORDING.ECoordinateSystem) : BABYLON.Mesh
+{
+    const pathProperty = shape as RECORDING.IPropertyPath;
+
+    const points = pathProperty.points.map((point) => { return RenderUtils.createVec3(point, system); });
+    let lines = pools.pathPool.getPath(
+        points,
+        pathProperty.color
+    );
+
+    lines.isPickable = false;
+    lines.id = pathProperty.id.toString();
+
+    return lines;
+}
+
+export function buildTriangleShape(shape: RECORDING.IProperyShape, pools: RenderPools, pivotPos: BABYLON.Vector3, system: RECORDING.ECoordinateSystem) : BABYLON.Mesh
+{
+    const triangleProperty = shape as RECORDING.IPropertyTriangle;
+
+    let customMesh = new BABYLON.Mesh("custom", pools.scene);
+    customMesh.isPickable = true;
+    customMesh.id = triangleProperty.id.toString();
+
+    let vertices = [
+        RenderUtils.createVec3(triangleProperty.p1, system).x,
+        RenderUtils.createVec3(triangleProperty.p1, system).y,
+        RenderUtils.createVec3(triangleProperty.p1, system).z,
+        RenderUtils.createVec3(triangleProperty.p2, system).x,
+        RenderUtils.createVec3(triangleProperty.p2, system).y,
+        RenderUtils.createVec3(triangleProperty.p2, system).z,
+        RenderUtils.createVec3(triangleProperty.p3, system).x,
+        RenderUtils.createVec3(triangleProperty.p3, system).y,
+        RenderUtils.createVec3(triangleProperty.p3, system).z
+    ];
+    let indices = [0, 1, 2];
+
+    let vertexData = new BABYLON.VertexData();
+    let normals: any[] = [];
+    BABYLON.VertexData.ComputeNormals(vertices, indices, normals, {
+        useRightHandedSystem: false
+    });
+
+    vertexData.positions = vertices;
+    vertexData.indices = indices;
+    vertexData.normals = normals;
+
+    vertexData.applyToMesh(customMesh);
+
+    customMesh.material = pools.materialPool.getMaterialByColor(triangleProperty.color);
+
+    return customMesh;
+}

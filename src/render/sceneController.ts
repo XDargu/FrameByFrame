@@ -48,6 +48,8 @@ const shapeBuildConfig : IPropertyBuilderConfig  = {
     [CorePropertyTypes.Arrow]: { builder: ShapeBuilders.buildArrowShape, pickable: false},
     [CorePropertyTypes.Vector]: { builder: ShapeBuilders.buildVectorwShape, pickable: false},
     [CorePropertyTypes.Mesh]: { builder: ShapeBuilders.buildMeshShape, pickable: true},
+    [CorePropertyTypes.Path]: { builder: ShapeBuilders.buildPathShape, pickable: true},
+    [CorePropertyTypes.Triangle]: { builder: ShapeBuilders.buildTriangleShape, pickable: true},
 }
 
 export default class SceneController
@@ -181,13 +183,20 @@ export default class SceneController
 
         if (shapeConfig)
         {
-            let mesh = shapeConfig.builder(shape, this.pools, entityData.mesh.position, this.coordSystem);
-            mesh.isPickable = shapeConfig.pickable;
-            if (shapeConfig.pickable)
+            try
             {
-                this.sceneEntityData.setEntityProperty(shape.id, entity.id);
+                let mesh = shapeConfig.builder(shape, this.pools, entityData.mesh.position, this.coordSystem);
+                mesh.isPickable = shapeConfig.pickable;
+                if (shapeConfig.pickable)
+                {
+                    this.sceneEntityData.setEntityProperty(shape.id, entity.id);
+                }
+                entityData.properties.set(shape.id, mesh);
             }
-            entityData.properties.set(shape.id, mesh);
+            catch(error)
+            {
+                throw new Error(`can't build mesh of property "${property.name}", entity ${entity.id} : ${error.message}`);
+            }
         }
 
     }

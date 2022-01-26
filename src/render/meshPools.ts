@@ -253,7 +253,7 @@ abstract class GenericLinePool<Args> extends MeshPool
     }
 }
 
-type LineArgs = { origin: RECORDING.IVec3, end: RECORDING.IVec3, color: RECORDING.IColor };
+type LineArgs = { origin: BABYLON.Vector3, end: BABYLON.Vector3, color: RECORDING.IColor };
 export class LinePool extends GenericLinePool<LineArgs>
 {
     constructor(scene: BABYLON.Scene)
@@ -261,7 +261,7 @@ export class LinePool extends GenericLinePool<LineArgs>
         super(scene);
     }
 
-    getLine(origin: RECORDING.IVec3, end: RECORDING.IVec3, color: RECORDING.IColor): BABYLON.Mesh
+    getLine(origin: BABYLON.Vector3, end: BABYLON.Vector3, color: RECORDING.IColor): BABYLON.Mesh
     {
         const args: LineArgs = { origin: origin, end: end, color: color };
         return this.getLineInternal(args);
@@ -270,8 +270,8 @@ export class LinePool extends GenericLinePool<LineArgs>
     getPoints(args: LineArgs)
     {
         return [[
-            RenderUtils.createVec3Raw(args.origin),
-            RenderUtils.createVec3Raw(args.end)
+            args.origin,
+            args.end
         ]];
     }
 
@@ -287,7 +287,7 @@ export class LinePool extends GenericLinePool<LineArgs>
     }
 }
 
-type ArrowArgs = { origin: RECORDING.IVec3, end: RECORDING.IVec3, color: RECORDING.IColor };
+type ArrowArgs = { origin: BABYLON.Vector3, end: BABYLON.Vector3, color: RECORDING.IColor };
 export class ArrowPool extends GenericLinePool<LineArgs>
 {
     constructor(scene: BABYLON.Scene)
@@ -295,7 +295,7 @@ export class ArrowPool extends GenericLinePool<LineArgs>
         super(scene);
     }
 
-    getArrow(origin: RECORDING.IVec3, end: RECORDING.IVec3, color: RECORDING.IColor): BABYLON.Mesh
+    getArrow(origin: BABYLON.Vector3, end: BABYLON.Vector3, color: RECORDING.IColor): BABYLON.Mesh
     {
         const args: ArrowArgs = { origin: origin, end: end, color: color };
         return this.getLineInternal(args);
@@ -303,8 +303,8 @@ export class ArrowPool extends GenericLinePool<LineArgs>
 
     getPoints(args: ArrowArgs)
     {
-        const origin = RenderUtils.createVec3Raw(args.origin);
-        const end = RenderUtils.createVec3Raw(args.end);
+        const origin = args.origin;
+        const end = args.end;
 
         const dir = end.subtract(origin).normalize();
         const isUp = Math.abs(dir.x) < 0.01 && Math.abs(dir.z) < 0.01; // Using epsilon to avoid issues with small numbers
@@ -329,5 +329,36 @@ export class ArrowPool extends GenericLinePool<LineArgs>
     getHash(args: ArrowArgs)
     {
         return "arrow";
+    }
+}
+
+type PathArgs = { points: BABYLON.Vector3[], color: RECORDING.IColor };
+export class PathPool extends GenericLinePool<PathArgs>
+{
+    constructor(scene: BABYLON.Scene)
+    {
+        super(scene);
+    }
+
+    getPath(points: BABYLON.Vector3[], color: RECORDING.IColor): BABYLON.Mesh
+    {
+        const args: PathArgs = { points: points, color: color };
+        return this.getLineInternal(args);
+    }
+
+    getPoints(args: PathArgs)
+    {
+        return [ args.points ];
+    }
+
+    getColors(args: PathArgs)
+    {
+        const col = RenderUtils.createColor4Rec(args.color);
+        return [new Array(args.points.length).fill(col)];
+    }
+
+    getHash(args: PathArgs)
+    {
+        return "path";
     }
 }
