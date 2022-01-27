@@ -1,6 +1,6 @@
 import * as BABYLON from 'babylonjs';
 import { MaterialPool } from './materialPool';
-import { ArrowPool, BoxPool, CapsulePool, LinePool, MeshPool, PlanePool, SpherePool } from './meshPools';
+import { ArrowPool, BoxPool, CapsulePool, LinePool, MeshPool, PathPool, PlanePool, SpherePool } from './meshPools';
 
 export default class RenderPools
 {
@@ -13,6 +13,7 @@ export default class RenderPools
     planePool: PlanePool;
     linePool: LinePool;
     arrowPool: ArrowPool;
+    pathPool: PathPool;
 
     pools: MeshPool[];
 
@@ -28,8 +29,9 @@ export default class RenderPools
         this.planePool = new PlanePool(scene);
         this.linePool = new LinePool(scene);
         this.arrowPool = new ArrowPool(scene);
+        this.pathPool = new PathPool(scene);
 
-        this.pools = [this.capsulePool, this.spherePool, this.boxPool, this.planePool, this.linePool, this.arrowPool];
+        this.pools = [this.capsulePool, this.spherePool, this.boxPool, this.planePool, this.linePool, this.arrowPool, this.pathPool];
     }
 
     tryFreeMesh(mesh: BABYLON.Mesh) : boolean

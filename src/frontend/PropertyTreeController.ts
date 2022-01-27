@@ -312,6 +312,28 @@ export class PropertyTreeController {
                             // Ignore vertices/indices
                             break;
                         }
+                        case TypeSystem.CorePropertyTypes.Path:
+                        {
+                            const path = property as RECORDING.IPropertyPath;
+                            let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
+                            let idx = 0;
+                            for (const point of path.points)
+                            {
+                                this.addVec3(addedItem, `Point ${idx}`, point, property.id);
+                                ++idx;
+                            }
+                            break;
+                        }
+                        case TypeSystem.CorePropertyTypes.Triangle:
+                        {
+                            const triangle = property as RECORDING.IPropertyTriangle;
+
+                            let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
+                            this.addVec3(addedItem, "p1", triangle.p1, property.id);
+                            this.addVec3(addedItem, "p2", triangle.p2, property.id);
+                            this.addVec3(addedItem, "p3", triangle.p3, property.id);
+                            break;
+                        }
                     }
                 }
             }

@@ -23,7 +23,9 @@ export enum CorePropertyTypes {
 	Line = "line",
     Arrow = "arrow",
     Vector = "vector",
-	Mesh = "mesh"
+	Mesh = "mesh",
+	Path = "path",
+	Triangle = "triangle"
 }
 
 export interface ITypeLayout

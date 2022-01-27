@@ -169,6 +169,20 @@ export function createMemberFilterFromProperty(property: RECORDING.IProperty): M
                 ...createMemberFilterOfType(CorePropertyTypes.Vec3, "Vector", vector.vector)
             ];
         }
+        case CorePropertyTypes.Path:
+        {
+            return [];
+        }
+        case CorePropertyTypes.Triangle:
+        {
+            const triangle = property as RECORDING.IPropertyTriangle;
+
+            return [
+                ...createMemberFilterOfType(CorePropertyTypes.Vec3, "p1", triangle.p1),
+                ...createMemberFilterOfType(CorePropertyTypes.Vec3, "p2", triangle.p2),
+                ...createMemberFilterOfType(CorePropertyTypes.Vec3, "p3", triangle.p3),
+            ]
+        }
     }
 
     return [];
@@ -378,6 +392,17 @@ export namespace Common {
         return false;
     }
 
+    export function filterPropertyTriangle(property: RECORDING.IPropertyTriangle, filters: MemberFilter[]): boolean {
+        return filterVec3("p1", property.p1, filters) ||
+            filterVec3("p2", property.p2, filters) ||
+            filterVec3("p3", property.p3, filters);
+    }
+
+    export function filterPropertyPath(property: RECORDING.IPropertyPath, filters: MemberFilter[]): boolean {
+        // TODO: How to filter a single point? Do we want that?
+        return false;
+    }
+
     export function filterProperty(property: RECORDING.IProperty, filters: MemberFilter[]): boolean {
         const Type = CorePropertyTypes;
 
@@ -397,6 +422,8 @@ export namespace Common {
             case Type.Capsule: return filterPropertyCapsule(property as RECORDING.IPropertyCapsule, filters);
             case Type.Mesh: return filterPropertyMesh(property as RECORDING.IPropertyMesh, filters);
             case Type.Vec3: return filterPropertyVec3(property, filters);
+            case Type.Triangle: return filterPropertyTriangle(property as RECORDING.IPropertyTriangle, filters);
+            case Type.Path: return filterPropertyPath(property as RECORDING.IPropertyPath, filters);
         }
 
         return false;
@@ -438,7 +465,7 @@ export namespace Common {
 
         for (let i = 0; i < properties.value.length; ++i) {
             let group = properties.value[i];
-            if (group.type == "group") {
+            if (group.type == CorePropertyTypes.Group) {
                 if (filterEntityPropertyGroup(group as RECORDING.IPropertyGroup, group.name, groupFilter, membersFilter)) {
                     return true;
                 }
