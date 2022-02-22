@@ -18,7 +18,7 @@ interface IEventClickedCallback {
 
 export interface IGetEntityName
 {
-    (entityId: string) : string
+    (entityId: string, frameIdx: number) : string
 }
 
 export interface ITimelineEvent {
@@ -102,7 +102,7 @@ class EventPopup {
         {
             const event = events[i];
             let p = document.createElement("p");
-            const name = this.getEntityName ? ` - ${this.getEntityName(event.entityId)}` : "";
+            const name = this.getEntityName ? ` - ${this.getEntityName(event.entityId, event.frame)}` : "";
             p.textContent = event.label + name;
             p.onclick = () => {
                 onEventClicked(event.entityId, event.frame);
