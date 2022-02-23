@@ -111,7 +111,7 @@ export class LayerController
                 let nameElement: HTMLInputElement = element.querySelector('.basico-text-oneline');
                 if (nameElement)
                 {
-                    nameElement.innerText = layerData.name;
+                    nameElement.innerText = layerData.name.length > 0 ? layerData.name : "Default";;
                 }
                 
                 let buttonGroupElement: HTMLInputElement = element.querySelector('.basico-button-group');
@@ -205,7 +205,7 @@ export class LayerController
     {
         let div: HTMLDivElement = document.createElement("div");
         div.classList.add("basico-text-oneline");
-        div.innerText = name;
+        div.innerText = name.length > 0 ? name : "Default";
         return div;
     }
 
