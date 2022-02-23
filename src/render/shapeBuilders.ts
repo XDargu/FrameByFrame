@@ -35,7 +35,7 @@ export function buildAABBShape(shape: RECORDING.IProperyShape, pools: RenderPool
 {
     const aabbProperty = shape as RECORDING.IPropertyAABB;
 
-    let aabb = pools.boxPool.getBox(aabbProperty.size);
+    let aabb = pools.boxPool.getBox(RenderUtils.createVec3(aabbProperty.size, system));
     setShapeCommonData(aabb, aabbProperty.id, RenderUtils.createVec3(aabbProperty.position, system), aabbProperty.color, pools);
 
     return aabb;
@@ -45,7 +45,7 @@ export function buildOOBBShape(shape: RECORDING.IProperyShape, pools: RenderPool
 {
     const oobbProperty = shape as RECORDING.IPropertyOOBB;
 
-    let oobb = pools.boxPool.getBox(oobbProperty.size);
+    let oobb = pools.boxPool.getBox(RenderUtils.createVec3(oobbProperty.size, system));
     setShapeCommonData(oobb, oobbProperty.id, RenderUtils.createVec3(oobbProperty.position, system), oobbProperty.color, pools);
     RenderUtils.setShapeOrientationFromUpAndFwd(oobb, RenderUtils.createVec3(oobbProperty.up, system), RenderUtils.createVec3(oobbProperty.forward, system), system);
 

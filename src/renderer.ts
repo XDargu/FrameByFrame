@@ -812,7 +812,7 @@ export default class Renderer {
         this.timeline.setFrameClickedCallback(this.onTimelineClicked.bind(this));
         this.timeline.setEventClickedCallback(this.onTimelineEventClicked.bind(this));
         this.timeline.setTimelineUpdatedCallback(this.onTimelineUpdated.bind(this));
-        this.timeline.setGetEntityNameCallback((entity) => { return this.findEntityName(Number.parseInt(entity)); });
+        this.timeline.setGetEntityNameCallback((entity, frameIdx) => { return this.findEntityNameOnFrame(Number.parseInt(entity), frameIdx); });
     }
 
     getCurrentFrame()
@@ -1065,17 +1065,17 @@ export default class Renderer {
         Console.log(LogLevel.Error, LogChannel.Default, message);
     }
 
-    logEntity(level: LogLevel, channel: LogChannel, message: string, frameId: number, entityId: number)
+    logEntity(level: LogLevel, channel: LogChannel, message: string, frameId: number, uniqueId: number)
     {
         Console.log(level, channel, `${message} `, {
-            text: `${this.findEntityName(entityId)} (id: ${Utils.getEntityIdUniqueId(entityId)}, clientId: ${Utils.getClientIdUniqueId(entityId)}) (frameID: ${frameId})`,
-            tooltip: `Go to frame ${frameId.toString()} and select entity ${this.findEntityName(entityId)}`,
+            text: `${this.findEntityName(uniqueId)} (id: ${Utils.getEntityIdUniqueId(uniqueId)}, clientId: ${Utils.getClientIdUniqueId(uniqueId)}) (frameID: ${frameId})`,
+            tooltip: `Go to frame ${frameId.toString()} and select entity ${this.findEntityName(uniqueId)}`,
             callback: () => {
                 const frame = this.findFrameById(frameId)
                 if (frame >= 0)
                 {
                     this.applyFrame(frame);
-                    this.selectEntity(entityId);
+                    this.selectEntity(uniqueId);
                 }
             }
         });
@@ -1108,19 +1108,30 @@ export default class Renderer {
     }
 
     // Utils
-    findEntity(entityId: number) : RECORDING.IEntity
+    findEntityName(uniqueId: number) : string
     {
-        return this.frameData.entities[entityId];
-    }
-
-    findEntityName(entityId: number) : string
-    {
+        const entityId = Utils.getEntityIdUniqueId(uniqueId);
         const entity = this.frameData.entities[entityId];
         if (entity)
         {
             return RECORDING.NaiveRecordedData.getEntityName(entity);
         }
 
+        return "";
+    }
+
+    findEntityNameOnFrame(uniqueId: number, frameIdx: number) : string
+    {
+        const frameInfo = this.recordedData.frameData[frameIdx];
+        if (frameInfo)
+        {
+            const entityId = Utils.getEntityIdUniqueId(uniqueId);
+            const entity = frameInfo.entities[entityId];
+            if (entity)
+            {
+                return RECORDING.NaiveRecordedData.getEntityName(entity);
+            }
+        }
         return "";
     }
 

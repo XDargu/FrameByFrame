@@ -11,6 +11,45 @@ interface PropertyTreeGroup
     propertyTreeController: PropertyTreeController;
 }
 
+class CollapsedGroupIDsTracker
+{
+    private collapsedGroups: Map<string, boolean>;
+
+    constructor()
+    {
+        this.collapsedGroups = new Map<string, boolean>();
+    }
+
+    isGroupCollapsed(name: string, nameIdx: number) : boolean
+    {
+        return this.collapsedGroups.has(this.hash(name, nameIdx));
+    }
+
+    setGroupCollapsed(name: string, nameIdx: number, isCollapsed: boolean)
+    {
+        if (isCollapsed)
+        {
+            this.collapsedGroups.set(this.hash(name, nameIdx), true);
+        }
+        else
+        {
+            this.collapsedGroups.delete(this.hash(name, nameIdx));
+        }
+    }
+
+    private hash(name: string, nameIdx: number)
+    {
+        return name + "###" + nameIdx;
+    }
+}
+
+function increaseNameId(groupsWithName: Map<string, number>, name: string) : number
+{
+    const amountWithName = groupsWithName.get(name) || 0;
+    groupsWithName.set(name, amountWithName + 1);
+    return amountWithName;
+}
+
 export interface ICreateFilterFromEventCallback
 {
     (name: string, tag: string) : void
@@ -30,6 +69,7 @@ export default class EntityPropertiesBuilder
 {
     private propertyGroups: PropertyTreeGroup[];
     private callbacks: EntityPropertiesBuilderCallbacks;
+    private collapsedGroups: CollapsedGroupIDsTracker;
 
     private readonly contextMenuItems = [
         { text: "Copy value", icon: "fa-copy", callback: this.onCopyValue.bind(this) },
@@ -40,9 +80,10 @@ export default class EntityPropertiesBuilder
     {
         this.propertyGroups = [];
         this.callbacks = callbacks;
+        this.collapsedGroups = new CollapsedGroupIDsTracker();
     }
 
-    buildSinglePropertyTreeBlock(treeParent: HTMLElement, propertyGroup: RECORDING.IPropertyGroup, name: string, tag: string = null, ignoreChildren: boolean = false, shouldPrepend: boolean = false)
+    buildSinglePropertyTreeBlock(treeParent: HTMLElement, propertyGroup: RECORDING.IPropertyGroup, name: string, nameIndex: number, tag: string = null, ignoreChildren: boolean = false, shouldPrepend: boolean = false)
     {
         const propsToAdd = propertyGroup.value.filter((property) => {
             const shouldAdd = !ignoreChildren || ignoreChildren && property.type != CorePropertyTypes.Group;
@@ -54,9 +95,12 @@ export default class EntityPropertiesBuilder
             let titleElement = document.createElement("div");
             titleElement.classList.add("basico-title");
 
+            let iconElement = document.createElement("i");
+            iconElement.className = "fa filter-arrow-icon fa-angle-down";
+
             let nameElement = document.createElement("span");
             nameElement.innerText = name;
-            titleElement.append(nameElement);
+            titleElement.append(iconElement, nameElement);
             
             if (tag)
             {
@@ -104,11 +148,30 @@ export default class EntityPropertiesBuilder
             }
 
             addContextMenu(treeElement, this.contextMenuItems);
+
+            const toggleCollapse = () => {
+                treeElement.classList.toggle("hidden");
+                titleElement.classList.toggle("collapsed");
+                Utils.toggleClasses(iconElement, "fa-angle-down", "fa-angle-right");
+            };
+            
+            if (this.collapsedGroups.isGroupCollapsed(name, nameIndex))
+            {
+                toggleCollapse();
+            }
+
+            titleElement.onclick = () => {
+                toggleCollapse();
+                const isCollapsed = treeElement.classList.contains("hidden");
+                this.collapsedGroups.setGroupCollapsed(name, nameIndex, isCollapsed);
+            };
         }
     }
 
     buildPropertiesPropertyTrees(propertyTrees: HTMLElement, properties: RECORDING.IProperty[])
     {
+        let groupsWithName = new Map<string, number>();
+
         for (let i=0; i<properties.length; ++i)
         {
             if (properties[i].type == CorePropertyTypes.Group)
@@ -117,17 +180,20 @@ export default class EntityPropertiesBuilder
 
                 if (currentGroup.name == "special")
                 {
-                    this.buildSinglePropertyTreeBlock(propertyTrees, currentGroup, "Basic Information", null, false, true);
+                    const name = "Basic Information";
+                    this.buildSinglePropertyTreeBlock(propertyTrees, currentGroup, name, increaseNameId(groupsWithName, name), null, false, true);
                 }
                 else
                 {
-                    this.buildSinglePropertyTreeBlock(propertyTrees, currentGroup, "Uncategorized", null, true);
+                    const name = "Uncategorized";
+
+                    this.buildSinglePropertyTreeBlock(propertyTrees, currentGroup, name, increaseNameId(groupsWithName, name), null, true);
                     for (let j=0; j<currentGroup.value.length; ++j)
                     {
                         if (currentGroup.value[j].type == CorePropertyTypes.Group)
                         {
                             const childGroup = currentGroup.value[j] as RECORDING.IPropertyGroup;
-                            this.buildSinglePropertyTreeBlock(propertyTrees, childGroup, childGroup.name);
+                            this.buildSinglePropertyTreeBlock(propertyTrees, childGroup, childGroup.name, increaseNameId(groupsWithName, childGroup.name));
                         }
                     }
                 }
@@ -137,10 +203,13 @@ export default class EntityPropertiesBuilder
 
     buildEventsPropertyTree(eventTree: HTMLElement, events: RECORDING.IEvent[])
     {
+        let groupsWithName = new Map<string, number>();
         for (let i=0; i<events.length; ++i)
         {
             const propertyGroup = events[i].properties;
-            this.buildSinglePropertyTreeBlock(eventTree, propertyGroup, events[i].name, events[i].tag);
+            const name = events[i].name;
+
+            this.buildSinglePropertyTreeBlock(eventTree, propertyGroup, name, increaseNameId(groupsWithName, name), events[i].tag);
         }
     }
 
