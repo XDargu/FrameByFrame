@@ -1,6 +1,7 @@
 import * as RECORDING from '../recording/RecordingData';
 import * as TREE from '../ui/tree';
 import * as TypeSystem from "../types/typeRegistry";
+import { Console, LogChannel, LogLevel } from './ConsoleController';
 
 export interface IGoToEntityCallback {
     (entityId: number) : void;
@@ -343,6 +344,11 @@ export class PropertyTreeController {
                 const value = primitiveType ? UI.getPrimitiveTypeAsString(property.value, primitiveType) : property.value as string;
                 const content = UI.wrapPrimitiveType(value);
                 this.addValueToPropertyTree(parent, property.name, [content], property.id);
+
+                if (primitiveType == undefined)
+                {
+                    Console.log(LogLevel.Error, LogChannel.Default, `Unknown property type: ${property.type} in property ${property.name}`);
+                }
             }
         }
     }
