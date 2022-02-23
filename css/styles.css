@@ -1406,7 +1406,15 @@ body {
 #events .basico-title {
   text-align: left;
   padding-left: 10px;
-  box-sizing: border-box; }
+  box-sizing: border-box;
+  cursor: pointer; }
+
+#properties .basico-title.collapsed,
+#events .basico-title.collapsed {
+  margin-bottom: 4px; }
+
+.basico-tree.hidden {
+  display: none; }
 
 /* Tags: maybe move to UI code? */
 #events .basico-title {
@@ -1573,7 +1581,15 @@ body {
 #events .basico-title {
   text-align: left;
   padding-left: 10px;
-  box-sizing: border-box; }
+  box-sizing: border-box;
+  cursor: pointer; }
+
+#properties .basico-title.collapsed,
+#events .basico-title.collapsed {
+  margin-bottom: 4px; }
+
+.basico-tree.hidden {
+  display: none; }
 
 /* Tags: maybe move to UI code? */
 #events .basico-title {
@@ -1737,7 +1753,15 @@ body {
 #events .basico-title {
   text-align: left;
   padding-left: 10px;
-  box-sizing: border-box; }
+  box-sizing: border-box;
+  cursor: pointer; }
+
+#properties .basico-title.collapsed,
+#events .basico-title.collapsed {
+  margin-bottom: 4px; }
+
+.basico-tree.hidden {
+  display: none; }
 
 /* Tags: maybe move to UI code? */
 #events .basico-title {
@@ -2178,7 +2202,15 @@ body {
 #events .basico-title {
   text-align: left;
   padding-left: 10px;
-  box-sizing: border-box; }
+  box-sizing: border-box;
+  cursor: pointer; }
+
+#properties .basico-title.collapsed,
+#events .basico-title.collapsed {
+  margin-bottom: 4px; }
+
+.basico-tree.hidden {
+  display: none; }
 
 /* Tags: maybe move to UI code? */
 #events .basico-title {
@@ -2462,7 +2494,15 @@ body {
 #events .basico-title {
   text-align: left;
   padding-left: 10px;
-  box-sizing: border-box; }
+  box-sizing: border-box;
+  cursor: pointer; }
+
+#properties .basico-title.collapsed,
+#events .basico-title.collapsed {
+  margin-bottom: 4px; }
+
+.basico-tree.hidden {
+  display: none; }
 
 /* Tags: maybe move to UI code? */
 #events .basico-title {
@@ -2741,7 +2781,15 @@ body {
 #events .basico-title {
   text-align: left;
   padding-left: 10px;
-  box-sizing: border-box; }
+  box-sizing: border-box;
+  cursor: pointer; }
+
+#properties .basico-title.collapsed,
+#events .basico-title.collapsed {
+  margin-bottom: 4px; }
+
+.basico-tree.hidden {
+  display: none; }
 
 /* Tags: maybe move to UI code? */
 #events .basico-title {
@@ -2938,7 +2986,15 @@ body {
 #events .basico-title {
   text-align: left;
   padding-left: 10px;
-  box-sizing: border-box; }
+  box-sizing: border-box;
+  cursor: pointer; }
+
+#properties .basico-title.collapsed,
+#events .basico-title.collapsed {
+  margin-bottom: 4px; }
+
+.basico-tree.hidden {
+  display: none; }
 
 /* Tags: maybe move to UI code? */
 #events .basico-title {
