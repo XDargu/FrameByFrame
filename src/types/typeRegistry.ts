@@ -98,5 +98,17 @@ export class TypeRegistry
             }
         };
         this.registerType(vec3);
+       
+        const quat : IType = {
+            nameId: "quat",
+            layout: {
+                x: EPrimitiveType.Number,
+                y: EPrimitiveType.Number,
+                z: EPrimitiveType.Number,
+                w: EPrimitiveType.Number
+            }
+        };
+        this.registerType(quat);
+
     }
 }
