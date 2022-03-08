@@ -83,6 +83,12 @@ function createMemberFilterOfType(type: CorePropertyTypes, name: string, value: 
             { name: name + ".name", type: MemberFilterType.String, value: (value as RECORDING.IEntityRef).name, mode: FilterMode.Equals },
             { name: name + ".id", type: MemberFilterType.Number, value: (value as RECORDING.IEntityRef).id, mode: FilterMode.Equals },
         ]
+        case CorePropertyTypes.Quat: return [
+            { name: name + ".x", type: MemberFilterType.Number, value: (value as RECORDING.IQuat).x, mode: FilterMode.Similar },
+            { name: name + ".y", type: MemberFilterType.Number, value: (value as RECORDING.IQuat).y, mode: FilterMode.Similar },
+            { name: name + ".z", type: MemberFilterType.Number, value: (value as RECORDING.IQuat).z, mode: FilterMode.Similar },
+            { name: name + ".w", type: MemberFilterType.Number, value: (value as RECORDING.IQuat).z, mode: FilterMode.Similar }
+        ]
     }
 
     return [];
@@ -97,6 +103,7 @@ export function createMemberFilterFromProperty(property: RECORDING.IProperty): M
         case CorePropertyTypes.String: return createMemberFilterOfType(property.type, property.name, property.value as string);
         case CorePropertyTypes.Vec3: return createMemberFilterOfType(property.type, property.name, property.value as RECORDING.IVec3);
         case CorePropertyTypes.EntityRef: return createMemberFilterOfType(property.type, property.name, property.value as RECORDING.IEntityRef);
+        case CorePropertyTypes.Quat: return createMemberFilterOfType(property.type, property.name, property.value as RECORDING.IQuat);
 
         // Shapes
         case CorePropertyTypes.Sphere:
@@ -323,6 +330,30 @@ export namespace Common {
         return false;
     }
 
+    export function filterQuat(name: string, value: RECORDING.IQuat, filters: MemberFilter[]): boolean {
+        const nameX = name + ".x";
+        const nameY = name + ".y";
+        const nameZ = name + ".z";
+        const nameW = name + ".w";
+
+        for (let i = 0; i < filters.length; ++i) {
+            if (applyFilterNumber(nameX, value.x, filters[i]) ||
+                applyFilterNumber(nameY, value.y, filters[i]) ||
+                applyFilterNumber(nameZ, value.z, filters[i]) ||
+                applyFilterNumber(nameW, value.w, filters[i])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    export function filterPropertyQuat(property: RECORDING.IProperty, filters: MemberFilter[]): boolean {
+        const name = property.name.toLowerCase();
+        const value = property.value as RECORDING.IQuat;
+
+        return filterQuat(name, value, filters);
+    }
+
     export function filterVec3(name: string, value: RECORDING.IVec3, filters: MemberFilter[]): boolean {
         const nameX = name + ".x";
         const nameY = name + ".y";
@@ -411,6 +442,7 @@ export namespace Common {
             case Type.Number: return filterPropertyNumber(property, filters);
             case Type.Bool: return filterPropertyBoolean(property, filters);
             case Type.EntityRef: return filterPropertyEntityRef(property, filters);
+            case Type.Quat: return filterPropertyQuat(property, filters);
             case Type.Group: return filterPropertyGroup(property as RECORDING.IPropertyGroup, filters);
             case Type.Sphere: return filterPropertySphere(property as RECORDING.IPropertySphere, filters);
             case Type.Line: return filterPropertyLine(property as RECORDING.IPropertyLine, filters);

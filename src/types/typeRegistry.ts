@@ -14,6 +14,7 @@ export enum CorePropertyTypes {
 	Bool = "boolean",
 	Vec3 = "vec3",
     EntityRef = "eref",
+    Quat = "quat",
 	/* Shapes */
 	Sphere = "sphere",
 	Capsule = "capsule",
