@@ -132,7 +132,7 @@ export class PropertyTreeController {
         for (const [layoutId, primitiveType] of Object.entries(type.layout)) {
             const customTypeValue = property.value as RECORDING.IPropertyCustomType;
             const value = customTypeValue[layoutId];
-            if (value) {
+            if (value != undefined) {
                 content.push(UI.getLayoutOfPrimitiveType(value, primitiveType));
             }
         }

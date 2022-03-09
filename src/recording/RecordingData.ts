@@ -34,6 +34,14 @@ export interface IVec3 {
 	z: number;
 }
 
+export interface IQuat
+{
+	x: number;
+	y: number;
+	z: number;
+	w: number;
+}
+
 export interface IColor {
 	r: number;
 	g: number;
