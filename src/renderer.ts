@@ -141,7 +141,8 @@ export default class Renderer {
 
         this.timeline.updateLength(this.recordedData.getSize());
 
-        Shortcuts.registerShortcuts(this.playbackController, this.connectionsList);
+        //Shortcuts.registerShortcuts(this.playbackController, this.connectionsList);
+        Shortcuts.initShortcuts();
 
         let recentFilesListElement = document.getElementById(`recentFilesList`);
         let recentFilesWelcomeElement = document.getElementById("recent-files-welcome").querySelector("ul");
@@ -156,6 +157,141 @@ export default class Renderer {
         this.pendingMarkers = new PendingFrames();
 
         this.applyFrame(0);
+    }
+
+    initializePlaybackBarUI()
+    {
+        const Action = Shortcuts.ShortcutActions;
+        const actionAsText = Shortcuts.getShortcutAsText;
+
+        let playBtn = document.getElementById("timeline-play");
+        let nextFrameBtb = document.getElementById("timeline-next");
+        let prevFrameBtn = document.getElementById("timeline-prev");
+        let firstFrameBtn = document.getElementById("timeline-first");
+        let lastFrameBtn = document.getElementById("timeline-last");
+        let nextEventBtn = document.getElementById("timeline-event-next");
+        let prevEventBtn = document.getElementById("timeline-event-prev");
+
+        playBtn.onmousedown = (e) => { this.playbackController.onTimelinePlayClicked(); e.preventDefault(); }
+        nextFrameBtb.onmousedown = (e) => { this.playbackController.onTimelineNextClicked(); e.preventDefault(); }
+        prevFrameBtn.onmousedown = (e) => { this.playbackController.onTimelinePrevClicked(); e.preventDefault(); }
+        firstFrameBtn.onmousedown = (e) => { this.playbackController.onTimelineFirstClicked(); e.preventDefault(); }
+        lastFrameBtn.onmousedown = (e) => { this.playbackController.onTimelineLastClicked(); e.preventDefault(); }
+        nextEventBtn.onmousedown = (e) => { this.playbackController.onTimelineNextEventClicked(e.ctrlKey); e.preventDefault(); }
+        prevEventBtn.onmousedown = (e) => { this.playbackController.onTimelinePrevEventClicked(e.ctrlKey); e.preventDefault(); }
+
+        const shortcuts = [
+            { name: "Toggle Playback",          binding: { keyCode: "Space" },                                 id: Action.TogglePlayback,     callback: () => { this.playbackController.onTimelinePlayClicked(); } },
+            { name: "Next Frame",               binding: { keyCode: "ArrowRight" },                        id: Action.NextFrame,          callback: () => { this.playbackController.onTimelineNextClicked(); } },
+            { name: "Previous Frame",           binding: { keyCode: "ArrowLeft" },                         id: Action.PrevFrame,          callback: () => { this.playbackController.onTimelinePrevClicked(); } },
+            { name: "First Frame",              binding: { keyCode: "ArrowLeft", ctrl: true },             id: Action.FirstFrame,         callback: () => { this.playbackController.onTimelineFirstClicked(); } },
+            { name: "Last Frame",               binding: { keyCode: "ArrowRight", ctrl: true },            id: Action.LastFrame,          callback: () => { this.playbackController.onTimelineLastClicked(); } },
+            { name: "Previous Event",           binding: { keyCode: "ArrowLeft", alt: true },              id: Action.PrevEvent,          callback: () => { this.playbackController.onTimelinePrevEventClicked(false); } },
+            { name: "Next Event",               binding: { keyCode: "ArrowRight", alt: true },             id: Action.NextEvent,          callback: () => { this.playbackController.onTimelineNextEventClicked(false); } },
+            { name: "Next Selection Event",     binding: { keyCode: "ArrowRight", alt: true, ctrl: true }, id: Action.NextSelectionEvent, callback: () => { this.playbackController.onTimelineNextEventClicked(true); } },
+            { name: "Previous Selection Event", binding: { keyCode: "ArrowLeft", alt: true, ctrl: true },  id: Action.PrevSelectionEvent, callback: () => { this.playbackController.onTimelinePrevEventClicked(true); } },
+        ];
+
+        for (let shortcut of shortcuts)
+        {
+            Shortcuts.registerShortcut(shortcut.name, "Timeline", shortcut.id, shortcut.binding, shortcut.callback);
+        }
+
+        firstFrameBtn.title = `Go to first frame (${actionAsText(Action.FirstFrame)})`;
+        lastFrameBtn.title = `Go to last frame (${actionAsText(Action.LastFrame)})`;
+        nextFrameBtb.title = `Go to next frame (${actionAsText(Action.NextFrame)})`;
+        prevFrameBtn.title = `Go to previous frame (${actionAsText(Action.PrevFrame)})`;
+        playBtn.title = `Start/Stop playback (${actionAsText(Action.TogglePlayback)})`;
+        nextEventBtn.title = `Go to previous frame with events (${actionAsText(Action.PrevEvent)})\nGo to previous frame with events of selected entity (Ctrl+click/${actionAsText(Action.PrevSelectionEvent)})`;
+        prevEventBtn.title = `Go to next frame with events (${actionAsText(Action.NextEvent)})\nGo to next frame with events of selected entity (Ctrl+click/${actionAsText(Action.NextSelectionEvent)})`;
+    }
+
+    initializeControlBarUI()
+    {
+        const Action = Shortcuts.ShortcutActions;
+        const actionAsText = Shortcuts.getShortcutAsText;
+
+        let openBtn = document.getElementById("title-bar-open");
+        let saveBtn = document.getElementById("title-bar-save");
+        let clearBtn = document.getElementById("title-bar-clear");
+        let helpBtn = document.getElementById("title-bar-help");
+
+        openBtn.onmousedown = (e) => { this.onOpenFile(); e.preventDefault(); }
+        saveBtn.onmousedown = (e) => { this.onSaveFile(); e.preventDefault(); }
+        clearBtn.onmousedown = (e) => { this.onClearFile(); e.preventDefault(); }
+        helpBtn.onmousedown = (e) => { this.onHelpButton(); e.preventDefault(); }
+
+        const shortcuts = [
+            { name: "Open Recording",  binding: { keyCode: "KeyO", ctrl: true },      id: Action.OpenFile,       callback: () => { this.onOpenFile(); } },
+            { name: "Save Recording",  binding: { keyCode: "KeyS", ctrl: true },      id: Action.SaveFile,       callback: () => { this.onSaveFile(); } },
+            { name: "Clear Recording", binding: { keyCode: "Delete", ctrl: true }, id: Action.ClearRecording, callback: () => { this.onClearFile(); } },
+            { name: "Toggle Helpt",    binding: { keyCode: "F1" },                 id: Action.ToggleHelp,     callback: () => { this.onHelpButton(); } },
+        ];
+
+        for (let shortcut of shortcuts)
+        {
+            Shortcuts.registerShortcut(shortcut.name, "Title bar", shortcut.id, shortcut.binding, shortcut.callback);
+        }
+
+        openBtn.title = `Open a recording (${actionAsText(Action.OpenFile)})`;
+        saveBtn.title = `Save current recording in a new file (${actionAsText(Action.SaveFile)})`;
+        clearBtn.title = `Remove current recording data (${actionAsText(Action.ClearRecording)})`;
+        helpBtn.title = `Open or close welcome window (${actionAsText(Action.ToggleHelp)})`;
+    }
+
+    initializeSideBarUI()
+    {
+        const Action = Shortcuts.ShortcutActions;
+        const actionAsText = Shortcuts.getShortcutAsText;
+
+        // Create tab control
+        const controlTabElements: HTMLElement[] = [
+            document.getElementById("entity-list"), 
+            document.getElementById("var-list"),
+            document.getElementById("connection-list"),
+            document.getElementById("filters-list"),
+            document.getElementById("recent-list"),
+            document.getElementById("setting-list")
+        ];
+
+        const controlTabs: HTMLElement[] = Array.from(document.getElementById("control-tabs").children) as HTMLElement[];
+
+        this.controlTabs = new TabControl(
+            controlTabs,
+            controlTabElements
+            , 0, TabBorder.Left, TabDisplay.Flex
+        );
+
+        this.controlTabs.closeAllTabs();
+
+        var consoleTabs = new TabControl(
+            [ document.getElementById("console-tabs").children[0] as HTMLElement ],
+            [ document.getElementById("default-console") ]
+            , 0, TabBorder.Left
+        );
+
+        const shortcuts = [
+            { name: "Entity List",       binding: { keyCode: "KeyE", shift: true, ctrl: true }, id: Action.EntityList,       callback: () => { this.controlTabs.openTabByIndex(TabIndices.EntityList); } },
+            { name: "Recording Options", binding: { keyCode: "KeyR", shift: true, ctrl: true }, id: Action.RecordingOptions, callback: () => { this.controlTabs.openTabByIndex(TabIndices.RecordingOptions); } },
+            { name: "Connection List",   binding: { keyCode: "KeyC", shift: true, ctrl: true }, id: Action.ConnectionList,   callback: () => { this.controlTabs.openTabByIndex(TabIndices.Connections); } },
+            { name: "Filters List",      binding: { keyCode: "KeyF", shift: true, ctrl: true }, id: Action.FilterList,       callback: () => { this.controlTabs.openTabByIndex(TabIndices.Filters); } },
+            { name: "Recent Files List", binding: { keyCode: "KeyL", shift: true, ctrl: true }, id: Action.RecentFileList,   callback: () => { this.controlTabs.openTabByIndex(TabIndices.Recent); } },
+            { name: "Settings",          binding: { keyCode: "KeyS", shift: true, ctrl: true }, id: Action.SettingsList,     callback: () => { this.controlTabs.openTabByIndex(TabIndices.Settings); } },
+        ];
+
+        for (let shortcut of shortcuts)
+        {
+            Shortcuts.registerShortcut(shortcut.name, "Side bar", shortcut.id, shortcut.binding, shortcut.callback);
+        }
+
+        console.log(controlTabElements);
+
+        controlTabs[TabIndices.EntityList].title = `Entity list (${actionAsText(Action.EntityList)})`;
+        controlTabs[TabIndices.RecordingOptions].title = `Recording Options (${actionAsText(Action.RecordingOptions)})`;
+        controlTabs[TabIndices.Connections].title = `Connections (${actionAsText(Action.ConnectionList)})`;
+        controlTabs[TabIndices.Filters].title = `Filters (${actionAsText(Action.FilterList)})`;
+        controlTabs[TabIndices.Recent].title = `Recent Files (${actionAsText(Action.RecentFileList)})`;
+        controlTabs[TabIndices.Settings].title = `Settings (${actionAsText(Action.SettingsList)})`;
     }
 
     initializeUI()
@@ -173,53 +309,15 @@ export default class Renderer {
             document.getElementById('entity-search') as HTMLInputElement,
             callbacks);
 
-        // Create tab control
-        const controlTabElements: HTMLElement[] = [
-            document.getElementById("entity-list"), 
-            document.getElementById("var-list"),
-            document.getElementById("connection-list"),
-            document.getElementById("filters-list"),
-            document.getElementById("recent-list"),
-            document.getElementById("setting-list")
-        ];
-
-        this.controlTabs = new TabControl(
-            <HTMLElement[]><any>document.getElementById("control-tabs").children,
-            controlTabElements
-            , 0, TabBorder.Left, TabDisplay.Flex
-        );
-
-        this.controlTabs.closeAllTabs();
-
-        var consoleTabs = new TabControl(
-            [
-                document.getElementById("console-tabs").children[0] as HTMLElement
-            ],
-            [
-                document.getElementById("default-console")
-            ]
-            , 0, TabBorder.Left
-        );
+        this.initializeSideBarUI();
 
         const consoleElement = document.getElementById("default-console").children[0] as HTMLElement;
         const consoleSearch = document.getElementById("console-search") as HTMLInputElement;
         this.consoleWindow = new ConsoleWindow(consoleElement, consoleSearch, LogLevel.Verbose);
         Console.setCallbacks((logLevel: LogLevel, channel: LogChannel, ...message: (string | ILogAction)[]) => {this.consoleWindow.log(logLevel, channel, ...message)});
 
-        // Create timeline callbacks
-        document.getElementById("timeline-play").onmousedown = (e) => { this.playbackController.onTimelinePlayClicked(); e.preventDefault(); }
-        document.getElementById("timeline-next").onmousedown = (e) => { this.playbackController.onTimelineNextClicked(); e.preventDefault(); }
-        document.getElementById("timeline-prev").onmousedown = (e) => { this.playbackController.onTimelinePrevClicked(); e.preventDefault(); }
-        document.getElementById("timeline-first").onmousedown = (e) => { this.playbackController.onTimelineFirstClicked(); e.preventDefault(); }
-        document.getElementById("timeline-last").onmousedown = (e) => { this.playbackController.onTimelineLastClicked(); e.preventDefault(); }
-        document.getElementById("timeline-event-prev").onmousedown = (e) => { this.playbackController.onTimelinePrevEventClicked(e.ctrlKey); e.preventDefault(); }
-        document.getElementById("timeline-event-next").onmousedown = (e) => { this.playbackController.onTimelineNextEventClicked(e.ctrlKey); e.preventDefault(); }
-
-        // Create control bar callbacks
-        document.getElementById("title-bar-open").onmousedown = (e) => { this.onOpenFile(); e.preventDefault(); }
-        document.getElementById("title-bar-save").onmousedown = (e) => { this.onSaveFile(); e.preventDefault(); }
-        document.getElementById("title-bar-clear").onmousedown = (e) => { this.onClearFile(); e.preventDefault(); }
-        document.getElementById("title-bar-help").onmousedown = (e) => { this.onHelpButton(); e.preventDefault(); }
+        this.initializePlaybackBarUI();
+        this.initializeControlBarUI();
 
         // Console callbacks
         document.getElementById("console-clear").onmousedown = (e) => { this.consoleWindow.clear(); e.preventDefault(); };
@@ -263,7 +361,7 @@ export default class Renderer {
         // Create splitters
         this.leftPaneSplitter = new Splitter({
             splitter: document.getElementById("left-pane-splitter"),
-            panes: controlTabElements,
+            panes: this.controlTabs.tabContentElements,
             minSize: 150,
             direction: "L",
             minPane: document.getElementById("main-content"),

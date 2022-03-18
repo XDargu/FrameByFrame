@@ -127,6 +127,14 @@ export function buildMeshShape(shape: RECORDING.IProperyShape, pools: RenderPool
         }
     }
 
+    if(indices.length == 0)
+    {
+        for(let i=0; i<vertices.length / 3; ++i)
+        {
+            indices.push(i);
+        }
+    }
+    
     let vertexData = new BABYLON.VertexData();
     let normals: any[] = [];
     BABYLON.VertexData.ComputeNormals(vertices, indices, normals, {
