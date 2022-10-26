@@ -172,7 +172,7 @@ export class BoxPool extends MeshPool
 
     protected buildMesh(hash: string, args: any) : BABYLON.Mesh
     {
-        return BABYLON.MeshBuilder.CreateBox(hash, {height: args.size.x, width: args.size.y, depth: args.size.z}, this.scene)
+        return BABYLON.MeshBuilder.CreateBox(hash, {height: args.size.y, width: args.size.x, depth: args.size.z}, this.scene)
     }
 }
 
