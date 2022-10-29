@@ -237,7 +237,7 @@ export class PlaybackController {
     getPreviousEventFrame(filterSelection: boolean) : ITimelineEvent
     {
         // TODO: Optimize this
-        const entity = this.timeline.selectedEntityId.toString();
+        const entity = this.timeline.getSelectedEntity().toString();
         for (let i=this.renderer.getCurrentFrame() - 1; i>= 0; --i)
         {
             const eventList = this.timeline.getEventsInFrame(i);
@@ -264,7 +264,7 @@ export class PlaybackController {
     getNextEventFrame(filterSelection: boolean) : ITimelineEvent
     {
         // TODO: Optimize this
-        const entity = this.timeline.selectedEntityId.toString();
+        const entity = this.timeline.getSelectedEntity().toString();
         for (let i=this.renderer.getCurrentFrame() + 1; i< this.renderer.getFrameCount() - 1; ++i)
         {
             const eventList = this.timeline.getEventsInFrame(i);

@@ -139,7 +139,7 @@ export default class Renderer {
 
         this.recordedData = new RECORDING.NaiveRecordedData();
 
-        this.timeline.updateLength(this.recordedData.getSize());
+        this.timeline.setLength(this.recordedData.getSize());
 
         //Shortcuts.registerShortcuts(this.playbackController, this.connectionsList);
         Shortcuts.initShortcuts();
@@ -550,7 +550,7 @@ export default class Renderer {
                 }
             }
 
-            this.timeline.updateLength(this.recordedData.getSize());
+            this.timeline.setLength(this.recordedData.getSize());
             this.pendingEvents.markAllPending();
             this.pendingMarkers.markAllPending();
             this.unprocessedFiltersPending = true;
@@ -615,7 +615,7 @@ export default class Renderer {
         this.unprocessedFiltersPending = true;
         this.recordedData.clear();
         this.sceneController.clear();
-        this.timeline.updateLength(this.recordedData.getSize());
+        this.timeline.setLength(this.recordedData.getSize());
         this.timeline.clearEvents();
         this.recordingOptions.setOptions([]);
         this.layerController.setLayers([]);
@@ -684,7 +684,7 @@ export default class Renderer {
 
         this.recordedData.pushFrame(frameToBuild);
 
-        this.timeline.updateLength(this.recordedData.getSize());
+        this.timeline.setLength(this.recordedData.getSize());
         this.pendingEvents.pushPending(this.recordedData.getSize() - 1);
         this.pendingMarkers.pushPending(this.recordedData.getSize() - 1);
         this.unprocessedFiltersPending = true;
@@ -919,12 +919,12 @@ export default class Renderer {
 
     getCurrentFrame()
     {
-        return this.timeline.currentFrame;
+        return this.timeline.getCurrentFrame();
     }
 
     getFrameCount()
     {
-        return this.timeline.length;
+        return this.timeline.getLength();
     }
 
     getElapsedTimeOfFrame(frame: number)
@@ -1087,7 +1087,7 @@ export default class Renderer {
     onLayerChanged(name: string, state: LayerState)
     {
         this.sceneController.updateLayerStatus(name, state);
-        this.applyFrame(this.timeline.currentFrame);
+        this.applyFrame(this.timeline.getCurrentFrame());
         Console.log(LogLevel.Verbose, LogChannel.Layers, `Layer ${name} status changed to: ${getLayerStateName(state)}`);
     }
 
