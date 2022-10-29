@@ -165,16 +165,22 @@ export class EntityTree {
             const entity = entities[entityID];
             if (!this.cachedItemsById.has(entity.id))
             {
-                // Add all parents
+                // Add all parents, from top to bottom
+                let parents = [];
                 let parentId = entity.parentId;
                 while (parentId != 0)
                 {
                     const parentEntity = entities[parentId];
                     if (parentId && !this.cachedItemsById.has(parentId) && parentEntity != undefined)
                     {
-                        this.addEntityToTree(parentEntity, wrapper, recordedData);
+                        parents.push(parentEntity);
                     }
                     parentId = parentEntity != undefined ? parentEntity.parentId : 0;
+                }
+
+                for (let i=parents.length - 1; i>=0; --i)
+                {
+                    this.addEntityToTree(parents[i], wrapper, recordedData);
                 }
                 
                 // Add entity
