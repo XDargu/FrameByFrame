@@ -268,4 +268,9 @@ export class EntityTree {
     {
         this.entityTree.selectElementOfValue(entityId.toString(), true);
     }
+
+    public scrollToEntity(entityId: number) 
+    {
+        this.entityTree.scrollToElementOfValue(entityId.toString());
+    }
 }

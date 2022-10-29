@@ -110,6 +110,18 @@ export class TreeControl {
         return listItem;
     }
 
+    getItemParent(listItem : HTMLElement) : HTMLElement {
+        return listItem.parentElement.closest("li");
+    }
+
+    getWrapperOfItem(listItem : HTMLElement) : HTMLSpanElement {
+        return listItem.querySelector(".basico-tree-item-wrapper");
+    }
+
+    getItemOfWrapper(treeItemWrapperElement : HTMLSpanElement) : HTMLElement {
+        return treeItemWrapperElement.parentElement;
+    }
+
     toggleItem(treeItemWrapperElement : HTMLSpanElement) {
 
         treeItemWrapperElement.addEventListener("click", function() {
@@ -123,6 +135,24 @@ export class TreeControl {
                 listItem.classList.add("basico-tree-closed");
             }
         });
+    }
+
+    openItem(treeItemWrapperElement : HTMLSpanElement) {
+
+        let listItem = treeItemWrapperElement.parentElement;
+
+        if (listItem.classList.contains("basico-tree-closed")) {
+            listItem.classList.remove("basico-tree-closed");
+        }
+    }
+
+    openItemRecursively(listItem : HTMLElement) {
+        let currentItem = listItem;
+        while(currentItem) {
+            this.openItem(this.getWrapperOfItem(currentItem));
+            currentItem = this.getItemParent(currentItem)
+            console.log(currentItem);
+        }
     }
 
     getValueOfItem(listItem : HTMLElement) {
@@ -160,7 +190,7 @@ export class TreeControl {
         let listItem = this.getItemWithValue(value) as HTMLElement;
         if (listItem)
         {
-            let wrapper = listItem.querySelector(".basico-tree-item-wrapper") as HTMLElement;
+            let wrapper = this.getWrapperOfItem(listItem);
             if (preventCallback) {
                 this.markElementSelected(wrapper);
             }
@@ -168,5 +198,16 @@ export class TreeControl {
                 wrapper.click();
             }
         }
+    }
+
+    public scrollToElementOfValue(value : string) {
+        let listItem = this.getItemWithValue(value) as HTMLElement;
+        if (listItem)
+        {
+            let wrapper = this.getWrapperOfItem(listItem);
+            this.openItemRecursively(this.getItemOfWrapper(wrapper));
+            wrapper.scrollIntoView({ block: "nearest"});
+        }
+        
     }
 }

@@ -101,7 +101,7 @@ export default class Renderer {
         this.sceneController = new SceneController();
         this.sceneController.initialize(
             canvas,
-            this.onEntitySelectedOnScene.bind(this),
+            (entityId: number) => { this.onEntitySelectedOnScene(entityId, true) },
             defaultSettings.selectionColor,
             defaultSettings.hoverColor,
             defaultSettings.selectionOutlineWidth
@@ -299,7 +299,7 @@ export default class Renderer {
         this.currentPropertyId = 0;
 
         const callbacks = {
-            onEntitySelected: (entityId: number) => { this.onEntitySelected(entityId); },
+            onEntitySelected: (entityId: number) => { this.onEntitySelected(entityId, false); },
             onEntityMouseOver: (entityId: number) => { this.onEntityHovered(entityId); },
             onEntityMouseOut: (entityId: number) => { this.onEntityStoppedHovering(entityId); }
         }
@@ -753,9 +753,9 @@ export default class Renderer {
         this.sceneController.unmarkEntityAsHovered(entityId);
     }
 
-    onEntitySelected(entityId: number)
+    onEntitySelected(entityId: number, scrollIntoView: boolean)
     {
-        this.onEntitySelectedOnScene(entityId);
+        this.onEntitySelectedOnScene(entityId, scrollIntoView);
 
         if (this.settings.moveToEntityOnSelection)
         {
@@ -764,7 +764,7 @@ export default class Renderer {
         }
     }
 
-    onEntitySelectedOnScene(entityId: number)
+    onEntitySelectedOnScene(entityId: number, scrollIntoView: boolean)
     {
         this.logEntity(LogLevel.Verbose, LogChannel.Selection, `Selected entity:`, this.frameData.frameId, entityId);
         this.selectedEntityId = entityId;
@@ -774,6 +774,10 @@ export default class Renderer {
             this.controlTabs.openTabByIndex(TabIndices.EntityList);
         }
         this.entityTree.selectEntity(entityId);
+        if (scrollIntoView)
+        {
+            this.entityTree.scrollToEntity(entityId);
+        }
         this.sceneController.markEntityAsSelected(entityId);
         this.timeline.setSelectedEntity(entityId);
         this.renderProperties();
@@ -781,7 +785,7 @@ export default class Renderer {
 
     selectEntity(entityId: number)
     {
-        this.onEntitySelected(entityId);
+        this.onEntitySelected(entityId, true);
     }
 
     buildPropertyTree()
