@@ -390,6 +390,13 @@ export default class SceneController
         this.sceneEntityData.clear();
     }
 
+    restoreContext()
+    {
+        let loseContext = this._engine._gl.getExtension('WEBGL_lose_context');
+        loseContext.loseContext();
+        window.setTimeout(() => { loseContext.restoreContext(); }, 1000); 
+    }
+
     private updateDebugData()
     {
         if (this.onDebugDataUpdated)

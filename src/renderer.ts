@@ -408,9 +408,8 @@ export default class Renderer {
         this.settingsList = new SettingsList(document.getElementById("settings"), 
             document.getElementById("settings-search") as HTMLInputElement,
             this.onSettingsChanged.bind(this),
-            () => {
-                this.sceneController.purgePools();
-            }
+            () => { this.sceneController.purgePools(); },
+            () => { this.sceneController.restoreContext(); }
         );
 
         // Connection buttons
@@ -1044,10 +1043,11 @@ export default class Renderer {
             const data = JSON.stringify(this.recordedData);
             this.openModal("Compressing data");
             const buffer = await do_zip(data);
+            const content = buffer.toString('base64');
 
             ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.SaveToFile, 
                 {
-                    content: buffer.toString('base64'),
+                    content: content,
                     path: path
                 }
             ));
