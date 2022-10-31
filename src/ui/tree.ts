@@ -4,6 +4,7 @@ export interface ITreeCallback {
 
 export interface ITreeCallbacks {
     onItemSelected: ITreeCallback;
+    onItemDoubleClicked: ITreeCallback;
     onItemMouseOver: ITreeCallback;
     onItemMouseOut: ITreeCallback;
 }
@@ -73,6 +74,13 @@ export class TreeControl {
             if (options.callbacks && options.callbacks.onItemSelected != null)
             {
                 options.callbacks.onItemSelected(listItem);
+            }
+        };
+
+        wrapper.ondblclick = () => {
+            if (options.callbacks && options.callbacks.onItemDoubleClicked != null)
+            {
+                options.callbacks.onItemDoubleClicked(listItem);
             }
         };
 

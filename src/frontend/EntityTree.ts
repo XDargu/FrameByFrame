@@ -11,6 +11,7 @@ export interface IEntityCallback {
 export interface IEntityCallbacks
 {
     onEntitySelected: IEntityCallback;
+    onEntityDoubleClicked: IEntityCallback;
     onEntityMouseOver: IEntityCallback;
     onEntityMouseOut: IEntityCallback;
 }
@@ -72,6 +73,9 @@ export class EntityTree {
         this.callbacks = {
             onItemSelected: (element: HTMLDivElement) => {
                 entityCallbacks.onEntitySelected(parseInt(this.entityTree.getValueOfItem(element)));
+            },
+            onItemDoubleClicked: (element: HTMLDivElement) => {
+                entityCallbacks.onEntityDoubleClicked(parseInt(this.entityTree.getValueOfItem(element)));
             },
             onItemMouseOver: (element: HTMLDivElement) => {
                 entityCallbacks.onEntityMouseOver(parseInt(this.entityTree.getValueOfItem(element)));

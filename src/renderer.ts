@@ -300,6 +300,7 @@ export default class Renderer {
 
         const callbacks = {
             onEntitySelected: (entityId: number) => { this.onEntitySelected(entityId, false); },
+            onEntityDoubleClicked: (entityId: number) => { this.onEntityDoubleClicked(entityId); },
             onEntityMouseOver: (entityId: number) => { this.onEntityHovered(entityId); },
             onEntityMouseOut: (entityId: number) => { this.onEntityStoppedHovering(entityId); }
         }
@@ -742,6 +743,12 @@ export default class Renderer {
         this.buildPropertyTree();
     }
 
+    moveCameraToSelection()
+    {
+        this.logEntity(LogLevel.Verbose, LogChannel.Selection, `Moving camera to entity:`, this.frameData.frameId, this.selectedEntityId);
+        this.sceneController.moveCameraToSelection();
+    }
+
     onEntityHovered(entityId: number)
     {
         this.sceneController.markEntityAsHovered(entityId);
@@ -758,8 +765,15 @@ export default class Renderer {
 
         if (this.settings.moveToEntityOnSelection)
         {
-            this.logEntity(LogLevel.Verbose, LogChannel.Selection, `Moving camera to entity:`, this.frameData.frameId, entityId);
-            this.sceneController.moveCameraToSelection();
+            this.moveCameraToSelection();
+        }
+    }
+
+    onEntityDoubleClicked(entityId: number)
+    {
+        if (!this.settings.moveToEntityOnSelection)
+        {
+            this.moveCameraToSelection();
         }
     }
 
@@ -1042,7 +1056,7 @@ export default class Renderer {
             await Utils.delay(10);
             const data = JSON.stringify(this.recordedData);
             this.openModal("Compressing data");
-            const buffer = await do_zip(data);
+            const buffer: Buffer = await do_zip(data);
             const content = buffer.toString('base64');
 
             ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.SaveToFile, 
