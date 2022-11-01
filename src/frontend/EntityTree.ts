@@ -11,6 +11,7 @@ export interface IEntityCallback {
 export interface IEntityCallbacks
 {
     onEntitySelected: IEntityCallback;
+    onEntityDoubleClicked: IEntityCallback;
     onEntityMouseOver: IEntityCallback;
     onEntityMouseOut: IEntityCallback;
 }
@@ -72,6 +73,9 @@ export class EntityTree {
         this.callbacks = {
             onItemSelected: (element: HTMLDivElement) => {
                 entityCallbacks.onEntitySelected(parseInt(this.entityTree.getValueOfItem(element)));
+            },
+            onItemDoubleClicked: (element: HTMLDivElement) => {
+                entityCallbacks.onEntityDoubleClicked(parseInt(this.entityTree.getValueOfItem(element)));
             },
             onItemMouseOver: (element: HTMLDivElement) => {
                 entityCallbacks.onEntityMouseOver(parseInt(this.entityTree.getValueOfItem(element)));
@@ -165,16 +169,22 @@ export class EntityTree {
             const entity = entities[entityID];
             if (!this.cachedItemsById.has(entity.id))
             {
-                // Add all parents
+                // Add all parents, from top to bottom
+                let parents = [];
                 let parentId = entity.parentId;
                 while (parentId != 0)
                 {
                     const parentEntity = entities[parentId];
                     if (parentId && !this.cachedItemsById.has(parentId) && parentEntity != undefined)
                     {
-                        this.addEntityToTree(parentEntity, wrapper, recordedData);
+                        parents.push(parentEntity);
                     }
                     parentId = parentEntity != undefined ? parentEntity.parentId : 0;
+                }
+
+                for (let i=parents.length - 1; i>=0; --i)
+                {
+                    this.addEntityToTree(parents[i], wrapper, recordedData);
                 }
                 
                 // Add entity
@@ -267,5 +277,10 @@ export class EntityTree {
     public selectEntity(entityId: number)
     {
         this.entityTree.selectElementOfValue(entityId.toString(), true);
+    }
+
+    public scrollToEntity(entityId: number) 
+    {
+        this.entityTree.scrollToElementOfValue(entityId.toString());
     }
 }

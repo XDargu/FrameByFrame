@@ -120,6 +120,7 @@ export class PropertyTreeController {
             selectable: false,
             callbacks: {
                 onItemSelected: null,
+                onItemDoubleClicked: null,
                 onItemMouseOver: this.onPropertyMouseEnter.bind(this),
                 onItemMouseOut: this.onPropertyMouseLeave.bind(this),
             }
@@ -188,6 +189,7 @@ export class PropertyTreeController {
             selectable: false,
             callbacks: {
                 onItemSelected: null,
+                onItemDoubleClicked: null,
                 onItemMouseOver: this.onPropertyMouseEnter.bind(this),
                 onItemMouseOut: this.onPropertyMouseLeave.bind(this),
             }

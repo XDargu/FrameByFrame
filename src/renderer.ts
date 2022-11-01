@@ -101,7 +101,7 @@ export default class Renderer {
         this.sceneController = new SceneController();
         this.sceneController.initialize(
             canvas,
-            this.onEntitySelectedOnScene.bind(this),
+            (entityId: number) => { this.onEntitySelectedOnScene(entityId, true) },
             defaultSettings.selectionColor,
             defaultSettings.hoverColor,
             defaultSettings.selectionOutlineWidth
@@ -139,7 +139,7 @@ export default class Renderer {
 
         this.recordedData = new RECORDING.NaiveRecordedData();
 
-        this.timeline.updateLength(this.recordedData.getSize());
+        this.timeline.setLength(this.recordedData.getSize());
 
         //Shortcuts.registerShortcuts(this.playbackController, this.connectionsList);
         Shortcuts.initShortcuts();
@@ -299,7 +299,8 @@ export default class Renderer {
         this.currentPropertyId = 0;
 
         const callbacks = {
-            onEntitySelected: (entityId: number) => { this.onEntitySelected(entityId); },
+            onEntitySelected: (entityId: number) => { this.onEntitySelected(entityId, false); },
+            onEntityDoubleClicked: (entityId: number) => { this.onEntityDoubleClicked(entityId); },
             onEntityMouseOver: (entityId: number) => { this.onEntityHovered(entityId); },
             onEntityMouseOut: (entityId: number) => { this.onEntityStoppedHovering(entityId); }
         }
@@ -408,9 +409,8 @@ export default class Renderer {
         this.settingsList = new SettingsList(document.getElementById("settings"), 
             document.getElementById("settings-search") as HTMLInputElement,
             this.onSettingsChanged.bind(this),
-            () => {
-                this.sceneController.purgePools();
-            }
+            () => { this.sceneController.purgePools(); },
+            () => { this.sceneController.restoreContext(); }
         );
 
         // Connection buttons
@@ -550,7 +550,7 @@ export default class Renderer {
                 }
             }
 
-            this.timeline.updateLength(this.recordedData.getSize());
+            this.timeline.setLength(this.recordedData.getSize());
             this.pendingEvents.markAllPending();
             this.pendingMarkers.markAllPending();
             this.unprocessedFiltersPending = true;
@@ -615,7 +615,7 @@ export default class Renderer {
         this.unprocessedFiltersPending = true;
         this.recordedData.clear();
         this.sceneController.clear();
-        this.timeline.updateLength(this.recordedData.getSize());
+        this.timeline.setLength(this.recordedData.getSize());
         this.timeline.clearEvents();
         this.recordingOptions.setOptions([]);
         this.layerController.setLayers([]);
@@ -684,7 +684,7 @@ export default class Renderer {
 
         this.recordedData.pushFrame(frameToBuild);
 
-        this.timeline.updateLength(this.recordedData.getSize());
+        this.timeline.setLength(this.recordedData.getSize());
         this.pendingEvents.pushPending(this.recordedData.getSize() - 1);
         this.pendingMarkers.pushPending(this.recordedData.getSize() - 1);
         this.unprocessedFiltersPending = true;
@@ -743,6 +743,12 @@ export default class Renderer {
         this.buildPropertyTree();
     }
 
+    moveCameraToSelection()
+    {
+        this.logEntity(LogLevel.Verbose, LogChannel.Selection, `Moving camera to entity:`, this.frameData.frameId, this.selectedEntityId);
+        this.sceneController.moveCameraToSelection();
+    }
+
     onEntityHovered(entityId: number)
     {
         this.sceneController.markEntityAsHovered(entityId);
@@ -753,18 +759,25 @@ export default class Renderer {
         this.sceneController.unmarkEntityAsHovered(entityId);
     }
 
-    onEntitySelected(entityId: number)
+    onEntitySelected(entityId: number, scrollIntoView: boolean)
     {
-        this.onEntitySelectedOnScene(entityId);
+        this.onEntitySelectedOnScene(entityId, scrollIntoView);
 
         if (this.settings.moveToEntityOnSelection)
         {
-            this.logEntity(LogLevel.Verbose, LogChannel.Selection, `Moving camera to entity:`, this.frameData.frameId, entityId);
-            this.sceneController.moveCameraToSelection();
+            this.moveCameraToSelection();
         }
     }
 
-    onEntitySelectedOnScene(entityId: number)
+    onEntityDoubleClicked(entityId: number)
+    {
+        if (!this.settings.moveToEntityOnSelection)
+        {
+            this.moveCameraToSelection();
+        }
+    }
+
+    onEntitySelectedOnScene(entityId: number, scrollIntoView: boolean)
     {
         this.logEntity(LogLevel.Verbose, LogChannel.Selection, `Selected entity:`, this.frameData.frameId, entityId);
         this.selectedEntityId = entityId;
@@ -774,6 +787,10 @@ export default class Renderer {
             this.controlTabs.openTabByIndex(TabIndices.EntityList);
         }
         this.entityTree.selectEntity(entityId);
+        if (scrollIntoView)
+        {
+            this.entityTree.scrollToEntity(entityId);
+        }
         this.sceneController.markEntityAsSelected(entityId);
         this.timeline.setSelectedEntity(entityId);
         this.renderProperties();
@@ -781,7 +798,7 @@ export default class Renderer {
 
     selectEntity(entityId: number)
     {
-        this.onEntitySelected(entityId);
+        this.onEntitySelected(entityId, true);
     }
 
     buildPropertyTree()
@@ -915,12 +932,12 @@ export default class Renderer {
 
     getCurrentFrame()
     {
-        return this.timeline.currentFrame;
+        return this.timeline.getCurrentFrame();
     }
 
     getFrameCount()
     {
-        return this.timeline.length;
+        return this.timeline.getLength();
     }
 
     getElapsedTimeOfFrame(frame: number)
@@ -1039,11 +1056,12 @@ export default class Renderer {
             await Utils.delay(10);
             const data = JSON.stringify(this.recordedData);
             this.openModal("Compressing data");
-            const buffer = await do_zip(data);
+            const buffer: Buffer = await do_zip(data);
+            const content = buffer.toString('base64');
 
             ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.SaveToFile, 
                 {
-                    content: buffer.toString('base64'),
+                    content: content,
                     path: path
                 }
             ));
@@ -1083,7 +1101,7 @@ export default class Renderer {
     onLayerChanged(name: string, state: LayerState)
     {
         this.sceneController.updateLayerStatus(name, state);
-        this.applyFrame(this.timeline.currentFrame);
+        this.applyFrame(this.timeline.getCurrentFrame());
         Console.log(LogLevel.Verbose, LogChannel.Layers, `Layer ${name} status changed to: ${getLayerStateName(state)}`);
     }
 

@@ -148,17 +148,17 @@ export function insertSorted<Type>(array: Array<Type>, value: Type, comparator: 
 
 export function toUniqueID(clientId: number, entityId: number)
 {
-    return (entityId << 8) + clientId;
+    return Number((BigInt(entityId) << BigInt(8)) + BigInt(clientId));
 }
 
 export function getEntityIdUniqueId(uniqueId: number)
 {
-    return uniqueId >> 8;
+    return Number(BigInt(uniqueId) >> BigInt(8));
 }
 
 export function getClientIdUniqueId(uniqueId: number)
 {
-    return uniqueId & 0xFF;
+    return Number(BigInt(uniqueId) & BigInt(0xFF));
 }
 
 export function numberToPaddedString(value: number, padding: number) : string
