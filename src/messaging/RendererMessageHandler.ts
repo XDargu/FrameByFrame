@@ -73,7 +73,10 @@ export function initMessageHandling(renderer: Renderer)
                     callback: () => { shell.showItemInFolder(path.resolve(pathName)); }
                 });
                 
-                document.getElementById("window-title-text").innerText = path.basename(pathName) + " - Frame by Frame";
+                let title = path.basename(pathName) + " - Frame by Frame";
+                document.title = title;
+                document.getElementById("window-title-text").innerText = title;
+
                 renderer.removeWelcomeMessage();
                 break;
             }
