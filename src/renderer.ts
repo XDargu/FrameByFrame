@@ -121,6 +121,7 @@ export default class Renderer {
                 onPropertyStopHovering: this.onPropertyStopHovering.bind(this),
                 onCreateFilterFromProperty: this.onCreateFilterFromProperty.bind(this),
                 onCreateFilterFromEvent: this.onCreateFilterFromEvent.bind(this),
+                onGroupStarred: this.onGroupStarred.bind(this),
                 // Note: twe need to convert to uniqueID here, because the ids are coming from the recording
                 // As an alternative, we could re-create the entityrefs when building the frame data
                 onGoToEntity: (id) => { this.selectEntity(Utils.toUniqueID(this.frameData.clientId, id)); },
@@ -1013,6 +1014,11 @@ export default class Renderer {
     {
         this.filterList.addFilter(new Filters.EventFilter(name, tag, []));
         this.controlTabs.openTabByIndex(TabIndices.Filters);
+    }
+
+    onGroupStarred(name: string, starred: boolean)
+    {
+        this.buildPropertyTree();
     }
 
     // Timeline callbacks

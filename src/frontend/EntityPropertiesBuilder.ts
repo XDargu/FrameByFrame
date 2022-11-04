@@ -55,12 +55,18 @@ export interface ICreateFilterFromEventCallback
     (name: string, tag: string) : void
 }
 
+export interface IGroupStarredCallback
+{
+    (name: string, starred: boolean) : void
+}
+
 export interface EntityPropertiesBuilderCallbacks
 {
     onPropertyHover: IPropertyHoverCallback;
     onPropertyStopHovering: IPropertyHoverCallback;
     onCreateFilterFromProperty: ICreateFilterFromPropCallback;
     onCreateFilterFromEvent: ICreateFilterFromEventCallback;
+    onGroupStarred: IGroupStarredCallback;
     onGoToEntity: IGoToEntityCallback;
     isEntityInFrame: IIsEntityInFrame;
 }
@@ -70,6 +76,7 @@ export default class EntityPropertiesBuilder
     private propertyGroups: PropertyTreeGroup[];
     private callbacks: EntityPropertiesBuilderCallbacks;
     private collapsedGroups: CollapsedGroupIDsTracker;
+    private starredGroups: string[];
 
     private readonly contextMenuItems = [
         { text: "Copy value", icon: "fa-copy", callback: this.onCopyValue.bind(this) },
@@ -81,9 +88,10 @@ export default class EntityPropertiesBuilder
         this.propertyGroups = [];
         this.callbacks = callbacks;
         this.collapsedGroups = new CollapsedGroupIDsTracker();
+        this.starredGroups = [];
     }
 
-    buildSinglePropertyTreeBlock(treeParent: HTMLElement, propertyGroup: RECORDING.IPropertyGroup, name: string, nameIndex: number, tag: string = null, ignoreChildren: boolean = false, shouldPrepend: boolean = false)
+    buildSinglePropertyTreeBlock(treeParent: HTMLElement, propertyGroup: RECORDING.IPropertyGroup, name: string, nameIndex: number, tag: string = null, ignoreChildren: boolean = false, shouldPrepend: boolean = false, hasStar: boolean = false)
     {
         const propsToAdd = propertyGroup.value.filter((property) => {
             const shouldAdd = !ignoreChildren || ignoreChildren && property.type != CorePropertyTypes.Group;
@@ -114,6 +122,34 @@ export default class EntityPropertiesBuilder
                     { text: "Create event filter", icon: "fa-plus-square", callback: () => {this.callbacks.onCreateFilterFromEvent(name, tag); } },
                 ];
                 addContextMenu(titleElement, contextMenuItems);
+            }
+            
+            if (hasStar)
+            {
+                let starElement = document.createElement("div");
+                starElement.classList.add("basico-star");
+                let icon = document.createElement("i");
+                icon.classList.add("fas", "fa-star");
+                if (this.starredGroups.includes(name)) {
+                    starElement.classList.add("active");
+                }
+                starElement.append(icon);
+                titleElement.append(starElement);
+
+                starElement.onclick = (e) => {
+                    starElement.classList.toggle("active");
+                    let isStarred = starElement.classList.contains("active");
+                    if (isStarred)
+                    {
+                        Utils.pushUnique(this.starredGroups, name);
+                    }
+                    else
+                    {
+                        this.starredGroups = this.starredGroups.filter(arrayItem => arrayItem !== name);
+                    }
+                    this.callbacks.onGroupStarred(name, isStarred);
+                    e.stopPropagation();
+                }
             }
 
             let treeElement = document.createElement("div");
@@ -188,12 +224,25 @@ export default class EntityPropertiesBuilder
                     const name = "Uncategorized";
 
                     this.buildSinglePropertyTreeBlock(propertyTrees, currentGroup, name, increaseNameId(groupsWithName, name), null, true);
+                    
+                    let indices = [];
                     for (let j=0; j<currentGroup.value.length; ++j)
                     {
-                        if (currentGroup.value[j].type == CorePropertyTypes.Group)
+                        if (this.starredGroups.includes(currentGroup.value[j].name))
+                            indices.unshift(j);
+                        else
+                            indices.push(j);
+                    }
+
+                    // Sort indices based on the names
+
+                    for (let j=0; j<currentGroup.value.length; ++j)
+                    {
+                        let groupData = currentGroup.value[indices[j]];
+                        if (groupData.type == CorePropertyTypes.Group)
                         {
-                            const childGroup = currentGroup.value[j] as RECORDING.IPropertyGroup;
-                            this.buildSinglePropertyTreeBlock(propertyTrees, childGroup, childGroup.name, increaseNameId(groupsWithName, childGroup.name));
+                            const childGroup = groupData as RECORDING.IPropertyGroup;
+                            this.buildSinglePropertyTreeBlock(propertyTrees, childGroup, childGroup.name, increaseNameId(groupsWithName, childGroup.name), null, false, false, true);
                         }
                     }
                 }
