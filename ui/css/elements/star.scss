@@ -1,0 +1,29 @@
+@import "../variables.scss";
+
+.basico-star {
+    float: right;
+    margin-right: 8px;
+    cursor: pointer;
+    opacity: 0.2;
+}
+
+.basico-star:hover {
+    opacity: 0.6;
+}
+
+.basico-star.active {
+    opacity: 1;
+    color: $primary-color;
+}
+
+.basico-card-header .basico-star {
+    float: right;
+}
+
+.basico-list-item .basico-star {
+    float: right;
+}
+
+.basico-console-line .basico-star {
+    float: right;
+}
