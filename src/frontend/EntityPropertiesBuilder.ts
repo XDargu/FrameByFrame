@@ -91,14 +91,23 @@ export default class EntityPropertiesBuilder
         this.starredGroups = [];
     }
 
-    buildSinglePropertyTreeBlock(treeParent: HTMLElement, propertyGroup: RECORDING.IPropertyGroup, name: string, nameIndex: number, tag: string = null, ignoreChildren: boolean = false, shouldPrepend: boolean = false, hasStar: boolean = false)
+    buildSinglePropertyTreeBlock(
+        treeParent: HTMLElement,
+        propertyGroup: RECORDING.IPropertyGroup,
+        name: string,
+        nameIndex: number,
+        tag: string = null,
+        ignoreChildren: boolean = false,
+        shouldPrepend: boolean = false,
+        hasStar: boolean = false,
+        alwaysAdd: boolean = false)
     {
         const propsToAdd = propertyGroup.value.filter((property) => {
             const shouldAdd = !ignoreChildren || ignoreChildren && property.type != CorePropertyTypes.Group;
             return shouldAdd;
         });
 
-        if (propsToAdd.length > 0)
+        if (propsToAdd.length > 0 || alwaysAdd)
         {
             let titleElement = document.createElement("div");
             titleElement.classList.add("basico-title");
@@ -258,7 +267,7 @@ export default class EntityPropertiesBuilder
             const propertyGroup = events[i].properties;
             const name = events[i].name;
 
-            this.buildSinglePropertyTreeBlock(eventTree, propertyGroup, name, increaseNameId(groupsWithName, name), events[i].tag);
+            this.buildSinglePropertyTreeBlock(eventTree, propertyGroup, name, increaseNameId(groupsWithName, name), events[i].tag, false, false, false, true);
         }
     }
 
