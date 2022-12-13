@@ -14,14 +14,14 @@ description: "Frame by Frame Unity plugin"
 Connect Frame by Frame to Unity easily with the free plugin.
 {: .fs-6 .fw-300 }
 
-[Get Frame by Frame for Unity](#getting-started){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[Get Frame by Frame for Unity](https://github.com/XDargu/FrameByFrame-UnityIntegration){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 
 ---
 
+Note: the Unity plugin is still in development and experimental. Once a first production ready version is ready, this documentation will be filled.
+
 ## Getting started
-
 ## Quick start guide
-
 ## Plugin installation
 ## What does the plugin include
 ## How to record custom information

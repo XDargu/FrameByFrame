@@ -19,6 +19,14 @@ description: "Learn how to quickly start using Frame by Frame"
 
 ---
 
+# Installing Frame by Frame
+
+1. Download the latest release of Frame by Frame and install it.
+
+    [Get Frame by Frame 0.2.6](https://github.com/XDargu/FrameByFrame/releases/tag/v0.2.6){: .btn .btn-primary .fs-3 .mb-4 .mb-md-0 .mr-2 }
+
+2. You can use the portable version or use the installer. *Note:* If you install it, the file extension .fbf will automatically be associated to Frame by Frame.
+
 # Prepare your game engine
 
 1. Download and install the plugin for [Unity](/FrameByFrame/unity/) or Unreal Engine
@@ -28,10 +36,16 @@ description: "Learn how to quickly start using Frame by Frame"
 # Record with Frame by Frame
 
 1. Download and install the latest Frame by Frame release. [Find the releases here](https://github.com/XDargu/FrameByFrame/releases).
-2. Open the tool and click the recording button in the Title Bar.
+2. Open the tool and check the connection button in the title Bar. If it's green, you are connected and can record.
 
-    ![Recording Button](/FrameByFrame/assets/images/ConnectionButton.png "Recording Button")
+    ![Connection Button Active](/FrameByFrame/assets/images/RecordingButtonActive.png "Connection Button Active")
+
+    If it's gray, click on it to connect:
+
+    ![Connection Button](/FrameByFrame/assets/images/ConnectionButton.png "Connection Button")
 
 3. Select what you want to record in the [Recording Options](/FrameByFrame/user-interface#recording-options).
 
     ![Frame by Frame Recording Options](/FrameByFrame/assets/images/screenshots/RecordingOptions.png "Recording Options")
+
+    If everything worked, Frame by Frame should already be recording information from your game!

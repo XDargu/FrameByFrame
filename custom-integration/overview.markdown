@@ -36,6 +36,7 @@ In order to connect to Frame by Frame you will need a client and a server WebSoc
 
 You can find the details of how to configure the WebSockets [here](/FrameByFrame/custom-integration/websocket-connection/).
 
+If you are unfamiliar with WebSockets, Mozilla has [several guides and resources.](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API)
 
 ### Raw Data
 

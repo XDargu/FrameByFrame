@@ -20,6 +20,10 @@ permalink: user-interface
 
 ---
 
+## Overview
+
+![Frame by Frame UI Overview](/FrameByFrame/assets/images/screenshots/UIOverview.png)
+
 ## Welcome Screen
 
 The first thing you will see when running Frame by Frame is the Welcome screen.
