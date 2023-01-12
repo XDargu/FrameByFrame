@@ -43,13 +43,13 @@ export function initMessageHandling(renderer: Renderer)
             }
             case Messaging.MessageType.SavePathResult:
             {
-                const pathName = arg.data as string;
+                const resultPath = arg.data as Messaging.IResultSavePathData;
                 Console.log(LogLevel.Information, LogChannel.Files, `Saving file file `, {
-                    text: pathName,
+                    text: resultPath.path,
                     tooltip: "Open file in explorer",
-                    callback: () => { shell.showItemInFolder(path.resolve(pathName)); }
+                    callback: () => { shell.showItemInFolder(path.resolve(resultPath.path)); }
                 });
-                renderer.saveToPath(pathName);
+                renderer.saveToPath(resultPath.path, resultPath.saveOnlySelection);
                 break;
             }
             case Messaging.MessageType.UpdateRecentFiles:

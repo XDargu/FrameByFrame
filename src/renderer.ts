@@ -616,6 +616,7 @@ export default class Renderer {
         this.unprocessedFiltersPending = true;
         this.recordedData.clear();
         this.sceneController.clear();
+        this.timeline.clear();
         this.timeline.setLength(this.recordedData.getSize());
         this.timeline.clearEvents();
         this.recordingOptions.setOptions([]);
@@ -928,6 +929,7 @@ export default class Renderer {
         this.timeline.setFrameClickedCallback(this.onTimelineClicked.bind(this));
         this.timeline.setEventClickedCallback(this.onTimelineEventClicked.bind(this));
         this.timeline.setTimelineUpdatedCallback(this.onTimelineUpdated.bind(this));
+        this.timeline.setRangeChangedCallback((initFrame, endFrame) => { this.playbackController.updateUI(); });
         this.timeline.setGetEntityNameCallback((entity, frameIdx) => { return this.findEntityNameOnFrame(Number.parseInt(entity), frameIdx); });
     }
 
@@ -1047,12 +1049,15 @@ export default class Renderer {
     
     onSaveFile()
     {
+        const hasPartialSelection : boolean = this.timeline.getSelectionInit() != 0 
+            || this.timeline.getSelectionEnd() != this.timeline.getLength() - 1;
         ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.RequestSavePath, {
-            defaultName: Utils.getFormattedFilename(this.settings.exportNameFormat)
+            defaultName: Utils.getFormattedFilename(this.settings.exportNameFormat),
+            askForPartialSave: hasPartialSelection
         }));
     }
 
-    async saveToPath(path: string)
+    async saveToPath(path: string, saveOnlySelection: boolean)
     {
         const { promisify } = require('util');
         const do_zip = promisify(zlib.gzip);
@@ -1060,7 +1065,27 @@ export default class Renderer {
         try {
             this.openModal("Serializing data");
             await Utils.delay(10);
-            const data = JSON.stringify(this.recordedData);
+
+            // Build data to save
+            let dataToSave = this.recordedData;
+            if (saveOnlySelection)
+            {
+                let data = new NaiveRecordedData();
+
+                data.layers = this.recordedData.layers;
+                data.clientIds = this.recordedData.clientIds;
+                const firstFrame = this.timeline.getSelectionInit();
+                const lastFrame = this.timeline.getSelectionEnd();
+
+                for (let i=firstFrame; i<=lastFrame; ++i)
+                {
+                    data.frameData.push(this.recordedData.frameData[i]);
+                }
+
+                dataToSave = data;
+            }
+
+            const data = JSON.stringify(dataToSave);
             this.openModal("Compressing data");
             const buffer: Buffer = await do_zip(data);
             const content = buffer.toString('base64');

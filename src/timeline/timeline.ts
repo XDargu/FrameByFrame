@@ -16,6 +16,10 @@ interface IEventClickedCallback {
 	(entityId: string, frame: number) : void;
 }
 
+interface IRangeChangedCallback {
+	(initRange: number, endRange: number) : void;
+}
+
 export interface IGetEntityName
 {
     (entityId: string, frameIdx: number) : string
@@ -37,6 +41,15 @@ export interface ITimelineMarker {
 }
 
 type TEventsPerFrame = Map<number, ITimelineEvent[]>;
+
+enum InputOperation
+{
+    None,
+    MovingTimeline,
+    MovingLeftRange,
+    MovingRightRange,
+    PressingTimeline
+}
 
 export function findEventOfEntityId(eventList: ITimelineEvent[], entityId: string)
 {
@@ -141,11 +154,18 @@ class EventPopup {
     }
 }
 
+interface TimelineRange
+{
+    initFrame: number;
+    endFrame: number;
+}
+
 export class TimelineData {
 
     // Timeline information
     currentFrame : number;
     length : number;
+    range: TimelineRange;
 
     // Selection
     selectedEntityId: number;
@@ -156,6 +176,7 @@ export class TimelineData {
     constructor() {
         this.events = new TimelineEvents();
         this.markers = new TimelineMarkers();
+        this.range = { initFrame: 0, endFrame: 0 };
 
         this.selectedEntityId = -1;
         this.currentFrame = 0;
@@ -166,6 +187,7 @@ export class TimelineData {
         this.length = 0;
         this.currentFrame = 0;
         this.selectedEntityId = -1;
+        this.range = { initFrame: 0, endFrame: 0 };
         this.events.clear();
         this.markers.clear();
     }
@@ -268,8 +290,7 @@ class TimelineInputHandler {
     canvas: HTMLCanvasElement;
 
     // Input control
-    private dragging : boolean;
-    private pressing : boolean;
+    private inputOperation: InputOperation;
 
     // Data
     private data: TimelineData;
@@ -281,6 +302,7 @@ class TimelineInputHandler {
     // Callbacks
     onframeClicked : ITimelineFrameClickedCallback;
     onEventClicked: IEventClickedCallback;
+    onRangeChanged: IRangeChangedCallback;
 
     constructor(canvas: HTMLCanvasElement, renderer: TimelineRenderer, data: TimelineData, popup: EventPopup) {
 
@@ -297,46 +319,89 @@ class TimelineInputHandler {
         this.renderer = renderer;
         this.popup = popup;
 
-        this.dragging = false;
-        this.pressing = false;
+        this.inputOperation = InputOperation.None;
     }
 
     clear()
     {
-        this.dragging = false;
-        this.pressing = false;
+        this.inputOperation = InputOperation.None;
     }
 
     private onMouseUp(event : MouseEvent)
     {
-        this.dragging = false;
-        this.pressing = false;
+        this.inputOperation = InputOperation.None;
     }
 
     private onMouseMove(event : MouseEvent)
     {
+        if (this.data.length == 0) { return; }
         this.renderer.hoveredEvent = this.renderer.findEventAtPosition(event.offsetX, event.offsetY);
+        this.renderer.hoveredLeftRange = this.renderer.isInRange(event.offsetX, event.offsetY, true);
+        this.renderer.hoveredRightRange = this.renderer.isInRange(event.offsetX, event.offsetY, false);
 
-        if (this.dragging)
+        const canvasPosition : number = event.offsetX;
+        let targetFrame = null;
+
+        switch(this.inputOperation)
         {
-            this.renderer.translate(-event.movementX)
+            case InputOperation.MovingTimeline:
+                this.renderer.translate(-event.movementX);
+                break;
+            case InputOperation.MovingRightRange:
+                {
+                    const prevEndFrame = this.data.range.endFrame;
+                    const targetEndFrame = Math.round(this.renderer.canvas2frame(canvasPosition));
+                    // Prevent overlapping
+                    this.data.range.endFrame = Utils.clamp(targetEndFrame, this.data.range.initFrame + 1, this.data.length - 1);
+
+                    this.renderer.hoveredRightRange = true;
+                    if (this.data.currentFrame <= prevEndFrame && this.data.currentFrame > this.data.range.endFrame)
+                    {
+                        targetFrame = this.data.range.endFrame;
+                    }
+                    if (this.onRangeChanged)
+                    {
+                        this.onRangeChanged(this.data.range.initFrame, this.data.range.endFrame);
+                    }
+                    break;
+                }
+            case InputOperation.MovingLeftRange:
+                {
+                    const prevInitFrame = this.data.range.initFrame;
+                    const targetInitFrame = Math.round(this.renderer.canvas2frame(canvasPosition));
+                    // Prevent overlapping
+                    this.data.range.initFrame = Utils.clamp(targetInitFrame, 0, this.data.range.endFrame - 1);
+                    this.renderer.hoveredLeftRange = true;
+
+                    if (this.data.currentFrame >= prevInitFrame && this.data.currentFrame < this.data.range.initFrame)
+                    {
+                        targetFrame = this.data.range.initFrame;
+                    }
+                    if (this.onRangeChanged)
+                    {
+                        this.onRangeChanged(this.data.range.initFrame, this.data.range.endFrame);
+                    }
+                    break;
+                }
+            case InputOperation.PressingTimeline:
+                targetFrame = Math.round(this.renderer.canvas2frame(canvasPosition)); // Mutating data
+                break;
         }
 
-        if (this.pressing)
+        if (targetFrame != null)
         {
-            const canvasPosition : number = event.offsetX;
-            this.data.currentFrame = Math.round(this.renderer.canvas2frame(canvasPosition)); // Mutating data
-
+            this.data.currentFrame = targetFrame;
             if (this.onframeClicked)
             {
                 this.onframeClicked(this.data.currentFrame);
             }
         }
 
-        const cursorStyle = this.renderer.hoveredEvent ? "pointer" : "auto";
-        this.canvas.style.cursor = cursorStyle;
+        const shouldDisplayPointer = this.renderer.hoveredEvent || this.renderer.hoveredLeftRange || this.renderer.hoveredRightRange;
+        this.canvas.style.cursor = shouldDisplayPointer ? "pointer" : "auto";
 
-        if (this.renderer.hoveredEvent && !this.dragging)
+        const shouldDisplayPopup = this.renderer.hoveredEvent && this.inputOperation != InputOperation.MovingTimeline;
+        if (shouldDisplayPopup)
         {
             const events = this.data.events.getEventsInFrame(this.renderer.hoveredEvent.frame);
 
@@ -356,32 +421,48 @@ class TimelineInputHandler {
 
     private onMouseLeave(event : MouseEvent)
     {
-        this.dragging = false;
-        this.pressing = false;
+        this.inputOperation = InputOperation.None;
         this.popup.hide();
     }
 
     private onMouseDown(event : MouseEvent)
     {
+        if (this.data.length == 0) { return; }
+
         this.renderer.hoveredEvent = this.renderer.findEventAtPosition(event.offsetX, event.offsetY);
+        this.renderer.hoveredLeftRange = this.renderer.isInRange(event.offsetX, event.offsetY, true);
+        this.renderer.hoveredRightRange = this.renderer.isInRange(event.offsetX, event.offsetY, false);
 
         if (event.button == 2)
         {
-            this.dragging = true;
+            this.inputOperation = InputOperation.MovingTimeline;
         }
         else if (event.button == 0)
         {
             const canvasPosition : number = event.offsetX;
-            this.data.currentFrame = Math.round(this.renderer.canvas2frame(canvasPosition)); // Mutating data
-            this.pressing = true;
 
-            if (this.renderer.hoveredEvent && this.onEventClicked)
+            if (this.renderer.hoveredLeftRange)
             {
-                this.onEventClicked(this.renderer.hoveredEvent.entityId, this.renderer.hoveredEvent.frame);
+                this.inputOperation = InputOperation.MovingLeftRange;
             }
-            else if (this.onframeClicked)
+            else if (this.renderer.hoveredRightRange)
             {
-                this.onframeClicked(this.data.currentFrame);
+                this.inputOperation = InputOperation.MovingRightRange;
+            }
+            else
+            {
+                this.inputOperation = InputOperation.PressingTimeline;
+
+                this.data.currentFrame = Math.round(this.renderer.canvas2frame(canvasPosition)); // Mutating data
+
+                if (this.renderer.hoveredEvent && this.onEventClicked)
+                {
+                    this.onEventClicked(this.renderer.hoveredEvent.entityId, this.renderer.hoveredEvent.frame);
+                }
+                else if (this.onframeClicked)
+                {
+                    this.onframeClicked(this.data.currentFrame);
+                }
             }
         }
     }
@@ -422,6 +503,8 @@ class TimelineRenderer {
 
     // Event
     hoveredEvent: ITimelineEvent;
+    hoveredLeftRange: boolean;
+    hoveredRightRange: boolean;
 
     // Time control
     private timeStampLastUpdate: number;
@@ -445,6 +528,9 @@ class TimelineRenderer {
 
         this.width = this.canvas.width / this.ratio;
         this.height = this.canvas.height / this.ratio;
+
+        this.hoveredLeftRange = false;
+        this.hoveredRightRange = false;
 
         this.zoom = 1;
         this.translation = 0;
@@ -475,10 +561,17 @@ class TimelineRenderer {
         this.ctx.fillRect(0,0,this.width,this.height);
 
         this.renderHeader();
-        this.renderCustomMarkers();
-        this.renderEvents(false, 0.3);
-        this.renderEvents(true, 1);
-        this.renderMarker();
+
+        if (this.data.length != 0)
+        {
+            this.renderCustomMarkers();
+            this.renderEvents(false, 0.3);
+            this.renderEvents(true, 1);
+            this.renderRangeMarker(this.data.range.initFrame, true);
+            this.renderRangeMarker(this.data.range.endFrame, false);
+            this.renderRangeOverlay();
+            this.renderMarker();
+        }
 
         window.requestAnimationFrame(this.render.bind(this));
     }
@@ -699,9 +792,46 @@ class TimelineRenderer {
         }
     }
 
+    private renderRangeMarker(frame: number, rightOriented: boolean)
+    {
+        const position : number = this.frame2canvas(frame);
+        const offset = rightOriented ? TimelineRenderer.headerHeight : -TimelineRenderer.headerHeight;
+        const isHovering = this.hoveredLeftRange && rightOriented || this.hoveredRightRange && !rightOriented;
+
+        this.ctx.lineWidth = 1;
+        this.ctx.strokeStyle = isHovering ? "#6DE080" : "#D6A3FF";
+        this.ctx.fillStyle = isHovering ? "#6DE080" : "#D6A3FF";
+
+        // Triangle at the bottom
+        this.ctx.beginPath();
+        this.ctx.moveTo(position, this.height);
+        this.ctx.lineTo(position + offset, this.height);
+        this.ctx.lineTo(position, this.height - TimelineRenderer.headerHeight);
+        this.ctx.fill();
+
+        // Line
+        this.ctx.beginPath();
+        this.ctx.moveTo(position, 0);
+        this.ctx.lineTo(position, this.height);
+        this.ctx.stroke();
+        this.ctx.closePath();
+    }
+
+    private renderRangeOverlay()
+    {
+        const init : number = this.frame2canvas(this.data.range.initFrame);
+        const end : number = this.frame2canvas(this.data.range.endFrame);
+
+        this.ctx.globalAlpha = 0.5;
+        this.ctx.fillStyle = "#000000";
+        this.ctx.fillRect(0,0,init,this.height);
+        this.ctx.fillRect(end,0,this.width,this.height);
+        this.ctx.globalAlpha = 1;
+    }
+
     private renderMarker()
     {
-        const position : number = this.frame2canvas(this.data.currentFrame);;
+        const position : number = this.frame2canvas(this.data.currentFrame);
 
         const eventLength = this.data.events.getEventsInFrame(this.data.currentFrame)?.length || 0;
         const eventLabel = eventLength == 1 ? "event" : "events";
@@ -857,6 +987,38 @@ class TimelineRenderer {
         return  this.findHoveredEventAroundFrame(mouseX, mouseY);
     }
 
+    isPointInsideTriangle(
+        pX: number, pY: number,
+        aX: number, aY: number,
+        bX: number, bY: number,
+        cX: number, cY: number) : boolean
+    {
+        const as_x = pX - aX;
+        const as_y = pY - aY;
+
+        const s_ab = (bX - aX) * as_y - (bY - aY) * as_x > 0;
+
+        if ((cX - aX) * as_y - (cY - aY) * as_x > 0 == s_ab) 
+            return false;
+        if ((cX - bX) * (pY - bY) - (cY - bY)*(pX - bX) > 0 != s_ab) 
+            return false;
+        return true;
+    }
+
+    isInRange(mouseX: number, mouseY: number, rightOriented: boolean) : boolean
+    {
+        const frame = rightOriented ? this.data.range.initFrame : this.data.range.endFrame;
+        const offset = rightOriented ? TimelineRenderer.headerHeight : -TimelineRenderer.headerHeight;
+        
+        const position : number = this.frame2canvas(frame);
+
+        return this.isPointInsideTriangle(
+            mouseX, mouseY,
+            position, this.height,
+            position + offset, this.height,
+            position, this.height - TimelineRenderer.headerHeight);
+    }
+
     private getMinFrameOnCanvas()
     {
         return this.canvas2frame(0);
@@ -1006,6 +1168,11 @@ export default class Timeline {
         this.inputHandler.onEventClicked = callback;
     }
 
+    setRangeChangedCallback(callback: IRangeChangedCallback)
+    {
+        this.inputHandler.onRangeChanged = callback;
+    }
+
     setGetEntityNameCallback(callback: IGetEntityName)
     {
         this.popup.setGetEntityNameCallback(callback);
@@ -1029,12 +1196,29 @@ export default class Timeline {
 
     setLength(length: number)
     {
+        const isInLastFrame = (this.data.range.endFrame == this.data.length - 1) || length == 0;
+        if (isInLastFrame)
+        {
+            this.data.range.endFrame = length - 1;
+        }
+
         this.data.length = length;
+
         this.renderer.calculateRenderingConstants();
     }
 
     getLength()
     {
         return this.data.length;
+    }
+
+    getSelectionInit()
+    {
+        return this.data.range.initFrame;
+    }
+
+    getSelectionEnd()
+    {
+        return this.data.range.endFrame;
     }
 }

@@ -185,9 +185,42 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
     case Messaging.MessageType.RequestSavePath:
     {
       const request = arg.data as Messaging.IRequestSavePathData;
-      fileManager.getSaveLocation(request.defaultName, (path: string) => {
-        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.SavePathResult, path));
-      });
+      const requestSave = (saveOnlySelection: boolean) =>
+      {
+        fileManager.getSaveLocation(request.defaultName, (path: string) => {
+          event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.SavePathResult, {
+            path: path,
+            saveOnlySelection: saveOnlySelection
+          }));
+        });
+      }
+
+      if (request.askForPartialSave)
+      {
+        const options = {
+          type: 'question',
+          buttons: ['Save selection', 'Save all'],
+          defaultId: 0,
+          title: 'Save data',
+          message: 'Save only the selection or all data?',
+          detail: 'You have a partial selection of the recording. Do you want to save only the selected data, or the entire recording?',
+        };
+      
+        dialog.showMessageBox(null, options, (response) => {
+          const saveOnlySelection: boolean = response == 0;
+          const saveAll: boolean = response == 1;
+
+          if (saveOnlySelection || saveAll)
+          {
+            requestSave(saveOnlySelection);
+          }
+        });
+      }
+      else
+      {
+        requestSave(false);
+      }
+      
       break;
     }
     case Messaging.MessageType.SaveToFile:

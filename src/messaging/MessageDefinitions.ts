@@ -36,6 +36,13 @@ export interface ILogData
 export interface IRequestSavePathData
 {
     defaultName: string;
+    askForPartialSave: boolean;
+}
+
+export interface IResultSavePathData
+{
+    path: string;
+    saveOnlySelection: boolean;
 }
 
 export interface ISaveFileData
@@ -44,7 +51,7 @@ export interface ISaveFileData
     path: string;
 }
 
-type MessageData = string | IClearResultData | ILogData | ISettings | ISaveFileData | IRequestSavePathData;
+type MessageData = string | IClearResultData | ILogData | ISettings | ISaveFileData | IRequestSavePathData | IResultSavePathData;
 export class Message
 {
     public type: MessageType;

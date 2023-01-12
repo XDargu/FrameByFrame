@@ -48,7 +48,7 @@ export class PlaybackController {
         if (this.isPlaying) {
             this.elapsedTime += elapsedSeconds * this.playbackSpeedFactor;
 
-            const lastFrame = this.renderer.getFrameCount() - 1;
+            const lastFrame = this.getLastFrame();
             const playbackResult = this.findNextPlayableFrameSameClient() || this.findNextPlayableFrameAnyClient();
             this.elapsedTime = playbackResult.nextElapsedTime;
             const nextFrame = Utils.clamp(playbackResult.nextFrame, this.renderer.getCurrentFrame(), lastFrame);
@@ -59,6 +59,26 @@ export class PlaybackController {
                 this.stopPlayback();
             }
         }
+    }
+
+    isInSelection()
+    {
+        return this.timeline.getCurrentFrame() >= this.timeline.getSelectionInit() &&
+            this.timeline.getCurrentFrame() <= this.timeline.getSelectionEnd();
+    }
+
+    getFirstFrame(fromSelectionOnly: boolean = false)
+    {
+        if (fromSelectionOnly || this.isInSelection())
+            return this.timeline.getSelectionInit();
+        return 0;
+    }
+
+    getLastFrame(fromSelectionOnly: boolean = false)
+    {
+        if (fromSelectionOnly || this.isInSelection())
+            return this.timeline.getSelectionEnd();
+        return this.timeline.getLength() - 1;
     }
 
     findNextPlayableFrameSameClient() : PlaybackResult
@@ -110,9 +130,12 @@ export class PlaybackController {
     }
 
     updateUI() {
+        const firstFrame = this.getFirstFrame(true);
+        const lastFrame = this.getLastFrame(true);
+
         const recordingEmpty = this.renderer.getFrameCount() == 0;
-        const isLastFrame = recordingEmpty || (this.renderer.getCurrentFrame() == this.renderer.getFrameCount() - 1);
-        const isFirstFrame = recordingEmpty || (this.renderer.getCurrentFrame() == 0);
+        const isLastFrame = recordingEmpty || (this.timeline.getCurrentFrame() == lastFrame);
+        const isFirstFrame = recordingEmpty || (this.timeline.getCurrentFrame() == firstFrame);
 
         // TODO: Optimize this
         const prevEvent = this.getPreviousEventFrame(false);
@@ -179,29 +202,31 @@ export class PlaybackController {
     }
 
     onTimelineNextClicked() {
-        if (this.renderer.getCurrentFrame() < this.renderer.getFrameCount() - 1) {
-            this.renderer.applyFrame(this.renderer.getCurrentFrame() + 1);
+        if (this.timeline.getCurrentFrame() < this.getLastFrame()) {
+            this.renderer.applyFrame(this.timeline.getCurrentFrame() + 1);
             this.updateUI();
         }
     }
 
     onTimelinePrevClicked() {
-        if (this.renderer.getCurrentFrame() > 0) {
-            this.renderer.applyFrame(this.renderer.getCurrentFrame() - 1);
+        if (this.timeline.getCurrentFrame() > this.getFirstFrame()) {
+            this.renderer.applyFrame(this.timeline.getCurrentFrame() - 1);
             this.updateUI();
         }
     }
 
     onTimelineFirstClicked() {
-        if (this.renderer.getCurrentFrame() != 0) {
-            this.renderer.applyFrame(0);
+        const firstFrame = this.getFirstFrame(true);
+        if (this.timeline.getCurrentFrame() != firstFrame) {
+            this.renderer.applyFrame(firstFrame);
             this.updateUI();
         }
     }
 
     onTimelineLastClicked() {
-        if (this.renderer.getCurrentFrame() != this.renderer.getFrameCount() - 1) {
-            this.renderer.applyFrame(this.renderer.getFrameCount() - 1);
+        const lastFrame = this.getLastFrame(true);
+        if (this.timeline.getCurrentFrame() != lastFrame) {
+            this.renderer.applyFrame(lastFrame);
             this.updateUI();
         }
     }
@@ -237,8 +262,9 @@ export class PlaybackController {
     getPreviousEventFrame(filterSelection: boolean) : ITimelineEvent
     {
         // TODO: Optimize this
+        const firstFrame = this.getFirstFrame();
         const entity = this.timeline.getSelectedEntity().toString();
-        for (let i=this.renderer.getCurrentFrame() - 1; i>= 0; --i)
+        for (let i=this.renderer.getCurrentFrame() - 1; i>= firstFrame; --i)
         {
             const eventList = this.timeline.getEventsInFrame(i);
             if (eventList)
@@ -264,8 +290,9 @@ export class PlaybackController {
     getNextEventFrame(filterSelection: boolean) : ITimelineEvent
     {
         // TODO: Optimize this
+        const lastFrame = this.getLastFrame();
         const entity = this.timeline.getSelectedEntity().toString();
-        for (let i=this.renderer.getCurrentFrame() + 1; i< this.renderer.getFrameCount() - 1; ++i)
+        for (let i=this.renderer.getCurrentFrame() + 1; i<= lastFrame; ++i)
         {
             const eventList = this.timeline.getEventsInFrame(i);
             if (eventList)
