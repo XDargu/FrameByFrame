@@ -616,6 +616,7 @@ export default class Renderer {
         this.unprocessedFiltersPending = true;
         this.recordedData.clear();
         this.sceneController.clear();
+        this.timeline.clear();
         this.timeline.setLength(this.recordedData.getSize());
         this.timeline.clearEvents();
         this.recordingOptions.setOptions([]);
@@ -928,6 +929,7 @@ export default class Renderer {
         this.timeline.setFrameClickedCallback(this.onTimelineClicked.bind(this));
         this.timeline.setEventClickedCallback(this.onTimelineEventClicked.bind(this));
         this.timeline.setTimelineUpdatedCallback(this.onTimelineUpdated.bind(this));
+        this.timeline.setRangeChangedCallback((initFrame, endFrame) => { this.playbackController.updateUI(); });
         this.timeline.setGetEntityNameCallback((entity, frameIdx) => { return this.findEntityNameOnFrame(Number.parseInt(entity), frameIdx); });
     }
 
