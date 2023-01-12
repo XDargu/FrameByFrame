@@ -36,7 +36,7 @@ Connect to any game or engine, Frame by Frame can be integrated with anything. I
 ### Installing Frame by Frame
 Download the latest release of Frame by Frame and install it.
 
-[Get Frame by Frame 0.2.5](https://github.com/XDargu/FrameByFrame/releases/tag/v0.2.5){: .btn .btn-primary .fs-3 .mb-4 .mb-md-0 .mr-2 }
+[Get Frame by Frame 0.3.0](https://github.com/XDargu/FrameByFrame/releases/tag/v0.3.0){: .btn .btn-primary .fs-3 .mb-4 .mb-md-0 .mr-2 }
 
 [Get older versions of Frame by Frame](https://github.com/XDargu/FrameByFrame/releases)
 
