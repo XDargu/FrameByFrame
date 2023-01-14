@@ -60,6 +60,8 @@ The playback bar lets you navigate through a recording. It contains, from left t
 
 ![Frame by Frame Playback Bar](/FrameByFrame/assets/images/screenshots/PlaybackBar.png)
 
+All this operations work on whatever portion of the Timeline is selected. You can learn more on the [Timeline Selection](#timeline-selection) section.
+
 ## Timeline
 
 The timeline lets you quickly navigate through a recording and gives an overview of the recorded data.
@@ -69,6 +71,18 @@ The timeline will display the current frame and the amount of frames, as well as
 You can left click on any point of the timeline to go to that frame. Use the mouse wheel to zoom in our out. If you are zoomed in, hold the right mouse button and drag to move.
 
 ![Frame by Frame Timeline](/FrameByFrame/assets/images/screenshots/Timeline.png)
+
+### Timeline Selection
+
+You can select part of the timeline by clicking and dragging on the selection markers on the sides of the timeline.
+
+![Frame by Frame Timeline Cropped](/FrameByFrame/assets/images/screenshots/TimelineCropped.png)
+
+By selecting only part of the timeline, you can control the portion of the recording that the [Playback Bar](#playback-bar) will use.
+
+If you have part of the timeline selected and save the recording, a popup window will ask you if you prefer saving the entire recording or only the selection. That way it is possible to crop recordings that contain frames you don't need.
+
+![Frame by Frame Save Dialog Popup when part of the Timeline is selected](/FrameByFrame/assets/images/screenshots/SaveDialogPopup.png)
 
 ## 3D viewer
 
