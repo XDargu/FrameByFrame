@@ -205,10 +205,10 @@ export default class FileManager
             }
 
             callback(path);
-        });
+        };
     }
 
-    saveFile(defaultName: string, content: string)
+    async saveFile(defaultName: string, content: string)
     {
         const options = {
             defaultPath: `${app.getPath('documents')}/${defaultName}.fbf`,
@@ -217,14 +217,19 @@ export default class FileManager
             ]
         }
 
-        dialog.showSaveDialog(null, options, (path: string) => {
+        const result = await  dialog.showSaveDialog(null, options);
+
+        if (result && !result.canceled)
+        {
+            const path = result.filePath;
+
             if (path === undefined){
                 console.log("You didn't save the file");
                 return;
             }
 
             this.saveToFile(path, content);
-        });
+        };
     }
 
     saveToFile(path: string, content: string)
