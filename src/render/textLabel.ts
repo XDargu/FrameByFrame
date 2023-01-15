@@ -1,4 +1,5 @@
 import * as BABYLON from 'babylonjs';
+import { ICanvasRenderingContext } from 'babylonjs';
 
 export default class TextLabels
 {
@@ -7,7 +8,7 @@ export default class TextLabels
 
     private scene: BABYLON.Scene;
     private tempTexture: BABYLON.DynamicTexture;
-    private tempContext: CanvasRenderingContext2D;
+    private tempContext: ICanvasRenderingContext;
 
     constructor(scene: BABYLON.Scene)
     {

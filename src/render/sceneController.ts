@@ -390,12 +390,16 @@ export default class SceneController
         this.sceneEntityData.clear();
     }
 
-    restoreContext()
+    /*restoreContext()
     {
-        let loseContext = this._engine._gl.getExtension('WEBGL_lose_context');
-        loseContext.loseContext();
-        window.setTimeout(() => { loseContext.restoreContext(); }, 1000); 
-    }
+        if (this._engine._gl.isContextLost())
+        {
+            this.initialize(document.getElementById('render-canvas') as HTMLCanvasElement);
+        }
+        //let loseContext = this._engine._gl.getExtension('WEBGL_lose_context');
+        //loseContext.loseContext();
+        //window.setTimeout(() => { loseContext.restoreContext(); }, 1000); 
+    }*/
 
     private updateDebugData()
     {

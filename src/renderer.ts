@@ -411,7 +411,16 @@ export default class Renderer {
             document.getElementById("settings-search") as HTMLInputElement,
             this.onSettingsChanged.bind(this),
             () => { this.sceneController.purgePools(); },
-            () => { this.sceneController.restoreContext(); }
+            () => {
+                 
+                this.sceneController.initialize(
+                    document.getElementById('render-canvas') as HTMLCanvasElement,
+                    (entityId: number) => { this.onEntitySelectedOnScene(entityId, true) },
+                    this.settings.selectionColor,
+                    this.settings.hoverColor,
+                    this.settings.selectionOutlineWidth
+                );
+            }
         );
 
         // Connection buttons
