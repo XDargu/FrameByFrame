@@ -1,0 +1,39 @@
+@import "colorStyles.scss";
+
+.context-menu { 
+    position: absolute;
+    z-index: 1000;
+}
+
+.menu {
+    display: flex;
+    flex-direction: column;
+    background-color: $dark-background;
+    border-radius: 2px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.38);
+    padding: 8px 0;
+    font-size: 13px;
+    list-style: none;
+    margin: 0;
+}
+
+.menu > li > a {
+    font: inherit;
+    border: 0;
+    padding: 5px 20px 5px 15px;
+    display: flex;
+    align-items: center;
+    position: relative;
+    text-decoration: unset;
+    color: $text-color-light;
+    font-weight: 500;
+}
+
+.menu > li > a:hover {
+    background:$strong-primary;
+    color: white;
+}
+
+.menu > li > a > i {
+    padding-right: 10px;
+}

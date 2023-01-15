@@ -74,7 +74,7 @@ body {
 .property-group {
     display: flex;
     float: right;
-    width: 50%;
+    width: 70%;
 }
 
 .property-group .property-primitive {
@@ -86,10 +86,29 @@ body {
 
 #central-content {
     flex: 1 1 auto;
+    position: relative;
 }
 
 #viewport {
     height: 100%;
+}
+
+#render-debug {
+    display: none;
+    position: absolute;
+    right: 0px;
+    font-size: 12px;
+    padding: 5px;
+    z-index: 1;
+    text-align: right;
+    white-space: pre-line;
+    line-height: 60%;
+    user-select: none;
+    text-shadow: 1px 1px black;
+}
+
+#render-debug.enabled {
+    display: block;
 }
 
 /* Detail pane */
@@ -137,14 +156,6 @@ body {
     position: absolute;
     left: calc(50% + 150px);
     transform: translate(-50%, -1px);
-}
-
-#entity-list .basico-form-field,
-#var-list .basico-form-field,
-#setting-list .basico-form-field {
-    display: block;
-    margin-bottom: 6px;
-    margin-top: 3px;
 }
 
 /* Connection buttons */

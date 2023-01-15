@@ -1,6 +1,8 @@
 import * as RECORDING from '../recording/RecordingData';
 import * as TREE from '../ui/tree';
-import { filterText } from "../utils/utils";
+import * as Utils from "../utils/utils";
+
+const clientLabelColors = ["#D6A3FF", "#6DE080", "#EB7C2B", "#5DAEDC", "#DFC956"];
 
 export interface IEntityCallback {
     (entityId: number) : void;
@@ -9,8 +11,14 @@ export interface IEntityCallback {
 export interface IEntityCallbacks
 {
     onEntitySelected: IEntityCallback;
+    onEntityDoubleClicked: IEntityCallback;
     onEntityMouseOver: IEntityCallback;
     onEntityMouseOut: IEntityCallback;
+}
+
+interface ClientIdToTagFunction
+{
+    (clientId: number) : string
 }
 
 interface CachedTreeItem
@@ -37,7 +45,7 @@ class TreePool
     public get()
     {
         if (this.pool.length == 0) {
-            let listItem = this.entityTree.buildItem([], { text: "PooledItem", selectable: true, callbacks: this.callbacks });
+            let listItem = this.entityTree.buildItem([], { text: "PooledItem", tag: "Test", selectable: true, callbacks: this.callbacks });
             return listItem;
         }
 
@@ -65,6 +73,9 @@ export class EntityTree {
         this.callbacks = {
             onItemSelected: (element: HTMLDivElement) => {
                 entityCallbacks.onEntitySelected(parseInt(this.entityTree.getValueOfItem(element)));
+            },
+            onItemDoubleClicked: (element: HTMLDivElement) => {
+                entityCallbacks.onEntityDoubleClicked(parseInt(this.entityTree.getValueOfItem(element)));
             },
             onItemMouseOver: (element: HTMLDivElement) => {
                 entityCallbacks.onEntityMouseOver(parseInt(this.entityTree.getValueOfItem(element)));
@@ -133,7 +144,7 @@ export class EntityTree {
         return defaultRoot;
     }
 
-    setEntities(entities: RECORDING.IFrameEntityData)
+    setEntities(entities: RECORDING.IFrameEntityData, recordedData: RECORDING.NaiveRecordedData)
     {
         // The wrapper will be used as the placeholder element to add new items
         let wrapper = document.createElement("div");
@@ -158,20 +169,26 @@ export class EntityTree {
             const entity = entities[entityID];
             if (!this.cachedItemsById.has(entity.id))
             {
-                // Add all parents
+                // Add all parents, from top to bottom
+                let parents = [];
                 let parentId = entity.parentId;
                 while (parentId != 0)
                 {
                     const parentEntity = entities[parentId];
                     if (parentId && !this.cachedItemsById.has(parentId) && parentEntity != undefined)
                     {
-                        this.addEntityToTree(parentEntity, wrapper);
+                        parents.push(parentEntity);
                     }
                     parentId = parentEntity != undefined ? parentEntity.parentId : 0;
                 }
+
+                for (let i=parents.length - 1; i>=0; --i)
+                {
+                    this.addEntityToTree(parents[i], wrapper, recordedData);
+                }
                 
                 // Add entity
-                this.addEntityToTree(entity, wrapper);
+                this.addEntityToTree(entity, wrapper, recordedData);
             }
         }
 
@@ -181,9 +198,9 @@ export class EntityTree {
         this.filterElements();
     }
 
-    private addEntityToTree(entity: RECORDING.IEntity, wrapper: HTMLDivElement)
+    private addEntityToTree(entity: RECORDING.IEntity, wrapper: HTMLDivElement, recordedData: RECORDING.NaiveRecordedData)
     {
-        let listItem = this.addEntity(this.findRoot(entity, wrapper), entity);
+        let listItem = this.addEntity(this.findRoot(entity, wrapper), entity, recordedData);
         this.cachedItemsById.set(entity.id, {
             element: listItem,
             parentId: entity.parentId,
@@ -191,14 +208,23 @@ export class EntityTree {
         });
     }
 
-    addEntity(root :HTMLElement, entity: RECORDING.IEntity) : HTMLElement
+    addEntity(root :HTMLElement, entity: RECORDING.IEntity, recordedData: RECORDING.NaiveRecordedData) : HTMLElement
     {
         let listItem = this.pool.get();
 
         // A bit of a hack, but direct access to the elements is much faster that doing a query
         let textElement = listItem.children[0].children[1];
+        let tagElement = listItem.children[0].children[2] as HTMLElement;
         let rootList = root.children[1] ? root.children[1] : root.children[0];
 
+        const isTagVisible = recordedData.clientIds.size > 1;
+        tagElement.style.display = isTagVisible ? "block" : "none";
+        if (isTagVisible) {
+            const clientId = Utils.getClientIdUniqueId(entity.id);
+            tagElement.textContent = recordedData.getTagByClientId(clientId);
+            tagElement.style.backgroundColor = Utils.colorFromHash(clientId, clientLabelColors);
+        }
+        
         textElement.textContent = RECORDING.NaiveRecordedData.getEntityName(entity);
         listItem.setAttribute("data-tree-value", entity.id.toString());
 
@@ -219,7 +245,7 @@ export class EntityTree {
         for (const [entityID, cachedData] of this.cachedItemsById)
         {
             const wrapper = cachedData.element.children[0] as HTMLElement;
-            const visible = this.filter == "" || filterText(this.filter, cachedData.name.toLowerCase()) || this.entityTree.isItemSelected(wrapper);
+            const visible = this.filter == "" || Utils.filterText(this.filter, cachedData.name.toLowerCase()) || this.entityTree.isItemSelected(wrapper);
 
             cachedData.element.style.display = visible ? "block" : "none";
 
@@ -251,5 +277,10 @@ export class EntityTree {
     public selectEntity(entityId: number)
     {
         this.entityTree.selectElementOfValue(entityId.toString(), true);
+    }
+
+    public scrollToEntity(entityId: number) 
+    {
+        this.entityTree.scrollToElementOfValue(entityId.toString());
     }
 }

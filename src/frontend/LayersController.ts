@@ -7,6 +7,11 @@ export enum LayerState
     All
 }
 
+export enum CoreLayers
+{
+    EntityNames = "Entity Names"
+}
+
 export function getLayerStateName(state: LayerState)
 {
     switch (state)
@@ -34,12 +39,14 @@ export class LayerController
     private allLayerList: HTMLElement;
     private layers: Map<string, ILayer>;
     private layerChangedCallback: ILayerChanged;
+    private initialState: LayerState;
 
     constructor(layerList: HTMLElement, allLayerList: HTMLElement, layerChangedCallback: ILayerChanged)
     {
         this.allLayerList = allLayerList;
         this.layerList = new ListControl(layerList);
         this.layers = new Map<string, ILayer>();
+        this.initialState = LayerState.Selected;
         this.layerChangedCallback = layerChangedCallback;
 
         this.initButtonsAllLayers();
@@ -67,12 +74,28 @@ export class LayerController
 
     setLayers(layers: string[])
     {
+        this.getOrCreateLayer(CoreLayers.EntityNames);
+
         for (let layer of layers)
         {
             this.getOrCreateLayer(layer);
         }
 
         this.updateLayers();
+    }
+
+    setInitialState(state: LayerState)
+    {
+        this.initialState = state;
+    }
+
+    setAllLayersState(state: LayerState)
+    {
+        for (let [layerName, layerData] of this.layers)
+        {
+            layerData.state = state;
+            this.layerChangedCallback(layerData.name, layerData.state);
+        }   
     }
 
     private updateLayers()
@@ -88,7 +111,7 @@ export class LayerController
                 let nameElement: HTMLInputElement = element.querySelector('.basico-text-oneline');
                 if (nameElement)
                 {
-                    nameElement.innerText = layerData.name;
+                    nameElement.innerText = layerData.name.length > 0 ? layerData.name : "Default";;
                 }
                 
                 let buttonGroupElement: HTMLInputElement = element.querySelector('.basico-button-group');
@@ -182,7 +205,7 @@ export class LayerController
     {
         let div: HTMLDivElement = document.createElement("div");
         div.classList.add("basico-text-oneline");
-        div.innerText = name;
+        div.innerText = name.length > 0 ? name : "Default";
         return div;
     }
 
@@ -194,7 +217,7 @@ export class LayerController
             return layer;
         }
         
-        const newLayer = { name: name, state: LayerState.Selected};
+        const newLayer = { name: name, state: this.initialState};
         this.layers.set(name, newLayer);
         return newLayer;
     }

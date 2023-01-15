@@ -1,19 +1,27 @@
-import { LogLevel } from "../frontend/ConsoleController";
-import { LogChannel } from "../frontend/ConsoleController";
-import { Console } from "../frontend/ConsoleController";
+import * as Utils from '../utils/utils';
+import { LogLevel, LogChannel, Console } from "../frontend/ConsoleController";
 import Renderer from "../renderer";
+import Timeline, { findEventOfEntityId, ITimelineEvent } from "./timeline";
+
+interface PlaybackResult
+{
+    nextFrame: number;
+    nextElapsedTime: number;
+}
 
 export class PlaybackController {
 
     private renderer: Renderer;
+    private timeline: Timeline;
     private isPlaying: boolean;
     private elapsedTime: number;
     private playbackSpeedFactor: number;
 
-    constructor(renderer: Renderer) {
+    constructor(renderer: Renderer, timeline: Timeline) {
         this.isPlaying = false;
         this.elapsedTime = 0;
         this.renderer = renderer;
+        this.timeline = timeline;
         this.playbackSpeedFactor = 1;
 
         this.initialize();
@@ -40,29 +48,98 @@ export class PlaybackController {
         if (this.isPlaying) {
             this.elapsedTime += elapsedSeconds * this.playbackSpeedFactor;
 
-            // Check how many frames we have to skip
-            let currentFrame = this.renderer.getCurrentFrame();
-            let currentElapsedTime = this.renderer.getElapsedTimeOfFrame(currentFrame);
-
-            while (this.elapsedTime > currentElapsedTime && currentFrame < this.renderer.getFrameCount() - 1) {
-                currentFrame++;
-                this.elapsedTime -= currentElapsedTime;
-                currentElapsedTime = this.renderer.getElapsedTimeOfFrame(currentFrame);
-            }
-
-            this.renderer.applyFrame(currentFrame);
+            const lastFrame = this.getLastFrame();
+            const playbackResult = this.findNextPlayableFrameSameClient() || this.findNextPlayableFrameAnyClient();
+            this.elapsedTime = playbackResult.nextElapsedTime;
+            const nextFrame = Utils.clamp(playbackResult.nextFrame, this.renderer.getCurrentFrame(), lastFrame);
+            this.renderer.applyFrame(nextFrame);
 
             // Stop in the last frame
-            if (currentFrame == this.renderer.getFrameCount() - 1) {
+            if (nextFrame == lastFrame) {
                 this.stopPlayback();
             }
         }
     }
 
+    isInSelection()
+    {
+        return this.timeline.getCurrentFrame() >= this.timeline.getSelectionInit() &&
+            this.timeline.getCurrentFrame() <= this.timeline.getSelectionEnd();
+    }
+
+    getFirstFrame(fromSelectionOnly: boolean = false)
+    {
+        if (fromSelectionOnly || this.isInSelection())
+            return this.timeline.getSelectionInit();
+        return 0;
+    }
+
+    getLastFrame(fromSelectionOnly: boolean = false)
+    {
+        if (fromSelectionOnly || this.isInSelection())
+            return this.timeline.getSelectionEnd();
+        return this.timeline.getLength() - 1;
+    }
+
+    findNextPlayableFrameSameClient() : PlaybackResult
+    {
+        // Check how many frames we have to skip
+        let currentFrame = this.renderer.getCurrentFrame();
+        let currentElapsedTime = this.renderer.getElapsedTimeOfFrame(currentFrame);
+        const initialClientId = this.renderer.getClientIdOfFrame(currentFrame);
+        const initialServerTime = this.renderer.getServerTimeOfFrame(currentFrame);
+
+        let pendingElapsedTime = this.elapsedTime;
+
+        while (pendingElapsedTime > currentElapsedTime && currentFrame < this.renderer.getFrameCount() - 1) {
+            currentFrame++;
+
+            if (this.renderer.getClientIdOfFrame(currentFrame) == initialClientId) {
+                pendingElapsedTime -= currentElapsedTime;
+                currentElapsedTime = this.renderer.getElapsedTimeOfFrame(currentFrame);
+            }
+
+            if (this.renderer.getServerTimeOfFrame(currentFrame) - initialServerTime > 5000) {
+                return null;
+            }
+        }
+
+        return { nextFrame: currentFrame, nextElapsedTime: pendingElapsedTime};
+    }
+
+    findNextPlayableFrameAnyClient() : PlaybackResult
+    {
+        // Check how many frames we have to skip
+        let currentFrame = this.renderer.getCurrentFrame();
+        const initialServerTime = this.renderer.getServerTimeOfFrame(currentFrame);
+
+        let pendingElapsedTime = this.elapsedTime;
+
+        while (currentFrame < this.renderer.getFrameCount() - 1) {
+            currentFrame++;
+            const elapsedTimeInSeconds = (this.renderer.getServerTimeOfFrame(currentFrame) - initialServerTime) / 1000;
+
+            if (elapsedTimeInSeconds > pendingElapsedTime)
+            {
+                pendingElapsedTime -= elapsedTimeInSeconds;
+                return { nextFrame: currentFrame, nextElapsedTime: pendingElapsedTime};
+            }
+        }
+
+        return { nextFrame: this.renderer.getFrameCount() - 1, nextElapsedTime: this.elapsedTime};
+    }
+
     updateUI() {
+        const firstFrame = this.getFirstFrame(true);
+        const lastFrame = this.getLastFrame(true);
+
         const recordingEmpty = this.renderer.getFrameCount() == 0;
-        const isLastFrame = recordingEmpty || (this.renderer.getCurrentFrame() == this.renderer.getFrameCount() - 1);
-        const isFirstFrame = recordingEmpty || (this.renderer.getCurrentFrame() == 0);
+        const isLastFrame = recordingEmpty || (this.timeline.getCurrentFrame() == lastFrame);
+        const isFirstFrame = recordingEmpty || (this.timeline.getCurrentFrame() == firstFrame);
+
+        // TODO: Optimize this
+        const prevEvent = this.getPreviousEventFrame(false);
+        const nextEvent = this.getNextEventFrame(false);
 
         if (this.isPlaying) {
             document.getElementById("timeline-play-icon").classList.remove("fa-play");
@@ -95,6 +172,20 @@ export class PlaybackController {
             document.getElementById("timeline-last").classList.remove("basico-disabled");
             document.getElementById("timeline-next").classList.remove("basico-disabled");
         }
+
+        if (!prevEvent) {
+            document.getElementById("timeline-event-prev").classList.add("basico-disabled");
+        }
+        else {
+            document.getElementById("timeline-event-prev").classList.remove("basico-disabled");
+        }
+
+        if (!nextEvent) {
+            document.getElementById("timeline-event-next").classList.add("basico-disabled");
+        }
+        else {
+            document.getElementById("timeline-event-next").classList.remove("basico-disabled");
+        }
     }
 
     startPlayback() {
@@ -111,29 +202,49 @@ export class PlaybackController {
     }
 
     onTimelineNextClicked() {
-        if (this.renderer.getCurrentFrame() < this.renderer.getFrameCount() - 1) {
-            this.renderer.applyFrame(this.renderer.getCurrentFrame() + 1);
+        if (this.timeline.getCurrentFrame() < this.getLastFrame()) {
+            this.renderer.applyFrame(this.timeline.getCurrentFrame() + 1);
             this.updateUI();
         }
     }
 
     onTimelinePrevClicked() {
-        if (this.renderer.getCurrentFrame() > 0) {
-            this.renderer.applyFrame(this.renderer.getCurrentFrame() - 1);
+        if (this.timeline.getCurrentFrame() > this.getFirstFrame()) {
+            this.renderer.applyFrame(this.timeline.getCurrentFrame() - 1);
             this.updateUI();
         }
     }
 
     onTimelineFirstClicked() {
-        if (this.renderer.getCurrentFrame() != 0) {
-            this.renderer.applyFrame(0);
+        const firstFrame = this.getFirstFrame(true);
+        if (this.timeline.getCurrentFrame() != firstFrame) {
+            this.renderer.applyFrame(firstFrame);
             this.updateUI();
         }
     }
 
     onTimelineLastClicked() {
-        if (this.renderer.getCurrentFrame() != this.renderer.getFrameCount() - 1) {
-            this.renderer.applyFrame(this.renderer.getFrameCount() - 1);
+        const lastFrame = this.getLastFrame(true);
+        if (this.timeline.getCurrentFrame() != lastFrame) {
+            this.renderer.applyFrame(lastFrame);
+            this.updateUI();
+        }
+    }
+
+    onTimelinePrevEventClicked(filterSelection: boolean) {
+        const prevEvent = this.getPreviousEventFrame(filterSelection);
+        if (prevEvent) {
+            this.renderer.applyFrame(prevEvent.frame);
+            this.renderer.selectEntity(Number.parseInt(prevEvent.entityId))
+            this.updateUI();
+        }
+    }
+
+    onTimelineNextEventClicked(filterSelection: boolean) {
+        const nextEvent = this.getNextEventFrame(filterSelection);
+        if (nextEvent) {
+            this.renderer.applyFrame(nextEvent.frame);
+            this.renderer.selectEntity(Number.parseInt(nextEvent.entityId))
             this.updateUI();
         }
     }
@@ -146,5 +257,61 @@ export class PlaybackController {
         else {
             this.stopPlayback();
         }
+    }
+
+    getPreviousEventFrame(filterSelection: boolean) : ITimelineEvent
+    {
+        // TODO: Optimize this
+        const firstFrame = this.getFirstFrame();
+        const entity = this.timeline.getSelectedEntity().toString();
+        for (let i=this.renderer.getCurrentFrame() - 1; i>= firstFrame; --i)
+        {
+            const eventList = this.timeline.getEventsInFrame(i);
+            if (eventList)
+            {
+                if (!filterSelection)
+                {
+                    return eventList[0];
+                }
+                else
+                {
+                    const result = findEventOfEntityId(eventList, entity);
+                    if (result)
+                    {
+                        return result;
+                    }
+                }
+            }
+        }
+
+        return undefined;
+    }
+
+    getNextEventFrame(filterSelection: boolean) : ITimelineEvent
+    {
+        // TODO: Optimize this
+        const lastFrame = this.getLastFrame();
+        const entity = this.timeline.getSelectedEntity().toString();
+        for (let i=this.renderer.getCurrentFrame() + 1; i<= lastFrame; ++i)
+        {
+            const eventList = this.timeline.getEventsInFrame(i);
+            if (eventList)
+            {
+                if (!filterSelection)
+                {
+                    return eventList[0];
+                }
+                else
+                {
+                    const result = findEventOfEntityId(eventList, entity);
+                    if (result)
+                    {
+                        return result;
+                    }
+                }
+            }
+        }
+
+        return undefined;
     }
 }

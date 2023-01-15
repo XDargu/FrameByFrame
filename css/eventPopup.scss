@@ -1,0 +1,46 @@
+@import "colorStyles.scss";
+
+.event-popup { 
+    position: absolute;
+    z-index: 2000;
+
+    display: flex;
+    flex-direction: column;
+    background-color: $dark-background;
+    border-radius: 2px;
+    text-align: left;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.38);
+    padding: 8px 0;
+    font-size: 13px;
+    list-style: none;
+    margin: 0;
+    overflow-y: auto;
+    max-height: 300px;
+}
+
+.event-popup.hidden:not(:hover) {
+    display: none;
+}
+
+.event-popup p {
+    padding: 3px 10px 3px 18px;
+    cursor: pointer;
+    margin: 0;
+    position: relative;
+}
+
+.event-popup p:hover {
+    background: $strong-primary;
+    color: white;
+}
+
+.event-popup p:before {
+    border: 2px solid white;
+    border-radius: 2px;
+    top: 8px;
+    left: 8px;
+    transform: scale(1.3);
+    content: ' ';
+    position: absolute;
+    display: block;
+}

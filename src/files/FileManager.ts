@@ -4,7 +4,7 @@ import { createDefaultSettings, ISettings } from "./Settings";
 
 export interface IFileAcceptedCallback
 {
-    () : void
+    (path: string) : void
 }
 
 export interface IOpenFileCallback
@@ -166,37 +166,28 @@ export default class FileManager
                 return;
             }
 
-            acceptedCallback();
+            acceptedCallback(paths[0]);
 
             this.loadFile(paths[0], callback);
         }
     }
 
-    loadFile(path: string, callback: IOpenFileCallback)
+    doesFileExist(path: string)
     {
-        fs.readFile(path, 'utf-8', (err, data) => {
-            if(err){
-                const options = {
-                    type: 'error',
-                    buttons: ['OK'],
-                    title: 'Error reading file',
-                    message: 'An error ocurred reading the file',
-                    detail: err.message,
-                    checkboxChecked: false,
-                  };
-                dialog.showMessageBox(null, options);
-                return;
-            }
-    
-            this.updateHistory(path);
-            callback(path, data);
-        });
+        return fs.existsSync(path);
     }
 
-    async saveFile(content: string)
+    async loadFile(path: string, callback: IOpenFileCallback)
+    {
+        const data = await fs.promises.readFile(path, 'utf8')
+        this.addPathToHistory(path);
+        callback(path, data);
+    }
+
+    async getSaveLocation(defaultName: string, callback: ((path: string) => void))
     {
         const options = {
-            defaultPath: app.getPath('documents') + '/recording.fbf',
+            defaultPath: `${app.getPath('documents')}/${defaultName}.fbf`,
             filters: [
                 { name: 'Recordings', extensions: ['fbf'] },
             ]
@@ -213,15 +204,39 @@ export default class FileManager
                 return;
             }
 
-            fs.writeFile(path, content, (err) => {
-                if(err){
-                    console.log("An error ocurred creating the file "+ err.message)
-                }
+            callback(path);
+        });
+    }
 
-                this.updateHistory(path);
-                console.log("The file has been succesfully saved");
-            });
+    saveFile(defaultName: string, content: string)
+    {
+        const options = {
+            defaultPath: `${app.getPath('documents')}/${defaultName}.fbf`,
+            filters: [
+                { name: 'Recordings', extensions: ['fbf'] },
+            ]
         }
+
+        dialog.showSaveDialog(null, options, (path: string) => {
+            if (path === undefined){
+                console.log("You didn't save the file");
+                return;
+            }
+
+            this.saveToFile(path, content);
+        });
+    }
+
+    saveToFile(path: string, content: string)
+    {
+        fs.writeFile(path, content, (err) => {
+            if(err){
+                console.log("An error ocurred creating the file "+ err.message)
+            }
+
+            this.addPathToHistory(path);
+            console.log("The file has been succesfully saved");
+        });
     }
 
     loadHistory()
@@ -277,7 +292,7 @@ export default class FileManager
         });
     }
 
-    updateHistory(path : string)
+    addPathToHistory(path : string)
     {
         // Limit recent paths to 15
         const index = this.pathHistory.paths.indexOf(path);
@@ -306,5 +321,28 @@ export default class FileManager
                 }
             }
         });
+    }
+
+    removePathFromHistory(path: string)
+    {
+        const index = this.pathHistory.paths.indexOf(path);
+        if (index !== -1) {
+            this.pathHistory.paths.splice(index, 1);
+
+            updateConfigFile({
+                dir: this.historyDir,
+                file: this.historyFile,
+                data: this.pathHistory,
+                onError: (err) => {
+                    displayError(err, 'Error saving recent files', 'An error ocurred saving the list of recent files');
+                },
+                onSuccess: () => {
+                    if (this.onHistoryChangedCallback)
+                    {
+                        this.onHistoryChangedCallback(this.pathHistory.paths);
+                    }
+                }
+            });
+        }
     }
 }

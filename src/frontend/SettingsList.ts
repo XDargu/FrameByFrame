@@ -1,5 +1,5 @@
-import { ISettings } from "../files/Settings";
-import { ListControl } from "../ui/list";
+import * as Utils from '../utils/utils';
+import { createDefaultSettings, ISettings } from "../files/Settings";
 import { filterText } from "../utils/utils";
 
 export interface ISettingsChanged
@@ -7,20 +7,9 @@ export interface ISettingsChanged
     () : void
 }
 
-enum ControlType
+export interface IButtonCallback
 {
-    Toggle
-}
-
-interface ISingleSettingLayout
-{
-    name: string;
-    control: ControlType;
-}
-
-interface ISettingsLayout
-{
-    [setting: string]: ISingleSettingLayout;
+    () : void
 }
 
 interface SettingsBuilderGroup
@@ -34,11 +23,25 @@ interface IBooleanSettingCallback
     (value: boolean) : void
 }
 
-const settingsLayout: ISettingsLayout =
+interface INumberSettingCallback
 {
-    recordOnConnect: { control: ControlType.Toggle, name: "Record on Connect" },
-    autoReconnect: { control: ControlType.Toggle, name: "Auto Re-connect" },
-};
+    (value: number) : void
+}
+
+interface IStringSettingCallback
+{
+    (value: string) : void
+}
+
+interface IColorSettingCallback
+{
+    (value: string) : void
+}
+
+interface IButtonSettingCallback
+{
+    () : void
+}
 
 namespace SettingsBuilder
 {
@@ -56,16 +59,161 @@ namespace SettingsBuilder
         fragment.appendChild(list);
 
         return { fragment: fragment, list: list };
+    }
 
-        /*<div class="basico-title">Connections</div>
-        <div class="basico-list">
-            <div class="basico-list-item basico-no-hover" data-list-value="Colliders">
-                <label class="basico-toggle">
-                    <input type="checkbox" data-layer-name="recordOnConnect"><span class="slider round"></span>
-                </label>
-                <div class="basico-text-oneline">Record on connect</div>
-            </div>
-        </div>*/
+    export function addButtonSetting(group: SettingsBuilderGroup, name: string, tooltip: string, callback: IButtonSettingCallback)
+    {
+        group.list.appendChild(createButtonSetting(name, tooltip, callback));
+    }
+
+    export function addColorSetting(group: SettingsBuilderGroup, name: string, tooltip: string, value: string, defaultValue: string, callback: IColorSettingCallback)
+    {
+        group.list.appendChild(createColorSetting(name, tooltip, value, defaultValue, callback));
+    }
+
+    function createInput(type: string, value: string, placeholder?: string) : HTMLInputElement
+    {
+        let input: HTMLInputElement = document.createElement("input");
+        input.className = "basico-input basico-small";
+        input.type = type;
+        input.value = value;
+        if (input.placeholder != null) {
+            input.placeholder = placeholder;
+        }
+        return input;
+    }
+
+    function createTextItem(name: string, tooltip: string) : HTMLElement
+    {
+        let textItem: HTMLElement = document.createElement("div");
+        textItem.className = "basico-text-oneline";
+        textItem.innerText = name;
+        textItem.title = tooltip;
+        return textItem;
+    }
+
+    function createListItem(textContent: Node, ...nodes: (Node | string)[]) : HTMLElement
+    {
+        let listItem: HTMLElement = document.createElement("div");
+        listItem.className = "basico-list-item basico-no-hover";
+
+        let contentWrapper = document.createElement("div");
+        contentWrapper.className = "setting-value-wrapper";
+        contentWrapper.append(...nodes.reverse());
+
+        listItem.append(textContent, contentWrapper);
+
+        return listItem;
+    }
+
+    function createResetButton() : HTMLButtonElement
+    {
+        let resetButton: HTMLButtonElement = document.createElement("button");
+        resetButton.className = "basico-button basico-small setting-reset-button";
+        resetButton.title = "Restore to default value";
+
+        let icon: HTMLElement = document.createElement("i");
+        icon.className = "fa fa-undo";
+        resetButton.append(icon);
+
+        return resetButton;
+    }
+
+    function createButton(text: string, tooltip: string) : HTMLButtonElement
+    {
+        let button: HTMLButtonElement = document.createElement("button");
+        button.className = "basico-button basico-small";
+        button.title = tooltip;
+        button.innerText = text;
+
+        return button;
+    }
+
+    function createButtonSetting(name: string, tooltip: string, callback: IButtonSettingCallback) : HTMLElement
+    {
+        let button = createButton(name, tooltip);
+        button.onclick = () => { callback(); };
+
+        return createListItem(button);
+    }
+
+    function createColorSetting(name: string, tooltip: string, value: string, defaultValue: string, callback: IColorSettingCallback) : HTMLElement
+    {
+        let input = createInput("color", value);
+        input.oninput = () => { callback(input.value); }
+
+        let resetButton = createResetButton();
+        resetButton.onclick = () => { input.value = defaultValue; callback(defaultValue); };
+
+        let textItem = createTextItem(name, tooltip);
+
+        return createListItem(textItem, input, resetButton);
+    }
+
+    export function addRangeSetting(group: SettingsBuilderGroup, name: string, tooltip: string, min: number, max: number, step: number, value: number, defaultValue: number, callback: INumberSettingCallback)
+    {
+        group.list.appendChild(createRangeSetting(name, tooltip, min, max, step, value, defaultValue, callback));
+    }
+
+    function createRangeSetting(name: string, tooltip: string, min: number, max: number, step: number, value: number, defaultValue: number, callback: INumberSettingCallback) : HTMLElement
+    {
+        let input = createInput("range", value.toString());
+        input.className = "basico-slider";
+        input.min = min.toString();
+        input.max = max.toString();
+        input.step = step.toString();
+        input.value = value.toString();
+        input.oninput = () => { callback( Utils.clamp(Number.parseFloat(input.value), min, max)); }
+
+        let textItem = createTextItem(name, tooltip);
+
+        let resetButton = createResetButton();
+        resetButton.onclick = () => { input.value = defaultValue.toString(); callback(defaultValue); };
+
+        return createListItem(textItem, input, resetButton);
+    }
+
+    export function addNumberSetting(group: SettingsBuilderGroup, name: string, tooltip: string, placeholder: number, value: number, callback: IStringSettingCallback)
+    {
+        group.list.appendChild(createNumberSetting(name, tooltip, placeholder, value, callback));
+    }
+
+    function createNumberSetting(name: string, tooltip: string, placeholder: number, value: number, callback: IStringSettingCallback) : HTMLElement
+    {
+        let input = createInput("number", value.toString(), placeholder.toString());
+        input.oninput = () => { callback(input.value == "" ? placeholder.toString() : input.value); }
+
+        let textItem = createTextItem(name, tooltip);
+
+        return createListItem(textItem, input);
+    }
+
+    export function addStringSetting(group: SettingsBuilderGroup, name: string, tooltip: string, placeholder: string, value: string, callback: IStringSettingCallback)
+    {
+        group.list.appendChild(createStringSetting(name, tooltip, placeholder, value, callback));
+    }
+
+    function createStringSetting(name: string, tooltip: string, placeholder: string, value: string, callback: IStringSettingCallback) : HTMLElement
+    {
+        let input = createInput("text", value, placeholder);
+        input.oninput = () => { callback(input.value); }
+
+        let textItem = createTextItem(name, tooltip);
+
+        return createListItem(textItem, input);
+    }
+
+    export function addNumberOptionsSetting(group: SettingsBuilderGroup, name: string, value: number, options: number[], callback: INumberSettingCallback)
+    {
+        group.list.appendChild(createNumberOptionsSetting(name, value, options, callback));
+    }
+
+    function createNumberOptionsSetting(name: string, value: number, options: number[], callback: INumberSettingCallback) : HTMLElement
+    {
+        let dropdown = createNumberDropdown(value, options, callback);
+        let textItem = createTextItem(name, "");
+
+        return createListItem(textItem, dropdown);
     }
 
     export function addBooleanSetting(group: SettingsBuilderGroup, name: string, value: boolean, callback: IBooleanSettingCallback)
@@ -75,20 +223,44 @@ namespace SettingsBuilder
 
     function createBooleanSetting(name: string, value: boolean, callback: IBooleanSettingCallback) : HTMLElement
     {
-        let listItem: HTMLElement = document.createElement("div");
-        listItem.className = "basico-list-item basico-no-hover";
+        let toggle = createToggle(value, callback);
+        let textItem = createTextItem(name, "");
 
-        let toggle: HTMLElement = createToggle(value, callback);
-        listItem.appendChild(toggle);
+        return createListItem(textItem, toggle);
+    }
 
-        let textItem: HTMLElement = document.createElement("div");
-        textItem.className = "basico-text-oneline";
-        textItem.innerText = name;
+    function createDropdownEntry(name: string) : HTMLElement
+    {
+        let entry = document.createElement("a");
+        entry.textContent = name;
+        return entry;
+    }
 
-        listItem.appendChild(textItem);
+    function createNumberDropdown(value: number, options: number[], callback: INumberSettingCallback): HTMLElement
+    {
+        const dropdown = document.createElement("div");
+        dropdown.className = "basico-dropdown";
 
+        const dropdownButton = document.createElement("button");
+        dropdownButton.className = "basico-dropdown-button";
+        dropdownButton.textContent = value.toString();
+        dropdown.appendChild(dropdownButton);
 
-        return listItem;
+        const dropdownContent = document.createElement("div");
+        dropdownContent.className = "basico-dropdown-content basico-right-align";
+        dropdown.appendChild(dropdownContent);
+
+        const entries = options.map((value) => {
+            let entry = createDropdownEntry(value.toString());
+            entry.onclick = () => {
+                dropdownButton.textContent = value.toString();
+                callback(value);
+            };
+            return entry;
+        });
+
+        dropdownContent.append(...entries);
+        return dropdown;
     }
 
     function createToggle(active: boolean, callback: IBooleanSettingCallback): HTMLLabelElement
@@ -117,26 +289,41 @@ namespace SettingsBuilder
 export class SettingsList
 {
     private onSettingsChanged: ISettingsChanged;
+    private onPurgePools: IButtonCallback;
+    private onRestoreContext: IButtonCallback;
     private settingsList: HTMLElement;
     private searchFilter: HTMLInputElement;
     private filter: string;
 
-    constructor(settingsList: HTMLElement, searchFilter: HTMLInputElement, onSettingsChanged: ISettingsChanged)
+    constructor(settingsList: HTMLElement, searchFilter: HTMLInputElement, onSettingsChanged: ISettingsChanged, onPurgePools: IButtonCallback, onRestoreContext: IButtonCallback)
     {
         this.settingsList = settingsList;
         this.searchFilter = searchFilter;
         this.searchFilter.onkeyup = () => { this.filterElements(); };
         this.filter = "";
         this.onSettingsChanged = onSettingsChanged;
-    }    
+        this.onPurgePools = onPurgePools;
+        this.onRestoreContext = onRestoreContext;
+    }
 
     setSettings(settings: ISettings)
     {
+        const defaultSettings = createDefaultSettings();
+
         this.settingsList.innerHTML = "";
         {
             let group = SettingsBuilder.createGroup("Connection");
             SettingsBuilder.addBooleanSetting(group, "Record on connect", settings.recordOnConnect, (value) => {settings.recordOnConnect = value; this.onSettingsChanged(); })
             SettingsBuilder.addBooleanSetting(group, "Auto re-connect", settings.autoReconnect, (value) => {settings.autoReconnect = value; this.onSettingsChanged(); })
+            SettingsBuilder.addNumberSetting(group,
+                "Default Port",
+                "",
+                Number.parseInt(defaultSettings.defaultPort), Number.parseInt(settings.defaultPort),
+                (value) => {
+                    settings.defaultPort = value;
+                    this.onSettingsChanged();
+                }
+            );
             this.settingsList.appendChild(group.fragment);
         }
         {
@@ -144,7 +331,92 @@ export class SettingsList
             SettingsBuilder.addBooleanSetting(group, "Move camera on selection", settings.moveToEntityOnSelection, (value) => {settings.moveToEntityOnSelection = value; this.onSettingsChanged(); })
             SettingsBuilder.addBooleanSetting(group, "Open entity list on selection", settings.openEntityListOnSelection, (value) => {settings.openEntityListOnSelection = value; this.onSettingsChanged(); })
             SettingsBuilder.addBooleanSetting(group, "Follow selected entity", settings.followCurrentSelection, (value) => {settings.followCurrentSelection = value; this.onSettingsChanged(); })
+            SettingsBuilder.addBooleanSetting(group, "Show all layers on start", settings.showAllLayersOnStart, (value) => {settings.showAllLayersOnStart = value; this.onSettingsChanged(); })
+            SettingsBuilder.addColorSetting(group, "Background Color", "Changes the background color of the viewer", settings.backgroundColor, defaultSettings.backgroundColor, (value) => {settings.backgroundColor = value; this.onSettingsChanged(); })
+            SettingsBuilder.addColorSetting(group, "Selection Color", "Changes the color of the outline of selected entities of the viewer", settings.selectionColor, defaultSettings.selectionColor, (value) => {settings.selectionColor = value; this.onSettingsChanged(); })
+            SettingsBuilder.addColorSetting(group, "Hover Color", "Changes color of the outline of hovered entities of the viewer", settings.hoverColor, defaultSettings.hoverColor, (value) => {settings.hoverColor = value; this.onSettingsChanged(); })
+            SettingsBuilder.addRangeSetting(group,
+                "Outline width",
+                "Changes the width of the selection and hover outline",
+                0, 3, 0.1,
+                settings.selectionOutlineWidth,
+                defaultSettings.selectionOutlineWidth,
+                (value) => {
+                    settings.selectionOutlineWidth = value;
+                    this.onSettingsChanged();
+                }
+            );
             this.settingsList.appendChild(group.fragment);
+        }
+
+        {
+            let group = SettingsBuilder.createGroup("Timeline");
+            SettingsBuilder.addBooleanSetting(group, "Show event popup", settings.showEventPopup, (value) => {settings.showEventPopup = value; this.onSettingsChanged(); })
+            this.settingsList.appendChild(group.fragment);
+        }
+
+        {
+            let group = SettingsBuilder.createGroup("Grid");
+            SettingsBuilder.addNumberSetting(group,
+                "Grid height",
+                "Changes the height of the grid on the viewer",
+                defaultSettings.gridHeight,
+                settings.gridHeight,
+                (value) => {
+                    settings.gridHeight = Number.parseFloat(value);
+                    this.onSettingsChanged();
+                }
+            );
+            SettingsBuilder.addNumberSetting(group,
+                "Grid spacing",
+                "Changes the spacing between the grid lines",
+                defaultSettings.gridSpacing,
+                settings.gridSpacing,
+                (value) => {
+                    settings.gridSpacing = Number.parseFloat(value);
+                    this.onSettingsChanged();
+                }
+            );
+            this.settingsList.appendChild(group.fragment);
+        }
+
+        {
+            let group = SettingsBuilder.createGroup("Graphics");
+            SettingsBuilder.addNumberOptionsSetting(group, "Anti-aliasing samples", settings.antialiasingSamples, [1, 2, 4, 8, 16], (value) => {  settings.antialiasingSamples = value; this.onSettingsChanged(); });
+            this.settingsList.appendChild(group.fragment);
+        }
+
+        {
+            let group = SettingsBuilder.createGroup("Exporting");
+            SettingsBuilder.addStringSetting(group,
+                "Exporting name format",
+`Default name of a file when saving a recording.
+You can use the following formatting options:
+ - %h: Hour (hh)
+ - %m: Minute (mm)
+ - %s: Second (ss)
+ - %Y: Year (YYYY)
+ - %M: Month (MM)
+ - %D: Day (DD)
+ - %%: %
+`,
+                defaultSettings.exportNameFormat, settings.exportNameFormat,
+                (value) => {
+                    const format = value == "" ? defaultSettings.exportNameFormat : value;
+                    settings.exportNameFormat = format;
+                    this.onSettingsChanged();
+                }
+            );
+            this.settingsList.appendChild(group.fragment);
+        }
+
+        {
+            let group = SettingsBuilder.createGroup("Debug");
+            SettingsBuilder.addBooleanSetting(group, "Show render debug info", settings.showRenderDebug, (value) => {settings.showRenderDebug = value; this.onSettingsChanged(); })
+            this.settingsList.appendChild(group.fragment);
+
+            SettingsBuilder.addButtonSetting(group, "Purge pools", "Empty mesh and material pools", this.onPurgePools);
+            SettingsBuilder.addButtonSetting(group, "Restore context", "Try to restore a lost WebGL context", this.onRestoreContext);
         }
 
         this.filterElements();
@@ -179,7 +451,7 @@ export class SettingsList
                 {
                     if (foundInTitle)
                     {
-                        settingElement.style.display = "block";
+                        settingElement.style.display = "flex";
                     }
                     else
                     {
@@ -188,7 +460,7 @@ export class SettingsList
                         {
                             const foundInSetting = this.filter == "" || filterText(this.filter, nameElement.innerText.toLowerCase());
                             foundInGroup = foundInGroup || foundInSetting;
-                            settingElement.style.display = foundInSetting ? "block" : "none";
+                            settingElement.style.display = foundInSetting ? "flex" : "none";
                         }
                     }
                 }

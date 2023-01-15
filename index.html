@@ -15,12 +15,15 @@
           <p><span><i class="fas fa-spinner fa-spin"></i></span><span id="modalText"></span></p>
         </div>
     </div>
+    <div id="contextMenu" class="context-menu" style="display: none"></div>
+    <div id="eventPopup" class="event-popup hidden"></div>
     <div class="full-page page-wrapper">
         <div class="basico-container basico-container-compact" id="title-bar-wrapper">
             <div class="basico-tabs" id="title-bar">
                 <div title="Open a recording" class="basico-tabs-item" id="title-bar-open"><i class="fas fa-folder-open"></i></div>
                 <div title="Save current recording in a new file" class="basico-tabs-item" id="title-bar-save"><i class="fas fa-save"></i></div>
                 <div title="Remove current recording data" class="basico-tabs-item" id="title-bar-clear"><i class="fas fa-trash"></i></div>
+                <div title="Open or close welcome window" class="basico-tabs-item" id="title-bar-help"><i class="fas fa-question-circle"></i></div>
                 <div id="drag-region">
                     <div id="window-title">
                         <span id="window-title-text">Frame by Frame</span>
@@ -47,18 +50,20 @@
         <div class="header basico-navbar basico-navbar-compact">
             <div class="basico-navbar-title" id="timeline-frame-counter">Frame: 1/100</div>
             <div class="basico-button-group" id="step-controls">
+                <button title="Go to previous frame with events&#013;(Hold Ctrl for selected entity events)" class="basico-button basico-small" id="timeline-event-prev"><i class="fas fa-arrow-alt-circle-left"></i></button>
                 <button title="Go to first frame" class="basico-button basico-small" id="timeline-first"><i class="fas fa-backward"></i></button>
                 <button title="Go to previous frame" class="basico-button basico-small" id="timeline-prev"><i class="fas fa-step-backward"></i></button>
                 <button title="Start/Stop playback" class="basico-button basico-small" id="timeline-play"><i id="timeline-play-icon" class="fas fa-play"></i></button>
                 <button title="Go to next frame" class="basico-button basico-small" id="timeline-next"><i class="fas fa-step-forward"></i></button>
                 <button title="Go to last frame" class="basico-button basico-small" id="timeline-last"><i class="fas fa-forward"></i></button>
+                <button title="Go to next frame with events&#013;(Hold Ctrl for selected entity events)" class="basico-button basico-small" id="timeline-event-next"><i class="fas fa-arrow-alt-circle-right"></i></button>
             </div>
             <div class="basico-button-group" id="record-control">
                 <button title="Start/Stop recording" class="basico-button basico-small" id="button-record"><i class="fas fa-circle"></i></button>
             </div>
             <div id="playback-controls">
                 <div class="basico-navbar-title" id="playback-display">x1</div>
-                <input title="Change playback speed" type="range" min="0" max="8" value="4" step="1" id="playback-speed">
+                <input class="basico-slider" title="Change playback speed" type="range" min="0" max="8" value="4" step="1" id="playback-speed">
             </div>
         </div>
         <div id="timeline-wrapper">
@@ -146,55 +151,12 @@
             </div>
             <div class="sidebar basico-container basico-container-compact" id="filters-list">
                 <div class="basico-title basico-title-compact uppercase">Filters</div>
-                <div class="basico-container">
-                    <div class="basico-card">
-                        <div class="basico-title basico-title-compact uppercase">EVENT FILTER</div>
-                        <div class="basico-card-element">
-                            <div class="basico-form">
-                                <div class="basico-form-field">
-                                    <div class="basico-form-field-label">Filter name:</div>
-                                    <input type="text" class="basico-input" value="Filter 1">
-                                </div>
-                                <div class="basico-form-field">
-                                    <div class="basico-form-field-label">Event name:</div>
-                                    <input type="text" class="basico-input" value="Impact">
-                                </div>
-                                <div class="basico-form-field">
-                                    <div class="basico-form-field-label">Event tag:</div>
-                                    <input type="text" class="basico-input" value="Bullets">
-                                </div>
-                                <div class="basico-form-field">
-                                    <div class="basico-form-field-label">Event properties:</div>
-                                </div>
-                                <div class="basico-form-field filter-property-wrapper">
-                                    <div class="basico-dropdown">
-                                        <button class="basico-dropdown-button">String</button>
-                                        <div class="basico-dropdown-content">
-                                            <a>String</a>
-                                            <a>Number</a>
-                                            <a>Boolean</a>
-                                        </div>
-                                    </div>
-                                    <input type="text" class="basico-input" value="Collider name">
-                                </div>
-                                <div class="basico-form-field filter-property-wrapper">
-                                    <div class="basico-dropdown">
-                                        <button class="basico-dropdown-button">Contains</button>
-                                        <div class="basico-dropdown-content">
-                                            <a>Contains</a>
-                                            <a>Equals</a>
-                                            <a>Different</a>
-                                        </div>
-                                    </div>
-                                    <input type="text" class="basico-input" value="bullet_col_001">
-                                </div>
-                                <div class="basico-form-field">
-                                    <button class="basico-button basico-small" ><i class="fas fa-plus"></i></button>
-                                </div>
-                            </div>
+                <div class="basico-container" id="filter-editing-list">
+                    <div class="basico-dropdown" id="add-filter-dropdown">
+                        <button class="basico-dropdown-button">Add new filter</button>
+                        <div class="basico-dropdown-content">
                         </div>
                     </div>
-                    <button class="basico-button basico-small" >Add new filter</button>
                 </div>
             </div>
             <div class="sidebar basico-container basico-container-compact" id="recent-list">
@@ -205,7 +167,7 @@
             </div>
             <div class="sidebar basico-container basico-container-compact" id="setting-list">
                 <div class="basico-title basico-title-compact uppercase">Settings</div>
-                <div class="basico-container">
+                <div class="basico-container" id="setting-search-wrapper">
                     <div class="basico-form-field search-form">
                         <input type="text" id="settings-search" placeholder="Type here to filter..." class="basico-input" value="">
                         <i class="fa fa-search"></i>
@@ -244,16 +206,24 @@
                                     </div>
                                 </div>
                                 <div class="column">
-                                    <h2>Quick Start Guide</h2>
+                                    <h2>Documentation</h2>
                                     <ul>
-                                        <li><p>View the <b>online documentation</b></p></li>
-                                        <li><p>How to connect to <b>Unity</b>, <b>Unreal Engine</b> or <b>CryEngine</b></p></li>
+                                        <li><p>View the <a href="https://xdargu.github.io/FrameByFrame/"><b>online documentation</b></a></p></li>
+                                        <li><p>How to connect to <a href="https://xdargu.github.io/FrameByFrame/unity"><b>Unity</b></a></p></li>
+                                    </ul>
+                                    <h2>About</h2>
+                                    <ul>
+                                        <li><p id="version-text">Version: 0.2.1</p></li>
+                                        <li><p>Find the <a href="https://github.com/XDargu/FrameByFrame/releases"><b>latest version here</b></a></p></li>
+                                        <li><p>Report bugs and request features in the  <a href="https://github.com/XDargu/FrameByFrame/issues"><b>issues page</b></a></p></li>
                                     </ul>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div id="viewport">
+                        <div id="filter-ticker-wrapper"></div>
+                        <div id="render-debug" class="enabled"></div>
                         <canvas id="render-canvas"></canvas>
                     </div>
                 </div>
@@ -269,7 +239,7 @@
                             </div>
                             <div class="basico-tabs-item basico-no-hover">
                                 <div class="basico-form-field search-form">
-                                    <input type="text" placeholder="Find..." class="basico-input" value="">
+                                    <input id="console-search" type="text" placeholder="Find..." class="basico-input" value="">
                                     <i class="fa fa-search"></i>
                                 </div>
                             </div>

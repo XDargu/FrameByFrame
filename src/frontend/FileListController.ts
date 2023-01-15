@@ -1,4 +1,5 @@
 import * as path from "path";
+import { addContextMenu } from "./ContextMenu";
 
 export interface IFileClicked
 {
@@ -10,12 +11,14 @@ export default class FileListController
     private welcomeList: HTMLElement;
     private recentFilesList: HTMLElement;
     private onFileClicked: IFileClicked;
+    private onFileOpenInExplorer: IFileClicked;
 
-    constructor(recentFilesList: HTMLElement, welcomeList: HTMLElement, onFileClicked: IFileClicked)
+    constructor(recentFilesList: HTMLElement, welcomeList: HTMLElement, onFileClicked: IFileClicked, onFileOpenInExplorer: IFileClicked)
     {
         this.recentFilesList = recentFilesList;
         this.welcomeList = welcomeList;
         this.onFileClicked = onFileClicked;
+        this.onFileOpenInExplorer = onFileOpenInExplorer;
     }
 
     updateRecentFiles(paths: string[])
@@ -38,6 +41,13 @@ export default class FileListController
                 recentFileElement.onclick = () => {
                     this.onFileClicked(recentFileElement.getAttribute("data-path"));
                 };
+
+                // Context menu
+                const config = [
+                    { text: "Show in explorer", icon: "fa-folder-open", callback: () => { this.onFileOpenInExplorer(recentFileElement.getAttribute("data-path")); } },
+                    { text: "Copy path", icon: "fa-copy", callback: () => { require('electron').clipboard.writeText(recentFileElement.getAttribute("data-path")); } },
+                ];
+                addContextMenu(recentFileElement, config);
             }
         }
 

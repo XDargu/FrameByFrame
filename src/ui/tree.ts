@@ -4,6 +4,7 @@ export interface ITreeCallback {
 
 export interface ITreeCallbacks {
     onItemSelected: ITreeCallback;
+    onItemDoubleClicked: ITreeCallback;
     onItemMouseOver: ITreeCallback;
     onItemMouseOut: ITreeCallback;
 }
@@ -11,6 +12,7 @@ export interface ITreeCallbacks {
 export interface ITreeItemOptions {
     text?: string;
     value?: string;
+    tag?: string;
     hidden?: boolean;
     selectable?: boolean;
     callbacks?: ITreeCallbacks;
@@ -57,16 +59,30 @@ export class TreeControl {
             listItem.setAttribute('data-tree-value', options.value);
         }
 
-        if (options.selectable)
+        if (options.tag != null && options.tag != "")
         {
-            wrapper.onclick = () => {
-                this.markElementSelected(wrapper);
-                if (options.callbacks && options.callbacks.onItemSelected != null)
-                {
-                    options.callbacks.onItemSelected(listItem);
-                }
-            };
+            let tag = document.createElement("div");
+            tag.className = "basico-tag basico-small";
+            tag.innerText = options.tag;
+            wrapper.appendChild(tag);
         }
+
+        wrapper.onclick = () => {
+            if (options.selectable) {
+                this.markElementSelected(wrapper);
+            }
+            if (options.callbacks && options.callbacks.onItemSelected != null)
+            {
+                options.callbacks.onItemSelected(listItem);
+            }
+        };
+
+        wrapper.ondblclick = () => {
+            if (options.callbacks && options.callbacks.onItemDoubleClicked != null)
+            {
+                options.callbacks.onItemDoubleClicked(listItem);
+            }
+        };
 
         if (options.callbacks && options.callbacks.onItemMouseOver != null)
         {
@@ -89,31 +105,7 @@ export class TreeControl {
 
         let parentList = parentListItem.querySelector("ul");
 
-        let listItem = document.createElement("li");
-        listItem.classList.add("basico-tree-leaf");
-
-        let wrapper = document.createElement("span");
-        wrapper.classList.add("basico-tree-item-wrapper");
-        this.toggleItem(wrapper);
-        listItem.appendChild(wrapper);
-
-        let toggle = document.createElement("span");
-        toggle.classList.add("basico-tree-item-toggle");
-        wrapper.appendChild(toggle);
-
-        let contentWrapper = document.createElement("span");
-        contentWrapper.classList.add("basico-tree-item-content");
-        if (options.text)
-        {
-            contentWrapper.innerText = options.text;
-        }
-        for (let i=0; i<content.length; ++i) {
-            contentWrapper.appendChild(content[i]);
-        }
-        wrapper.appendChild(contentWrapper);
-
-        let children = document.createElement("ul");
-        listItem.appendChild(children);
+        let listItem = this.buildItem(content, options);
 
         parentList.appendChild(listItem);
         parentListItem.classList.remove("basico-tree-leaf");
@@ -123,36 +115,19 @@ export class TreeControl {
             parentListItem.classList.add("basico-tree-closed");
         }
 
-        if (options.value != null)
-        {
-            listItem.setAttribute('data-tree-value', options.value);
-        }
-
-        wrapper.onclick = () => {
-            if (options.selectable) {
-                this.markElementSelected(wrapper);
-            }
-            if (options.callbacks && options.callbacks.onItemSelected != null)
-            {
-                options.callbacks.onItemSelected(listItem);
-            }
-        };
-
-        if (options.callbacks && options.callbacks.onItemMouseOver != null)
-        {
-            wrapper.onmouseover = () => {
-                options.callbacks.onItemMouseOver(listItem);
-            };
-        }
-
-        if (options.callbacks && options.callbacks.onItemMouseOut != null)
-        {
-            wrapper.onmouseout = () => {
-                options.callbacks.onItemMouseOut(listItem);
-            };
-        }
-
         return listItem;
+    }
+
+    getItemParent(listItem : HTMLElement) : HTMLElement {
+        return listItem.parentElement.closest("li");
+    }
+
+    getWrapperOfItem(listItem : HTMLElement) : HTMLSpanElement {
+        return listItem.querySelector(".basico-tree-item-wrapper");
+    }
+
+    getItemOfWrapper(treeItemWrapperElement : HTMLSpanElement) : HTMLElement {
+        return treeItemWrapperElement.parentElement;
     }
 
     toggleItem(treeItemWrapperElement : HTMLSpanElement) {
@@ -168,6 +143,24 @@ export class TreeControl {
                 listItem.classList.add("basico-tree-closed");
             }
         });
+    }
+
+    openItem(treeItemWrapperElement : HTMLSpanElement) {
+
+        let listItem = treeItemWrapperElement.parentElement;
+
+        if (listItem.classList.contains("basico-tree-closed")) {
+            listItem.classList.remove("basico-tree-closed");
+        }
+    }
+
+    openItemRecursively(listItem : HTMLElement) {
+        let currentItem = listItem;
+        while(currentItem) {
+            this.openItem(this.getWrapperOfItem(currentItem));
+            currentItem = this.getItemParent(currentItem)
+            console.log(currentItem);
+        }
     }
 
     getValueOfItem(listItem : HTMLElement) {
@@ -205,7 +198,7 @@ export class TreeControl {
         let listItem = this.getItemWithValue(value) as HTMLElement;
         if (listItem)
         {
-            let wrapper = listItem.querySelector(".basico-tree-item-wrapper") as HTMLElement;
+            let wrapper = this.getWrapperOfItem(listItem);
             if (preventCallback) {
                 this.markElementSelected(wrapper);
             }
@@ -213,5 +206,16 @@ export class TreeControl {
                 wrapper.click();
             }
         }
+    }
+
+    public scrollToElementOfValue(value : string) {
+        let listItem = this.getItemWithValue(value) as HTMLElement;
+        if (listItem)
+        {
+            let wrapper = this.getWrapperOfItem(listItem);
+            this.openItemRecursively(this.getItemOfWrapper(wrapper));
+            wrapper.scrollIntoView({ block: "nearest"});
+        }
+        
     }
 }

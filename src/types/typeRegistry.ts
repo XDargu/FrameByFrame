@@ -5,6 +5,30 @@ export enum EPrimitiveType
     Boolean
 }
 
+export enum CorePropertyTypes {
+	Group = "group",
+	Comment = "comment",
+	/* Types */
+	Number = "number",
+	String = "string",
+	Bool = "boolean",
+	Vec3 = "vec3",
+    EntityRef = "eref",
+    Quat = "quat",
+	/* Shapes */
+	Sphere = "sphere",
+	Capsule = "capsule",
+	AABB = "aabb",
+	OOBB = "oobb",
+	Plane = "plane",
+	Line = "line",
+    Arrow = "arrow",
+    Vector = "vector",
+	Mesh = "mesh",
+	Path = "path",
+	Triangle = "triangle"
+}
+
 export interface ITypeLayout
 {
     [nameId: string] : EPrimitiveType
@@ -75,5 +99,17 @@ export class TypeRegistry
             }
         };
         this.registerType(vec3);
+       
+        const quat : IType = {
+            nameId: "quat",
+            layout: {
+                x: EPrimitiveType.Number,
+                y: EPrimitiveType.Number,
+                z: EPrimitiveType.Number,
+                w: EPrimitiveType.Number
+            }
+        };
+        this.registerType(quat);
+
     }
 }

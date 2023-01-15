@@ -5,6 +5,12 @@ export const enum TabBorder
     Righ = "basico-border-right"
 }
 
+export const enum TabDisplay
+{
+    Block = "block",
+    Flex = "flex",
+}
+
 export class TabControl {
 
     tabElements: HTMLElement[];
@@ -12,13 +18,15 @@ export class TabControl {
     activeTab: HTMLElement;
     activeContent: HTMLElement;
     tabBorder: TabBorder;
+    tabDisplay: TabDisplay;
 
-    constructor(tabElements : HTMLElement[], tabContentElements : HTMLElement[], defaultActiveTabIdx : number = 0, tabBorder: TabBorder = TabBorder.None) {
+    constructor(tabElements : HTMLElement[], tabContentElements : HTMLElement[], defaultActiveTabIdx : number = 0, tabBorder: TabBorder = TabBorder.None, tabDisplay: TabDisplay = TabDisplay.Block) {
         this.tabElements = tabElements;
         this.tabContentElements = tabContentElements;
         this.activeTab = this.tabElements[defaultActiveTabIdx];
         this.activeContent = this.tabContentElements[defaultActiveTabIdx];
         this.tabBorder = tabBorder;
+        this.tabDisplay = tabDisplay;
 
         if (this.tabElements.length != this.tabContentElements.length) {
             console.error("Tabs and tabs content have different amounts.");
@@ -42,10 +50,14 @@ export class TabControl {
                 currentTab.classList.add(this.tabBorder);
             }
             currentContent.style.display = "none";
+            
+            if (this.tabDisplay == TabDisplay.Flex) {
+                currentContent.style.flexDirection = "column";
+            }
         }
 
         this.activeTab.classList.add("basico-tabs-selected");
-        this.activeContent.style.display = "block";
+        this.activeContent.style.display = this.tabDisplay;
     }
 
     openTabByElement(tab: HTMLElement)
@@ -82,7 +94,7 @@ export class TabControl {
         this.activeTab = tab;
 
         this.activeContent.style.display = "none";
-        content.style.display = "block";
+        content.style.display = this.tabDisplay;
         this.activeContent = content;
     }
 }

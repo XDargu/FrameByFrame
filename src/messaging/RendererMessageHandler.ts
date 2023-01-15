@@ -16,7 +16,15 @@ export function initMessageHandling(renderer: Renderer)
         {
             case Messaging.MessageType.OpenResult:
             {
-                renderer.loadData(arg.data as string)
+                const result = arg.data as string;
+                if (result)
+                {
+                    renderer.loadCompressedData(result);
+                }
+                else
+                {
+                    renderer.closeModal();
+                }
                 break;
             }
             case Messaging.MessageType.ClearResult:
@@ -33,10 +41,20 @@ export function initMessageHandling(renderer: Renderer)
                 renderer.onSaveFile();
                 break;
             }
+            case Messaging.MessageType.SavePathResult:
+            {
+                const resultPath = arg.data as Messaging.IResultSavePathData;
+                Console.log(LogLevel.Information, LogChannel.Files, `Saving file file `, {
+                    text: resultPath.path,
+                    tooltip: "Open file in explorer",
+                    callback: () => { shell.showItemInFolder(path.resolve(resultPath.path)); }
+                });
+                renderer.saveToPath(resultPath.path, resultPath.saveOnlySelection);
+                break;
+            }
             case Messaging.MessageType.UpdateRecentFiles:
             {
                 const recentFiles = (arg.data as string).split(",");
-                console.log(recentFiles);
                 renderer.updateRecentFiles(recentFiles);
                 break;
             }
@@ -55,7 +73,10 @@ export function initMessageHandling(renderer: Renderer)
                     callback: () => { shell.showItemInFolder(path.resolve(pathName)); }
                 });
                 
-                document.getElementById("window-title-text").innerText = path.basename(pathName) + " - Frame by Frame";
+                let title = path.basename(pathName) + " - Frame by Frame";
+                document.title = title;
+                document.getElementById("window-title-text").innerText = title;
+
                 renderer.removeWelcomeMessage();
                 break;
             }

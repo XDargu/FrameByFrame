@@ -24,7 +24,7 @@
 }
 
 .basico-tree .basico-tree-item-wrapper {
-    display: block;
+    display: flex;
     cursor: pointer;
 }
 
@@ -80,7 +80,7 @@
 }
 
 .basico-tree .basico-tree-item-content {
-    display: inline-block;
+    display: flex;
     padding-bottom: 4px;
     padding-top: 4px;
 }

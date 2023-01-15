@@ -1,7 +1,45 @@
+import { CorePropertyTypes } from '../types/typeRegistry';
+import * as Utils from '../utils/utils'
+
+export enum ECoordinateSystem
+{
+    RightHand = 0,
+    LeftHand
+}
+
+export enum RecordingFileType {
+	NaiveRecording,
+	RawFrames
+}
+
+export function isPropertyShape(property: IProperty)
+{
+    const Type = CorePropertyTypes;
+    return property.type == Type.Sphere || 
+        property.type == Type.Line ||
+		property.type == Type.Arrow ||
+		property.type == Type.Vector ||
+        property.type == Type.Plane ||
+        property.type == Type.AABB ||
+        property.type == Type.OOBB ||
+        property.type == Type.Capsule ||
+        property.type == Type.Mesh ||
+		property.type == Type.Path ||
+		property.type == Type.Triangle;
+}
+
 export interface IVec3 {
 	x: number;
 	y: number;
 	z: number;
+}
+
+export interface IQuat
+{
+	x: number;
+	y: number;
+	z: number;
+	w: number;
 }
 
 export interface IColor {
@@ -15,10 +53,15 @@ export interface IPropertyCustomType {
 	[nameId: string] : string | number | boolean;
 }
 
+export interface IEntityRef {
+	name: string;
+	id: number;
+}
+
 export interface IProperty {
 	type: string;
 	name?: string;
-	value: string | number | IVec3 | IPropertyCustomType | IProperty[];
+	value: string | number | boolean | IVec3 | IPropertyCustomType | IEntityRef | IProperty[];
 	id?: number;
 }
 
@@ -70,10 +113,33 @@ export interface IPropertyLine extends IProperyShape {
 	value: string;
 }
 
+export interface IPropertyArrow extends IProperyShape {
+	origin: IVec3;
+	destination: IVec3;
+	value: string;
+}
+
+export interface IPropertyVector extends IProperyShape {
+	vector: IVec3;
+	value: string;
+}
+
 export interface IPropertyMesh extends IProperyShape {
 	vertices: number[];
 	indices?: number[];
 	wireframe?: boolean;
+	value: string;
+}
+
+export interface IPropertyPath extends IProperyShape {
+	points: IVec3[];
+	value: string;
+}
+
+export interface IPropertyTriangle extends IProperyShape {
+	p1: IVec3;
+	p2: IVec3;
+	p3: IVec3;
 	value: string;
 }
 
@@ -88,6 +154,7 @@ export interface IEvent {
 	name: string;
 	tag: string;
 	properties: IPropertyGroup;
+	idx: number;
 	id?: number;
 }
 
@@ -105,9 +172,12 @@ export interface IFrameEntityData {
 
 export interface IFrameData {
 	entities: IFrameEntityData;
+	serverTime: number;
+	clientId: number;
 	frameId: number;
 	elapsedTime: number;
 	tag: string;
+	coordSystem?: ECoordinateSystem;
 }
 
 export enum VisitorResult
@@ -118,13 +188,23 @@ export enum VisitorResult
 
 export interface IPropertyVisitorCallback
 {
-    (id: IProperty) : VisitorResult | void
+    (property: IProperty) : VisitorResult | void
 }
 
 export interface IEventVisitorCallback
 {
-    (id: IEvent) : VisitorResult | void
+    (event: IEvent) : VisitorResult | void
 }
+
+const emptyFrameData: IFrameData = {
+	entities: [],
+	frameId: 0,
+	serverTime: 0,
+	elapsedTime: 0,
+	clientId: 0,
+	tag: "",
+	coordSystem: ECoordinateSystem.LeftHand
+};
 
 export class PropertyTable {
 	types: any[];
@@ -361,13 +441,33 @@ export class FrameTable {
 	}
 }
 
-export class NaiveRecordedData {
+export interface ClientData
+{
+	tag: string;
+}
+
+export interface IRecordedData {
+	type: RecordingFileType;
+}
+
+export interface INaiveRecordedData extends IRecordedData {
+	version: number;
 	frameData: IFrameData[];
 	layers: string[];
+	clientIds: Map<number, ClientData>
+}
+
+export class NaiveRecordedData implements INaiveRecordedData {
+	readonly version: number = 1;
+	readonly type: RecordingFileType = RecordingFileType.NaiveRecording;
+	frameData: IFrameData[];
+	layers: string[];
+	clientIds: Map<number, ClientData>
 
 	constructor() {
 		this.frameData = [];
 		this.layers = [];
+		this.clientIds = new Map<number, ClientData>();
 	}
 
 	static getEntityName(entity: IEntity) : string
@@ -382,9 +482,8 @@ export class NaiveRecordedData {
 		return (entity.properties[1] as IPropertyGroup).value[1].value as IVec3;
 	}
 
-	loadFromString(data: string)
+	loadFromData(dataJson: INaiveRecordedData)
 	{
-		let dataJson = JSON.parse(data);
 		this.frameData = dataJson.frameData;
 		this.layers = dataJson.layers;
 		if (this.layers == undefined)
@@ -395,6 +494,11 @@ export class NaiveRecordedData {
 		for (let frame of this.frameData)
 		{
 			this.updateLayersOfFrame(frame);
+			this.updateClientIDsOfFrame(frame);
+
+			// Fix legacy frames (just for testing)
+			if (frame.clientId == null) { frame.clientId = 0; }
+			if (frame.tag == null) { frame.tag = "Client"; }
 		}
 
 		console.log(this);
@@ -402,15 +506,69 @@ export class NaiveRecordedData {
 
 	clear()
 	{
-		this.frameData = [];
-		this.layers = [];
+		this.frameData.length = 0;
+		this.layers.length = 0;
+		this.clientIds.clear();
 	}
 
 	pushFrame(frame: IFrameData)
 	{
-		this.frameData.push(frame);
+		Utils.insertSorted(this.frameData, frame, (value, frameData) => {
+			return value.serverTime > frameData.serverTime;
+		});
 
 		this.updateLayersOfFrame(frame);
+		this.updateClientIDsOfFrame(frame);
+	}
+
+	static findPropertyIdInProperties(frameData: IFrameData, propertyId: number) : IProperty
+	{
+		let result: IProperty = null;
+		for (let entityID in frameData.entities)
+		{
+			const entity = frameData.entities[entityID];
+
+			NaiveRecordedData.visitEntityProperties(entity, (property) => {
+				if (property.id == propertyId)
+				{
+					result = property;
+					return VisitorResult.Stop;
+				}
+			});
+
+			if (result != null) {
+				return result;
+			}
+		}
+
+		return null;
+	}
+
+	static findPropertyIdInEvents(frameData: IFrameData, propertyId: number)
+	{
+		let resultProp: IProperty = null;
+		let resultEvent: IEvent = null;
+		for (let entityID in frameData.entities)
+		{
+			const entity = frameData.entities[entityID];
+
+			NaiveRecordedData.visitEvents(entity.events, (event) => {
+				NaiveRecordedData.visitProperties([event.properties], (property) => {
+					if (property.id == propertyId)
+					{
+						resultEvent = event;
+						resultProp = property;
+						return VisitorResult.Stop;
+					}
+				});
+			});
+
+			if (resultEvent != null) {
+				return { resultEvent, resultProp };
+			}
+		}
+
+		return null;
 	}
 
 	static visitEntityProperties(entity: IEntity, callback: IPropertyVisitorCallback)
@@ -418,7 +576,7 @@ export class NaiveRecordedData {
 		NaiveRecordedData.visitProperties(entity.properties, callback);
 	}
 
-	static visitProperties(properties: IProperty[], callback: IPropertyVisitorCallback)
+	static visitProperties(properties: IProperty[], callback: IPropertyVisitorCallback, visitChildGroups: boolean = true)
 	{
 		const propertyCount = properties.length;
 		for (let i=0; i<propertyCount; ++i)
@@ -427,7 +585,10 @@ export class NaiveRecordedData {
 			{
 				const res = callback(properties[i]);
 				if (res == VisitorResult.Stop) { return; }
-				NaiveRecordedData.visitProperties((properties[i] as IPropertyGroup).value, callback);
+				if (visitChildGroups)
+				{
+					NaiveRecordedData.visitProperties((properties[i] as IPropertyGroup).value, callback);
+				}
 			}
 			else
 			{
@@ -447,28 +608,74 @@ export class NaiveRecordedData {
 		}
 	}
 
-	buildFrameData(frame : number) : IFrameData {
-		// Instead of building the frame data here we just set the propertyID (overriding previous ones)
+	buildFrameDataHeader(frame: number) : IFrameData {
 		let frameData = this.frameData[frame];
 
-		if (!frameData)
+		if (!frameData) {
+			return emptyFrameData;
+		}
+
+		return frameData;
+	}
+
+	buildFrameData(frame : number) : IFrameData {
+
+		let frameData = this.frameData[frame];
+
+		if (!frameData) {
+			return emptyFrameData;
+		}
+
+		let dataPerClientID = new Map<number, IFrameData>();
+		dataPerClientID.set(frameData.clientId, frameData);
+		const maxPrevFrames = 10;
+		for (let i=0; i<maxPrevFrames; ++i)
 		{
-			return { entities: [],
-				frameId: 0,
-				elapsedTime: 0,
-				tag: ""
-			};
+			const prevFrameData = this.frameData[frame - i - 1];
+			if (prevFrameData) {
+				const prevFrameClientId = prevFrameData.clientId;
+				if (!dataPerClientID.has(prevFrameClientId)) {
+					dataPerClientID.set(prevFrameClientId, prevFrameData);
+				}
+			}
+		}
+
+		let mergedFrameData : IFrameData = {
+			entities: {},
+			serverTime: frameData.serverTime,
+			clientId: frameData.clientId,
+			frameId: frameData.frameId,
+			elapsedTime: frameData.elapsedTime,
+			tag: frameData.tag,
+			coordSystem: frameData.coordSystem
+		};
+
+		// Merge all entities
+		for (let [clientID, frameData] of dataPerClientID)
+		{
+			for (let entityID in frameData.entities)
+			{
+				const entity = frameData.entities[entityID];
+				const uniqueID = Utils.toUniqueID(frameData.clientId, entity.id);
+				const parentUniqueID = entity.parentId == 0 ? 0 : Utils.toUniqueID(frameData.clientId, entity.parentId);
+				mergedFrameData.entities[uniqueID] = {
+					id: uniqueID,
+					parentId: parentUniqueID,
+					properties: entity.properties,
+					events: entity.events
+				};
+			}
 		}
 
 		let eventId = 1;
 		let propId = 1;
 		
-		for (let id in frameData.entities)
+		for (let id in mergedFrameData.entities)
 		{
-			NaiveRecordedData.visitProperties(frameData.entities[id].properties, (property: IProperty) => {
+			NaiveRecordedData.visitProperties(mergedFrameData.entities[id].properties, (property: IProperty) => {
 				property.id = propId++;
 			});
-			NaiveRecordedData.visitEvents(frameData.entities[id].events, (event: IEvent) => {
+			NaiveRecordedData.visitEvents(mergedFrameData.entities[id].events, (event: IEvent) => {
 				event.id = eventId++;
 
 				NaiveRecordedData.visitProperties([event.properties], (property: IProperty) => {
@@ -477,8 +684,7 @@ export class NaiveRecordedData {
 			});
 		}
 		
-
-		return frameData;
+		return mergedFrameData;
 	}
 
 	getSize()
@@ -489,7 +695,7 @@ export class NaiveRecordedData {
 	addTestData(frames: number, entityAmount: number) {
 		for (let i=0; i<frames; ++i)
 		{
-			let frameData : IFrameData = { entities: {}, frameId: i, elapsedTime: 0.0166, tag: "" };
+			let frameData : IFrameData = { entities: {}, frameId: i, elapsedTime: 0.0166, clientId: 0, serverTime: i, tag: "", coordSystem: ECoordinateSystem.LeftHand };
 			
 			for (let j=0; j<entityAmount; ++j)
 			{
@@ -497,22 +703,51 @@ export class NaiveRecordedData {
 
 				var entity : IEntity = { id: entityID, parentId: 0, properties: [], events: [] };
 				
-				var propertyGroup = { type: "group", name: "properties", value: [
-					{ type: "int", name: "Target ID", value: 122 },
-					{ type: "string", name: "Target Name", value: "Player" },
-					{ type: "float", name: "Target Distance", value: Math.random() * 352 },
-					{ type: "group", name: "Target Info", value: [
-						{ type: "float", name: "Target Radius", value: Math.random() * 5 },
-						{ type: "float", name: "Target Length", value: Math.random() * 20 }
+				var propertyGroup = { type: CorePropertyTypes.Group, name: "properties", value: [
+					{ type: CorePropertyTypes.Number, name: "Target ID", value: 122 },
+					{ type: CorePropertyTypes.String, name: "Target Name", value: "Player" },
+					{ type: CorePropertyTypes.Number, name: "Target Distance", value: j },
+					{ type: CorePropertyTypes.Group, name: "Target Info", value: [
+						{ type: CorePropertyTypes.Number, name: "Target Radius", value: i },
+						{ type: CorePropertyTypes.Number, name: "Target Length", value: Math.random() * 20 }
 						] }
 					]
 				};
 
-				var specialGroup = { type: "group", name: "special", value: [
-					{ type: "string", name: "Name", value: "My Entity Name " + entityID },
-					{ type: "vec3", name: "Position", value: { x: Math.random() * 10, y: Math.random() * 10, z: Math.random() * 10} }
+				var specialGroup = { type: CorePropertyTypes.Group, name: "special", value: [
+					{ type: CorePropertyTypes.String, name: "Name", value: "My Entity Name " + entityID },
+					{ type: CorePropertyTypes.Vec3, name: "Position", value: { x: Math.random() * 10, y: Math.random() * 10, z: Math.random() * 10} }
 					]
 				};
+
+				if (i % 2 == 0)
+				{
+					var eventProperties = [
+						{ name: "Test string", type: CorePropertyTypes.String, value: "eventProp" + i },
+						{ name: "Test number", type: CorePropertyTypes.Number, value: j }
+					];
+					var event = {
+						idx: 0,
+						name: "OnTestEvent",
+						tag: "FirstTest",
+						properties: {value: eventProperties, type: CorePropertyTypes.Group, name: "properties" }
+					};
+					entity.events.push(event);
+				}
+				else
+				{
+					var eventProperties2 = [
+						{ name: "Test other string", type: CorePropertyTypes.String, value: "eventProp" + i },
+						{ name: "Test other number", type: CorePropertyTypes.Number, value: j }
+					];
+					var event2 = {
+						idx: 0,
+						name: "OnOtherTestEvent",
+						tag: "OtherTest",
+						properties: {value: eventProperties2, type: CorePropertyTypes.Group, name: "properties" }
+					};
+					entity.events.push(event2);
+				}
 
 				entity.properties.push(propertyGroup);
 				entity.properties.push(specialGroup);
@@ -521,6 +756,20 @@ export class NaiveRecordedData {
 			}
 
 			this.pushFrame(frameData);
+		}
+	}
+
+	getTagByClientId(clientId: number) : string
+	{
+		const data = this.clientIds.get(clientId);
+		return data?.tag;
+	}
+
+	private updateClientIDsOfFrame(frame: IFrameData)
+	{
+		if (frame.clientId != undefined && !this.clientIds.has(frame.clientId))
+		{
+			this.clientIds.set(frame.clientId, { tag: frame.tag });
 		}
 	}
 
@@ -572,17 +821,7 @@ export class RecordedData {
 		this.eventTable = new EventTable();
 		this.eventDescrTable = new EventDescriptorTable();
 	}
-	
-	/* Property Data format:
-	 { type: "int", name: "Target ID", value: 122 }
-	 If it's a group:
-	 { type: "group", name: "Target ID", value: [
-		 { type: "int", name: "Target ID", value: 122 }
-		]
-	 }
-	 Property data is always a group type, the base one. Its name is root:
-	 { type: "group", name: "root", value: [...] }
-	 */
+
 	addProperties(frame: number, entity : IEntity) {
 		for (let i=0; i<entity.properties.length; ++i) {
 			this.addProperty(frame, entity.id, entity.properties[i], -1);
@@ -602,7 +841,7 @@ export class RecordedData {
 		const propertyID = this.propertyTable.registerEntry(propertyData.type, propertyData.name, parentID);
 		
 		// Register children if it's a group
-		if (propertyData.type == "group") {
+		if (propertyData.type == CorePropertyTypes.Group) {
 			let propertyGroup = propertyData as IPropertyGroup;
 			for (let i=0; i<propertyGroup.value.length; i++) {
 				this.addProperty(frame, entityID, propertyGroup.value[i], propertyID);
@@ -625,7 +864,7 @@ export class RecordedData {
 	}
 	
 	buildFrameData(frame : number) : IFrameData {
-		let frameData : IFrameData = { entities: {}, frameId: 0, elapsedTime: 0, tag: "" };
+		let frameData : IFrameData = { entities: {}, frameId: 0, elapsedTime: 0, clientId: 0, serverTime: 0, tag: "", coordSystem: ECoordinateSystem.LeftHand };
 		let tempPropertyData : IProperty = { type: null, value: null, name: null};
 		
 		const entityPropValIDs =  this.frameTable.entryIDs[frame];
@@ -673,7 +912,7 @@ export class RecordedData {
 				}
 				else {
 					const parentName = this.propertyTable.names[currentParentID];
-					tempPropertyData = { type: "group", name: parentName, value: [tempPropertyData] };
+					tempPropertyData = { type: CorePropertyTypes.Group, name: parentName, value: [tempPropertyData] };
 					
 					entityData.groupMap[currentParentID] = tempPropertyData;
 				}

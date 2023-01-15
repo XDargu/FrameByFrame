@@ -15,7 +15,7 @@ export class ConnectionsManager {
 
     addConnection(hostName: string, port: string) : ConnectionId
     {
-        let connection : Connection = new Connection(hostName, port, 'tcp');
+        let connection : Connection = new Connection(hostName, port, 'frameByframe');
         const id : ConnectionId = this.lastConnectionId++;
 
         this.connections.set(id, connection);

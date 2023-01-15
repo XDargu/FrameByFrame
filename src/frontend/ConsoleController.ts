@@ -1,3 +1,5 @@
+import * as Utils from "../utils/utils";
+
 export interface IActionCallback
 {
     () : void
@@ -49,6 +51,7 @@ export enum LogChannel
     Timeline,
     Files,
     Connections,
+    Filters,
 
     Count
 }
@@ -152,8 +155,9 @@ export class ConsoleWindow
     private levelDropdown: ConsoleLevelDropdown;
     private openChannels: BitArrayHelper;
     private openLevels: BitArrayHelper;
+    private searchFilter: HTMLInputElement;
 
-    constructor(consoleElement: HTMLElement, logLevel: LogLevel)
+    constructor(consoleElement: HTMLElement, searchFilter: HTMLInputElement, logLevel: LogLevel)
     {
         this.console = consoleElement;
         this.openChannels = new BitArrayHelper(LogChannel.Count);
@@ -162,6 +166,8 @@ export class ConsoleWindow
         this.enableLevel(LogLevel.Warning);
         this.enableLevel(LogLevel.Error);
         this.levelDropdown = new ConsoleLevelDropdown(document.getElementById("console-levels"), this, this.onLogLevelChanged.bind(this) );
+        this.searchFilter = searchFilter;
+        this.searchFilter.onkeyup = () => { this.filter(); };
     }
 
     openChannel(channel: LogChannel)
@@ -190,11 +196,13 @@ export class ConsoleWindow
             {
                 let line = this.addError(logLevel, channel);
                 this.addToLine(line, ...message);
+                this.filterLine(line);
             }
             else
             {
                 let line = this.addMessage(logLevel, channel);
                 this.addToLine(line, ...message);
+                this.filterLine(line);
             }
 
             if (scrolledToBottom)
@@ -300,5 +308,28 @@ export class ConsoleWindow
         this.console.appendChild(outerWrapper);
 
         return line;
+    }
+
+    private filter()
+    {
+        const filter = this.searchFilter.value.toLowerCase();
+
+        const lines = document.querySelectorAll("#console .basico-console-block");
+        for (let line of lines)
+        {
+            this.filterConsoleBlock(filter, line as HTMLElement);
+        }
+    }
+
+    private filterLine(consoleLine: HTMLElement)
+    {
+        const filter = this.searchFilter.value.toLowerCase();
+        this.filterConsoleBlock(filter, consoleLine.parentElement);
+    }
+
+    private filterConsoleBlock(filter: string, consoleBlock: HTMLElement)
+    {
+        const visible = filter == "" || Utils.filterText(filter, consoleBlock.textContent.toLowerCase());
+        consoleBlock.style.display = visible ? "block" : "none";
     }
 }

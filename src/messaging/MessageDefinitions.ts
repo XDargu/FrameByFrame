@@ -3,7 +3,9 @@ import { ConsoleWindow, LogLevel, ILogAction, LogChannel } from "../frontend/Con
 
 export enum MessageType { // TODO: Maybe rename these to make clear the direction of the messge (main->render or render->main)
     RequestSave,
-    Save,
+    RequestSavePath,
+    SavePathResult,
+    SaveToFile,
     Load, // Load specific file
     Open, // Open file prompt
     OpenResult,
@@ -14,7 +16,8 @@ export enum MessageType { // TODO: Maybe rename these to make clear the directio
     FileOpened,
     SettingsChanged,
     SaveSettings,
-    LongOperationOngoing
+    LongOperationOngoing,
+    OpenInExplorer
 }
 
 export interface IClearResultData
@@ -30,12 +33,31 @@ export interface ILogData
     channel: LogChannel;
 }
 
+export interface IRequestSavePathData
+{
+    defaultName: string;
+    askForPartialSave: boolean;
+}
+
+export interface IResultSavePathData
+{
+    path: string;
+    saveOnlySelection: boolean;
+}
+
+export interface ISaveFileData
+{
+    content: string;
+    path: string;
+}
+
+type MessageData = string | IClearResultData | ILogData | ISettings | ISaveFileData | IRequestSavePathData | IResultSavePathData;
 export class Message
 {
     public type: MessageType;
-    public data: string | IClearResultData | ILogData | ISettings;
+    public data: MessageData;
 
-    constructor(type: MessageType, data: string | IClearResultData | ILogData | ISettings)
+    constructor(type: MessageType, data: MessageData)
     {
         this.type = type;
         this.data = data;

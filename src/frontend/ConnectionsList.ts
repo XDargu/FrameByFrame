@@ -4,7 +4,7 @@ import { Console, LogChannel, LogLevel } from './ConsoleController';
 
 export interface IMessageCallback
 {
-    (data: string) : void
+    (id: ConnectionId, data: string) : void
 }
 
 export interface IConnectionCallback
@@ -106,7 +106,7 @@ export default class ConnectionsList
         let connection: Connection = this.connectionsManager.getConnection(id as any as number);
 
         connection.onMessage = (openEvent : MessageEvent) => {
-            callback(openEvent.data);
+            callback(id, openEvent.data);
         };
         connection.onConnected = (openEvent : Event) => {
             Console.log(LogLevel.Verbose, LogChannel.Connections, `Connection established to: ${address}:${port}`);
@@ -153,6 +153,12 @@ export default class ConnectionsList
         this.connectButtonCallback(id);
     }
 
+    setConnectionName(id: ConnectionId, name: string)
+    {
+        let connectionTag: HTMLElement = document.getElementById(`connection-${id}-tag`);
+        connectionTag.innerText = name;
+    }
+
     private static createConnectionElement(address: string, port: string, id: ConnectionId) : ConnectionCardData
     {
         let connectionElement = document.createElement("div");
@@ -167,8 +173,19 @@ export default class ConnectionsList
         list.className = "basico-list basico-list-compact";
         card.appendChild(list);
 
+        let clientName = document.createElement("div");
+        clientName.className = "basico-list-item basico-no-hover";
+        clientName.innerText = "Client Tag";
+        list.appendChild(clientName);
+
+        let clientTag = document.createElement("div");
+        clientTag.className = "basico-tag";
+        clientTag.id = `connection-${id}-tag`;
+        clientTag.innerText = "Unknown";
+        clientName.appendChild(clientTag);
+
         let status = document.createElement("div");
-        status.className = "basico-list-item";
+        status.className = "basico-list-item basico-no-hover";
         status.innerText = "Status";
         list.appendChild(status);
 

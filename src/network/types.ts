@@ -7,11 +7,19 @@ export enum MessageType
 	RecordingOptionChanged
 }
 
+export interface IRawRecordingData extends RECORDING.IRecordedData {
+	version: number;
+	rawFrames: IMessageFrameData[];
+}
+
 export interface IMessageFrameData {
 	entities: RECORDING.IEntity[];
 	frameId: number;
+	clientId: number;
+	serverTime: number;
 	elapsedTime: number;
 	tag: string;
+	coordSystem?: RECORDING.ECoordinateSystem;
 }
 
 export interface IMessageRecordingOption

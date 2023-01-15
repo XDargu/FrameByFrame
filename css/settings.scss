@@ -1,0 +1,75 @@
+#setting-list .basico-form-field {
+    display: block;
+    margin-bottom: 6px;
+}
+
+#setting-list .basico-container {
+    display: flex;
+    flex-direction: column;
+}
+
+#settings-container,
+#settings {
+    flex: auto;
+}
+
+#settings .basico-dropdown {
+    width: 36px;
+    text-align: right;
+}
+
+#settings-container input {
+    text-align: right;
+}
+
+#settings-container .basico-list,
+#settings-container .basico-title {
+    z-index: unset;
+}
+
+#settings-container .basico-list-item {
+    display: flex;
+    align-items: center;
+}
+
+#settings-container .basico-list-item .basico-text-oneline {
+    flex: 1;
+}
+
+#settings-container input[type=color] {
+    padding: 0;
+    background: none;
+    cursor: pointer;
+}
+
+#settings-container input[type=color]:focus {
+    padding: 0;
+    background: none;
+    cursor: pointer;
+}
+
+#settings-container input[type=color]::-webkit-color-swatch-wrapper {
+    padding: 0; 
+}
+#settings-container input[type=color]::-webkit-color-swatch {
+    border: none;
+}
+
+#settings-container .setting-value-wrapper {
+    width: 50%;
+    display: flex;
+    flex-direction: row-reverse;
+}
+
+#settings-container .setting-reset-button {
+    margin-left: 5px;
+    padding: 3px 5px;
+}
+
+#setting-search-wrapper {
+    flex-shrink: 0;
+}
+
+#settings-container .basico-slider {
+    width: 100%;
+}

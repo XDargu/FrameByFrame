@@ -3,33 +3,3 @@
 #playback-controls {
     float: right;
 }
-
-#playback-speed {
-    -webkit-appearance: none;
-    height:8px;
-    background: #574D5F;
-    outline: none;
-    opacity: 0.7;
-    -webkit-transition: .2s;
-    transition: opacity .2s;
-}
-  
-#playback-speed:hover {
-    opacity: 1;
-}
-  
-#playback-speed::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 12px;
-    height: 12px;
-    background: $soft-primary;
-    cursor: pointer;
-}
-  
-#playback-speed::-moz-range-thumb {
-    width: 12px;
-    height: 12px;
-    background: $soft-primary;
-    cursor: pointer;
-}

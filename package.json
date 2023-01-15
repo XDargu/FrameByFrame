@@ -1,17 +1,24 @@
 {
   "name": "frame-by-frame",
   "productName": "Frame By Frame",
-  "version": "0.1.2",
-  "description": "Tool Test",
+  "version": "0.3.0",
+  "description": "Visual Debugging and Recording Tool for 3D applications",
   "main": "./app/main.js",
   "build": {
     "appId": "com.danielarmesto.framebyframe",
     "fileAssociations": {
       "ext": "fbf",
       "name": "Frame by Frame File"
+    },
+    "win": {
+      "target": ["portable", "nsis"]
+    },
+    "portable": {
+        "artifactName": "framebyframe_portable.exe"
     }
   },
   "scripts": {
+    "prebuild": "node -p \"'export const LIB_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/version.ts",
     "build": "tsc",
     "start": "electron ./app/main.js",
     "dist": "build",
@@ -20,7 +27,7 @@
   "author": "Daniel Armesto",
   "license": "MIT",
   "dependencies": {
-    "babylonjs": "^4.0.3",
+    "babylonjs": "^4.2.0",
     "babylonjs-materials": "^4.0.3",
     "resize-observer": "^1.0.0",
     "@electron/remote": "^2.0.1"

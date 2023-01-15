@@ -12,10 +12,18 @@ export function hashCode(str: string): number
     return h & 0xFFFFFFFF
 }
 
-const colors = ["#D6A3FF", "#EB7C2B", "#5DAEDC", "#DFC956", "E5CF58"];
-export function colorFromHash(hash: number) : string
+export function isHexColor(hex: string)
 {
-    return colors[hash % colors.length];
+    return typeof hex === 'string'
+        && hex.length === 7
+        && hex[0] === '#'
+        && !isNaN(Number('0x' + hex.substr(1)))
+}
+
+const defaultColors = ["#D6A3FF", "#EB7C2B", "#5DAEDC", "#DFC956"];
+export function colorFromHash(hash: number, colors: string[] = defaultColors) : string
+{
+    return colors.length > 0 ? colors[Math.abs(hash) % colors.length] : defaultColors[0];
 }
 
 export function componentToHex(c: number)
@@ -25,7 +33,14 @@ export function componentToHex(c: number)
 }
 
 // Colors
-export interface RGBColor
+export class RGBColor
+{
+    r: number;
+    g: number;
+    b: number;
+}
+
+export class RGBColor01
 {
     r: number;
     g: number;
@@ -47,14 +62,31 @@ export function hexToRgb(hex: string) : RGBColor
     } : null;
 }
 
-export function blend(color1: RGBColor, color2: RGBColor, amount: number)
+export function RgbToRgb01(color: RGBColor) : RGBColor01
+{
+    return {
+        r: color.r / 255,
+        g: color.g / 255,
+        b: color.b / 255
+    };
+}
+
+export function blend(color1: RGBColor, color2: RGBColor, amount: number) : RGBColor
 {
     const bias = clamp(amount, 0, 1);
     const bias2 = 1 - bias;
     return {
-        r: Math.round(color1.r * bias + color2.r * bias2),
-        g: Math.round(color1.g * bias + color2.g * bias2),
-        b: Math.round(color1.b * bias + color2.b * bias2)
+        r: Math.round(color1.r * bias2 + color2.r * bias),
+        g: Math.round(color1.g * bias2 + color2.g * bias),
+        b: Math.round(color1.b * bias2 + color2.b * bias)
+    }
+}
+
+export function addUniqueClass(element: HTMLElement, classToAdd: string)
+{
+    if (!element.classList.contains(classToAdd))
+    {
+        element.classList.add(classToAdd);
     }
 }
 
@@ -64,7 +96,128 @@ export function swapClass(element: HTMLElement, classToRemove: string, classToAd
     element.classList.add(classToAdd);
 }
 
+export function toggleClasses(element: HTMLElement, class1: string, class2: string)
+{
+    if (element.classList.contains(class1))
+    {
+        swapClass(element, class1, class2)
+    }
+    else
+    {
+        swapClass(element, class2, class1);
+    }
+}
+
+export function setClass(element: HTMLElement, className: string, isActive: boolean)
+{
+    if (isActive) {
+        addUniqueClass(element, className);
+    }
+    else {
+        element.classList.remove(className);
+    }
+}
+
 export function filterText(filter: string, content: string)
 {
     return content.indexOf(filter) > -1;
+}
+
+export function pushUnique<Type>(array: Type[], value: Type)
+{
+    if (array.indexOf(value) == -1)
+    {
+        array.push(value);
+    }
+}
+
+type Comparator<T> = (fromArray: T, value: T) => boolean;
+export function searchLastSortedInsertionPos<Type>(array: Array<Type>, value: Type, comparator: Comparator<Type>) : number
+{
+    let i = array.length - 1;
+    while (i >= 0 && comparator(array[i], value)) {
+        --i;
+    }
+    return i + 1;
+}
+
+export function insertSorted<Type>(array: Array<Type>, value: Type, comparator: Comparator<Type>)
+{
+    array.splice(searchLastSortedInsertionPos(array, value, comparator), 0, value);
+}
+
+export function toUniqueID(clientId: number, entityId: number)
+{
+    return Number((BigInt(entityId) << BigInt(8)) + BigInt(clientId));
+}
+
+export function getEntityIdUniqueId(uniqueId: number)
+{
+    return Number(BigInt(uniqueId) >> BigInt(8));
+}
+
+export function getClientIdUniqueId(uniqueId: number)
+{
+    return Number(BigInt(uniqueId) & BigInt(0xFF));
+}
+
+export function numberToPaddedString(value: number, padding: number) : string
+{
+    return value.toString().padStart(padding, '0');
+}
+
+interface IFormatTable
+{
+    [token: string] : string;
+}
+export function getFormattedString(format: string, formatTable: IFormatTable) : string
+{
+    const re = new RegExp(Object.keys(formatTable).join("|"),"gi");
+    return format.replace(re, function(matched){
+        return formatTable[matched];
+    });
+}
+
+export function getFormattedFilename(format: string) : string
+{
+    const date = new Date();
+    const formatTable : IFormatTable = {
+        '%h': numberToPaddedString(date.getHours(), 2),
+        '%m': numberToPaddedString(date.getMinutes(), 2),
+        '%s': numberToPaddedString(date.getSeconds(), 2),
+        '%D': numberToPaddedString(date.getDate(), 2),
+        '%M': numberToPaddedString(date.getMonth() + 1, 2),
+        '%Y': numberToPaddedString(date.getFullYear(), 4),
+        '%%': '%'
+    }
+
+    return getFormattedString(format, formatTable);
+}
+
+export function runAsync(callback: Function)
+{
+    setTimeout(callback, 0);
+}
+
+export function nextTick() {
+    return new Promise(function(resolve) {
+        runAsync(resolve);
+    });
+}
+
+export function delay(time: number) {
+    return new Promise(function(resolve) {
+        setTimeout(resolve, time);
+    });
+}
+
+export function clampElementToScreen(pageX: number, pageY: number, element: HTMLElement, offsetX: number = 0, offsetY: number = 0)
+{
+    const isNearRight = (window.innerWidth - pageX) < element.offsetWidth + offsetX;
+    const isNearBottom = (window.innerHeight - pageY) < element.offsetHeight + offsetY;
+
+    const x = isNearRight ? pageX - element.offsetWidth - offsetX : pageX + offsetX;
+    const y = isNearBottom ? pageY - element.offsetHeight - offsetY : pageY + offsetY;
+
+    return {x: x, y: y};
 }

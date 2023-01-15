@@ -53,9 +53,10 @@
     text-overflow: ellipsis;
 }
 
-#welcome-box b
+#welcome-box b,
+#welcome-box a
 {
-    color: #6de080;
+    color: $strong-secondary;
 }
 
 #welcome-box .icon
@@ -136,6 +137,12 @@
 }
 
 #recent-files-welcome li b
+{
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+#welcome a
 {
     cursor: pointer;
     text-decoration: underline;

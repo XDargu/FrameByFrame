@@ -8,7 +8,7 @@ import { LogChannel, LogLevel, ILogAction } from "./frontend/ConsoleController";
 import * as Messaging from "./messaging/MessageDefinitions";
 let mainWindow: Electron.BrowserWindow;
 
-require('@electron/remote/main').initialize();
+const shell = require('electron').shell;
 
 // File Manager
 let fileManager: FileManager;
@@ -64,6 +64,15 @@ function createWindow() {
   fileManager.initialize(onFileHistoryChanged, onSettingsChanged);
 
   mainWindow.webContents.once('dom-ready', onRendererReady);
+
+  // Open external links
+  mainWindow.webContents.on('will-navigate', function(event, url){
+    logToConsole(LogLevel.Verbose, LogChannel.Default, "Opening: " + url);
+    if (url.startsWith('https:')) {
+      event.preventDefault();
+      shell.openExternal(url);
+    }
+  });
 }
 
 function onRendererReady()
@@ -104,7 +113,7 @@ function onOpenFileClicked()
   fileManager.openFile((pathName: string, content: string) => {
     mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.FileOpened, pathName));
     mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
-  }, () => {
+  }, (pathName: string) => {
     mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LongOperationOngoing, "Opening File"));
   });
 }
@@ -116,6 +125,7 @@ function onExportFileClicked()
 
 function onOpenRecentFileClicked(pathName : string)
 {
+  mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LongOperationOngoing, "Opening File"));
   fileManager.loadFile(pathName, (pathName: string, content: string) => {
     mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.FileOpened, pathName));
     mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
@@ -175,18 +185,93 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
 
   switch(arg.type)
   {
-    case Messaging.MessageType.Save:
+    case Messaging.MessageType.RequestSavePath:
     {
-      fileManager.saveFile(arg.data as string);
+      const request = arg.data as Messaging.IRequestSavePathData;
+      const requestSave = (saveOnlySelection: boolean) =>
+      {
+        fileManager.getSaveLocation(request.defaultName, (path: string) => {
+          event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.SavePathResult, {
+            path: path,
+            saveOnlySelection: saveOnlySelection
+          }));
+        });
+      }
+
+      if (request.askForPartialSave)
+      {
+        const options = {
+          type: 'question',
+          buttons: ['Save selection', 'Save all'],
+          defaultId: 0,
+          title: 'Save data',
+          message: 'Save only the selection or all data?',
+          detail: 'You have a partial selection of the recording. Do you want to save only the selected data, or the entire recording?',
+        };
+      
+        dialog.showMessageBox(null, options, (response) => {
+          const saveOnlySelection: boolean = response == 0;
+          const saveAll: boolean = response == 1;
+
+          if (saveOnlySelection || saveAll)
+          {
+            requestSave(saveOnlySelection);
+          }
+        });
+      }
+      else
+      {
+        requestSave(false);
+      }
+      
+      break;
+    }
+    case Messaging.MessageType.SaveToFile:
+    {
+      const fileSaveData = arg.data as Messaging.ISaveFileData;
+      fileManager.saveToFile(fileSaveData.path, fileSaveData.content)
       break;
     }
     case Messaging.MessageType.Load:
     {
       const filePath = arg.data as string;
-      fileManager.loadFile(filePath, (pathName: string, content: string) => {
-        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.FileOpened, pathName));
-        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
-      });
+      try {
+        if (fileManager.doesFileExist(filePath))
+        {
+          fileManager.loadFile(filePath, (pathName: string, content: string) => {
+            event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.FileOpened, pathName));
+            event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
+          });
+        }
+        else
+        {
+          const options = {
+            type: 'question',
+            buttons: ['Keep file', 'Remove from recent'],
+            title: 'File does not exist',
+            message: 'Looks like the file has been removed. Do you want to remove it from the recent file list?',
+          };
+        dialog.showMessageBox(null, options, (response) => {
+          const souldRemove: boolean = response == 1;
+          if (souldRemove) {
+            fileManager.removePathFromHistory(filePath);
+          }
+        });
+        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, null));
+        }
+      }
+      catch(err) {
+          const options = {
+              type: 'error',
+              buttons: ['OK'],
+              title: 'Error reading file',
+              message: 'An error ocurred reading the file',
+              detail: err.message,
+              checkboxChecked: false,
+            };
+          dialog.showMessageBox(null, options);
+          event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, null));
+      }
       break;
     }
     case Messaging.MessageType.Open:
@@ -232,6 +317,10 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
     {
       fileManager.updateSettings(arg.data as ISettings);
       break;
+    }
+    case Messaging.MessageType.OpenInExplorer:
+    {
+      shell.showItemInFolder(path.resolve(arg.data as string))
     }
   }
 })
