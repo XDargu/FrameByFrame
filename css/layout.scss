@@ -20,6 +20,7 @@ body {
     display: flex;
     flex: 1 1 auto;
     flex-direction: row;
+    overflow: hidden;
 }
 
 .page-wrapper,

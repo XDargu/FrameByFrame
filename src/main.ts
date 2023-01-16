@@ -8,6 +8,7 @@ import { LogChannel, LogLevel, ILogAction } from "./frontend/ConsoleController";
 import * as Messaging from "./messaging/MessageDefinitions";
 let mainWindow: Electron.BrowserWindow;
 
+require('@electron/remote/main').initialize();
 const shell = require('electron').shell;
 
 // File Manager
@@ -27,7 +28,8 @@ function createWindow() {
     frame: false,
     webPreferences: {
         nodeIntegration: true,
-        nodeIntegrationInWorker: true
+        nodeIntegrationInWorker: true,
+        contextIsolation: false
     }
   });
 
@@ -45,6 +47,8 @@ function createWindow() {
   {
     mainWindow.webContents.openDevTools({mode: 'detach'});
   }
+
+  require("@electron/remote/main").enable(mainWindow.webContents);
 
   // Emitted when the window is closed.
   mainWindow.on("closed", () => {
@@ -205,10 +209,10 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
           message: 'Save only the selection or all data?',
           detail: 'You have a partial selection of the recording. Do you want to save only the selected data, or the entire recording?',
         };
-      
-        dialog.showMessageBox(null, options, (response) => {
-          const saveOnlySelection: boolean = response == 0;
-          const saveAll: boolean = response == 1;
+
+        dialog.showMessageBox(null, options).then((result) => {
+          const saveOnlySelection: boolean = result.response == 0;
+          const saveAll: boolean = result.response == 1;
 
           if (saveOnlySelection || saveAll)
           {
@@ -248,8 +252,8 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
             title: 'File does not exist',
             message: 'Looks like the file has been removed. Do you want to remove it from the recent file list?',
           };
-        dialog.showMessageBox(null, options, (response) => {
-          const souldRemove: boolean = response == 1;
+        dialog.showMessageBox(null, options).then((result) => {
+          const souldRemove: boolean = result.response == 1;
           if (souldRemove) {
             fileManager.removePathFromHistory(filePath);
           }
@@ -299,14 +303,14 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
         checkboxChecked: false,
       };
     
-      dialog.showMessageBox(null, options, (response, checkboxChecked) => {
-        const shouldClear: boolean = response == 0;
+      dialog.showMessageBox(null, options).then((result) => {
+        const shouldClear: boolean = result.response == 0;
 
-        if (shouldClear && checkboxChecked) {
+        if (shouldClear && result.checkboxChecked) {
           sessionOptions.showClearDataDialog = false;
         }
 
-        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.ClearResult, {clear: shouldClear, remember: checkboxChecked}));
+        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.ClearResult, {clear: shouldClear, remember: result.checkboxChecked}));
       });
       break;
     }

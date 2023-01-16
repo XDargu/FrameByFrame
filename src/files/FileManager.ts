@@ -1,4 +1,4 @@
-import { app, remote, dialog } from "electron";
+import { app, dialog } from "electron";
 import * as fs from 'fs';
 import { createDefaultSettings, ISettings } from "./Settings";
 
@@ -149,7 +149,7 @@ export default class FileManager
         this.loadSettings();
     }
 
-    openFile(callback: IOpenFileCallback, acceptedCallback: IFileAcceptedCallback)
+    async openFile(callback: IOpenFileCallback, acceptedCallback: IFileAcceptedCallback)
     {
         const options = {
             filters: [
@@ -157,7 +157,10 @@ export default class FileManager
             ]
         };
 
-        dialog.showOpenDialog(null, options, (paths: string[]) => {
+        const result = await dialog.showOpenDialog(null, options);
+        if (result && !result.canceled)
+        {
+            const paths = result.filePaths;
             if (paths === undefined || paths.length == 0){
                 console.log("You didn't open a file");
                 return;
@@ -166,7 +169,7 @@ export default class FileManager
             acceptedCallback(paths[0]);
 
             this.loadFile(paths[0], callback);
-        });
+        }
     }
 
     doesFileExist(path: string)
@@ -190,17 +193,22 @@ export default class FileManager
             ]
         }
 
-        dialog.showSaveDialog(null, options, (path: string) => {
+        const result = await dialog.showSaveDialog(null, options);
+
+        if (result && !result.canceled)
+        {
+            const path = result.filePath;
+
             if (path === undefined){
                 console.log("You didn't save the file");
                 return;
             }
 
             callback(path);
-        });
+        };
     }
 
-    saveFile(defaultName: string, content: string)
+    async saveFile(defaultName: string, content: string)
     {
         const options = {
             defaultPath: `${app.getPath('documents')}/${defaultName}.fbf`,
@@ -209,14 +217,19 @@ export default class FileManager
             ]
         }
 
-        dialog.showSaveDialog(null, options, (path: string) => {
+        const result = await  dialog.showSaveDialog(null, options);
+
+        if (result && !result.canceled)
+        {
+            const path = result.filePath;
+
             if (path === undefined){
                 console.log("You didn't save the file");
                 return;
             }
 
             this.saveToFile(path, content);
-        });
+        };
     }
 
     saveToFile(path: string, content: string)

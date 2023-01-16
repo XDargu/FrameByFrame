@@ -241,7 +241,7 @@ export class CustomLinesMesh extends Mesh {
         }
 
         // Clip planes
-        MaterialHelper.BindClipPlane(colorEffect!, this.getScene());
+        //MaterialHelper.BindClipPlane(colorEffect!, this.getScene());
         return this;
     }
 
