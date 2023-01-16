@@ -411,16 +411,7 @@ export default class Renderer {
             document.getElementById("settings-search") as HTMLInputElement,
             this.onSettingsChanged.bind(this),
             () => { this.sceneController.purgePools(); },
-            () => {
-                 
-                this.sceneController.initialize(
-                    document.getElementById('render-canvas') as HTMLCanvasElement,
-                    (entityId: number) => { this.onEntitySelectedOnScene(entityId, true) },
-                    this.settings.selectionColor,
-                    this.settings.hoverColor,
-                    this.settings.selectionOutlineWidth
-                );
-            }
+            () => { this.sceneController.restoreContext(); }
         );
 
         // Connection buttons
@@ -478,8 +469,20 @@ export default class Renderer {
         this.connectionsList.addConnection("localhost", settings.defaultPort, false);
     }
 
-    applySettings(settings: ISettings)
+    until(conditionFunction: any) {
+
+        const poll = (resolve: any) =>
+        {
+          if(conditionFunction()) resolve();
+          else setTimeout((_: any) => poll(resolve), 400);
+        }
+      
+        return new Promise(poll);
+      }
+
+    async applySettings(settings: ISettings)
     {
+        await this.until((_:any) => this.sceneController.isReady() == true);
         if (settings.showAllLayersOnStart)
         {
             this.layerController.setInitialState(LayerState.All);
@@ -1320,7 +1323,7 @@ export default class Renderer {
     }
 }
 
+initWindowControls();
 const renderer = new Renderer();
 renderer.initialize(document.getElementById('render-canvas') as HTMLCanvasElement);
-initWindowControls();
 initMessageHandling(renderer);

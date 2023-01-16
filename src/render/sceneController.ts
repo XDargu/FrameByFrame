@@ -81,35 +81,42 @@ export default class SceneController
     // Config
     private coordSystem: RECORDING.ECoordinateSystem;
 
+    isReady() { return this._engine != undefined; }
+
     initialize(canvas: HTMLCanvasElement, onEntitySelected: IEntitySelectedCallback, selectionColor: string, hoverColor: string, outlineWidth: number) {
 
-        const selectionColor01 = Utils.RgbToRgb01(Utils.hexToRgb(selectionColor));
-        const hoverColor01 = Utils.RgbToRgb01(Utils.hexToRgb(hoverColor));
+        window.setTimeout(() => { 
+            const selectionColor01 = Utils.RgbToRgb01(Utils.hexToRgb(selectionColor));
+            const hoverColor01 = Utils.RgbToRgb01(Utils.hexToRgb(hoverColor));
 
-        const engine = new BABYLON.Engine(canvas, false, { stencil: true });
-        this.createScene(canvas, engine);
+            const engine = new BABYLON.Engine(canvas, false, { stencil: true });
+            this.createScene(canvas, engine);
 
-        this.outline = new SceneOutline(this._scene, this.cameraControl.getCamera(), selectionColor01, hoverColor01, outlineWidth);
+            this.outline = new SceneOutline(this._scene, this.cameraControl.getCamera(), selectionColor01, hoverColor01, outlineWidth);
 
-        this.labels = new TextLabels(this._scene);
+            this.labels = new TextLabels(this._scene);
 
-        engine.runRenderLoop(() => {
-            this._scene.render();
-            this.updateDebugData();
-        });
+            engine.runRenderLoop(() => {
+                this._scene.render();
+                this.updateDebugData();
+            });
 
-        window.addEventListener('resize', () => {
-            engine.resize();
-        });
+            window.addEventListener('resize', () => {
+                engine.resize();
+            });
+
+            this.entitySelection = new SceneEntitySelection(onEntitySelected, this.sceneEntityData, this.outline, selectionColor01, hoverColor01);
+            this.entitySelection.initialize(this._scene, this._canvas);
+
+            this.propertySelection = new ScenePropertySelection(this.sceneEntityData, this.pools);
+
+        }, 100);
 
         this.sceneEntityData = new SceneEntityData();
 
-        this.entitySelection = new SceneEntitySelection(onEntitySelected, this.sceneEntityData, this.outline, selectionColor01, hoverColor01);
-        this.entitySelection.initialize(this._scene, this._canvas);
-
-        this.propertySelection = new ScenePropertySelection(this.sceneEntityData, this.pools);
-
+        this.layerManager = new LayerManager();
         this.setCoordinateSystem(RECORDING.ECoordinateSystem.LeftHand);
+
     }
 
     private createScene(canvas: HTMLCanvasElement, engine: BABYLON.Engine) {
@@ -122,7 +129,6 @@ export default class SceneController
         this._scene = scene;
 
         this.pools = new RenderPools(scene);
-        this.layerManager = new LayerManager();
 
         // Gizmos
         // Create utility layer the gizmo will be rendered on
@@ -318,7 +324,7 @@ export default class SceneController
 
     refreshOutlineTargets()
     {
-        this.entitySelection.refreshOutlineTargets();
+        this.entitySelection?.refreshOutlineTargets();
     }
 
     followEntity()
@@ -390,16 +396,12 @@ export default class SceneController
         this.sceneEntityData.clear();
     }
 
-    /*restoreContext()
+    restoreContext()
     {
-        if (this._engine._gl.isContextLost())
-        {
-            this.initialize(document.getElementById('render-canvas') as HTMLCanvasElement);
-        }
-        //let loseContext = this._engine._gl.getExtension('WEBGL_lose_context');
-        //loseContext.loseContext();
-        //window.setTimeout(() => { loseContext.restoreContext(); }, 1000); 
-    }*/
+        let loseContext = this._engine._gl.getExtension('WEBGL_lose_context');
+        loseContext.loseContext();
+        window.setTimeout(() => { loseContext.restoreContext(); }, 1000); 
+    }
 
     private updateDebugData()
     {
