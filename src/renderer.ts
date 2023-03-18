@@ -102,6 +102,7 @@ export default class Renderer {
         this.sceneController.initialize(
             canvas,
             (entityId: number) => { this.onEntitySelectedOnScene(entityId, true) },
+            (pos: RECORDING.IVec3, up: RECORDING.IVec3, right: RECORDING.IVec3) => { this.onCameraMoved(pos, up, right) },
             defaultSettings.selectionColor,
             defaultSettings.hoverColor,
             defaultSettings.selectionOutlineWidth
@@ -653,7 +654,14 @@ export default class Renderer {
                     break;
                     
                 }
-                break;
+                case NET_TYPES.MessageType.SyncOptionsChanged:
+                {
+                    const renderingDataRequest: NET_TYPES.IMessageSyncOptionsChanged = message.data as NET_TYPES.IMessageSyncOptionsChanged;
+                    this.settings.syncVisibleShapes = renderingDataRequest.syncVisibleShapes;
+                    this.settings.syncCameraPosition = renderingDataRequest.syncCamera;
+                    this.onSettingsChanged();
+                    break;
+                }
             }
         }
     }
@@ -743,6 +751,20 @@ export default class Renderer {
 
         // Rebuild property tree
         this.buildPropertyTree();
+
+        // Update connections
+        if (this.settings && this.settings.syncVisibleShapes)
+        {
+            const visibleShapes = this.sceneController.collectVisibleShapes(this.frameData.entities);
+
+            this.connectionsList.sendToAllConnections({ 
+                type: NET_TYPES.MessageType.SyncVisibleShapesData,
+                data: {
+                    shapes: visibleShapes,
+                    coordinateSystem: this.sceneController.getCoordinateSystem()
+                }
+            });
+        }
     }
 
     moveCameraToSelection()
@@ -1178,6 +1200,22 @@ export default class Renderer {
         this.timeoutFilter = setTimeout(() => {
             this.updateTimelineEvents();
         }, 500);
+    }
+
+    onCameraMoved(pos: RECORDING.IVec3, up: RECORDING.IVec3, right: RECORDING.IVec3)
+    {
+        // TODO: Optimize this by adding or removing the callback depending on the settings
+        if (this.settings && this.settings.syncCameraPosition)
+        {
+            this.connectionsList.sendToAllConnections({ 
+                type: NET_TYPES.MessageType.SyncCameraData,
+                data: {
+                    position: pos,
+                    up: up,
+                    right: right
+                }
+            });
+        }
     }
 
     // Modal
