@@ -59,6 +59,16 @@ export function createVec3(vec3: IVec3, system: RECORDING.ECoordinateSystem) : B
     }
 }
 
+export function BabylonToVec3(vec3: BABYLON.Vector3, system: RECORDING.ECoordinateSystem) : IVec3
+{
+    switch(system)
+    {
+        case RECORDING.ECoordinateSystem.LeftHand: return { x: vec3.x, y: vec3.y, z: vec3.z };
+        case RECORDING.ECoordinateSystem.RightHand: return { x: vec3.x, y: vec3.z, z: vec3.y };
+        default: return { x: vec3.x, y: vec3.y, z: vec3.z };
+    }
+}
+
 export function createVec4(vec3: IVec3) : BABYLON.Vector4
 {
     return new BABYLON.Vector4(vec3.x, vec3.y, vec3.z, 0);

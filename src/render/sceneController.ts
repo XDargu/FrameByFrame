@@ -38,6 +38,11 @@ interface IPropertyBuilderConfig
     [type: string] : IPropertyBuilderConfigEntry;
 }
 
+interface ICameraChangedCallback
+{
+    (position: RECORDING.IVec3, up: RECORDING.IVec3, forward: RECORDING.IVec3) : void
+}
+
 const shapeBuildConfig : IPropertyBuilderConfig  = {
     [CorePropertyTypes.Sphere]: { builder: ShapeBuilders.buildSphereShape, pickable: true},
     [CorePropertyTypes.Capsule]: { builder: ShapeBuilders.buildCapsuleShape, pickable: true},
@@ -81,13 +86,13 @@ export default class SceneController
     // Config
     private coordSystem: RECORDING.ECoordinateSystem;
 
-    initialize(canvas: HTMLCanvasElement, onEntitySelected: IEntitySelectedCallback, selectionColor: string, hoverColor: string, outlineWidth: number) {
+    initialize(canvas: HTMLCanvasElement, onEntitySelected: IEntitySelectedCallback, onCameraChangedCallback: ICameraChangedCallback, selectionColor: string, hoverColor: string, outlineWidth: number) {
 
         const selectionColor01 = Utils.RgbToRgb01(Utils.hexToRgb(selectionColor));
         const hoverColor01 = Utils.RgbToRgb01(Utils.hexToRgb(hoverColor));
 
         const engine = new BABYLON.Engine(canvas, false, { stencil: true });
-        this.createScene(canvas, engine);
+        this.createScene(canvas, engine, onCameraChangedCallback);
 
         this.outline = new SceneOutline(this._scene, this.cameraControl.getCamera(), selectionColor01, hoverColor01, outlineWidth);
 
@@ -112,7 +117,7 @@ export default class SceneController
         this.setCoordinateSystem(RECORDING.ECoordinateSystem.LeftHand);
     }
 
-    private createScene(canvas: HTMLCanvasElement, engine: BABYLON.Engine) {
+    private createScene(canvas: HTMLCanvasElement, engine: BABYLON.Engine, onCameraChangedCallback: ICameraChangedCallback) {
         this._canvas = canvas;
 
         this._engine = engine;
@@ -131,7 +136,13 @@ export default class SceneController
 
         // Create camera control
         this.cameraControl = new CameraControl();
-        this.cameraControl.initialize(scene, canvas);
+        this.cameraControl.initialize(scene, canvas, (position: BABYLON.Vector3, up: BABYLON.Vector3, forward: BABYLON.Vector3) => {
+            onCameraChangedCallback(
+                RenderUtils.BabylonToVec3(position, this.coordSystem),
+                RenderUtils.BabylonToVec3(up, this.coordSystem),
+                RenderUtils.BabylonToVec3(forward, this.coordSystem)
+            );
+        });
 
         // This creates a light, aiming 0,1,0 - to the sky (non-mesh)
         const light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
@@ -356,6 +367,11 @@ export default class SceneController
         this.coordSystem = system;
     }
 
+    getCoordinateSystem()
+    {
+        return this.coordSystem;
+    }
+
     setOutlineColors(selectionColor: string, hoverColor: string)
     {
         const selectionColor01 = Utils.RgbToRgb01(Utils.hexToRgb(selectionColor));
@@ -395,6 +411,36 @@ export default class SceneController
         let loseContext = this._engine._gl.getExtension('WEBGL_lose_context');
         loseContext.loseContext();
         window.setTimeout(() => { loseContext.restoreContext(); }, 1000); 
+    }
+
+    collectVisibleShapesOfEntity(entity: RECORDING.IEntity) : RECORDING.IProperyShape[]
+    {
+        let visibleShapes : RECORDING.IProperyShape[] = [];
+
+        // TODO: There are several ways we can optimize this
+        // We could collect the visible shapes during in addProperty
+        // We could implement a fast way of accessing properties by id in the recording data
+        // There are other options. The point is: this can be improved
+        const collectProperty = (property: RECORDING.IProperty) =>
+        {
+            if (!RECORDING.isPropertyShape(property)) { return; }
+
+            const shape = property as RECORDING.IProperyShape;
+
+            if (this.isLayerActiveForEntity(shape.layer, entity.id))
+            {
+                visibleShapes.push(shape);
+            }
+        };
+
+        RECORDING.NaiveRecordedData.visitEntityProperties(entity, collectProperty);
+
+        RECORDING.NaiveRecordedData.visitEvents(entity.events, (event: RECORDING.IEvent) => {
+            RECORDING.NaiveRecordedData.visitProperties([event.properties], collectProperty);
+        });
+        this.isLayerActiveForEntity
+
+        return visibleShapes;
     }
 
     private updateDebugData()
