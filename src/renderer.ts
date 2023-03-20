@@ -102,7 +102,7 @@ export default class Renderer {
         this.sceneController.initialize(
             canvas,
             (entityId: number) => { this.onEntitySelectedOnScene(entityId, true) },
-            (pos: RECORDING.IVec3, up: RECORDING.IVec3, right: RECORDING.IVec3) => { this.onCameraMoved(pos, up, right) },
+            (pos: RECORDING.IVec3, up: RECORDING.IVec3, forward: RECORDING.IVec3) => { this.onCameraMoved(pos, up, forward) },
             defaultSettings.selectionColor,
             defaultSettings.hoverColor,
             defaultSettings.selectionOutlineWidth
@@ -753,18 +753,7 @@ export default class Renderer {
         this.buildPropertyTree();
 
         // Update connections
-        if (this.settings && this.settings.syncVisibleShapes)
-        {
-            const visibleShapes = this.sceneController.collectVisibleShapes(this.frameData.entities);
-
-            this.connectionsList.sendToAllConnections({ 
-                type: NET_TYPES.MessageType.SyncVisibleShapesData,
-                data: {
-                    shapes: visibleShapes,
-                    coordinateSystem: this.sceneController.getCoordinateSystem()
-                }
-            });
-        }
+        this.updateVisibleShapesSyncing();
     }
 
     moveCameraToSelection()
@@ -909,6 +898,34 @@ export default class Renderer {
         
         this.pendingMarkers.forEachPendingFrame(this.recordedData, this.updateFrameDataMarkers.bind(this));
         this.pendingMarkers.clear();
+    }
+
+    updateVisibleShapesSyncing()
+    {
+        if (this.settings && this.settings.syncVisibleShapes && this.connectionsList.getNumberOfConnections() > 0)
+        {
+            let remoteEntities = [];
+            for (let entityID in this.frameData.entities)
+            {
+                const entity = this.frameData.entities[entityID];
+                const entityVisibleShapes = this.sceneController.collectVisibleShapesOfEntity(entity);
+                const remoteEntity : NET_TYPES.IRemoteEntityData = {
+                    id: entity.id,
+                    name: NaiveRecordedData.getEntityName(entity),
+                    position: NaiveRecordedData.getEntityPosition(entity),
+                    shapes: entityVisibleShapes
+                };
+                remoteEntities.push(remoteEntity);
+            }
+
+            this.connectionsList.sendToAllConnections({ 
+                type: NET_TYPES.MessageType.SyncVisibleShapesData,
+                data: {
+                    entities: remoteEntities,
+                    coordinateSystem: this.sceneController.getCoordinateSystem()
+                }
+            });
+        }
     }
 
     renderProperties()
@@ -1202,7 +1219,7 @@ export default class Renderer {
         }, 500);
     }
 
-    onCameraMoved(pos: RECORDING.IVec3, up: RECORDING.IVec3, right: RECORDING.IVec3)
+    onCameraMoved(pos: RECORDING.IVec3, up: RECORDING.IVec3, forward: RECORDING.IVec3)
     {
         // TODO: Optimize this by adding or removing the callback depending on the settings
         if (this.settings && this.settings.syncCameraPosition)
@@ -1212,7 +1229,7 @@ export default class Renderer {
                 data: {
                     position: pos,
                     up: up,
-                    right: right
+                    forward: forward
                 }
             });
         }

@@ -265,6 +265,11 @@ export default class ConnectionsList
         }
     }
 
+    getNumberOfConnections() : number
+    {
+        return this.connectionsMap.size;
+    }
+
     private removeButtonCallback(id: ConnectionId)
     {
         let connectionElementTitle: HTMLElement = this.connectionsMap.get(id);

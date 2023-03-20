@@ -40,7 +40,7 @@ interface IPropertyBuilderConfig
 
 interface ICameraChangedCallback
 {
-    (position: RECORDING.IVec3, up: RECORDING.IVec3, right: RECORDING.IVec3) : void
+    (position: RECORDING.IVec3, up: RECORDING.IVec3, forward: RECORDING.IVec3) : void
 }
 
 const shapeBuildConfig : IPropertyBuilderConfig  = {
@@ -136,11 +136,11 @@ export default class SceneController
 
         // Create camera control
         this.cameraControl = new CameraControl();
-        this.cameraControl.initialize(scene, canvas, (position: BABYLON.Vector3, up: BABYLON.Vector3, right: BABYLON.Vector3) => {
+        this.cameraControl.initialize(scene, canvas, (position: BABYLON.Vector3, up: BABYLON.Vector3, forward: BABYLON.Vector3) => {
             onCameraChangedCallback(
                 RenderUtils.BabylonToVec3(position, this.coordSystem),
                 RenderUtils.BabylonToVec3(up, this.coordSystem),
-                RenderUtils.BabylonToVec3(right, this.coordSystem)
+                RenderUtils.BabylonToVec3(forward, this.coordSystem)
             );
         });
 
@@ -413,7 +413,7 @@ export default class SceneController
         window.setTimeout(() => { loseContext.restoreContext(); }, 1000); 
     }
 
-    collectVisibleShapes(entities: RECORDING.IFrameEntityData) : RECORDING.IProperyShape[]
+    collectVisibleShapesOfEntity(entity: RECORDING.IEntity) : RECORDING.IProperyShape[]
     {
         let visibleShapes : RECORDING.IProperyShape[] = [];
 
@@ -421,30 +421,24 @@ export default class SceneController
         // We could collect the visible shapes during in addProperty
         // We could implement a fast way of accessing properties by id in the recording data
         // There are other options. The point is: this can be improved
-        for (let [id, _] of this.sceneEntityData.entities)
+        const collectProperty = (property: RECORDING.IProperty) =>
         {
-            const entity = entities[id];
+            if (!RECORDING.isPropertyShape(property)) { return; }
 
-            const collectProperty = (property: RECORDING.IProperty) => {
-                if (!RECORDING.isPropertyShape(property)) { return; }
-    
-                const shape = property as RECORDING.IProperyShape;
-    
-                if (!this.isLayerActiveForEntity(shape.layer, id))
-                {
-                    return;
-                }
+            const shape = property as RECORDING.IProperyShape;
 
+            if (this.isLayerActiveForEntity(shape.layer, entity.id))
+            {
                 visibleShapes.push(shape);
-            };
+            }
+        };
 
-            RECORDING.NaiveRecordedData.visitEntityProperties(entity, collectProperty);
+        RECORDING.NaiveRecordedData.visitEntityProperties(entity, collectProperty);
 
-            RECORDING.NaiveRecordedData.visitEvents(entity.events, (event: RECORDING.IEvent) => {
-                RECORDING.NaiveRecordedData.visitProperties([event.properties], collectProperty);
-            });
-            this.isLayerActiveForEntity
-        }
+        RECORDING.NaiveRecordedData.visitEvents(entity.events, (event: RECORDING.IEvent) => {
+            RECORDING.NaiveRecordedData.visitProperties([event.properties], collectProperty);
+        });
+        this.isLayerActiveForEntity
 
         return visibleShapes;
     }

@@ -40,10 +40,17 @@ export interface IMessageSyncOptionsChanged {
 	syncCamera: boolean;
 }
 
+export interface IRemoteEntityData {
+	id: number;
+	name: string;
+	position: RECORDING.IVec3;
+	shapes: RECORDING.IProperyShape[];
+}
+
 // Sent by Frame by Frame to the 3D application
 // Contains all the visual information so the application can render it
 export interface IMessageSyncVisibleShapesData {
-	shapes: RECORDING.IProperyShape[];
+	entities: IRemoteEntityData[];
 	coordSystem: RECORDING.ECoordinateSystem;
 }
 
@@ -52,7 +59,7 @@ export interface IMessageSyncVisibleShapesData {
 export interface IMessageSyncCameraData {
 	position: RECORDING.IVec3;
 	up: RECORDING.IVec3;
-	right: RECORDING.IVec3;
+	forward: RECORDING.IVec3;
 }
 
 export interface IMessage {

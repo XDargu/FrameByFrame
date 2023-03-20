@@ -9,7 +9,7 @@ interface ISceneKeyboardFunctions
 
 interface ICameraMatrixChangedCallback
 {
-    (position: BABYLON.Vector3, up: BABYLON.Vector3, right: BABYLON.Vector3) : void;
+    (position: BABYLON.Vector3, up: BABYLON.Vector3, forward: BABYLON.Vector3) : void;
 }
 
 export default class CameraControl
@@ -87,7 +87,7 @@ export default class CameraControl
 
         this._camera.onAfterCheckInputsObservable.add(this.updateCameraFollow.bind(this));
         this._camera.onViewMatrixChangedObservable.add(() => {
-            cameraChangeCallback(this._camera.position, this._camera.upVector, this._camera.getDirection(new BABYLON.Vector3(1, 0, 0)));
+            cameraChangeCallback(this._camera.position, this._camera.upVector, this._camera.getDirection(BABYLON.Vector3.Forward()));
         });
 
         // This targets the camera to scene origin
