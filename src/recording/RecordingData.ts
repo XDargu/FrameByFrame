@@ -196,6 +196,11 @@ export interface IEventVisitorCallback
     (event: IEvent) : VisitorResult | void
 }
 
+export interface IShapeVisitorCallback
+{
+    (event: IEvent) : VisitorResult | void
+}
+
 const emptyFrameData: IFrameData = {
 	entities: [],
 	frameId: 0,

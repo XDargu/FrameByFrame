@@ -7,6 +7,11 @@ interface ISceneKeyboardFunctions
     [type: string] : () => void;
 }
 
+interface ICameraMatrixChangedCallback
+{
+    (position: BABYLON.Vector3, up: BABYLON.Vector3, forward: BABYLON.Vector3) : void;
+}
+
 export default class CameraControl
 {
     private _camera: BABYLON.UniversalCamera;
@@ -15,7 +20,7 @@ export default class CameraControl
     private cameraMinSpeed: number = 5;
     private cameraMaxSpeed: number = 15;
 
-    initialize(scene: BABYLON.Scene, canvas: HTMLCanvasElement)
+    initialize(scene: BABYLON.Scene, canvas: HTMLCanvasElement, cameraChangeCallback: ICameraMatrixChangedCallback)
     {
         // This creates and positions a free camera (non-mesh)
         //const camera = new BABYLON.ArcRotateCamera("Camera", 3 * Math.PI / 2, Math.PI / 8, 50, BABYLON.Vector3.Zero(), scene);
@@ -80,7 +85,10 @@ export default class CameraControl
             }
         });
 
-        this._camera.onAfterCheckInputsObservable.add(this.updateCameraFollow.bind(this))
+        this._camera.onAfterCheckInputsObservable.add(this.updateCameraFollow.bind(this));
+        this._camera.onViewMatrixChangedObservable.add(() => {
+            cameraChangeCallback(this._camera.position, this._camera.upVector, this._camera.getDirection(BABYLON.Vector3.Forward()));
+        });
 
         // This targets the camera to scene origin
         this._camera.setTarget(BABYLON.Vector3.Zero());

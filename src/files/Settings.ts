@@ -13,6 +13,9 @@ export interface ISettings
     selectionColor: string,
     hoverColor: string,
     selectionOutlineWidth: number,
+    /* Syncing */
+    syncVisibleShapes: boolean,
+    syncCameraPosition: boolean,
     /* Timeline */
     showEventPopup: boolean,
     /* Grid */
@@ -42,6 +45,9 @@ export function createDefaultSettings() : ISettings
         selectionColor: "#6DE080",
         hoverColor: "#8442B9",
         selectionOutlineWidth: 1,
+        /* Syncing */
+        syncVisibleShapes: false,
+        syncCameraPosition: false,
         /* Timeline */
         showEventPopup: true,
         /* Grid */
