@@ -463,7 +463,7 @@ export interface INaiveRecordedData extends IRecordedData {
 }
 
 export class NaiveRecordedData implements INaiveRecordedData {
-	readonly version: number = 1;
+	readonly version: number = 2;
 	readonly type: RecordingFileType = RecordingFileType.NaiveRecording;
 	frameData: IFrameData[];
 	layers: string[];
@@ -487,6 +487,18 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		return (entity.properties[1] as IPropertyGroup).value[1].value as IVec3;
 	}
 
+	static getEntityUp(entity: IEntity) : IVec3
+	{
+		// Up vector is always part of the special groups
+		return (entity.properties[1] as IPropertyGroup).value[2].value as IVec3;
+	}
+
+	static getEntityForward(entity: IEntity) : IVec3
+	{
+		// Forward vector is always part of the special groups
+		return (entity.properties[1] as IPropertyGroup).value[3].value as IVec3;
+	}
+
 	loadFromData(dataJson: INaiveRecordedData)
 	{
 		this.frameData = dataJson.frameData;
@@ -506,7 +518,32 @@ export class NaiveRecordedData implements INaiveRecordedData {
 			if (frame.tag == null) { frame.tag = "Client"; }
 		}
 
+		if (dataJson.version == 1)
+		{
+			this.patchVersion1();
+		}
+
 		console.log(this);
+	}
+
+	private patchVersion1()
+	{
+		// Converts from version 1 to version 2
+		const upLH = { x: 0, y: 1, z: 0};
+		const forwardLH = { x: 0, y: 0, z: 1};
+		
+		const upRH = { x: 0, y: 0, z: 1};
+		const forwardRH = { x: 0, y: 1, z: 0};
+		for (let frame of this.frameData)
+		{
+			const isRightHand = frame.coordSystem != undefined && frame.coordSystem == ECoordinateSystem.RightHand;
+			for (let entityID in frame.entities)
+			{
+				let entity = frame.entities[entityID];
+				(entity.properties[1] as IPropertyGroup).value[2] = { type: CorePropertyTypes.Vec3, value: isRightHand ? upRH : upLH };
+				(entity.properties[1] as IPropertyGroup).value[3] = { type: CorePropertyTypes.Vec3, value: isRightHand ? forwardRH : forwardLH };
+			}
+		}
 	}
 
 	clear()
@@ -721,7 +758,9 @@ export class NaiveRecordedData implements INaiveRecordedData {
 
 				var specialGroup = { type: CorePropertyTypes.Group, name: "special", value: [
 					{ type: CorePropertyTypes.String, name: "Name", value: "My Entity Name " + entityID },
-					{ type: CorePropertyTypes.Vec3, name: "Position", value: { x: Math.random() * 10, y: Math.random() * 10, z: Math.random() * 10} }
+					{ type: CorePropertyTypes.Vec3, name: "Position", value: { x: Math.random() * 10, y: Math.random() * 10, z: Math.random() * 10} },
+					{ type: CorePropertyTypes.Vec3, name: "Up", value: { x: Math.random(), y: Math.random(), z: Math.random() } },
+					{ type: CorePropertyTypes.Vec3, name: "Forward", value: { x: Math.random(), y: Math.random(), z: Math.random() } }
 					]
 				};
 

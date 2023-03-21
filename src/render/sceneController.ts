@@ -235,8 +235,13 @@ export default class SceneController
         }
         
         const position = RenderUtils.createVec3(RECORDING.NaiveRecordedData.getEntityPosition(entity), this.coordSystem);
+        const up = RenderUtils.createVec3(RECORDING.NaiveRecordedData.getEntityUp(entity), this.coordSystem);
+        const forward = RenderUtils.createVec3(RECORDING.NaiveRecordedData.getEntityForward(entity), this.coordSystem);
+
         entityData.mesh.position.set(position.x, position.y, position.z);
         entityData.mesh.setEnabled(true);
+
+        RenderUtils.setShapeOrientationFromUpAndFwd(entityData.mesh, up, forward, this.coordSystem);
 
         this.updateEntityLabelInternal(entityData, position, entity.id);
     }

@@ -69,5 +69,37 @@ describe('RecordingData', () => {
             expect(position).to.have.property("y");
             expect(position).to.have.property("z");
         });
+
+        it('gets entity up', () => {
+
+            const firstEntityId = Utils.toUniqueID(0, 1);
+
+            const entity = frameData.entities[firstEntityId];
+            expect(entity).to.not.be.undefined;
+
+            const up = Recording.NaiveRecordedData.getEntityUp(entity);
+
+            expect(up).to.not.be.undefined;
+
+            expect(up).to.have.property("x");
+            expect(up).to.have.property("y");
+            expect(up).to.have.property("z");
+        });
+
+        it('gets entity forward', () => {
+
+            const firstEntityId = Utils.toUniqueID(0, 1);
+
+            const entity = frameData.entities[firstEntityId];
+            expect(entity).to.not.be.undefined;
+
+            const forward = Recording.NaiveRecordedData.getEntityForward(entity);
+
+            expect(forward).to.not.be.undefined;
+
+            expect(forward).to.have.property("x");
+            expect(forward).to.have.property("y");
+            expect(forward).to.have.property("z");
+        });
     });
 });
