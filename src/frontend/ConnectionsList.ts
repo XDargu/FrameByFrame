@@ -142,7 +142,7 @@ export default class ConnectionsList
         this.connectionsList
         this.connectionsMap.forEach((value: HTMLElement, id: ConnectionId) => {
             let connection = this.connectionsManager.getConnection(id);
-            if (connection){
+            if (connection && connection.isConnected()){
                 connection.send(stringMessage)
             }
         });
