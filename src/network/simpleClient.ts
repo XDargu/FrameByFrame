@@ -56,8 +56,9 @@ export default class Connection {
 	}
 	
 	send(data: string | ArrayBuffer | SharedArrayBuffer | Blob | ArrayBufferView) {
-		if (this.webSocket.readyState != WebSocket.OPEN) {
+		if (this.webSocket == null || this.webSocket.readyState != WebSocket.OPEN) {
 			console.error("WebSocket is not open, it is: " + this.webSocket.readyState);
+			return;
 		}
 		console.log("Sending");
 		this.webSocket.send(data);
@@ -106,6 +107,6 @@ export default class Connection {
 
 	isConnected(): boolean
 	{
-		return this.webSocket && (this.webSocket.readyState == 0 || this.webSocket.readyState == 1);
+		return this.webSocket && (this.webSocket.readyState == WebSocket.CONNECTING || this.webSocket.readyState == WebSocket.OPEN);
 	}
 }
