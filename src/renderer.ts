@@ -22,12 +22,12 @@ import { NaiveRecordedData } from "./recording/RecordingData";
 import { RecordingOptions } from "./frontend/RecordingOptions";
 import { createDefaultSettings, ISettings } from "./files/Settings";
 import { SettingsList } from "./frontend/SettingsList";
+import { RecordingInfoList } from "./frontend/RecordingInfoList";
 import { EntityTree } from "./frontend/EntityTree";
 import FiltersList, { FilterId } from "./frontend/FiltersList";
 import * as Utils from "./utils/utils";
 import FilterTickers from "./frontend/FilterTickers";
 import EntityPropertiesBuilder from "./frontend/EntityPropertiesBuilder";
-import { CorePropertyTypes } from "./types/typeRegistry";
 import PendingFrames from "./utils/pendingFrames";
 import { LIB_VERSION } from "./version";
 
@@ -39,6 +39,7 @@ enum TabIndices
     RecordingOptions,
     Connections,
     Filters,
+    Info,
     Recent,
     Settings
 }
@@ -93,6 +94,9 @@ export default class Renderer {
     // Settings
     private settingsList: SettingsList;
     private settings: ISettings;
+
+    // Info
+    private recordingInfoList: RecordingInfoList;
 
     initialize(canvas: HTMLCanvasElement) {
 
@@ -226,8 +230,8 @@ export default class Renderer {
         const shortcuts = [
             { name: "Open Recording",  binding: { keyCode: "KeyO", ctrl: true },      id: Action.OpenFile,       callback: () => { this.onOpenFile(); } },
             { name: "Save Recording",  binding: { keyCode: "KeyS", ctrl: true },      id: Action.SaveFile,       callback: () => { this.onSaveFile(); } },
-            { name: "Clear Recording", binding: { keyCode: "Delete", ctrl: true }, id: Action.ClearRecording, callback: () => { this.onClearFile(); } },
-            { name: "Toggle Helpt",    binding: { keyCode: "F1" },                 id: Action.ToggleHelp,     callback: () => { this.onHelpButton(); } },
+            { name: "Clear Recording", binding: { keyCode: "Delete", ctrl: true },    id: Action.ClearRecording, callback: () => { this.onClearFile(); } },
+            { name: "Toggle Helpt",    binding: { keyCode: "F1" },                    id: Action.ToggleHelp,     callback: () => { this.onHelpButton(); } },
         ];
 
         for (let shortcut of shortcuts)
@@ -252,6 +256,7 @@ export default class Renderer {
             document.getElementById("var-list"),
             document.getElementById("connection-list"),
             document.getElementById("filters-list"),
+            document.getElementById("info-list"),
             document.getElementById("recent-list"),
             document.getElementById("setting-list")
         ];
@@ -277,6 +282,7 @@ export default class Renderer {
             { name: "Recording Options", binding: { keyCode: "KeyR", shift: true, ctrl: true }, id: Action.RecordingOptions, callback: () => { this.controlTabs.openTabByIndex(TabIndices.RecordingOptions); } },
             { name: "Connection List",   binding: { keyCode: "KeyC", shift: true, ctrl: true }, id: Action.ConnectionList,   callback: () => { this.controlTabs.openTabByIndex(TabIndices.Connections); } },
             { name: "Filters List",      binding: { keyCode: "KeyF", shift: true, ctrl: true }, id: Action.FilterList,       callback: () => { this.controlTabs.openTabByIndex(TabIndices.Filters); } },
+            { name: "Info List",         binding: { keyCode: "KeyI", shift: true, ctrl: true }, id: Action.InfoList,         callback: () => { this.controlTabs.openTabByIndex(TabIndices.Info); } },
             { name: "Recent Files List", binding: { keyCode: "KeyL", shift: true, ctrl: true }, id: Action.RecentFileList,   callback: () => { this.controlTabs.openTabByIndex(TabIndices.Recent); } },
             { name: "Settings",          binding: { keyCode: "KeyS", shift: true, ctrl: true }, id: Action.SettingsList,     callback: () => { this.controlTabs.openTabByIndex(TabIndices.Settings); } },
         ];
@@ -292,6 +298,7 @@ export default class Renderer {
         controlTabs[TabIndices.RecordingOptions].title = `Recording Options (${actionAsText(Action.RecordingOptions)})`;
         controlTabs[TabIndices.Connections].title = `Connections (${actionAsText(Action.ConnectionList)})`;
         controlTabs[TabIndices.Filters].title = `Filters (${actionAsText(Action.FilterList)})`;
+        controlTabs[TabIndices.Info].title = `Recording Info (${actionAsText(Action.InfoList)})`;
         controlTabs[TabIndices.Recent].title = `Recent Files (${actionAsText(Action.RecentFileList)})`;
         controlTabs[TabIndices.Settings].title = `Settings (${actionAsText(Action.SettingsList)})`;
     }
@@ -414,6 +421,9 @@ export default class Renderer {
             () => { this.sceneController.purgePools(); },
             () => { this.sceneController.restoreContext(); }
         );
+
+        // Create info
+        this.recordingInfoList = new RecordingInfoList(document.getElementById("recording-info"));
 
         // Connection buttons
         this.connectionButtons = new ConnectionButtons(document.getElementById(`connection-buttons`), (id: ConnectionId) => {
@@ -563,6 +573,8 @@ export default class Renderer {
             {
                 this.layerController.setAllLayersState(LayerState.All);
             }
+
+            this.updateMetadata();
             
             // Select any first entity
             Utils.runAsync(() => {
@@ -623,6 +635,7 @@ export default class Renderer {
         this.recordingOptions.setOptions([]);
         this.layerController.setLayers([]);
         this.applyFrame(0);
+        this.updateMetadata();
     }
 
     onMessageArrived(id: ConnectionId, data: string) : void
@@ -644,6 +657,7 @@ export default class Renderer {
                     this.connectionsList.setConnectionName(id, frame.tag);
 
                     this.addFrameData(frame);
+                    this.updateMetadata();
                     
                     break;
                 }
@@ -1307,6 +1321,12 @@ export default class Renderer {
                 this.controlTabs.openTabByIndex(TabIndices.Settings);
             }
         };
+    }
+
+    // Metadata
+    updateMetadata()
+    {
+        this.recordingInfoList.buildInfoList(this.recordedData);
     }
 
     // Utils
