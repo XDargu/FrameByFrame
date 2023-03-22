@@ -12,6 +12,16 @@ export enum RecordingFileType {
 	RawFrames
 }
 
+export function RecordingFileTypeToString(type: RecordingFileType)
+{
+	switch(type)
+	{
+		case RecordingFileType.NaiveRecording: return "Standard";
+		case RecordingFileType.RawFrames: return "RawData";
+	}
+	return "Unknown";
+}
+
 export function isPropertyShape(property: IProperty)
 {
     const Type = CorePropertyTypes;

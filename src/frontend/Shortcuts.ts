@@ -20,6 +20,7 @@ export enum ShortcutActions
     EntityList,
     RecordingOptions,
     ConnectionList,
+    InfoList,
     FilterList,
     RecentFileList,
     SettingsList,

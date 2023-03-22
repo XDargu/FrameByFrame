@@ -86,6 +86,9 @@ export default class SceneController
     // Config
     private coordSystem: RECORDING.ECoordinateSystem;
 
+    // WebGL
+    private loseContext: WEBGL_lose_context;
+
     initialize(canvas: HTMLCanvasElement, onEntitySelected: IEntitySelectedCallback, onCameraChangedCallback: ICameraChangedCallback, selectionColor: string, hoverColor: string, outlineWidth: number) {
 
         const selectionColor01 = Utils.RgbToRgb01(Utils.hexToRgb(selectionColor));
@@ -93,6 +96,7 @@ export default class SceneController
 
         const engine = new BABYLON.Engine(canvas, false, { stencil: true });
         this.createScene(canvas, engine, onCameraChangedCallback);
+        this.loseContext = engine._gl.getExtension('WEBGL_lose_context');
 
         this.outline = new SceneOutline(this._scene, this.cameraControl.getCamera(), selectionColor01, hoverColor01, outlineWidth);
 
@@ -413,9 +417,8 @@ export default class SceneController
 
     restoreContext()
     {
-        let loseContext = this._engine._gl.getExtension('WEBGL_lose_context');
-        loseContext.loseContext();
-        window.setTimeout(() => { loseContext.restoreContext(); }, 1000); 
+        this.loseContext.loseContext();
+        window.setTimeout(() => { this.loseContext.restoreContext(); }, 1000); 
     }
 
     collectVisibleShapesOfEntity(entity: RECORDING.IEntity) : RECORDING.IProperyShape[]
