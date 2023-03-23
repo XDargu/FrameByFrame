@@ -92,9 +92,9 @@ export class RecordingInfoList
 
         {
             let group = InfoBuiler.createGroup("Recording");
-            InfoBuiler.addElement(group, `Version: ${recording.version}`, "");
-            InfoBuiler.addElement(group, `Length (frames): ${recording.frameData.length}`, "");
-            InfoBuiler.addElement(group, `Type: ${RECORDING.RecordingFileTypeToString(recording.type)}`, "");
+            InfoBuiler.addElement(group, `Version: ${recording.storageVersion}`, "Version of the recorded data format");
+            InfoBuiler.addElement(group, `Length (frames): ${recording.frameData.length}`, "Length of the recording in frames");
+            InfoBuiler.addElement(group, `Type: ${RECORDING.RecordingFileTypeToString(recording.type)}`, "Type of recording");
             this.infoList.appendChild(group.fragment);
         }
 
@@ -103,6 +103,15 @@ export class RecordingInfoList
             for (let [id, clientData] of recording.clientIds)
             {
                 InfoBuiler.addElement(group, `${clientData.tag} (ID: ${id})`, "");
+            }
+            this.infoList.appendChild(group.fragment);
+        }
+
+        {
+            let group = InfoBuiler.createGroup("Scenes/Levels");
+            for (let scene of recording.scenes)
+            {
+                InfoBuiler.addElement(group, scene, "");
             }
             this.infoList.appendChild(group.fragment);
         }

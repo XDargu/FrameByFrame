@@ -527,7 +527,7 @@ export default class Renderer {
 
     loadJsonData(data: string) : boolean
     {
-        try
+        //try
         {
             this.clear();
             const dataJson = JSON.parse(data) as RECORDING.IRecordedData;
@@ -587,10 +587,10 @@ export default class Renderer {
 
             return true;
         }
-        catch(error)
+        /*catch(error)
         {
             Console.log(LogLevel.Error, LogChannel.Files, "Error loading file: " + error.message);
-        }
+        }*/
 
         return false;
     }
@@ -689,7 +689,8 @@ export default class Renderer {
             clientId: frame.clientId,
             frameId: frame.frameId,
             elapsedTime: frame.elapsedTime,
-            tag: frame.tag
+            tag: frame.tag,
+            scene: frame.scene
         };
 
         // Optional values

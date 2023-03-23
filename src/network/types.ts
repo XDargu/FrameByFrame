@@ -23,6 +23,7 @@ export interface IMessageFrameData {
 	serverTime: number;
 	elapsedTime: number;
 	tag: string;
+	scene: string;
 	coordSystem?: RECORDING.ECoordinateSystem;
 }
 

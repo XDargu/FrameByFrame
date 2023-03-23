@@ -186,6 +186,7 @@ export interface IFrameData {
 	clientId: number;
 	frameId: number;
 	elapsedTime: number;
+	scene: string;
 	tag: string;
 	coordSystem?: ECoordinateSystem;
 }
@@ -218,6 +219,7 @@ const emptyFrameData: IFrameData = {
 	elapsedTime: 0,
 	clientId: 0,
 	tag: "",
+	scene: "",
 	coordSystem: ECoordinateSystem.LeftHand
 };
 
@@ -467,22 +469,28 @@ export interface IRecordedData {
 
 export interface INaiveRecordedData extends IRecordedData {
 	version: number;
+	storageVersion: number; // Version of the data file before patching
 	frameData: IFrameData[];
 	layers: string[];
+	scenes: string[];
 	clientIds: Map<number, ClientData>
 }
 
 export class NaiveRecordedData implements INaiveRecordedData {
-	readonly version: number = 2;
+	readonly version: number = 3;
 	readonly type: RecordingFileType = RecordingFileType.NaiveRecording;
 	frameData: IFrameData[];
 	layers: string[];
+	scenes: string[];
 	clientIds: Map<number, ClientData>
+	storageVersion: number;
 
 	constructor() {
 		this.frameData = [];
 		this.layers = [];
+		this.scenes = [];
 		this.clientIds = new Map<number, ClientData>();
+		this.storageVersion = this.version;
 	}
 
 	static getEntityName(entity: IEntity) : string
@@ -513,6 +521,9 @@ export class NaiveRecordedData implements INaiveRecordedData {
 	{
 		this.frameData = dataJson.frameData;
 		this.layers = dataJson.layers;
+		this.scenes = dataJson.scenes;
+		this.storageVersion = dataJson.storageVersion != undefined ? dataJson.storageVersion : dataJson.version;
+
 		if (this.layers == undefined)
 		{
 			this.layers = [];
@@ -521,6 +532,7 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		for (let frame of this.frameData)
 		{
 			this.updateLayersOfFrame(frame);
+			this.updateScenesOfFrame(frame);
 			this.updateClientIDsOfFrame(frame);
 
 			// Fix legacy frames (just for testing)
@@ -531,6 +543,12 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		if (dataJson.version == 1)
 		{
 			this.patchVersion1();
+			this.patchVersion2();
+		}
+
+		if (dataJson.version == 2)
+		{
+			this.patchVersion2();
 		}
 
 		console.log(this);
@@ -550,9 +568,18 @@ export class NaiveRecordedData implements INaiveRecordedData {
 			for (let entityID in frame.entities)
 			{
 				let entity = frame.entities[entityID];
-				(entity.properties[1] as IPropertyGroup).value[2] = { type: CorePropertyTypes.Vec3, value: isRightHand ? upRH : upLH };
-				(entity.properties[1] as IPropertyGroup).value[3] = { type: CorePropertyTypes.Vec3, value: isRightHand ? forwardRH : forwardLH };
+				(entity.properties[1] as IPropertyGroup).value[2] = { type: CorePropertyTypes.Vec3, name: "Up", value: isRightHand ? upRH : upLH };
+				(entity.properties[1] as IPropertyGroup).value[3] = { type: CorePropertyTypes.Vec3, name: "Forward", value: isRightHand ? forwardRH : forwardLH };
 			}
+		}
+	}
+
+	private patchVersion2()
+	{
+		// Converts from version 2 to version 3
+		if (this.scenes == undefined)
+		{
+			this.scenes = [];
 		}
 	}
 
@@ -560,6 +587,7 @@ export class NaiveRecordedData implements INaiveRecordedData {
 	{
 		this.frameData.length = 0;
 		this.layers.length = 0;
+		this.scenes.length = 0;
 		this.clientIds.clear();
 	}
 
@@ -570,6 +598,7 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		});
 
 		this.updateLayersOfFrame(frame);
+		this.updateScenesOfFrame(frame);
 		this.updateClientIDsOfFrame(frame);
 	}
 
@@ -699,6 +728,7 @@ export class NaiveRecordedData implements INaiveRecordedData {
 			frameId: frameData.frameId,
 			elapsedTime: frameData.elapsedTime,
 			tag: frameData.tag,
+			scene: frameData.scene,
 			coordSystem: frameData.coordSystem
 		};
 
@@ -747,7 +777,7 @@ export class NaiveRecordedData implements INaiveRecordedData {
 	addTestData(frames: number, entityAmount: number) {
 		for (let i=0; i<frames; ++i)
 		{
-			let frameData : IFrameData = { entities: {}, frameId: i, elapsedTime: 0.0166, clientId: 0, serverTime: i, tag: "", coordSystem: ECoordinateSystem.LeftHand };
+			let frameData : IFrameData = { entities: {}, frameId: i, elapsedTime: 0.0166, clientId: 0, serverTime: i, tag: "", scene: "", coordSystem: ECoordinateSystem.LeftHand };
 			
 			for (let j=0; j<entityAmount; ++j)
 			{
@@ -849,6 +879,13 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		}
 	}
 
+	private updateScenesOfFrame(frame: IFrameData) {
+		// TODO: Optimize this.
+		if (frame.scene && !this.scenes.includes(frame.scene)) {
+			this.scenes.push(frame.scene);
+		}
+	}
+
 	private addLayer(name: string) {
 		// TODO: Optimize this
 		if (!this.layers.includes(name)) {
@@ -918,7 +955,7 @@ export class RecordedData {
 	}
 	
 	buildFrameData(frame : number) : IFrameData {
-		let frameData : IFrameData = { entities: {}, frameId: 0, elapsedTime: 0, clientId: 0, serverTime: 0, tag: "", coordSystem: ECoordinateSystem.LeftHand };
+		let frameData : IFrameData = { entities: {}, frameId: 0, elapsedTime: 0, clientId: 0, serverTime: 0, tag: "", scene: "", coordSystem: ECoordinateSystem.LeftHand };
 		let tempPropertyData : IProperty = { type: null, value: null, name: null};
 		
 		const entityPropValIDs =  this.frameTable.entryIDs[frame];
