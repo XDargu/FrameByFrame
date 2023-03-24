@@ -35,6 +35,10 @@ parent: Using Frame by Frame
  - **Hover color**: Controls the color of the outline of a hovered entity. Click on the button on the right to reset to the default value.
   - **Outline width**: Controls the width of the outline of selected and hovered entities. Click on the button on the right to reset to the default value.
 
+## Syncing
+ - **Sync Visible Shapes**: If enabled, Frame by Frame will send the current rendered shapes back to the 3D application.
+ - **Sync Camera Position**: If enabled, Frame by Frame will send the current camera position back to the 3D application.
+
 ## Grid
  - **Grid height**: Determines at which height should the grid be rendered. By default is zero, but your game might have levels with a different height, and the grid might appear very far away.
  - **Grid spacing**: Controls the spacing between the grid lines. The grid can be useful as a distance reference, or even for measuring. You can change the spacing to fit your needs.
