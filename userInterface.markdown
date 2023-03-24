@@ -160,6 +160,20 @@ Events also show up in the [timeline](#timeline) automatically.
 
 ![Frame by Frame Timeline](/FrameByFrame/assets/images/screenshots/Timeline.png)
 
+## Console
+
+The console is at the bottom.
+
+In the console you can see information regarding your actions. It will log events like opening files, selecting entities, layer changes, as well as general information messages and errors.
+
+You can filter which level of information you want to display by using the "Levels" dropdown menu.
+
+Search in the console by using the search bar at the top right.
+
+Clear all the information in the console clicking on the button on the top rigt, next to the search bar.
+
+![Frame by Frame Console](/FrameByFrame/assets/images/screenshots/Console.png)
+
 ## Recording Options
 
 The recording options panel is one of the tabs in the left side bar.
@@ -201,6 +215,19 @@ The filter color is important. All filters are color-coded. This is useful when 
 In order to save time, you can right click on any property to create a new filter based on that specific property.
 
 ![Frame by Frame Create a Filter from a Property](/FrameByFrame/assets/images/screenshots/CreateFilterFromProperty.png)
+
+## Recording Info
+
+The recording info panel in the left side bar lets you have a quick look at the metadata of the current recording.
+
+The metadata includes information about:
+* Version of the recording file
+* Length of the recording
+* Type of recording
+* List of Client IDs
+* List of scene/levels
+
+![Frame by Frame Recording Info](/FrameByFrame/assets/images/screenshots/RecordingInfo.png)
 
 ## Recent Files
 

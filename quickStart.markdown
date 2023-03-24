@@ -46,6 +46,16 @@ description: "Learn how to quickly start using Frame by Frame"
 
 3. Select what you want to record in the [Recording Options](/FrameByFrame/user-interface#recording-options).
 
-    ![Frame by Frame Recording Options](/FrameByFrame/assets/images/screenshots/RecordingOptions.png "Recording Options")
+    ![Frame by Frame Recording Options](/FrameByFrame/assets/images/screenshots/RecordingOptionsScreenHighlight.png "Recording Options")
 
     If everything worked, Frame by Frame should already be recording information from your game!
+
+    ![Frame by Frame Screenshot](/FrameByFrame/assets/images/screenshots/ExampleScreen.png)
+
+    You can scrub through the [Timeline](/FrameByFrame/user-interface/#timeline-selection) to move back and forth in time.
+
+    ![Frame by Frame Timeline](/FrameByFrame/assets/images/screenshots/Timeline.png)
+
+    Click on any entity on the left panel to select it. The [entity data](/FrameByFrame/user-interface/#entity-data) should appear immediatly on the right panel. There, you can see the [properties](/FrameByFrame/user-interface/#properties) and [events](/FrameByFrame/user-interface/#events) of the selected entity.
+
+    To understand how to navigate through the recording in more detail and learn how to use Frame by Frame in depth, go to the [User Interface](/FrameByFrame/user-interface/) section.
