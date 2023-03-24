@@ -26,7 +26,7 @@ After all, games and 3D applications are often based around spacial behaviour, q
 
 Store your recordings and examine them later on. Let each member of the team do what they do best: QA can find and record bugs, developers can examine recordings and fix them.
 
-Connect to any game or engine, Frame by Frame can be integrated with anything. If you are using a popular game engine like [Unity](/FrameByFrame/Unity) or [Unreal Engine](/FrameByFrame/Unity) you can try the integration plugins. Or you can [integrate Frame by Frame on your own](/FrameByFrame/custom-integrations/).
+Connect to any game or engine, Frame by Frame can be integrated with anything. If you are using a popular game engine like [Unity](/FrameByFrame/Unity) you can try the integration plugins. Or you can [integrate Frame by Frame on your own](/FrameByFrame/custom-integrations/).
 
 ![Frame by Frame Screenshot](/FrameByFrame/assets/images/screenshots/ExampleScreen.png)
 *Example of a Frame by Frame capture. In this capture we can see the frame when the destination position of an AI agent was changed, as well as its current path, position, collider, etc.*
@@ -36,15 +36,12 @@ Connect to any game or engine, Frame by Frame can be integrated with anything. I
 ### Installing Frame by Frame
 Download the latest release of Frame by Frame and install it.
 
-[Get Frame by Frame 0.3.0](https://github.com/XDargu/FrameByFrame/releases/tag/v0.3.0){: .btn .btn-primary .fs-3 .mb-4 .mb-md-0 .mr-2 }
+[Get Frame by Frame 0.4.0](https://github.com/XDargu/FrameByFrame/releases/tag/v0.4.0){: .btn .btn-primary .fs-3 .mb-4 .mb-md-0 .mr-2 }
 
 [Get older versions of Frame by Frame](https://github.com/XDargu/FrameByFrame/releases)
 
 ### Using Frame by Frame with Unity
 Get the free Unity Plugin and learn how to use it [here](/FrameByFrame/unity/).
-
-### Using Frame by Frame with Unreal Engine
-The Unreal Engine plugin is not yet available.
 
 ### Using Frame by Frame with your custom engine
 If you want to add Frame by Frame to your own 3D application, visit the [Custom Integrations section](/FrameByFrame/custom-integrations).
