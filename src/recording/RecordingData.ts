@@ -540,18 +540,23 @@ export class NaiveRecordedData implements INaiveRecordedData {
 			if (frame.tag == null) { frame.tag = "Client"; }
 		}
 
-		if (dataJson.version == 1)
+		this.patch(dataJson.version);
+
+		console.log(this);
+	}
+
+	patch(version: number)
+	{
+		if (version == 1)
 		{
 			this.patchVersion1();
 			this.patchVersion2();
 		}
 
-		if (dataJson.version == 2)
+		if (version == 2)
 		{
 			this.patchVersion2();
 		}
-
-		console.log(this);
 	}
 
 	private patchVersion1()
@@ -568,8 +573,11 @@ export class NaiveRecordedData implements INaiveRecordedData {
 			for (let entityID in frame.entities)
 			{
 				let entity = frame.entities[entityID];
-				(entity.properties[1] as IPropertyGroup).value[2] = { type: CorePropertyTypes.Vec3, name: "Up", value: isRightHand ? upRH : upLH };
-				(entity.properties[1] as IPropertyGroup).value[3] = { type: CorePropertyTypes.Vec3, name: "Forward", value: isRightHand ? forwardRH : forwardLH };
+				if ((entity.properties[1] as IPropertyGroup).value[2] == undefined)
+					(entity.properties[1] as IPropertyGroup).value[2] = { type: CorePropertyTypes.Vec3, name: "Up", value: isRightHand ? upRH : upLH };
+
+				if ((entity.properties[1] as IPropertyGroup).value[3] == undefined)
+					(entity.properties[1] as IPropertyGroup).value[3] = { type: CorePropertyTypes.Vec3, name: "Forward", value: isRightHand ? forwardRH : forwardLH };
 			}
 		}
 	}
@@ -774,7 +782,7 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		return this.frameData.length;
 	}
 
-	addTestData(frames: number, entityAmount: number) {
+	addTestData(frames: number, entityAmount: number, version: number = this.version) {
 		for (let i=0; i<frames; ++i)
 		{
 			let frameData : IFrameData = { entities: {}, frameId: i, elapsedTime: 0.0166, clientId: 0, serverTime: i, tag: "", scene: "", coordSystem: ECoordinateSystem.LeftHand };
@@ -783,9 +791,9 @@ export class NaiveRecordedData implements INaiveRecordedData {
 			{
 				const entityID = j + 1;
 
-				var entity : IEntity = { id: entityID, parentId: 0, properties: [], events: [] };
+				let entity : IEntity = { id: entityID, parentId: 0, properties: [], events: [] };
 				
-				var propertyGroup = { type: CorePropertyTypes.Group, name: "properties", value: [
+				let propertyGroup = { type: CorePropertyTypes.Group, name: "properties", value: [
 					{ type: CorePropertyTypes.Number, name: "Target ID", value: 122 },
 					{ type: CorePropertyTypes.String, name: "Target Name", value: "Player" },
 					{ type: CorePropertyTypes.Number, name: "Target Distance", value: j },
@@ -796,21 +804,27 @@ export class NaiveRecordedData implements INaiveRecordedData {
 					]
 				};
 
-				var specialGroup = { type: CorePropertyTypes.Group, name: "special", value: [
+				let specialGroup = { type: CorePropertyTypes.Group, name: "special", value: [
 					{ type: CorePropertyTypes.String, name: "Name", value: "My Entity Name " + entityID },
-					{ type: CorePropertyTypes.Vec3, name: "Position", value: { x: Math.random() * 10, y: Math.random() * 10, z: Math.random() * 10} },
-					{ type: CorePropertyTypes.Vec3, name: "Up", value: { x: Math.random(), y: Math.random(), z: Math.random() } },
-					{ type: CorePropertyTypes.Vec3, name: "Forward", value: { x: Math.random(), y: Math.random(), z: Math.random() } }
+					{ type: CorePropertyTypes.Vec3, name: "Position", value: { x: Math.random() * 10, y: Math.random() * 10, z: Math.random() * 10} }
 					]
 				};
 
+				if (version >= 2)
+				{
+					specialGroup.value.push(
+						{ type: CorePropertyTypes.Vec3, name: "Up", value: { x: Math.random(), y: Math.random(), z: Math.random() } },
+						{ type: CorePropertyTypes.Vec3, name: "Forward", value: { x: Math.random(), y: Math.random(), z: Math.random() } }
+					);
+				}
+
 				if (i % 2 == 0)
 				{
-					var eventProperties = [
+					let eventProperties = [
 						{ name: "Test string", type: CorePropertyTypes.String, value: "eventProp" + i },
 						{ name: "Test number", type: CorePropertyTypes.Number, value: j }
 					];
-					var event = {
+					let event = {
 						idx: 0,
 						name: "OnTestEvent",
 						tag: "FirstTest",
@@ -820,11 +834,11 @@ export class NaiveRecordedData implements INaiveRecordedData {
 				}
 				else
 				{
-					var eventProperties2 = [
+					let eventProperties2 = [
 						{ name: "Test other string", type: CorePropertyTypes.String, value: "eventProp" + i },
 						{ name: "Test other number", type: CorePropertyTypes.Number, value: j }
 					];
-					var event2 = {
+					let event2 = {
 						idx: 0,
 						name: "OnOtherTestEvent",
 						tag: "OtherTest",

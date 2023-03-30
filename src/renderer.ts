@@ -542,6 +542,8 @@ export default class Renderer {
                     {
                         this.addFrameData(frame);
                     }
+
+                    this.recordedData.patch(rawData.version);
                 }
                 break;
                 case RECORDING.RecordingFileType.NaiveRecording:

@@ -102,4 +102,44 @@ describe('RecordingData', () => {
             expect(forward).to.have.property("z");
         });
     });
+
+    describe('NaiveRecordingData version 1', () => {
+
+        it('correctly converts to latest version', () => {
+
+            const version = 1;
+            let dataV1 = new Recording.NaiveRecordedData();
+            dataV1.addTestData(100, 15, version);
+
+            dataV1.patch(version);
+
+            expect(dataV1.scenes).to.not.be.undefined;
+
+            const frameData = dataV1.buildFrameData(0);
+            const firstEntityId = Utils.toUniqueID(0, 1);
+
+            const entity = frameData.entities[firstEntityId];
+
+            const forward = Recording.NaiveRecordedData.getEntityForward(entity);
+            const up = Recording.NaiveRecordedData.getEntityUp(entity);
+
+            expect(forward).to.not.be.undefined;
+            expect(up).to.not.be.undefined;
+        });
+
+    });
+
+    describe('NaiveRecordingData version 2', () => {
+
+        it('correctly converts to latest version', () => {
+
+            const version = 2;
+            let dataV1 = new Recording.NaiveRecordedData();
+            dataV1.addTestData(100, 15, version);
+
+            dataV1.patch(version);
+
+            expect(dataV1.scenes).to.not.be.undefined;
+        });
+    });
 });
