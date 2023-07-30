@@ -1,7 +1,7 @@
 {
   "name": "frame-by-frame",
   "productName": "Frame By Frame",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Visual Debugging and Recording Tool for 3D applications",
   "main": "./app/main.js",
   "build": {
@@ -11,10 +11,13 @@
       "name": "Frame by Frame File"
     },
     "win": {
-      "target": ["portable", "nsis"]
+      "target": [
+        "portable",
+        "nsis"
+      ]
     },
     "portable": {
-        "artifactName": "framebyframe_portable.exe"
+      "artifactName": "framebyframe_portable.exe"
     }
   },
   "scripts": {
