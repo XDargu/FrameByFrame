@@ -187,6 +187,7 @@ export class PropertyTreeController {
             text: property.name,
             value:  property.id.toString(),
             selectable: false,
+            hidden: property.flags != undefined && ((property.flags & RECORDING.EPropertyFlags.Hidden) != 0),
             callbacks: {
                 onItemSelected: null,
                 onItemDoubleClicked: null,
@@ -196,6 +197,7 @@ export class PropertyTreeController {
         };
 
         if (property.type == TypeSystem.CorePropertyTypes.Group) {
+            
             let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
             const propertyGroup = property as RECORDING.IPropertyGroup;
 

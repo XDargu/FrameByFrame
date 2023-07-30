@@ -68,11 +68,18 @@ export interface IEntityRef {
 	id: number;
 }
 
+export enum EPropertyFlags
+{
+	None = 0,
+	Hidden = 1 << 0,
+}
+
 export interface IProperty {
 	type: string;
 	name?: string;
 	value: string | number | boolean | IVec3 | IPropertyCustomType | IEntityRef | IProperty[];
 	id?: number;
+	flags?: EPropertyFlags;
 }
 
 export interface IProperyShape extends IProperty {

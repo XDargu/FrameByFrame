@@ -112,7 +112,7 @@ export class TreeControl {
 
         if (options.hidden)
         {
-            parentListItem.classList.add("basico-tree-closed");
+            listItem.classList.add("basico-tree-closed");
         }
 
         return listItem;
