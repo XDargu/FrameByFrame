@@ -32,7 +32,7 @@ export default class ScenePropertySelection
 
                 if (entityId == selectedEntityID)
                 {
-                    if (this.hoveredProperty || this.hoveredProperty != propertyId)
+                    if (this.hoveredProperty && this.hoveredProperty != propertyId)
                     {
                         this.hideProperty(this.hoveredProperty);
                         this.hoveredProperty = null;
@@ -79,8 +79,9 @@ export default class ScenePropertySelection
 
                 if (showToolTip)
                 {
-                    document.getElementById("sceneTooltip").textContent = property.name;
-                    document.getElementById("sceneTooltip").classList.remove("disabled");
+                    let toolTipElement = document.getElementById("sceneTooltip");
+                    toolTipElement.textContent = property.name;
+                    toolTipElement.classList.remove("disabled");
                 }
             }
         }
@@ -99,10 +100,7 @@ export default class ScenePropertySelection
                 property.mesh.material = this.previousMaterial;
                 this.previousMaterial = null;
              
-                if (!document.getElementById("sceneTooltip").classList.contains("disabled"))
-                {
-                    document.getElementById("sceneTooltip").classList.add("disabled");
-                }
+                Utils.addUniqueClass(document.getElementById("sceneTooltip"), "disabled");
             }
         }
     }
