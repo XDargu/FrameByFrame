@@ -9,9 +9,11 @@ export interface ISettings
     openEntityListOnSelection: boolean,
     followCurrentSelection: boolean,
     showAllLayersOnStart: boolean,
+    highlightShapesOnHover: boolean,
     backgroundColor: string,
     selectionColor: string,
     hoverColor: string,
+    shapeHoverColor: string,
     selectionOutlineWidth: number,
     /* Syncing */
     syncVisibleShapes: boolean,
@@ -41,9 +43,11 @@ export function createDefaultSettings() : ISettings
         openEntityListOnSelection: true,
         followCurrentSelection: false,
         showAllLayersOnStart: true,
+        highlightShapesOnHover: true,
         backgroundColor: "#33334C",
         selectionColor: "#6DE080",
         hoverColor: "#8442B9",
+        shapeHoverColor: "#FFFF00",
         selectionOutlineWidth: 1,
         /* Syncing */
         syncVisibleShapes: false,

@@ -4,7 +4,7 @@ import ConnectionButtons from "./frontend/ConnectionButtons";
 import { Console, ConsoleWindow, ILogAction, LogChannel, LogLevel } from "./frontend/ConsoleController";
 import FileListController from "./frontend/FileListController";
 import { ConnectionId } from './network/conectionsManager';
-import { getLayerStateName, LayerController, LayerState } from "./frontend/LayersController";
+import { CoreLayers, getLayerStateName, LayerController, LayerState } from "./frontend/LayersController";
 import * as Messaging from "./messaging/MessageDefinitions";
 import { initMessageHandling } from "./messaging/RendererMessageHandler";
 import * as NET_TYPES from './network/types';
@@ -67,6 +67,9 @@ export default class Renderer {
     private filterList: FiltersList;
     private filterTickers: FilterTickers;
     private entityPropsBuilder: EntityPropertiesBuilder;
+    
+    // Tooltio
+    private sceneTooltip: HTMLElement;
 
     // Networking
     private connectionsList: ConnectionsList;
@@ -109,7 +112,9 @@ export default class Renderer {
             (pos: RECORDING.IVec3, up: RECORDING.IVec3, forward: RECORDING.IVec3) => { this.onCameraMoved(pos, up, forward) },
             defaultSettings.selectionColor,
             defaultSettings.hoverColor,
-            defaultSettings.selectionOutlineWidth
+            defaultSettings.shapeHoverColor,
+            defaultSettings.highlightShapesOnHover,
+            defaultSettings.selectionOutlineWidth,
         );
         this.sceneController.onDebugDataUpdated = (data) => {
             if (this.settings && this.settings.showRenderDebug)
@@ -463,6 +468,16 @@ export default class Renderer {
                 this.connectionButtons.onConnectionDisconnecting(id);
             },
         });
+
+        this.sceneTooltip = document.getElementById("sceneTooltip");
+
+        document.addEventListener('mousemove', evt => {
+            let x = evt.clientX + 20;
+            let y = evt.clientY + 20;
+         
+            this.sceneTooltip.style.left = x + "px";
+            this.sceneTooltip.style.top = y + "px";
+        });
     }
 
     onSettingsChanged()
@@ -504,6 +519,7 @@ export default class Renderer {
         this.sceneController.setBackgroundColor(settings.backgroundColor);
         this.sceneController.setAntiAliasingSamples(settings.antialiasingSamples);
         this.sceneController.setOutlineColors(settings.selectionColor, settings.hoverColor);
+        this.sceneController.setShapeHoverSettings(settings.highlightShapesOnHover, settings.shapeHoverColor);
         this.sceneController.setOutlineWidth(settings.selectionOutlineWidth);
 
         this.timeline.setPopupActive(settings.showEventPopup);
@@ -527,74 +543,68 @@ export default class Renderer {
 
     loadJsonData(data: string) : boolean
     {
-        //try
+        this.clear();
+        const dataJson = JSON.parse(data) as RECORDING.IRecordedData;
+
+        switch(dataJson.type)
         {
-            this.clear();
-            const dataJson = JSON.parse(data) as RECORDING.IRecordedData;
-
-            switch(dataJson.type)
+            case RECORDING.RecordingFileType.RawFrames:
             {
-                case RECORDING.RecordingFileType.RawFrames:
+                // Add trailing brackets
+                const rawData = dataJson as NET_TYPES.IRawRecordingData;
+                for (const frame of rawData.rawFrames)
                 {
-                    // Add trailing brackets
-                    const rawData = dataJson as NET_TYPES.IRawRecordingData;
-                    for (const frame of rawData.rawFrames)
-                    {
-                        this.addFrameData(frame);
-                    }
+                    this.addFrameData(frame);
+                }
 
-                    this.recordedData.patch(rawData.version);
+                this.recordedData.patch(rawData.version);
+            }
+            break;
+            case RECORDING.RecordingFileType.NaiveRecording:
+            {
+                this.recordedData.loadFromData(dataJson as RECORDING.INaiveRecordedData);
+            }
+            break;
+            default:
+            {
+                // Used for legacy load, remove once not needed
+                const recordingData = dataJson as RECORDING.INaiveRecordedData;
+                if (recordingData.frameData) {
+                    this.recordedData.loadFromData(recordingData);
                 }
-                break;
-                case RECORDING.RecordingFileType.NaiveRecording:
-                {
-                    this.recordedData.loadFromData(dataJson as RECORDING.INaiveRecordedData);
-                }
-                break;
-                default:
-                {
-                    // Used for legacy load, remove once not needed
-                    const recordingData = dataJson as RECORDING.INaiveRecordedData;
-                    if (recordingData.frameData) {
-                        this.recordedData.loadFromData(recordingData);
-                    }
-                    else {
-                        throw new Error('Unable to detect type of recording');
-                    }
+                else {
+                    throw new Error('Unable to detect type of recording');
                 }
             }
-
-            this.timeline.setLength(this.recordedData.getSize());
-            this.pendingEvents.markAllPending();
-            this.pendingMarkers.markAllPending();
-            this.unprocessedFiltersPending = true;
-
-            this.applyFrame(0);
-            this.controlTabs.openTabByIndex(TabIndices.EntityList);
-            if (this.settings.showAllLayersOnStart)
-            {
-                this.layerController.setAllLayersState(LayerState.All);
-            }
-
-            this.updateMetadata();
-            
-            // Select any first entity
-            Utils.runAsync(() => {
-                for (let entity in this.frameData.entities)
-                {
-                    this.selectEntity(this.frameData.entities[entity].id);
-                    break;
-                }
-            });
-
-            return true;
         }
-        /*catch(error)
-        {
-            Console.log(LogLevel.Error, LogChannel.Files, "Error loading file: " + error.message);
-        }*/
 
-        return false;
+        this.timeline.setLength(this.recordedData.getSize());
+        this.pendingEvents.markAllPending();
+        this.pendingMarkers.markAllPending();
+        this.unprocessedFiltersPending = true;
+
+        this.applyFrame(0);
+        this.controlTabs.openTabByIndex(TabIndices.EntityList);
+        if (this.settings.showAllLayersOnStart)
+        {
+            this.layerController.setAllLayersState(LayerState.All);
+        }
+
+        // Show only selected names as default when opening a file
+        this.layerController.setLayerState(CoreLayers.EntityNames, LayerState.Selected);
+
+        this.updateMetadata();
+        
+        // Select any first entity
+        Utils.runAsync(() => {
+            for (let entity in this.frameData.entities)
+            {
+                this.selectEntity(this.frameData.entities[entity].id);
+                break;
+            }
+        });
+
+        return true;
     }
 
     async loadCompressedData(data: string)

@@ -332,9 +332,11 @@ export class SettingsList
             SettingsBuilder.addBooleanSetting(group, "Open entity list on selection", settings.openEntityListOnSelection, (value) => {settings.openEntityListOnSelection = value; this.onSettingsChanged(); })
             SettingsBuilder.addBooleanSetting(group, "Follow selected entity", settings.followCurrentSelection, (value) => {settings.followCurrentSelection = value; this.onSettingsChanged(); })
             SettingsBuilder.addBooleanSetting(group, "Show all layers on start", settings.showAllLayersOnStart, (value) => {settings.showAllLayersOnStart = value; this.onSettingsChanged(); })
+            SettingsBuilder.addBooleanSetting(group, "Highlight shapes on hover", settings.highlightShapesOnHover, (value) => {settings.highlightShapesOnHover = value; this.onSettingsChanged(); })
             SettingsBuilder.addColorSetting(group, "Background Color", "Changes the background color of the viewer", settings.backgroundColor, defaultSettings.backgroundColor, (value) => {settings.backgroundColor = value; this.onSettingsChanged(); })
             SettingsBuilder.addColorSetting(group, "Selection Color", "Changes the color of the outline of selected entities of the viewer", settings.selectionColor, defaultSettings.selectionColor, (value) => {settings.selectionColor = value; this.onSettingsChanged(); })
             SettingsBuilder.addColorSetting(group, "Hover Color", "Changes color of the outline of hovered entities of the viewer", settings.hoverColor, defaultSettings.hoverColor, (value) => {settings.hoverColor = value; this.onSettingsChanged(); })
+            SettingsBuilder.addColorSetting(group, "Shape Hover Color", "Changes color used for highlighting the hovered shapes entities on the viewer or the property tree", settings.shapeHoverColor, defaultSettings.shapeHoverColor, (value) => {settings.shapeHoverColor = value; this.onSettingsChanged(); })
             SettingsBuilder.addRangeSetting(group,
                 "Outline width",
                 "Changes the width of the selection and hover outline",

@@ -25,7 +25,7 @@ export function getBoundingBoxOfEntity(entity: IEntityRenderData) : BABYLON.Boun
     {
         if (child.name !== "line" && child.name !== "arrow")
         {
-            boundingInfo = child.getBoundingInfo();
+            boundingInfo = child.mesh.getBoundingInfo();
             min = BABYLON.Vector3.Minimize(min, boundingInfo.boundingBox.minimumWorld);
             max = BABYLON.Vector3.Maximize(max, boundingInfo.boundingBox.maximumWorld);
         }

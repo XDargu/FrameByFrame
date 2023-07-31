@@ -8,7 +8,7 @@ import * as ShapeBuilders from '../render/shapeBuilders';
 import { AxisGizmo } from './gizmos';
 import RenderPools from './renderPools';
 import LayerManager from './layerManager';
-import { IEntityRenderData, SceneEntityData } from './commonTypes';
+import { IEntityRenderData, IPropertyRenderData, SceneEntityData } from './commonTypes';
 import CameraControl from './cameraControl';
 import SceneOutline from './sceneOutline';
 import SceneGrid from './sceneGrid';
@@ -89,10 +89,21 @@ export default class SceneController
     // WebGL
     private loseContext: WEBGL_lose_context;
 
-    initialize(canvas: HTMLCanvasElement, onEntitySelected: IEntitySelectedCallback, onCameraChangedCallback: ICameraChangedCallback, selectionColor: string, hoverColor: string, outlineWidth: number) {
+    initialize(
+        canvas: HTMLCanvasElement,
+        onEntitySelected: IEntitySelectedCallback,
+        onCameraChangedCallback: ICameraChangedCallback,
+        selectionColor: string,
+        hoverColor: string,
+        shapeHoverColor: string,
+        highlightOnHover: boolean,
+        outlineWidth: number
+    )
+    {
 
         const selectionColor01 = Utils.RgbToRgb01(Utils.hexToRgb(selectionColor));
         const hoverColor01 = Utils.RgbToRgb01(Utils.hexToRgb(hoverColor));
+        const shapeHoverColor01 = Utils.RgbToRgb01(Utils.hexToRgb(shapeHoverColor));
 
         const engine = new BABYLON.Engine(canvas, false, { stencil: true });
         this.createScene(canvas, engine, onCameraChangedCallback);
@@ -101,6 +112,7 @@ export default class SceneController
         this.outline = new SceneOutline(this._scene, this.cameraControl.getCamera(), selectionColor01, hoverColor01, outlineWidth);
 
         this.labels = new TextLabels(this._scene);
+
 
         engine.runRenderLoop(() => {
             this._scene.render();
@@ -113,10 +125,10 @@ export default class SceneController
 
         this.sceneEntityData = new SceneEntityData();
 
-        this.entitySelection = new SceneEntitySelection(onEntitySelected, this.sceneEntityData, this.outline, selectionColor01, hoverColor01);
-        this.entitySelection.initialize(this._scene, this._canvas);
+        this.propertySelection = new ScenePropertySelection(this.sceneEntityData, this.pools, highlightOnHover, shapeHoverColor01);
 
-        this.propertySelection = new ScenePropertySelection(this.sceneEntityData, this.pools);
+        this.entitySelection = new SceneEntitySelection(onEntitySelected, this.sceneEntityData, this.outline, selectionColor01, hoverColor01);
+        this.entitySelection.initialize(this._scene, this._canvas, this.propertySelection);
 
         this.setCoordinateSystem(RECORDING.ECoordinateSystem.LeftHand);
     }
@@ -161,11 +173,11 @@ export default class SceneController
     {
         for (const [id, data] of this.sceneEntityData.entities)
         {
-            for (let [propId, propertyMesh] of data.properties)
+            for (let [propId, propertyData] of data.properties)
             {
-                if (!this.pools.tryFreeMesh(propertyMesh))
+                if (!this.pools.tryFreeMesh(propertyData.mesh))
                 {
-                    this._scene.removeMesh(propertyMesh, true);
+                    this._scene.removeMesh(propertyData.mesh, true);
                 }
             }
             data.properties.clear();
@@ -206,7 +218,7 @@ export default class SceneController
                 {
                     this.sceneEntityData.setEntityProperty(shape.id, entity.id);
                 }
-                entityData.properties.set(shape.id, mesh);
+                entityData.properties.set(shape.id, { mesh: mesh, name: property.name });
             }
             catch(error)
             {
@@ -223,7 +235,7 @@ export default class SceneController
         sphere.isPickable = true;
         sphere.id = entity.id.toString();
         const labelMesh = this.labels.buildLabel(RECORDING.NaiveRecordedData.getEntityName(entity));
-        let entityData: IEntityRenderData = { mesh: sphere, label: labelMesh, properties: new Map<number, BABYLON.Mesh>() };
+        let entityData: IEntityRenderData = { mesh: sphere, label: labelMesh, properties: new Map<number, IPropertyRenderData>() };
         this.sceneEntityData.setEntityData(entity.id, entityData);
         this.sceneEntityData.setEntityProperty(entity.id, entity.id);
 
@@ -388,6 +400,13 @@ export default class SceneController
 
         this.entitySelection.setColors(selectionColor01, hoverColor01);
         this.outline.setColors(selectionColor01, hoverColor01);
+    }
+
+    setShapeHoverSettings(highlightShapesOnHover: boolean, shapeHoverColor: string)
+    {
+        const shapeHoverColor01 = Utils.RgbToRgb01(Utils.hexToRgb(shapeHoverColor));
+
+        this.propertySelection.setShapeHoverSettings(highlightShapesOnHover, shapeHoverColor01);
     }
 
     setOutlineWidth(outlineWidth: number)

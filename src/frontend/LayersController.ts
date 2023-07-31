@@ -98,6 +98,16 @@ export class LayerController
         }   
     }
 
+    setLayerState(name: string, state: LayerState)
+    {
+        const layerData = this.layers.get(name);
+        if (layerData != undefined) 
+        {
+            layerData.state = state;
+            this.layerChangedCallback(layerData.name, layerData.state);
+        }
+    }
+
     private updateLayers()
     {
         let listElement = this.layerList.listWrapper;
