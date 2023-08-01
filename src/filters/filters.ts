@@ -205,6 +205,7 @@ export interface MemberFilter {
 export interface FilteredResult {
     frameIdx: number;
     entityId: number;
+    name: string;
 }
 
 export namespace Common {
@@ -570,10 +571,11 @@ export class EventFilter extends Filter {
             const frameData = recordedData.frameData[i];
             for (let entityID in frameData.entities) {
                 const entity = frameData.entities[entityID];
+                const entityName = RECORDING.NaiveRecordedData.getEntityName(entity);
 
                 RECORDING.NaiveRecordedData.visitEvents(entity.events, (event: RECORDING.IEvent) => {
                     if (Common.filterEvent(event, nameFilter, tagFilter, membersFilter)) {
-                        results.push({ frameIdx: i, entityId: entity.id });
+                        results.push({ frameIdx: i, entityId: entity.id, name: event.name });
                     }
                 });
             }
@@ -620,6 +622,7 @@ export class PropertyFilter extends Filter {
             const frameData = recordedData.frameData[i];
             for (let entityID in frameData.entities) {
                 const entity = frameData.entities[entityID];
+                const entityName = RECORDING.NaiveRecordedData.getEntityName(entity);
 
                 if (Common.filterEntityProperties(entity, groupFilter, [])) {
                     let allGood = true;
@@ -631,7 +634,7 @@ export class PropertyFilter extends Filter {
                     }
 
                     if (allGood) {
-                        results.push({ frameIdx: i, entityId: entity.id });
+                        results.push({ frameIdx: i, entityId: entity.id, name: "Filtered property - " + entityName });
                     }
                 }
             }
