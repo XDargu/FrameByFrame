@@ -80,7 +80,7 @@ export default class ScenePropertySelection
                 if (showToolTip)
                 {
                     let toolTipElement = document.getElementById("sceneTooltip");
-                    toolTipElement.textContent = property.name;
+                    toolTipElement.textContent = property.property.name;
                     toolTipElement.classList.remove("disabled");
                 }
             }
@@ -103,6 +103,11 @@ export default class ScenePropertySelection
                 Utils.addUniqueClass(document.getElementById("sceneTooltip"), "disabled");
             }
         }
+    }
+
+    getHoveredPropertyId()
+    {
+        return this.hoveredProperty;
     }
 
     setShapeHoverSettings(highlightShapesOnHover: boolean, shapeHoverColor: Utils.RGBColor01)

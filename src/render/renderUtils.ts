@@ -23,7 +23,7 @@ export function getBoundingBoxOfEntity(entity: IEntityRenderData) : BABYLON.Boun
 
     for (let child of entity.properties.values())
     {
-        if (child.name !== "line" && child.name !== "arrow")
+        if (child.mesh.name !== "line" && child.mesh.name !== "arrow")
         {
             boundingInfo = child.mesh.getBoundingInfo();
             min = BABYLON.Vector3.Minimize(min, boundingInfo.boundingBox.minimumWorld);

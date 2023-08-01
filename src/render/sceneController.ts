@@ -218,7 +218,7 @@ export default class SceneController
                 {
                     this.sceneEntityData.setEntityProperty(shape.id, entity.id);
                 }
-                entityData.properties.set(shape.id, { mesh: mesh, name: property.name });
+                entityData.properties.set(shape.id, { mesh: mesh, property: property });
             }
             catch(error)
             {
@@ -468,6 +468,60 @@ export default class SceneController
         this.isLayerActiveForEntity
 
         return visibleShapes;
+    }
+
+    getCanvasPositionOfProperty(propertyId: number) : RECORDING.IVec3
+    {
+        const entity = this.entitySelection.getSelectedEntity();
+        if (entity)
+        {
+            //const propertyId = this.propertySelection.getHoveredPropertyId();
+            const property = entity.properties.get(propertyId);
+            if (property)
+            {
+                const propertyPos = this.getPositionOfPropertyMesh(property.property, property.mesh, entity.mesh);
+
+                const target_screen_pos = BABYLON.Vector3.Project(
+                    propertyPos,
+                    BABYLON.Matrix.IdentityReadOnly,
+                    this._scene.getTransformMatrix(),
+                    this.cameraControl.getCamera().viewport.toGlobal(
+                        this._engine.getRenderWidth(),
+                        this._engine.getRenderHeight()
+                    )
+                );
+
+                return { x: target_screen_pos.x, y: target_screen_pos.y, z: target_screen_pos.z };
+            }
+        }
+    }
+
+    private getPositionOfPropertyMesh(property: RECORDING.IProperty, propertyMesh: BABYLON.Mesh, entityMesh: BABYLON.Mesh)
+    {
+        if (property.type == CorePropertyTypes.Path)
+        {
+            const pathProperty = property as RECORDING.IPropertyPath;
+            if (pathProperty.points.length > 0)
+            {
+                return RenderUtils.createVec3(pathProperty.points[0], this.coordSystem);
+            }
+        }
+        if (property.type == CorePropertyTypes.Line)
+        {
+            const lineProperty = property as RECORDING.IPropertyLine;
+            return RenderUtils.createVec3(lineProperty.origin, this.coordSystem);
+        }
+        if (property.type == CorePropertyTypes.Arrow)
+        {
+            const arrowProperty = property as RECORDING.IPropertyArrow;
+            return RenderUtils.createVec3(arrowProperty.origin, this.coordSystem);
+        }
+        if (property.type == CorePropertyTypes.Vector)
+        {
+            return entityMesh.getAbsolutePosition();
+        }
+
+        return propertyMesh.getAbsolutePosition();
     }
 
     private updateDebugData()

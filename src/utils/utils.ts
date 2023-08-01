@@ -221,3 +221,42 @@ export function clampElementToScreen(pageX: number, pageY: number, element: HTML
 
     return {x: x, y: y};
 }
+
+// Liang-Barsky function by Daniel White @ https://www.skytopia.com/project/articles/compsci/clipping.html
+export function LiangBarsky(edgeLeft: number, edgeRight: number, edgeBottom: number, edgeTop: number,   // Define the x/y clipping values for the border.
+                x0src: number, y0src: number, x1src: number, y1src: number)                             // Define the start and end points of the line.
+{
+    let t0 = 0.0;
+    let t1 = 1.0;
+
+    const xdelta = x1src-x0src;
+    const ydelta = y1src-y0src;
+
+    let p = 0;
+    let q = 0;
+    let r = 0;
+
+    for(let edge=0; edge<4; edge++) {   // Traverse through left, right, bottom, top edges.
+        if (edge==0) {  p = -xdelta;    q = -(edgeLeft-x0src);  }
+        if (edge==1) {  p = xdelta;     q =  (edgeRight-x0src); }
+        if (edge==2) {  p = -ydelta;    q = -(edgeBottom-y0src);}
+        if (edge==3) {  p = ydelta;     q =  (edgeTop-y0src);   }   
+        r = q/p;
+        if(p==0 && q<0) return null;   // Don't draw line at all. (parallel line outside)
+
+        if(p<0) {
+            if(r>t1) return null;         // Don't draw line at all.
+            else if(r>t0) t0=r;            // Line is clipped!
+        } else if(p>0) {
+            if(r<t0) return null;      // Don't draw line at all.
+            else if(r<t1) t1=r;         // Line is clipped!
+        }
+    }
+
+    const x0clip = x0src + t0*xdelta;
+    const y0clip = y0src + t0*ydelta;
+    const x1clip = x0src + t1*xdelta;
+    const y1clip = y0src + t1*ydelta;
+
+    return { x0: x0clip, y0: y0clip, x1: x1clip, y1: y1clip };        // (clipped) line is drawn
+}

@@ -22,3 +22,34 @@
 {
     display: none;
 }
+
+#shapeHighlightOrigin,
+#shapeHighlightTarget
+{
+    position: absolute;
+    z-index: 90;
+
+    background-color: yellow;
+    border-radius: 100%;
+    height: 14px;
+    width: 14px;
+    margin: -7px -7px;
+}
+
+#shapeHighlightLine
+{
+    position: absolute;
+    z-index: 900;
+
+    transform-origin: left;
+    background-color: yellow;
+    width: 100%;
+    height: 2px;
+}
+
+#shapeHighlightOrigin.disabled,
+#shapeHighlightTarget.disabled,
+#shapeHighlightLine.disabled
+{
+    display: none;
+}

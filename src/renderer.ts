@@ -30,6 +30,7 @@ import FilterTickers from "./frontend/FilterTickers";
 import EntityPropertiesBuilder from "./frontend/EntityPropertiesBuilder";
 import PendingFrames from "./utils/pendingFrames";
 import { LIB_VERSION } from "./version";
+import ShapeLineController from "./frontend/ShapeLineController";
 
 const zlib = require('zlib');
 
@@ -67,6 +68,7 @@ export default class Renderer {
     private filterList: FiltersList;
     private filterTickers: FilterTickers;
     private entityPropsBuilder: EntityPropertiesBuilder;
+    private shapeArrowController: ShapeLineController;
     
     // Tooltio
     private sceneTooltip: HTMLElement;
@@ -145,6 +147,12 @@ export default class Renderer {
 
         this.initializeTimeline();
         this.initializeUI();
+
+        this.shapeArrowController = new ShapeLineController(
+            (propertyId) => { return this.entityPropsBuilder.findItemWithValue(propertyId + "") as HTMLElement; },
+            (propertyId) => { return this.sceneController.getCanvasPositionOfProperty(propertyId); },
+            defaultSettings.shapeHoverColor
+        );
 
         this.playbackController = new PlaybackController(this, this.timeline);
 
@@ -522,6 +530,9 @@ export default class Renderer {
         this.sceneController.setShapeHoverSettings(settings.highlightShapesOnHover, settings.shapeHoverColor);
         this.sceneController.setOutlineWidth(settings.selectionOutlineWidth);
 
+        this.shapeArrowController.setColor(settings.shapeHoverColor);
+        this.shapeArrowController.setEnabled(settings.showShapeLineOnHover);
+
         this.timeline.setPopupActive(settings.showEventPopup);
     }
 
@@ -879,7 +890,7 @@ export default class Renderer {
                             const entry = result[i];
                             const clientId = this.recordedData.buildFrameDataHeader(entry.frameIdx).clientId;
                             const uniqueEntityID = Utils.toUniqueID(clientId, entry.entityId);
-                            this.timeline.addEvent(i, uniqueEntityID.toString(), entry.frameIdx, filterColor, "Filtered result", 0);
+                            this.timeline.addEvent(i, uniqueEntityID.toString(), entry.frameIdx, filterColor, entry.name, 0);
                         }
                     }
                 }
@@ -1055,11 +1066,18 @@ export default class Renderer {
     onPropertyHover(propertyId: number)
     {
         this.sceneController.showProperty(propertyId);
+
+        const pos = this.sceneController.getCanvasPositionOfProperty(propertyId);
+        if (pos)
+        {
+            this.shapeArrowController.activate(propertyId);
+        }
     }
 
     onPropertyStopHovering(propertyId: number)
     {
         this.sceneController.hideProperty(propertyId);
+        this.shapeArrowController.deactivate();
     }
 
     onCreateFilterFromProperty(propertyId: number)
