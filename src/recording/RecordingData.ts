@@ -38,6 +38,11 @@ export function isPropertyShape(property: IProperty)
 		property.type == Type.Triangle;
 }
 
+export interface IVec2 {
+	x: number;
+	y: number;
+}
+
 export interface IVec3 {
 	x: number;
 	y: number;
@@ -77,7 +82,7 @@ export enum EPropertyFlags
 export interface IProperty {
 	type: string;
 	name?: string;
-	value: string | number | boolean | IVec3 | IPropertyCustomType | IEntityRef | IProperty[];
+	value: string | number | boolean | IVec2 | IVec3 | IPropertyCustomType | IEntityRef | IProperty[];
 	id?: number;
 	flags?: EPropertyFlags;
 }

@@ -12,6 +12,7 @@ export enum CorePropertyTypes {
 	Number = "number",
 	String = "string",
 	Bool = "boolean",
+	Vec2 = "vec2",
 	Vec3 = "vec3",
     EntityRef = "eref",
     Quat = "quat",
@@ -90,6 +91,15 @@ export class TypeRegistry
     {
         // TODO: Read these from a configuration file
         // TODO: Add a type editor within the tool
+        const vec2 : IType = {
+            nameId: "vec2",
+            layout: {
+                x: EPrimitiveType.Number,
+                y: EPrimitiveType.Number
+            }
+        };
+        this.registerType(vec2);
+
         const vec3 : IType = {
             nameId: "vec3",
             layout: {
