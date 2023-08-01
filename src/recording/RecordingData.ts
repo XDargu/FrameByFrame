@@ -77,6 +77,7 @@ export enum EPropertyFlags
 {
 	None = 0,
 	Hidden = 1 << 0,
+	Collapsed = 1 << 1,
 }
 
 export interface IProperty {
