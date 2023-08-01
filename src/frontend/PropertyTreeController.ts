@@ -187,7 +187,7 @@ export class PropertyTreeController {
             text: property.name,
             value:  property.id.toString(),
             selectable: false,
-            hidden: property.flags != undefined && ((property.flags & RECORDING.EPropertyFlags.Hidden) != 0),
+            collapsed: property.flags != undefined && ((property.flags & RECORDING.EPropertyFlags.Collapsed) != 0),
             callbacks: {
                 onItemSelected: null,
                 onItemDoubleClicked: null,
@@ -195,6 +195,9 @@ export class PropertyTreeController {
                 onItemMouseOut: this.onPropertyMouseLeave.bind(this),
             }
         };
+
+        const isHidden = property.flags != undefined && ((property.flags & RECORDING.EPropertyFlags.Hidden) != 0);
+        if (isHidden) return;
 
         if (property.type == TypeSystem.CorePropertyTypes.Group) {
             

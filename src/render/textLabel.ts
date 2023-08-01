@@ -17,6 +17,11 @@ export default class TextLabels
         this.tempContext.font = this.font;
     }
 
+    removeLabel(label: BABYLON.Mesh)
+    {
+        this.scene.removeMesh(label);
+    }
+
     buildLabel(text: string) : BABYLON.Mesh
     {
         //Set height for plane

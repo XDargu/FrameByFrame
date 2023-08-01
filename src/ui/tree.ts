@@ -13,7 +13,7 @@ export interface ITreeItemOptions {
     text?: string;
     value?: string;
     tag?: string;
-    hidden?: boolean;
+    collapsed?: boolean;
     selectable?: boolean;
     callbacks?: ITreeCallbacks;
 }
@@ -110,7 +110,7 @@ export class TreeControl {
         parentList.appendChild(listItem);
         parentListItem.classList.remove("basico-tree-leaf");
 
-        if (options.hidden)
+        if (options.collapsed)
         {
             listItem.classList.add("basico-tree-closed");
         }

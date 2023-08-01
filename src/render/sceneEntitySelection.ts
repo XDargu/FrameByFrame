@@ -2,6 +2,7 @@ import * as BABYLON from 'babylonjs';
 import * as Utils from '../utils/utils';
 import { IEntityRenderData, SceneEntityData } from './commonTypes';
 import SceneOutline from './sceneOutline';
+import ScenePropertySelection from './scenePropertySelection';
 
 export interface IEntitySelectedCallback
 {
@@ -28,7 +29,7 @@ export default class SceneEntitySelection
         this.hoverColor = hoverColor;
     }
 
-    initialize(scene: BABYLON.Scene, canvas: HTMLCanvasElement)
+    initialize(scene: BABYLON.Scene, canvas: HTMLCanvasElement, propertySelection: ScenePropertySelection)
     {
         // Mouse picking
         // We need this to let the system select invisible meshes
@@ -67,6 +68,8 @@ export default class SceneEntitySelection
                     this.onEntityStopHovered();
                 }
             }
+
+            propertySelection.onPointerMove(pickInfo, this.selectedEntityId);
         };
     }
 

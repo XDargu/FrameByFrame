@@ -288,6 +288,20 @@ export default class EntityPropertiesBuilder
         }
     }
 
+    findItemWithValue(value: string)
+    {
+        for (let i=0; i<this.propertyGroups.length; ++i)
+        {
+            const item = this.propertyGroups[i].propertyTree.getItemWithValue(value);
+            if (item)
+            {
+                return item;
+            }
+        }
+        
+        return null;
+    }
+
     private onAddFilter(item: HTMLElement)
     {
         const treeElement = item.closest("li[data-tree-value]");

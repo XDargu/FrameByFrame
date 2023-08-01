@@ -1,9 +1,15 @@
 import * as BABYLON from 'babylonjs';
+import { IProperty } from '../recording/RecordingData';
 
+export interface IPropertyRenderData
+{
+    mesh: BABYLON.Mesh;
+    property: IProperty
+}
 export interface IEntityRenderData
 {
     mesh: BABYLON.Mesh;
-    properties: Map<number, BABYLON.Mesh>;
+    properties: Map<number, IPropertyRenderData>;
     label: BABYLON.Mesh;
 }
 

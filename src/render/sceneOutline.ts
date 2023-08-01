@@ -1,6 +1,6 @@
 import * as BABYLON from 'babylonjs';
 import * as Utils from '../utils/utils';
-import { IEntityRenderData } from './commonTypes';
+import { IEntityRenderData, IPropertyRenderData } from './commonTypes';
 import { getOutlineShader, OutlineEffect } from './outlineShader';
 
 export default class SceneOutline
@@ -28,8 +28,8 @@ export default class SceneOutline
         if (selectedEntity)
         {
             this.selectionOutline.addMesh(selectedEntity.mesh);
-            selectedEntity.properties.forEach((mesh: BABYLON.Mesh) => {
-                this.selectionOutline.addMesh(mesh);
+            selectedEntity.properties.forEach((propertyData: IPropertyRenderData) => {
+                this.selectionOutline.addMesh(propertyData.mesh);
             });
         }
 
@@ -37,8 +37,8 @@ export default class SceneOutline
         if (hoveredEntity && hoveredEntity != selectedEntity)
         {
             this.hoverOutline.addMesh(hoveredEntity.mesh);
-            hoveredEntity.properties.forEach((mesh: BABYLON.Mesh) => {
-                this.hoverOutline.addMesh(mesh);
+            hoveredEntity.properties.forEach((propertyData: IPropertyRenderData) => {
+                this.hoverOutline.addMesh(propertyData.mesh);
             });
         }
     }
