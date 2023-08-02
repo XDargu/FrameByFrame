@@ -3,12 +3,264 @@ import * as Utils from "../utils/utils";
 import { CorePropertyTypes } from "../types/typeRegistry";
 import { TreeControl } from "../ui/tree";
 import { ICreateFilterFromPropCallback, IGoToEntityCallback, IIsEntityInFrame, IPropertyHoverCallback, PropertyTreeController } from "../frontend/PropertyTreeController";
-import { addContextMenu } from './ContextMenu';
+import { IContextMenuItem, addContextMenu, removeContextMenu } from './ContextMenu';
+
+namespace UI
+{
+    function makeTitle(name: string)
+    {
+        let titleElement = document.createElement("div");
+        titleElement.classList.add("basico-title");
+
+        let iconElement = document.createElement("i");
+        iconElement.className = "fa filter-arrow-icon fa-angle-down";
+
+        let nameElement = document.createElement("span");
+        nameElement.innerText = name;
+        titleElement.append(iconElement, nameElement);
+
+        return titleElement;
+    }
+
+    function makeTitleTag(name: string, tag: string)
+    {
+        let tagElement = document.createElement("div");
+        setTitleTag(tagElement, name, tag);
+
+        return tagElement;
+    }
+
+    function setTitleTag(tagElement: HTMLElement, name: string, tag: string)
+    {
+        tagElement.innerText = tag;
+        tagElement.classList.add("basico-tag");
+        tagElement.style.background = Utils.colorFromHash(Utils.hashCode(tag));
+    }
+
+    function addTitleEventMenu(titleElement: HTMLElement, name: string, tag: string, onCreateFilterFromEvent: ICreateFilterFromEventCallback)
+    {
+        // TODO: Maybe this can be moved to the main builder class
+        const contextMenuItems = [
+            { text: "Create event filter", icon: "fa-plus-square", callback: () => { onCreateFilterFromEvent(name, tag); } },
+        ];
+        addContextMenu(titleElement, contextMenuItems);
+    }
+
+    function makeTitleStar(name: string, isStarred: boolean, onGroupStarred: IGroupStarredCallback)
+    {
+        let starElement = document.createElement("div");
+        starElement.classList.add("basico-star");
+
+        let icon = document.createElement("i");
+        icon.classList.add("fas", "fa-star");
+        starElement.append(icon);
+
+        setTitleStar(starElement, name, isStarred, onGroupStarred);
+
+        return starElement;
+    }
+
+    function setTitleStar(starElement: HTMLElement, name: string, isStarred: boolean, onGroupStarred: IGroupStarredCallback)
+    {
+        if (isStarred) {
+            if (!starElement.classList.contains("active")) {
+                starElement.classList.add("active");
+            }
+        }
+        else {
+            starElement.classList.remove("active");
+        }
+
+        starElement.onclick = (e) => {
+            starElement.classList.toggle("active");
+            const isStarred = starElement.classList.contains("active");                
+            onGroupStarred(name, isStarred);
+            e.stopPropagation();
+        }
+    }
+
+    function makeTreeElement()
+    {
+        let treeElement = document.createElement("div");
+        treeElement.classList.add("basico-tree");
+        let ul = document.createElement("ul");
+        treeElement.appendChild(ul);
+
+        return treeElement;
+    }
+
+    export function updatePropertyTreeTitle(
+        titleElement: HTMLElement,
+        name: string,
+        tag: string,
+        hasStar: boolean,
+        isStarred: boolean,
+        onCreateFilterFromEvent: ICreateFilterFromEventCallback,
+        onGroupStarred: IGroupStarredCallback
+    )
+    {
+        // Update name
+        // Hacky but fast way of accessing the title
+        let nameElement = titleElement.children[1] as HTMLElement;
+        nameElement.innerText = name;
+
+        // Update tag
+        let tagElement = titleElement.querySelector(".basico-tag") as HTMLElement;
+        if (tag)
+        {
+            if (tagElement)
+            {
+                setTitleTag(tagElement, name, tag);
+            }
+            else
+            {
+                let newTagElement = makeTitleTag(name, tag);
+                titleElement.append(newTagElement);
+            }
+        }
+        else if (tagElement)
+        {
+            tagElement.remove();
+        }
+
+        // Update context menu
+        const isEvent = tag != null;
+        if (isEvent)
+        {
+            addTitleEventMenu(titleElement, name, tag, onCreateFilterFromEvent);
+        }
+        else
+        {
+            removeContextMenu(titleElement);
+        }
+
+        // Update star
+        let starElement = titleElement.querySelector(".basico-star") as HTMLElement;
+        if (hasStar)
+        {
+            if (starElement)
+            {
+                setTitleStar(starElement, name, isStarred, onGroupStarred);
+            }
+            else
+            {
+                let starElement = makeTitleStar(name, isStarred, onGroupStarred);
+                titleElement.append(starElement);
+            }
+            
+        }
+        else if (starElement)
+        {
+            starElement.remove();
+        }
+    }
+
+    export function setPropertyTree(
+        treeElement: HTMLElement,
+        name: string,
+        nameIndex: number,
+        titleElement: HTMLElement,
+        collapsedGroups: CollapsedGroupIDsTracker)
+    {
+        let iconElement = titleElement.children[0] as HTMLElement;
+
+        const toggleCollapse = () => {
+            treeElement.classList.toggle("hidden");
+            titleElement.classList.toggle("collapsed");
+            Utils.toggleClasses(iconElement, "fa-angle-down", "fa-angle-right");
+        };
+
+        titleElement.onclick = () => {
+            toggleCollapse();
+            const isCollapsed = treeElement.classList.contains("hidden");
+            collapsedGroups.setGroupCollapsed(name, nameIndex, isCollapsed);
+        };
+
+        const isCollapsed = treeElement.classList.contains("hidden");
+        if (collapsedGroups.isGroupCollapsed(name, nameIndex) && !isCollapsed)
+        {
+            toggleCollapse();
+        }
+    }
+
+    export function makePropertyTree(
+        name: string,
+        nameIndex: number,
+        tag: string = null,
+        hasStar: boolean = false,
+        isStarred: boolean,
+        collapsedGroups: CollapsedGroupIDsTracker,
+        onCreateFilterFromEvent: ICreateFilterFromEventCallback,
+        onGroupStarred: IGroupStarredCallback,
+        contextMenuItems: IContextMenuItem[])
+    {        
+        let titleElement = makeTitle(name);
+        let iconElement = titleElement.children[0] as HTMLElement;
+
+        if (tag)
+        {
+            let TagElement = makeTitleTag(name, tag);
+            titleElement.append(TagElement);
+        }
+
+        const isEvent = tag != null;
+        if (isEvent)
+        {
+            addTitleEventMenu(titleElement, name, tag, onCreateFilterFromEvent);
+        }
+
+        if (hasStar)
+        {
+            let starElement = makeTitleStar(name, isStarred, onGroupStarred);
+            titleElement.append(starElement);
+        }
+
+        let treeElement = makeTreeElement();
+        setPropertyTree(treeElement, name, nameIndex, titleElement, collapsedGroups);
+
+        addContextMenu(treeElement, contextMenuItems);
+
+        return { title: titleElement, tree: new TreeControl(treeElement) };
+    }
+}
 
 interface PropertyTreeGroup
 {
+    title: HTMLElement;
     propertyTree: TreeControl;
     propertyTreeController: PropertyTreeController;
+}
+
+class PropertyPathCache<Data>
+{
+    cache: Map<string, Map<number, Data>>;
+
+    constructor()
+    {
+        this.cache = new Map<string, Map<number, Data>>();
+    }
+
+    setValue(path: string, index: number, data: Data)
+    {
+        let storedIndexMap = this.cache.get(path);
+        if (storedIndexMap == undefined)
+        {
+            this.cache.set(path, new Map<number, Data>());
+        }
+
+        let indexMap = this.cache.get(path);
+        indexMap.set(index, data);
+    }
+
+    getValue(path: string, index: number)
+    {
+        let storedIndexMap = this.cache.get(path);
+        if (storedIndexMap != undefined)
+        {
+            return storedIndexMap.get(index);
+        }
+        return undefined;
+    }
 }
 
 class CollapsedGroupIDsTracker
@@ -75,8 +327,9 @@ export default class EntityPropertiesBuilder
 {
     private propertyGroups: PropertyTreeGroup[];
     private callbacks: EntityPropertiesBuilderCallbacks;
-    private collapsedGroups: CollapsedGroupIDsTracker;
-    private starredGroups: string[];
+    collapsedGroups: CollapsedGroupIDsTracker;
+    starredGroups: string[];
+    private propertyGroupsById: Map<string, PropertyTreeGroup>;
 
     private readonly contextMenuItems = [
         { text: "Copy value", icon: "fa-copy", callback: this.onCopyValue.bind(this) },
@@ -89,6 +342,7 @@ export default class EntityPropertiesBuilder
         this.callbacks = callbacks;
         this.collapsedGroups = new CollapsedGroupIDsTracker();
         this.starredGroups = [];
+        this.propertyGroupsById = new Map<string, PropertyTreeGroup>();
     }
 
     buildSinglePropertyTreeBlock(
@@ -107,76 +361,53 @@ export default class EntityPropertiesBuilder
             return shouldAdd;
         });
 
-        if (propsToAdd.length > 0 || alwaysAdd)
+        const shouldAdd = propsToAdd.length > 0 || alwaysAdd;
+        if (!shouldAdd) return;
+
+        // TODO: Replace with two maps
+        let storedGroup = this.propertyGroupsById.get(name + nameIndex);
+
+        const isStarred = this.starredGroups.includes(name);
+        const onStarredCallback = (name: string, starred: boolean) => {
+            if (starred) {
+                Utils.pushUnique(this.starredGroups, name);
+            }
+            else {
+                this.starredGroups = this.starredGroups.filter(arrayItem => arrayItem !== name);
+            }
+            this.callbacks.onGroupStarred(name, starred);
+        };
+
+        if (storedGroup)
         {
-            let titleElement = document.createElement("div");
-            titleElement.classList.add("basico-title");
+            // For now, clear and re-build tree
+            storedGroup.propertyTree.clear();
 
-            let iconElement = document.createElement("i");
-            iconElement.className = "fa filter-arrow-icon fa-angle-down";
+            UI.updatePropertyTreeTitle(
+                storedGroup.title,
+                name,
+                tag,
+                hasStar,
+                isStarred,
+                this.callbacks.onCreateFilterFromEvent,
+                onStarredCallback);
+            UI.setPropertyTree(storedGroup.propertyTree.root, name, nameIndex, storedGroup.title, this.collapsedGroups);
+        }
+        else
+        {
+            let propertyTree = UI.makePropertyTree(
+                name,
+                nameIndex,
+                tag,
+                hasStar,
+                isStarred,
+                this.collapsedGroups,
+                this.callbacks.onCreateFilterFromEvent,
+                onStarredCallback,
+                this.contextMenuItems
+            );
 
-            let nameElement = document.createElement("span");
-            nameElement.innerText = name;
-            titleElement.append(iconElement, nameElement);
-            
-            if (tag)
-            {
-                let tagElement = document.createElement("div");
-                tagElement.innerText = tag;
-                tagElement.classList.add("basico-tag");
-                tagElement.style.background = Utils.colorFromHash(Utils.hashCode(tag));
-                titleElement.append(tagElement);
-
-                const contextMenuItems = [
-                    { text: "Create event filter", icon: "fa-plus-square", callback: () => {this.callbacks.onCreateFilterFromEvent(name, tag); } },
-                ];
-                addContextMenu(titleElement, contextMenuItems);
-            }
-            
-            if (hasStar)
-            {
-                let starElement = document.createElement("div");
-                starElement.classList.add("basico-star");
-                let icon = document.createElement("i");
-                icon.classList.add("fas", "fa-star");
-                if (this.starredGroups.includes(name)) {
-                    starElement.classList.add("active");
-                }
-                starElement.append(icon);
-                titleElement.append(starElement);
-
-                starElement.onclick = (e) => {
-                    starElement.classList.toggle("active");
-                    let isStarred = starElement.classList.contains("active");
-                    if (isStarred)
-                    {
-                        Utils.pushUnique(this.starredGroups, name);
-                    }
-                    else
-                    {
-                        this.starredGroups = this.starredGroups.filter(arrayItem => arrayItem !== name);
-                    }
-                    this.callbacks.onGroupStarred(name, isStarred);
-                    e.stopPropagation();
-                }
-            }
-
-            let treeElement = document.createElement("div");
-            treeElement.classList.add("basico-tree");
-            let ul = document.createElement("ul");
-            treeElement.appendChild(ul);
-
-            if (shouldPrepend)
-            {
-                treeParent.prepend(titleElement, treeElement);
-            }
-            else
-            {
-                treeParent.append(titleElement, treeElement);
-            }
-
-            let propertyTree = new TreeControl(treeElement);
-            let propertyTreeController = new PropertyTreeController(propertyTree,
+            let propertyTreeController = new PropertyTreeController(propertyTree.tree,
                 {
                     onPropertyHover: this.callbacks.onPropertyHover,
                     onPropertyStopHovering: this.callbacks.onPropertyStopHovering,
@@ -184,32 +415,35 @@ export default class EntityPropertiesBuilder
                     isEntityInFrame: this.callbacks.isEntityInFrame
                 }
             );
-
-            this.propertyGroups.push({propertyTree: propertyTree, propertyTreeController: propertyTreeController});
+            
+            let newPropertyGroup = { 
+                title: propertyTree.title,
+                propertyTree: propertyTree.tree,
+                propertyTreeController: propertyTreeController
+            };
+    
+            this.propertyGroups.push(newPropertyGroup);
+            this.propertyGroupsById.set(name + nameIndex, newPropertyGroup);
+        }
+        
+        // Fill group now that is stored
+        {
+            let storedGroup = this.propertyGroupsById.get(name + nameIndex);
 
             for (let i=0; i<propsToAdd.length; ++i)
             {
-                propertyTreeController.addToPropertyTree(propertyTree.root, propsToAdd[i]);
+                storedGroup.propertyTreeController.addToPropertyTree(storedGroup.propertyTree.root, propsToAdd[i]);
             }
 
-            addContextMenu(treeElement, this.contextMenuItems);
-
-            const toggleCollapse = () => {
-                treeElement.classList.toggle("hidden");
-                titleElement.classList.toggle("collapsed");
-                Utils.toggleClasses(iconElement, "fa-angle-down", "fa-angle-right");
-            };
-            
-            if (this.collapsedGroups.isGroupCollapsed(name, nameIndex))
+            // Add to parent
+            if (shouldPrepend)
             {
-                toggleCollapse();
+                treeParent.prepend(storedGroup.title, storedGroup.propertyTree.root);
             }
-
-            titleElement.onclick = () => {
-                toggleCollapse();
-                const isCollapsed = treeElement.classList.contains("hidden");
-                this.collapsedGroups.setGroupCollapsed(name, nameIndex, isCollapsed);
-            };
+            else
+            {
+                treeParent.append(storedGroup.title, storedGroup.propertyTree.root);
+            }
         }
     }
 
@@ -279,7 +513,6 @@ export default class EntityPropertiesBuilder
 
         propertyTree.innerHTML = "";
         eventTree.innerHTML = "";
-        this.propertyGroups = [];
 
         if (entity)
         {
@@ -298,7 +531,7 @@ export default class EntityPropertiesBuilder
                 return item;
             }
         }
-        
+
         return null;
     }
 

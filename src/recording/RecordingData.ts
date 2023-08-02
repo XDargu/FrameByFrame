@@ -492,6 +492,8 @@ export interface INaiveRecordedData extends IRecordedData {
 export class NaiveRecordedData implements INaiveRecordedData {
 	readonly version: number = 3;
 	readonly type: RecordingFileType = RecordingFileType.NaiveRecording;
+	static readonly UserProps = 0;
+	static readonly SpecialProps = 1;
 	frameData: IFrameData[];
 	layers: string[];
 	scenes: string[];
@@ -509,25 +511,30 @@ export class NaiveRecordedData implements INaiveRecordedData {
 	static getEntityName(entity: IEntity) : string
 	{
 		// Name is always part of the special groups
-		return (entity.properties[1] as IPropertyGroup).value[0].value as string;
+		return (entity.properties[NaiveRecordedData.SpecialProps] as IPropertyGroup).value[0].value as string;
 	}
 
 	static getEntityPosition(entity: IEntity) : IVec3
 	{
 		// Position is always part of the special groups
-		return (entity.properties[1] as IPropertyGroup).value[1].value as IVec3;
+		return (entity.properties[NaiveRecordedData.SpecialProps] as IPropertyGroup).value[1].value as IVec3;
+	}
+
+	static getEntityUserProperties(entity: IEntity) : IPropertyGroup
+	{
+		return (entity.properties[NaiveRecordedData.UserProps] as IPropertyGroup);
 	}
 
 	static getEntityUp(entity: IEntity) : IVec3
 	{
 		// Up vector is always part of the special groups
-		return (entity.properties[1] as IPropertyGroup).value[2].value as IVec3;
+		return (entity.properties[NaiveRecordedData.SpecialProps] as IPropertyGroup).value[2].value as IVec3;
 	}
 
 	static getEntityForward(entity: IEntity) : IVec3
 	{
 		// Forward vector is always part of the special groups
-		return (entity.properties[1] as IPropertyGroup).value[3].value as IVec3;
+		return (entity.properties[NaiveRecordedData.SpecialProps] as IPropertyGroup).value[3].value as IVec3;
 	}
 
 	loadFromData(dataJson: INaiveRecordedData)

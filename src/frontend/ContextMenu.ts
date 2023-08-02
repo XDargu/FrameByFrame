@@ -62,5 +62,10 @@ export function addContextMenu(element: HTMLElement, items: IContextMenuItem[])
 {
     element.oncontextmenu = (ev: MouseEvent) => {
         createContextMenu(ev.pageX, ev.pageY, ev.target as HTMLElement, items);
-    }; 
+    };
+}
+
+export function removeContextMenu(element: HTMLElement)
+{
+    element.oncontextmenu = null;
 }
