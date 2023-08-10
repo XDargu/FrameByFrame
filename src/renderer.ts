@@ -534,6 +534,8 @@ export default class Renderer {
         this.shapeArrowController.setEnabled(settings.showShapeLineOnHover);
 
         this.timeline.setPopupActive(settings.showEventPopup);
+
+        this.entityPropsBuilder.setUIPoolsEnabled(settings.uiPoolsEnabled);
     }
 
     updateSettings(settings: ISettings)

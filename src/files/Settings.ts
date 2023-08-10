@@ -28,6 +28,7 @@ export interface ISettings
     exportNameFormat: string,
     /* Debug */
     showRenderDebug: boolean,
+    uiPoolsEnabled: boolean,
     /* Graphics */
     antialiasingSamples: number,
 }
@@ -63,6 +64,7 @@ export function createDefaultSettings() : ISettings
         exportNameFormat: "recording_%Y-%M-%D_%h_%m_%s",
         /* Debug */
         showRenderDebug: false,
+        uiPoolsEnabled: true,
         /* Graphics */
         antialiasingSamples: 4,
     };

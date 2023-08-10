@@ -424,6 +424,7 @@ You can use the following formatting options:
         {
             let group = SettingsBuilder.createGroup("Debug");
             SettingsBuilder.addBooleanSetting(group, "Show render debug info", settings.showRenderDebug, (value) => {settings.showRenderDebug = value; this.onSettingsChanged(); })
+            SettingsBuilder.addBooleanSetting(group, "UI pools enabled", settings.uiPoolsEnabled, (value) => {settings.uiPoolsEnabled = value; this.onSettingsChanged(); })
             this.settingsList.appendChild(group.fragment);
 
             SettingsBuilder.addButtonSetting(group, "Purge pools", "Empty mesh and material pools", this.onPurgePools);

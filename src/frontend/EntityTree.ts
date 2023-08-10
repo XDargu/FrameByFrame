@@ -91,6 +91,11 @@ export class EntityTree {
         this.filter = "";
     }
 
+    setUIPoolEnabled(isEnabled: boolean)
+    {
+        this.entityTree.setPoolEnabled(isEnabled);
+    }
+
     areEntitiesEqual(entities: RECORDING.IFrameEntityData, cachedData: Map<number, CachedTreeItem>) : boolean
     {
         for (const [entityID, listItem] of this.cachedItemsById)

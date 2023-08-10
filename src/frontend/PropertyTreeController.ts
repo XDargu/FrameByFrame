@@ -27,6 +27,62 @@ interface PropertyTreeControllerCallbacks {
     isEntityInFrame: IIsEntityInFrame;
 }
 
+export interface IWrapperBuilderFunc
+{
+    () : HTMLElement
+}
+
+class WrapperPool
+{
+    pool: HTMLElement[];
+    used: HTMLElement[];
+    isEnabled: boolean;
+    builderfunction: IWrapperBuilderFunc;
+
+    constructor(builderfunction: IWrapperBuilderFunc)
+    {
+        this.pool = [];
+        this.used = [];
+        this.isEnabled = true;
+        this.builderfunction = builderfunction;
+    }
+
+    public get()
+    {
+        if (!this.isEnabled)
+        {
+            return this.builderfunction();
+        }
+
+        if (this.pool.length == 0)
+        {
+            let wrapper = this.builderfunction();
+            this.used.push(wrapper);
+            return wrapper;
+        }
+
+        let wrapper = this.pool.pop();
+        this.used.push(wrapper);
+        return wrapper;
+    }
+
+    public freeAll()
+    {
+        for (let i=0; i<this.used.length; ++i)
+        {
+            this.pool.push(this.used[i]);
+        }
+        this.used = [];
+    }
+}
+
+interface WrapperPools
+{
+    primitives: WrapperPool,
+    groups: WrapperPool,
+    names: WrapperPool
+}
+
 namespace UI
 {
     export function getPrimitiveTypeAsString(value: any, primitiveType: TypeSystem.EPrimitiveType): string {
@@ -34,7 +90,8 @@ namespace UI
             case TypeSystem.EPrimitiveType.Number:
                 {
                     // TODO: Either check type here, or validate incomming data so this is always valid data
-                    return (+value.toFixed(2)).toString();
+                    return (Math.round(value*100)/100).toString();
+                    //return (+value.toFixed(2)).toString();
                 }
             case TypeSystem.EPrimitiveType.String:
                 {
@@ -47,35 +104,50 @@ namespace UI
         }
     }
 
-    export function wrapPrimitiveType(content: string): HTMLElement
+    export function setPrimitiveTypeWrapper(wrapper: HTMLElement, content: string)
+    {
+        wrapper.innerText = content;
+    }
+
+    export function makePrimitiveTypeWrapper(): HTMLElement
     {
         let wrapper = document.createElement("div");
         wrapper.className = "basico-tag basico-big property-primitive";
-        wrapper.innerText = content;
         return wrapper;
     }
 
-    export function wrapPropertyGroup(content: HTMLElement[]): HTMLElement
+    export function setPropertyGroupWrapper(wrapper: HTMLElement, content: HTMLElement[])
     {
-        let wrapper = document.createElement("span");
-        wrapper.className = "property-group";
+        wrapper.innerHTML = "";
         for (let i=0; i<content.length; ++i) {
             wrapper.appendChild(content[i]);
         }
+    }
+
+    export function makePropertyGroupWrapper(): HTMLElement
+    {
+        let wrapper = document.createElement("span");
+        wrapper.className = "property-group";
         return wrapper;
     }
 
-    export function wrapPropertyName(content: string): HTMLElement
+    export function setPropertyNameWrapper(wrapper: HTMLElement, content: string)
+    {
+        wrapper.innerText = content;
+    }
+
+    export function makePropertyNameWrapper(): HTMLElement
     {
         let wrapper = document.createElement("span");
         wrapper.className = "property-name";
-        wrapper.innerText = content;
         return wrapper;
     }
 
-    export function getLayoutOfPrimitiveType(value: any, primitiveType: TypeSystem.EPrimitiveType)
+    export function getLayoutOfPrimitiveType(value: any, primitiveType: TypeSystem.EPrimitiveType, uiPools: WrapperPools)
     {
-        return wrapPrimitiveType(getPrimitiveTypeAsString(value, primitiveType));
+        let wrapper = uiPools.primitives.get();
+        UI.setPrimitiveTypeWrapper(wrapper, getPrimitiveTypeAsString(value, primitiveType));
+        return wrapper;
     }
 
     export function createGoToEntityButton(id: number, callback: IGoToEntityCallback, isEnabled: boolean) : HTMLButtonElement
@@ -106,15 +178,36 @@ export class PropertyTreeController {
 
     callbacks: PropertyTreeControllerCallbacks;
 
+    wrapperPools: WrapperPools;
+
     constructor(propertyTree: TREE.TreeControl, callbacks: PropertyTreeControllerCallbacks) {
         this.propertyTree = propertyTree;
         this.typeRegistry = TypeSystem.TypeRegistry.getInstance();
         this.callbacks = callbacks;
+        this.wrapperPools = {
+            primitives: new WrapperPool(UI.makePrimitiveTypeWrapper),
+            groups: new WrapperPool(UI.makePropertyGroupWrapper),
+            names: new WrapperPool(UI.makePropertyNameWrapper),
+        };
     }
 
-    addValueToPropertyTree(parent: HTMLElement, name: string, content: HTMLElement[], propertyId: number = null)
+    setUIPoolsEnabled(isEnabled: boolean)
     {
-        const elements = [UI.wrapPropertyName(name), UI.wrapPropertyGroup(content)];
+        this.propertyTree.setPoolEnabled(isEnabled);
+        this.wrapperPools.primitives.isEnabled = isEnabled;
+        this.wrapperPools.groups.isEnabled = isEnabled;
+        this.wrapperPools.names.isEnabled = isEnabled;
+    }
+
+    addValueToPropertyTree(parent: HTMLElement, name: string, content: HTMLElement[], propertyId: number, uiPools: WrapperPools)
+    {
+        const nameItem = uiPools.names.get();
+        UI.setPropertyNameWrapper(nameItem, name);
+
+        const groupItem = uiPools.groups.get();
+        UI.setPropertyGroupWrapper(groupItem, content);
+
+        const elements = [nameItem, groupItem];
         const listItem = this.propertyTree.addItem(parent, elements, {
             value:  propertyId == null ? null : propertyId.toString(),
             selectable: false,
@@ -127,58 +220,65 @@ export class PropertyTreeController {
         });
     }
 
-    addCustomTypeToPropertyTree(parent: HTMLElement, property: RECORDING.IProperty, type: TypeSystem.IType) {
+    addCustomTypeToPropertyTree(parent: HTMLElement, property: RECORDING.IProperty, type: TypeSystem.IType, uiPools: WrapperPools) {
         // Complex value type
         let content = [];
         for (const [layoutId, primitiveType] of Object.entries(type.layout)) {
             const customTypeValue = property.value as RECORDING.IPropertyCustomType;
             const value = customTypeValue[layoutId];
             if (value != undefined) {
-                content.push(UI.getLayoutOfPrimitiveType(value, primitiveType));
+                content.push(UI.getLayoutOfPrimitiveType(value, primitiveType, uiPools));
             }
         }
 
-        this.addValueToPropertyTree(parent, property.name, content, property.id);
+        this.addValueToPropertyTree(parent, property.name, content, property.id, uiPools);
     }
 
-    addEntityRef(parent: HTMLElement, name: string, value: RECORDING.IEntityRef, propertyId: number = null)
+    addEntityRef(parent: HTMLElement, name: string, value: RECORDING.IEntityRef, propertyId: number, uiPools: WrapperPools)
     {
         const content = [
-            UI.getLayoutOfPrimitiveType(value.name, TypeSystem.EPrimitiveType.String),
+            UI.getLayoutOfPrimitiveType(value.name, TypeSystem.EPrimitiveType.String, uiPools),
             //UI.getLayoutOfPrimitiveType(value.id, TypeSystem.EPrimitiveType.Number), // Don't display id for now, too noisy
             UI.createGoToEntityButton(value.id, this.callbacks.onGoToEntity, this.callbacks.isEntityInFrame(value.id))
         ];
 
-        this.addValueToPropertyTree(parent, name, content, propertyId);
+        this.addValueToPropertyTree(parent, name, content, propertyId, uiPools);
     }
 
-    addVec3(parent: HTMLElement, name: string, value: RECORDING.IVec3, propertyId: number = null)
+    addVec3(parent: HTMLElement, name: string, value: RECORDING.IVec3, propertyId: number, uiPools: WrapperPools)
     {
         const content = [
-            UI.getLayoutOfPrimitiveType(value.x, TypeSystem.EPrimitiveType.Number),
-            UI.getLayoutOfPrimitiveType(value.y, TypeSystem.EPrimitiveType.Number),
-            UI.getLayoutOfPrimitiveType(value.z, TypeSystem.EPrimitiveType.Number)
+            UI.getLayoutOfPrimitiveType(value.x, TypeSystem.EPrimitiveType.Number, uiPools),
+            UI.getLayoutOfPrimitiveType(value.y, TypeSystem.EPrimitiveType.Number, uiPools),
+            UI.getLayoutOfPrimitiveType(value.z, TypeSystem.EPrimitiveType.Number, uiPools)
         ];
 
-        this.addValueToPropertyTree(parent, name, content, propertyId);
+        this.addValueToPropertyTree(parent, name, content, propertyId, uiPools);
     }
 
-    addColor(parent: HTMLElement, name: string, value: RECORDING.IColor, propertyId: number = null)
+    addColor(parent: HTMLElement, name: string, value: RECORDING.IColor, propertyId: number, uiPools: WrapperPools)
     {
         const content =[ 
-            UI.getLayoutOfPrimitiveType(value.r, TypeSystem.EPrimitiveType.Number),
-            UI.getLayoutOfPrimitiveType(value.g, TypeSystem.EPrimitiveType.Number),
-            UI.getLayoutOfPrimitiveType(value.b, TypeSystem.EPrimitiveType.Number),
-            UI.getLayoutOfPrimitiveType(value.a, TypeSystem.EPrimitiveType.Number)
+            UI.getLayoutOfPrimitiveType(value.r, TypeSystem.EPrimitiveType.Number, uiPools),
+            UI.getLayoutOfPrimitiveType(value.g, TypeSystem.EPrimitiveType.Number, uiPools),
+            UI.getLayoutOfPrimitiveType(value.b, TypeSystem.EPrimitiveType.Number, uiPools),
+            UI.getLayoutOfPrimitiveType(value.a, TypeSystem.EPrimitiveType.Number, uiPools)
         ];
 
-        this.addValueToPropertyTree(parent, name, content, propertyId);
+        this.addValueToPropertyTree(parent, name, content, propertyId, uiPools);
     }
 
-    addNumber(parent: HTMLElement, name: string, value: number, propertyId: number = null)
+    addNumber(parent: HTMLElement, name: string, value: number, propertyId: number, uiPools: WrapperPools)
     {
-        const content = UI.getLayoutOfPrimitiveType(value, TypeSystem.EPrimitiveType.Number)
-        this.addValueToPropertyTree(parent, name, [content], propertyId);
+        const content = UI.getLayoutOfPrimitiveType(value, TypeSystem.EPrimitiveType.Number, uiPools)
+        this.addValueToPropertyTree(parent, name, [content], propertyId, uiPools);
+    }
+
+    clear()
+    {
+        this.wrapperPools.primitives.freeAll();
+        this.wrapperPools.groups.freeAll();
+        this.wrapperPools.names.freeAll();
     }
 
     addToPropertyTree(parent: HTMLElement, property: RECORDING.IProperty)
@@ -213,7 +313,7 @@ export class PropertyTreeController {
             const type = this.typeRegistry.findType(property.type);
             if (type)
             {
-                this.addCustomTypeToPropertyTree(parent, property, type);
+                this.addCustomTypeToPropertyTree(parent, property, type, this.wrapperPools);
             }
             else if (property.type == TypeSystem.CorePropertyTypes.Comment)
             {
@@ -228,7 +328,7 @@ export class PropertyTreeController {
             }
             else if (property.type == TypeSystem.CorePropertyTypes.EntityRef)
             {
-                this.addEntityRef(parent, property.name, property.value as RECORDING.IEntityRef, property.id);
+                this.addEntityRef(parent, property.name, property.value as RECORDING.IEntityRef, property.id, this.wrapperPools);
             }
             else if (RECORDING.isPropertyShape(property))
             {
@@ -241,8 +341,8 @@ export class PropertyTreeController {
                             const sphere = property as RECORDING.IPropertySphere;
 
                             let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
-                            this.addVec3(addedItem, "Position", sphere.position, property.id);
-                            this.addNumber(addedItem, "Radius", sphere.radius, property.id);
+                            this.addVec3(addedItem, "Position", sphere.position, property.id, this.wrapperPools);
+                            this.addNumber(addedItem, "Radius", sphere.radius, property.id, this.wrapperPools);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Capsule:
@@ -250,10 +350,10 @@ export class PropertyTreeController {
                             const capsule = property as RECORDING.IPropertyCapsule;
 
                             let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
-                            this.addVec3(addedItem, "Position", capsule.position, property.id);
-                            this.addVec3(addedItem, "Direction", capsule.direction, property.id);
-                            this.addNumber(addedItem, "Radius", capsule.radius, property.id);
-                            this.addNumber(addedItem, "Height", capsule.height, property.id);
+                            this.addVec3(addedItem, "Position", capsule.position, property.id, this.wrapperPools);
+                            this.addVec3(addedItem, "Direction", capsule.direction, property.id, this.wrapperPools);
+                            this.addNumber(addedItem, "Radius", capsule.radius, property.id, this.wrapperPools);
+                            this.addNumber(addedItem, "Height", capsule.height, property.id, this.wrapperPools);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.AABB:
@@ -261,8 +361,8 @@ export class PropertyTreeController {
                             const aabb = property as RECORDING.IPropertyAABB;
 
                             let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
-                            this.addVec3(addedItem, "Position", aabb.position, property.id);
-                            this.addVec3(addedItem, "Size", aabb.size, property.id);
+                            this.addVec3(addedItem, "Position", aabb.position, property.id, this.wrapperPools);
+                            this.addVec3(addedItem, "Size", aabb.size, property.id, this.wrapperPools);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.OOBB:
@@ -270,10 +370,10 @@ export class PropertyTreeController {
                             const oobb = property as RECORDING.IPropertyOOBB;
 
                             let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
-                            this.addVec3(addedItem, "Position", oobb.position, property.id);
-                            this.addVec3(addedItem, "Size", oobb.size, property.id);
-                            this.addVec3(addedItem, "Forward", oobb.forward, property.id);
-                            this.addVec3(addedItem, "Up", oobb.up, property.id);
+                            this.addVec3(addedItem, "Position", oobb.position, property.id, this.wrapperPools);
+                            this.addVec3(addedItem, "Size", oobb.size, property.id, this.wrapperPools);
+                            this.addVec3(addedItem, "Forward", oobb.forward, property.id, this.wrapperPools);
+                            this.addVec3(addedItem, "Up", oobb.up, property.id, this.wrapperPools);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Plane:
@@ -281,11 +381,11 @@ export class PropertyTreeController {
                             const plane = property as RECORDING.IPropertyPlane;
 
                             let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
-                            this.addVec3(addedItem, "Position", plane.position, property.id);
-                            this.addVec3(addedItem, "Normal", plane.normal, property.id);
-                            this.addVec3(addedItem, "Up", plane.up, property.id);
-                            this.addNumber(addedItem, "Width", plane.width, property.id);
-                            this.addNumber(addedItem, "Length", plane.length, property.id);
+                            this.addVec3(addedItem, "Position", plane.position, property.id, this.wrapperPools);
+                            this.addVec3(addedItem, "Normal", plane.normal, property.id, this.wrapperPools);
+                            this.addVec3(addedItem, "Up", plane.up, property.id, this.wrapperPools);
+                            this.addNumber(addedItem, "Width", plane.width, property.id, this.wrapperPools);
+                            this.addNumber(addedItem, "Length", plane.length, property.id, this.wrapperPools);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Line:
@@ -293,8 +393,8 @@ export class PropertyTreeController {
                             const line = property as RECORDING.IPropertyLine;
 
                             let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
-                            this.addVec3(addedItem, "Origin", line.origin, property.id);
-                            this.addVec3(addedItem, "Destination", line.destination, property.id);
+                            this.addVec3(addedItem, "Origin", line.origin, property.id, this.wrapperPools);
+                            this.addVec3(addedItem, "Destination", line.destination, property.id, this.wrapperPools);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Arrow:
@@ -302,8 +402,8 @@ export class PropertyTreeController {
                             const arrow = property as RECORDING.IPropertyArrow;
 
                             let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
-                            this.addVec3(addedItem, "Origin", arrow.origin, property.id);
-                            this.addVec3(addedItem, "Destination", arrow.destination, property.id);
+                            this.addVec3(addedItem, "Origin", arrow.origin, property.id, this.wrapperPools);
+                            this.addVec3(addedItem, "Destination", arrow.destination, property.id, this.wrapperPools);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Vector:
@@ -311,7 +411,7 @@ export class PropertyTreeController {
                             const vector = property as RECORDING.IPropertyVector;
 
                             let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
-                            this.addVec3(addedItem, "Vector", vector.vector, property.id);
+                            this.addVec3(addedItem, "Vector", vector.vector, property.id, this.wrapperPools);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Mesh:
@@ -327,7 +427,7 @@ export class PropertyTreeController {
                             let idx = 0;
                             for (const point of path.points)
                             {
-                                this.addVec3(addedItem, `Point ${idx}`, point, property.id);
+                                this.addVec3(addedItem, `Point ${idx}`, point, property.id, this.wrapperPools);
                                 ++idx;
                             }
                             break;
@@ -337,9 +437,9 @@ export class PropertyTreeController {
                             const triangle = property as RECORDING.IPropertyTriangle;
 
                             let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
-                            this.addVec3(addedItem, "p1", triangle.p1, property.id);
-                            this.addVec3(addedItem, "p2", triangle.p2, property.id);
-                            this.addVec3(addedItem, "p3", triangle.p3, property.id);
+                            this.addVec3(addedItem, "p1", triangle.p1, property.id, this.wrapperPools);
+                            this.addVec3(addedItem, "p2", triangle.p2, property.id, this.wrapperPools);
+                            this.addVec3(addedItem, "p3", triangle.p3, property.id, this.wrapperPools);
                             break;
                         }
                     }
@@ -349,8 +449,9 @@ export class PropertyTreeController {
             {
                 const primitiveType = TypeSystem.buildPrimitiveType(property.type);
                 const value = primitiveType ? UI.getPrimitiveTypeAsString(property.value, primitiveType) : property.value as string;
-                const content = UI.wrapPrimitiveType(value);
-                this.addValueToPropertyTree(parent, property.name, [content], property.id);
+                let wrapper = this.wrapperPools.primitives.get();
+                UI.setPrimitiveTypeWrapper(wrapper, value);
+                this.addValueToPropertyTree(parent, property.name, [wrapper], property.id, this.wrapperPools);
 
                 if (primitiveType == undefined)
                 {
@@ -375,6 +476,4 @@ export class PropertyTreeController {
             this.callbacks.onPropertyStopHovering(Number.parseInt(propertyId));
         }
     }
-
-    
 }

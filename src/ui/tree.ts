@@ -1,3 +1,5 @@
+import * as Utils from '../utils/utils';
+
 export interface ITreeCallback {
     (item: HTMLElement) : void;
 }
@@ -18,22 +20,111 @@ export interface ITreeItemOptions {
     callbacks?: ITreeCallbacks;
 }
 
-export class TreeControl {
+class TreeItem
+{
+    listItem: HTMLElement;
+    wrapper: HTMLElement;
+    tag: HTMLElement;
+    contentWrapper: HTMLElement;
+}
 
-    root: HTMLElement;
+namespace UI
+{
+    export function setItem(item: TreeItem, content : HTMLElement[], options: ITreeItemOptions, treeControl: TreeControl)
+    {
+        Utils.addUniqueClass(item.listItem, "basico-tree-leaf");
+        item.contentWrapper.innerHTML = "";
 
-    constructor(treeElement : HTMLElement) {
-        this.root = treeElement;
+        if (options.text)
+        {
+            item.contentWrapper.innerText = options.text;
+        }
+        else
+        {
+            item.contentWrapper.innerText = "";
+        }
+
+        for (let i=0; i<content.length; ++i)
+        {
+            item.contentWrapper.appendChild(content[i]);
+        }
+
+        if (options.value != null)
+        {
+            item.listItem.setAttribute('data-tree-value', options.value);
+        }
+        else
+        {
+            item.listItem.removeAttribute('data-tree-value');
+        }
+
+        if (options.tag != null && options.tag != "")
+        {
+            item.tag.innerText = options.tag;
+            item.tag.style.display = "";
+        }
+        else
+        {
+            item.tag.style.display = "none";
+        }
+
+        if (options.collapsed)
+        {
+            Utils.addUniqueClass(item.listItem, "basico-tree-closed");
+        }
+        else
+        {
+            item.listItem.classList.remove("basico-tree-closed");
+        }
+
+        item.wrapper.onclick = () => {
+            if (options.selectable) {
+                treeControl.markElementSelected(item.wrapper);
+            }
+            if (options.callbacks && options.callbacks.onItemSelected != null)
+            {
+                options.callbacks.onItemSelected(item.listItem);
+            }
+        };
+
+        item.wrapper.ondblclick = () => {
+            if (options.callbacks && options.callbacks.onItemDoubleClicked != null)
+            {
+                options.callbacks.onItemDoubleClicked(item.listItem);
+            }
+        };
+
+        if (options.callbacks && options.callbacks.onItemMouseOver != null)
+        {
+            item.wrapper.onmouseover = () => {
+                options.callbacks.onItemMouseOver(item.listItem);
+            };
+        }
+        else
+        {
+            item.wrapper.onmouseover = null;
+        }
+
+        if (options.callbacks && options.callbacks.onItemMouseOut != null)
+        {
+            item.wrapper.onmouseout = () => {
+                options.callbacks.onItemMouseOut(item.listItem);
+            };
+        }
+        else
+        {
+            item.wrapper.onmouseout = null;
+        }
     }
 
-    buildItem(content : HTMLElement[], options: ITreeItemOptions) {
-
+    export function buildItem(treeControl: TreeControl) : TreeItem
+    {
         let listItem = document.createElement("li");
         listItem.classList.add("basico-tree-leaf");
 
         let wrapper = document.createElement("span");
         wrapper.classList.add("basico-tree-item-wrapper");
-        this.toggleItem(wrapper);
+        treeControl.toggleItem(wrapper);
         listItem.appendChild(wrapper);
 
         let toggle = document.createElement("span");
@@ -42,80 +133,97 @@ export class TreeControl {
 
         let contentWrapper = document.createElement("span");
         contentWrapper.classList.add("basico-tree-item-content");
-        if (options.text)
-        {
-            contentWrapper.innerText = options.text;
-        }
-        for (let i=0; i<content.length; ++i) {
-            contentWrapper.appendChild(content[i]);
-        }
         wrapper.appendChild(contentWrapper);
 
         let children = document.createElement("ul");
         listItem.appendChild(children);
 
-        if (options.value != null)
-        {
-            listItem.setAttribute('data-tree-value', options.value);
-        }
+        let tag = document.createElement("div");
+        tag.className = "basico-tag basico-small";
+        wrapper.appendChild(tag);
 
-        if (options.tag != null && options.tag != "")
-        {
-            let tag = document.createElement("div");
-            tag.className = "basico-tag basico-small";
-            tag.innerText = options.tag;
-            wrapper.appendChild(tag);
-        }
-
-        wrapper.onclick = () => {
-            if (options.selectable) {
-                this.markElementSelected(wrapper);
-            }
-            if (options.callbacks && options.callbacks.onItemSelected != null)
-            {
-                options.callbacks.onItemSelected(listItem);
-            }
+        let item = {
+            listItem: listItem,
+            wrapper: wrapper,
+            tag: tag,
+            contentWrapper: contentWrapper
         };
 
-        wrapper.ondblclick = () => {
-            if (options.callbacks && options.callbacks.onItemDoubleClicked != null)
-            {
-                options.callbacks.onItemDoubleClicked(listItem);
-            }
-        };
+        return item;
+    }
+}
 
-        if (options.callbacks && options.callbacks.onItemMouseOver != null)
+class TreeItemPool
+{
+    pool: TreeItem[];
+    used: TreeItem[];
+    control: TreeControl;
+
+    constructor(control: TreeControl)
+    {
+        this.pool = [];
+        this.used = [];
+        this.control = control;
+    }
+
+    public get()
+    {
+        if (this.pool.length == 0)
         {
-            wrapper.onmouseover = () => {
-                options.callbacks.onItemMouseOver(listItem);
-            };
+            let item = UI.buildItem(this.control);
+            this.used.push(item);
+            return item;
         }
 
-        if (options.callbacks && options.callbacks.onItemMouseOut != null)
-        {
-            wrapper.onmouseout = () => {
-                options.callbacks.onItemMouseOut(listItem);
-            };
-        }
+        let item = this.pool.pop();
+        this.used.push(item);
+        return item;
+    }
 
-        return listItem;
+    public freeAll()
+    {
+        for (let i=0; i<this.used.length; ++i)
+        {
+            this.pool.push(this.used[i]);
+        }
+        this.used = [];
+    }
+}
+
+export class TreeControl {
+
+    root: HTMLElement;
+    pool: TreeItemPool;
+    isPoolEnabled: boolean;
+
+    constructor(treeElement : HTMLElement) {
+        this.root = treeElement;
+        this.pool = new TreeItemPool(this);
+        this.isPoolEnabled = true;
+    }
+
+    setPoolEnabled(isEnabled: boolean)
+    {
+        this.isPoolEnabled = isEnabled;
+    }
+
+    buildItem(content : HTMLElement[], options: ITreeItemOptions)
+    {
+        let item = UI.buildItem(this);
+        return item.listItem;
     }
 
     addItem(parentListItem : HTMLElement, content : HTMLElement[], options: ITreeItemOptions) {
 
         let parentList = parentListItem.querySelector("ul");
 
-        let listItem = this.buildItem(content, options);
+        let item = this.isPoolEnabled ? this.pool.get() : UI.buildItem(this);
+        UI.setItem(item, content, options, this);
 
-        parentList.appendChild(listItem);
+        parentList.appendChild(item.listItem);
         parentListItem.classList.remove("basico-tree-leaf");
 
-        if (options.collapsed)
-        {
-            listItem.classList.add("basico-tree-closed");
-        }
-
-        return listItem;
+        return item.listItem;
     }
 
     getItemParent(listItem : HTMLElement) : HTMLElement {
@@ -178,6 +286,7 @@ export class TreeControl {
     clear()
     {
         let rootList = this.root.querySelector("ul");
+        this.pool.freeAll();
         rootList.innerHTML = "";
     }
 

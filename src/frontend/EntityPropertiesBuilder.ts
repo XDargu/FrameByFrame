@@ -330,6 +330,7 @@ export default class EntityPropertiesBuilder
     collapsedGroups: CollapsedGroupIDsTracker;
     starredGroups: string[];
     private propertyGroupsById: Map<string, PropertyTreeGroup>;
+    private areUIPoolsEnabled: boolean;
 
     private readonly contextMenuItems = [
         { text: "Copy value", icon: "fa-copy", callback: this.onCopyValue.bind(this) },
@@ -343,6 +344,16 @@ export default class EntityPropertiesBuilder
         this.collapsedGroups = new CollapsedGroupIDsTracker();
         this.starredGroups = [];
         this.propertyGroupsById = new Map<string, PropertyTreeGroup>();
+    }
+
+    setUIPoolsEnabled(areEnabled: boolean)
+    {
+        this.areUIPoolsEnabled = areEnabled;
+
+        for (let i=0; i<this.propertyGroups.length; ++i)
+        {
+            this.propertyGroups[i].propertyTreeController.setUIPoolsEnabled(areEnabled);
+        }
     }
 
     buildSinglePropertyTreeBlock(
@@ -415,6 +426,8 @@ export default class EntityPropertiesBuilder
                     isEntityInFrame: this.callbacks.isEntityInFrame
                 }
             );
+
+            propertyTreeController.setUIPoolsEnabled(this.areUIPoolsEnabled);
             
             let newPropertyGroup = { 
                 title: propertyTree.title,
@@ -430,8 +443,12 @@ export default class EntityPropertiesBuilder
         {
             let storedGroup = this.propertyGroupsById.get(name + nameIndex);
 
+            storedGroup.propertyTreeController.clear();
+            storedGroup.propertyTree.clear();
+
             for (let i=0; i<propsToAdd.length; ++i)
             {
+                // TODO: Use pools of items for the properties
                 storedGroup.propertyTreeController.addToPropertyTree(storedGroup.propertyTree.root, propsToAdd[i]);
             }
 
