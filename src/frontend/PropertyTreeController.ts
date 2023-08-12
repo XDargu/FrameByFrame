@@ -91,7 +91,6 @@ namespace UI
                 {
                     // TODO: Either check type here, or validate incomming data so this is always valid data
                     return (Math.round(value*100)/100).toString();
-                    //return (+value.toFixed(2)).toString();
                 }
             case TypeSystem.EPrimitiveType.String:
                 {
@@ -281,6 +280,233 @@ export class PropertyTreeController {
         this.wrapperPools.names.freeAll();
     }
 
+    setPrimitiveInContent(content: Element, property: RECORDING.IProperty, type: TypeSystem.IType)
+    {
+        let groupElement = content.querySelector(".property-group");
+        let index = 0;
+        for (const [layoutId, primitiveType] of Object.entries(type.layout))
+        {
+            const customTypeValue = property.value as RECORDING.IPropertyCustomType;
+            const value = customTypeValue[layoutId];
+            if (value != undefined) {
+                groupElement.children[index].textContent = UI.getPrimitiveTypeAsString(value, primitiveType);
+            }
+        }
+    }
+
+    setVec2(content: Element, value: RECORDING.IVec2)
+    {
+        let groupElement = content.querySelector(".property-group");
+        
+        groupElement.children[0].textContent = UI.getPrimitiveTypeAsString(value.x, TypeSystem.EPrimitiveType.Number);
+        groupElement.children[1].textContent = UI.getPrimitiveTypeAsString(value.y, TypeSystem.EPrimitiveType.Number);
+    }
+
+    setVec3(content: Element, value: RECORDING.IVec3)
+    {
+        let groupElement = content.querySelector(".property-group");
+        
+        groupElement.children[0].textContent = UI.getPrimitiveTypeAsString(value.x, TypeSystem.EPrimitiveType.Number);
+        groupElement.children[1].textContent = UI.getPrimitiveTypeAsString(value.y, TypeSystem.EPrimitiveType.Number);
+        groupElement.children[2].textContent = UI.getPrimitiveTypeAsString(value.z, TypeSystem.EPrimitiveType.Number);
+    }
+
+    setColor(content: Element, value: RECORDING.IColor)
+    {
+        let groupElement = content.querySelector(".property-group");
+        
+        groupElement.children[0].textContent = UI.getPrimitiveTypeAsString(value.r, TypeSystem.EPrimitiveType.Number);
+        groupElement.children[1].textContent = UI.getPrimitiveTypeAsString(value.g, TypeSystem.EPrimitiveType.Number);
+        groupElement.children[2].textContent = UI.getPrimitiveTypeAsString(value.b, TypeSystem.EPrimitiveType.Number);
+        groupElement.children[3].textContent = UI.getPrimitiveTypeAsString(value.a, TypeSystem.EPrimitiveType.Number);
+    }
+
+    setNumber(content: Element, value: number)
+    {
+        let groupElement = content.querySelector(".property-group");
+        
+        groupElement.children[0].textContent = UI.getPrimitiveTypeAsString(value, TypeSystem.EPrimitiveType.Number);
+    }
+
+    setInPropertyTree(parent: HTMLElement, properties: RECORDING.IProperty[])
+    {
+        let parentList = parent.querySelector("ul");
+
+        for (let i=0; i<properties.length; ++i)
+        {
+            const property = properties[i];
+            const isShape = RECORDING.isPropertyShape(property);
+
+            let listItem = parentList.children[i] as HTMLElement;
+
+            this.propertyTree.setValueOfItem(listItem, property.id.toString())
+
+            // Much faster than calling getWrapperOfItem, which queries
+            let itemWrapper = listItem.children[0] as HTMLElement;
+            let content = itemWrapper.querySelector(".basico-tree-item-content") as HTMLElement;
+
+            if (property.name != null)
+            {
+                let nameElement = content.querySelector(".property-name");
+                if (nameElement)
+                    nameElement.textContent = property.name;
+                else
+                    content.textContent = property.name;
+            }
+
+            if (property.type == TypeSystem.CorePropertyTypes.Group)
+            {
+                const propertyGroup = property as RECORDING.IPropertyGroup;
+
+                this.setInPropertyTree(listItem, propertyGroup.value);
+            }
+            else
+            {
+                const type = this.typeRegistry.findType(property.type);
+                if (type)
+                {
+                    this.setPrimitiveInContent(content, property, type);
+                }
+                else if (property.type == TypeSystem.CorePropertyTypes.Comment)
+                {
+                    let commentElement = itemWrapper.querySelector(".property-comment");
+                    commentElement.textContent = property.value as string;
+                }
+                else if (property.type == TypeSystem.CorePropertyTypes.EntityRef)
+                {
+                    // TODO: Not supported yet
+                }
+                else if (isShape)
+                {
+                    if (property.name.length > 0)
+                    {
+                        let childrenList = listItem.querySelector("ul");
+
+                        // Refresh ids
+                        for (let child of childrenList.children)
+                        {
+                            let childItem = child as HTMLElement;
+                            this.propertyTree.setValueOfItem(childItem, property.id.toString());
+                        }
+
+                        switch(property.type)
+                        {
+                            case TypeSystem.CorePropertyTypes.Sphere:
+                            {
+                                const sphere = property as RECORDING.IPropertySphere;
+
+                                this.setVec3(childrenList.children[0], sphere.position);
+                                this.setNumber(childrenList.children[1], sphere.radius);
+
+                                break;
+                            }
+                            case TypeSystem.CorePropertyTypes.Capsule:
+                            {
+                                const capsule = property as RECORDING.IPropertyCapsule;
+
+                                this.setVec3(childrenList.children[0], capsule.position);
+                                this.setVec3(childrenList.children[1], capsule.direction);
+                                this.setNumber(childrenList.children[2], capsule.radius);
+                                this.setNumber(childrenList.children[3], capsule.height);
+                                break;
+                            }
+                            case TypeSystem.CorePropertyTypes.AABB:
+                            {
+                                const aabb = property as RECORDING.IPropertyAABB;
+
+                                this.setVec3(childrenList.children[0], aabb.position);
+                                this.setVec3(childrenList.children[1], aabb.size);
+                                break;
+                            }
+                            case TypeSystem.CorePropertyTypes.OOBB:
+                            {
+                                const oobb = property as RECORDING.IPropertyOOBB;
+
+                                this.setVec3(childrenList.children[0], oobb.position);
+                                this.setVec3(childrenList.children[1], oobb.size);
+                                this.setVec3(childrenList.children[2], oobb.forward);
+                                this.setVec3(childrenList.children[3], oobb.up);
+                                break;
+                            }
+                            case TypeSystem.CorePropertyTypes.Plane:
+                            {
+                                const plane = property as RECORDING.IPropertyPlane;
+
+                                this.setVec3(childrenList.children[0], plane.position);
+                                this.setVec3(childrenList.children[1], plane.normal);
+                                this.setVec3(childrenList.children[2], plane.up);
+                                this.setNumber(childrenList.children[3], plane.width);
+                                this.setNumber(childrenList.children[4], plane.length);
+                                break;
+                            }
+                            case TypeSystem.CorePropertyTypes.Line:
+                            {
+                                const line = property as RECORDING.IPropertyLine;
+
+                                this.setVec3(childrenList.children[0], line.origin);
+                                this.setVec3(childrenList.children[1], line.destination);
+                                break;
+                            }
+                            case TypeSystem.CorePropertyTypes.Arrow:
+                            {
+                                const arrow = property as RECORDING.IPropertyArrow;
+
+                                this.setVec3(childrenList.children[0], arrow.origin);
+                                this.setVec3(childrenList.children[1], arrow.destination);
+                                break;
+                            }
+                            case TypeSystem.CorePropertyTypes.Vector:
+                            {
+                                const vector = property as RECORDING.IPropertyVector;
+
+                                this.setVec3(childrenList.children[0], vector.vector);
+                                break;
+                            }
+                            case TypeSystem.CorePropertyTypes.Mesh:
+                            {
+                                // Ignore vertices/indices
+                                break;
+                            }
+                            case TypeSystem.CorePropertyTypes.Path:
+                            {
+                                const path = property as RECORDING.IPropertyPath;
+
+                                let idx = 0;
+                                for (const point of path.points)
+                                {
+                                    this.setVec3(childrenList.children[idx], point);
+                                    ++idx;
+                                }
+                                break;
+                            }
+                            case TypeSystem.CorePropertyTypes.Triangle:
+                            {
+                                const triangle = property as RECORDING.IPropertyTriangle;
+
+                                this.setVec3(childrenList.children[0], triangle.p1);
+                                this.setVec3(childrenList.children[1], triangle.p2);
+                                this.setVec3(childrenList.children[2], triangle.p3);
+                                break;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    const primitiveType = TypeSystem.buildPrimitiveType(property.type);
+                    const value = primitiveType ? UI.getPrimitiveTypeAsString(property.value, primitiveType) : property.value as string;
+                    
+                    // TODO: Not supported yet
+
+                    if (primitiveType == undefined)
+                    {
+                        Console.log(LogLevel.Error, LogChannel.Default, `Unknown property type: ${property.type} in property ${property.name}`);
+                    }
+                }
+            }
+        }
+    }
+
     addToPropertyTree(parent: HTMLElement, property: RECORDING.IProperty)
     {
         const treeItemOptions : TREE.ITreeItemOptions = {
@@ -295,9 +521,6 @@ export class PropertyTreeController {
                 onItemMouseOut: this.onPropertyMouseLeave.bind(this),
             }
         };
-
-        const isHidden = property.flags != undefined && ((property.flags & RECORDING.EPropertyFlags.Hidden) != 0);
-        if (isHidden) return;
 
         if (property.type == TypeSystem.CorePropertyTypes.Group) {
             

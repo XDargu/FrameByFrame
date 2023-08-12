@@ -7,6 +7,29 @@ import { IContextMenuItem, addContextMenu, removeContextMenu } from './ContextMe
 
 namespace UI
 {
+    export enum TreeFlags
+    {
+        None = 1 << 0,
+        IgnoreChildren = 1 << 1,
+        HasStar = 1 << 2,
+        AlwaysAdd = 1 << 3,
+        UsePools = 1 << 4
+    }
+
+    export function insertAt(parent: HTMLElement, child: HTMLElement, index: number)
+    {
+        if (index >= parent.children.length) {
+            parent.appendChild(child)
+        } else {
+            parent.insertBefore(child, parent.children[index])
+        }
+    }
+
+    export function hasFlag(flags: TreeFlags, test: TreeFlags)
+    {
+        return (flags & test) === test
+    }
+
     function makeTitle(name: string)
     {
         let titleElement = document.createElement("div");
@@ -229,6 +252,8 @@ interface PropertyTreeGroup
     title: HTMLElement;
     propertyTree: TreeControl;
     propertyTreeController: PropertyTreeController;
+    usedThisFrame: boolean;
+    props: RECORDING.IProperty[];
 }
 
 class PropertyPathCache<Data>
@@ -323,6 +348,67 @@ export interface EntityPropertiesBuilderCallbacks
     isEntityInFrame: IIsEntityInFrame;
 }
 
+function havePropGroupsSameLayout(props1: RECORDING.IProperty[], props2: RECORDING.IProperty[])
+{
+    if (props1.length != props2.length)
+        return false;
+
+    let amount = props1.length;
+    for (let i=0; i<amount; ++i)
+    {
+        let prop1 = props1[i];
+        let prop2 = props2[i];
+
+        if (prop1.type != prop2.type)
+            return false;
+        
+        if (prop1.flags != prop2.flags)
+            return false;
+
+        if (prop1.type == CorePropertyTypes.EntityRef)
+        {
+            return false;
+            let ref1 = prop1 as RECORDING.IEntityRef;
+            let ref2 = prop2 as RECORDING.IEntityRef;
+
+            if (ref1.id != ref2.id)
+                return false;
+
+            if (ref1.name != ref2.name)
+                return false;
+        }
+        
+        if (prop1.type == CorePropertyTypes.Group)
+        {
+            let group1 = prop1 as RECORDING.IPropertyGroup;
+            let group2 = prop2 as RECORDING.IPropertyGroup;
+
+            if (!havePropGroupsSameLayout(group1.value, group2.value))
+                return false;
+        }
+
+        if (prop1.type == CorePropertyTypes.Path)
+        {
+            let path1 = prop1 as RECORDING.IPropertyPath;
+            let path2 = prop2 as RECORDING.IPropertyPath;
+
+            if (path1.points.length != path2.points.length)
+                return false;
+        }
+
+        if (RECORDING.isPropertyShape(prop1))
+        {
+            const emptyName1 = prop1.name.length == 0;
+            const emptyName2 = prop2.name.length == 0;
+
+            if (emptyName1 != emptyName2)
+                return;
+        }
+    }
+
+    return true;
+}
+
 export default class EntityPropertiesBuilder
 {
     private propertyGroups: PropertyTreeGroup[];
@@ -361,23 +447,27 @@ export default class EntityPropertiesBuilder
         propertyGroup: RECORDING.IPropertyGroup,
         name: string,
         nameIndex: number,
+        treeIndex: number,
         tag: string = null,
-        ignoreChildren: boolean = false,
-        shouldPrepend: boolean = false,
-        hasStar: boolean = false,
-        alwaysAdd: boolean = false)
+        flags: UI.TreeFlags = UI.TreeFlags.None)
     {
-        const propsToAdd = propertyGroup.value.filter((property) => {
+        const ignoreChildren = UI.hasFlag(flags, UI.TreeFlags.IgnoreChildren);
+        const hasStar = UI.hasFlag(flags, UI.TreeFlags.HasStar);
+        const alwaysAdd = UI.hasFlag(flags, UI.TreeFlags.AlwaysAdd);
+        const usePools = UI.hasFlag(flags, UI.TreeFlags.UsePools);
+
+        let propsToAdd = propertyGroup.value.filter((property) => {
             const shouldAdd = !ignoreChildren || ignoreChildren && property.type != CorePropertyTypes.Group;
             return shouldAdd;
         });
 
         const shouldAdd = propsToAdd.length > 0 || alwaysAdd;
-        if (!shouldAdd) return;
+        if (!shouldAdd) return false;
 
-        // TODO: Replace with two maps
-        let storedGroup = this.propertyGroupsById.get(name + nameIndex);
+        // Further filtering
+        propsToAdd = propertyGroup.value.filter((property) => { return !RECORDING.isPropertyHidden(property); });
 
+        // Starring
         const isStarred = this.starredGroups.includes(name);
         const onStarredCallback = (name: string, starred: boolean) => {
             if (starred) {
@@ -389,11 +479,12 @@ export default class EntityPropertiesBuilder
             this.callbacks.onGroupStarred(name, starred);
         };
 
+        // TODO: Replace with two maps, otherwise there might be name collision
+        const storedGroupID = name + "#%#%" + nameIndex;
+        let storedGroup = this.propertyGroupsById.get(storedGroupID);
+
         if (storedGroup)
         {
-            // For now, clear and re-build tree
-            storedGroup.propertyTree.clear();
-
             UI.updatePropertyTreeTitle(
                 storedGroup.title,
                 name,
@@ -429,44 +520,68 @@ export default class EntityPropertiesBuilder
 
             propertyTreeController.setUIPoolsEnabled(this.areUIPoolsEnabled);
             
-            let newPropertyGroup = { 
+            let newPropertyGroup : PropertyTreeGroup = { 
                 title: propertyTree.title,
                 propertyTree: propertyTree.tree,
-                propertyTreeController: propertyTreeController
+                propertyTreeController: propertyTreeController,
+                usedThisFrame: false,
+                props: [],
             };
     
             this.propertyGroups.push(newPropertyGroup);
-            this.propertyGroupsById.set(name + nameIndex, newPropertyGroup);
+            this.propertyGroupsById.set(storedGroupID, newPropertyGroup);
         }
         
         // Fill group now that is stored
         {
-            let storedGroup = this.propertyGroupsById.get(name + nameIndex);
+            let storedGroup = this.propertyGroupsById.get(storedGroupID);
+            storedGroup.usedThisFrame = true;
 
-            storedGroup.propertyTreeController.clear();
-            storedGroup.propertyTree.clear();
+            if (!usePools)
+                this.propertyGroupsById.clear();
 
-            for (let i=0; i<propsToAdd.length; ++i)
+            const sameLayout = havePropGroupsSameLayout(propsToAdd, storedGroup.props);
+            storedGroup.props = propsToAdd;
+
+            if (sameLayout && usePools)
             {
-                // TODO: Use pools of items for the properties
-                storedGroup.propertyTreeController.addToPropertyTree(storedGroup.propertyTree.root, propsToAdd[i]);
-            }
-
-            // Add to parent
-            if (shouldPrepend)
-            {
-                treeParent.prepend(storedGroup.title, storedGroup.propertyTree.root);
+                storedGroup.propertyTreeController.setInPropertyTree(storedGroup.propertyTree.root, propsToAdd);
             }
             else
             {
-                treeParent.append(storedGroup.title, storedGroup.propertyTree.root);
+                storedGroup.propertyTreeController.clear();
+                storedGroup.propertyTree.clear();
+
+                for (let i=0; i<propsToAdd.length; ++i)
+                {
+                    storedGroup.propertyTreeController.addToPropertyTree(storedGroup.propertyTree.root, propsToAdd[i]);
+                }
+            }
+
+            // Check if it is on the correct index
+            // Indices are doubled, since we always add title + propertyTree
+            let titleIndex = treeIndex * 2;
+            let propertyTreeIndex = titleIndex + 1;
+
+            const isInCorrectIndex = treeParent.childElementCount > propertyTreeIndex &&
+                treeParent.children[titleIndex] === storedGroup.title &&
+                treeParent.children[propertyTreeIndex] === storedGroup.propertyTree.root;
+
+            if (!isInCorrectIndex)
+            {
+                UI.insertAt(treeParent, storedGroup.title, titleIndex);
+                UI.insertAt(treeParent, storedGroup.propertyTree.root, propertyTreeIndex);
             }
         }
+
+        return true;
     }
 
-    buildPropertiesPropertyTrees(propertyTrees: HTMLElement, properties: RECORDING.IProperty[])
+    buildPropertiesPropertyTrees(propertyTrees: HTMLElement, properties: RECORDING.IProperty[], shouldUsePools: boolean)
     {
         let groupsWithName = new Map<string, number>();
+        let treeIndex = 1;
+        const extraFlags = shouldUsePools ? UI.TreeFlags.UsePools : UI.TreeFlags.None;
 
         for (let i=0; i<properties.length; ++i)
         {
@@ -477,13 +592,17 @@ export default class EntityPropertiesBuilder
                 if (currentGroup.name == "special")
                 {
                     const name = "Basic Information";
-                    this.buildSinglePropertyTreeBlock(propertyTrees, currentGroup, name, increaseNameId(groupsWithName, name), null, false, true);
+                    const flags = UI.TreeFlags.None | extraFlags;
+
+                    this.buildSinglePropertyTreeBlock(propertyTrees, currentGroup, name, increaseNameId(groupsWithName, name), 0, null, flags);
                 }
                 else
                 {
                     const name = "Uncategorized";
+                    const flags = UI.TreeFlags.IgnoreChildren | extraFlags;
 
-                    this.buildSinglePropertyTreeBlock(propertyTrees, currentGroup, name, increaseNameId(groupsWithName, name), null, true);
+                    if (this.buildSinglePropertyTreeBlock(propertyTrees, currentGroup, name, increaseNameId(groupsWithName, name), treeIndex, null, flags))
+                        ++treeIndex
                     
                     let indices = [];
                     for (let j=0; j<currentGroup.value.length; ++j)
@@ -495,14 +614,16 @@ export default class EntityPropertiesBuilder
                     }
 
                     // Sort indices based on the names
-
                     for (let j=0; j<currentGroup.value.length; ++j)
                     {
                         let groupData = currentGroup.value[indices[j]];
                         if (groupData.type == CorePropertyTypes.Group)
                         {
                             const childGroup = groupData as RECORDING.IPropertyGroup;
-                            this.buildSinglePropertyTreeBlock(propertyTrees, childGroup, childGroup.name, increaseNameId(groupsWithName, childGroup.name), null, false, false, true);
+                            const flags = UI.TreeFlags.HasStar | extraFlags;
+
+                            if (this.buildSinglePropertyTreeBlock(propertyTrees, childGroup, childGroup.name, increaseNameId(groupsWithName, childGroup.name), treeIndex, null, flags))
+                                ++treeIndex;
                         }
                     }
                 }
@@ -510,31 +631,47 @@ export default class EntityPropertiesBuilder
         }
     }
 
-    buildEventsPropertyTree(eventTree: HTMLElement, events: RECORDING.IEvent[])
+    buildEventsPropertyTree(eventTree: HTMLElement, events: RECORDING.IEvent[], shouldUsePools: boolean)
     {
+        const extraFlags = shouldUsePools ? UI.TreeFlags.UsePools : UI.TreeFlags.None;
+
         let groupsWithName = new Map<string, number>();
         for (let i=0; i<events.length; ++i)
         {
             const propertyGroup = events[i].properties;
             const name = events[i].name;
+            const flags = UI.TreeFlags.AlwaysAdd | extraFlags;
 
-            this.buildSinglePropertyTreeBlock(eventTree, propertyGroup, name, increaseNameId(groupsWithName, name), events[i].tag, false, false, false, true);
+            this.buildSinglePropertyTreeBlock(eventTree, propertyGroup, name, increaseNameId(groupsWithName, name), i, events[i].tag, flags);
         }
+
+        // TODO: Clear pending trees
     }
 
-    buildPropertyTree(entity: RECORDING.IEntity)
+    buildPropertyTree(entity: RECORDING.IEntity, shouldUsePools: boolean)
     {
         // TODO: Instead of destroying everything, reuse/pool the already existing ones!
         let propertyTree = document.getElementById('properties');
         let eventTree = document.getElementById('events');
 
-        propertyTree.innerHTML = "";
-        eventTree.innerHTML = "";
+        for (let group of this.propertyGroups)
+        {
+            group.usedThisFrame = false;
+        }
 
         if (entity)
         {
-            this.buildPropertiesPropertyTrees(propertyTree, entity.properties);
-            this.buildEventsPropertyTree(eventTree, entity.events);
+            this.buildPropertiesPropertyTrees(propertyTree, entity.properties, shouldUsePools);
+            this.buildEventsPropertyTree(eventTree, entity.events, shouldUsePools);
+        }
+
+        for (let group of this.propertyGroups)
+        {
+            if (!group.usedThisFrame)
+            {
+                group.title.remove();
+                group.propertyTree.root.remove();
+            }
         }
     }
 

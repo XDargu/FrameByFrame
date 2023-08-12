@@ -38,6 +38,18 @@ export function isPropertyShape(property: IProperty)
 		property.type == Type.Triangle;
 }
 
+export function isPropertyHidden(property: IProperty)
+{
+	const isHidden = property.flags != undefined && ((property.flags & EPropertyFlags.Hidden) != 0);
+	if (isHidden)
+		return true;
+
+	if (isPropertyShape(property) && property.name.length == 0)
+		return true;
+
+	return false;
+}
+
 export interface IVec2 {
 	x: number;
 	y: number;

@@ -210,6 +210,7 @@ export class TreeControl {
     buildItem(content : HTMLElement[], options: ITreeItemOptions)
     {
         let item = UI.buildItem(this);
+        UI.setItem(item, content, options, this);
         return item.listItem;
     }
 
@@ -269,6 +270,10 @@ export class TreeControl {
             currentItem = this.getItemParent(currentItem)
             console.log(currentItem);
         }
+    }
+
+    setValueOfItem(listItem : HTMLElement, value: string) {
+        return listItem.setAttribute('data-tree-value', value);
     }
 
     getValueOfItem(listItem : HTMLElement) {

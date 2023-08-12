@@ -857,7 +857,8 @@ export default class Renderer {
     buildPropertyTree()
     {
         const selectedEntity = this.selectedEntityId != null ? this.frameData.entities[this.selectedEntityId] : null;
-        this.entityPropsBuilder.buildPropertyTree(selectedEntity);
+        const shouldUsePools = this.settings ? this.settings.uiPoolsEnabled : false;
+        this.entityPropsBuilder.buildPropertyTree(selectedEntity, shouldUsePools);
     }
 
     updateFrameDataEvents(frameData: RECORDING.IFrameData, frameIdx: number)
@@ -1067,6 +1068,7 @@ export default class Renderer {
     // Property tree callbacks
     onPropertyHover(propertyId: number)
     {
+        console.log("Hovering over: " + propertyId);
         this.sceneController.showProperty(propertyId);
 
         const pos = this.sceneController.getCanvasPositionOfProperty(propertyId);
