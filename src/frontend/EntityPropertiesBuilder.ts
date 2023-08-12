@@ -560,20 +560,26 @@ export default class EntityPropertiesBuilder
     private onGoToShape(item: HTMLElement)
     {
         const treeElement = item.closest("li[data-tree-value]");
-        const propertyId = treeElement.getAttribute('data-tree-value');
-        if (propertyId != null)
+        if (treeElement)
         {
-            this.callbacks.onGoToShapePos(Number.parseInt(propertyId));
+            const propertyId = treeElement.getAttribute('data-tree-value');
+            if (propertyId != null)
+            {
+                this.callbacks.onGoToShapePos(Number.parseInt(propertyId));
+            }
         }
     }
 
     private isPropertyVisible(item: HTMLElement)
     {
         const treeElement = item.closest("li[data-tree-value]");
-        const propertyId = treeElement.getAttribute('data-tree-value');
-        if (propertyId != null)
+        if (treeElement)
         {
-            return this.callbacks.isPropertyVisible(Number.parseInt(propertyId));
+            const propertyId = treeElement.getAttribute('data-tree-value');
+            if (propertyId != null)
+            {
+                return this.callbacks.isPropertyVisible(Number.parseInt(propertyId));
+            }
         }
 
         return false;
