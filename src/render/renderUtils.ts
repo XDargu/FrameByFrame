@@ -34,6 +34,16 @@ export function getBoundingBoxOfEntity(entity: IEntityRenderData) : BABYLON.Boun
     return new BABYLON.BoundingInfo(min, max);
 }
 
+export function getRadiusOfShape(mesh: BABYLON.Mesh) : number
+{
+    if (mesh.name !== "line" && mesh.name !== "arrow")
+    {
+        return Math.max(2, mesh.getBoundingInfo().diagonalLength * 0.6);
+    }
+
+    return 6;
+}
+
 export function createColor4Rec(color: RECORDING.IColor) : BABYLON.Color4
 {
     return new BABYLON.Color4(color.r, color.g, color.b, color.a);

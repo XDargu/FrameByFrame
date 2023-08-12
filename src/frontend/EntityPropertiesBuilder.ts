@@ -312,6 +312,15 @@ export interface IGroupStarredCallback
     (name: string, starred: boolean) : void
 }
 
+export interface IGoToShapeCallback {
+    (entityId: number) : void;
+}
+
+export interface IIsPropertyVisible
+{
+    (propertyId: number) : boolean
+}
+
 export interface EntityPropertiesBuilderCallbacks
 {
     onPropertyHover: IPropertyHoverCallback;
@@ -320,7 +329,9 @@ export interface EntityPropertiesBuilderCallbacks
     onCreateFilterFromEvent: ICreateFilterFromEventCallback;
     onGroupStarred: IGroupStarredCallback;
     onGoToEntity: IGoToEntityCallback;
+    onGoToShapePos: IGoToShapeCallback;
     isEntityInFrame: IIsEntityInFrame;
+    isPropertyVisible: IIsPropertyVisible;
 }
 
 export default class EntityPropertiesBuilder
@@ -331,9 +342,10 @@ export default class EntityPropertiesBuilder
     starredGroups: string[];
     private propertyGroupsById: Map<string, PropertyTreeGroup>;
 
-    private readonly contextMenuItems = [
+    private readonly contextMenuItems: IContextMenuItem[] = [
         { text: "Copy value", icon: "fa-copy", callback: this.onCopyValue.bind(this) },
         { text: "Create filter from property", icon: "fa-plus-square", callback: this.onAddFilter.bind(this) },
+        { text: "Go to Shape", icon: "fa-arrow-circle-right", callback: this.onGoToShape.bind(this), condition: this.isPropertyVisible.bind(this) },
     ];
 
     constructor(callbacks: EntityPropertiesBuilderCallbacks)
@@ -543,6 +555,28 @@ export default class EntityPropertiesBuilder
         {
             this.callbacks.onCreateFilterFromProperty(Number.parseInt(propertyId));
         }
+    }
+
+    private onGoToShape(item: HTMLElement)
+    {
+        const treeElement = item.closest("li[data-tree-value]");
+        const propertyId = treeElement.getAttribute('data-tree-value');
+        if (propertyId != null)
+        {
+            this.callbacks.onGoToShapePos(Number.parseInt(propertyId));
+        }
+    }
+
+    private isPropertyVisible(item: HTMLElement)
+    {
+        const treeElement = item.closest("li[data-tree-value]");
+        const propertyId = treeElement.getAttribute('data-tree-value');
+        if (propertyId != null)
+        {
+            return this.callbacks.isPropertyVisible(Number.parseInt(propertyId));
+        }
+
+        return false;
     }
 
     private onCopyValue(item: HTMLElement)

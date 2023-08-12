@@ -332,6 +332,33 @@ export default class SceneController
         }
     }
 
+    moveCameraToShape(propertyId: number)
+    {
+        const entityId = this.sceneEntityData.getEntityIdOfProperty(propertyId);
+        if (entityId != null)
+        {
+            const entityData = this.sceneEntityData.getEntityById(entityId);
+            let property = entityData.properties.get(propertyId);
+            if (property != null)
+            {
+                this.cameraControl.moveCameraToPosition(property.mesh.position, RenderUtils.getRadiusOfShape(property.mesh));
+            }
+        }
+    }
+
+    isPropertyVisible(propertyId: number)
+    {
+        const entityId = this.sceneEntityData.getEntityIdOfProperty(propertyId);
+        if (entityId != null)
+        {
+            const entityData = this.sceneEntityData.getEntityById(entityId);
+            let property = entityData.properties.get(propertyId);
+            return property != null;
+        }
+
+        return false;
+    }
+
     showProperty(propertyId: number)
     {
         this.propertySelection.showProperty(propertyId);
