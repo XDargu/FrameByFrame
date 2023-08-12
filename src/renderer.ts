@@ -531,6 +531,7 @@ export default class Renderer {
         this.sceneController.setOutlineColors(settings.selectionColor, settings.hoverColor);
         this.sceneController.setShapeHoverSettings(settings.highlightShapesOnHover, settings.shapeHoverColor);
         this.sceneController.setOutlineWidth(settings.selectionOutlineWidth);
+        this.sceneController.setLightIntensity(settings.lightIntensity);
 
         this.shapeArrowController.setColor(settings.shapeHoverColor);
         this.shapeArrowController.setEnabled(settings.showShapeLineOnHover);

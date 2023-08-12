@@ -30,6 +30,7 @@ export interface ISettings
     showRenderDebug: boolean,
     /* Graphics */
     antialiasingSamples: number,
+    lightIntensity: number,
 }
 
 export function createDefaultSettings() : ISettings
@@ -65,5 +66,6 @@ export function createDefaultSettings() : ISettings
         showRenderDebug: false,
         /* Graphics */
         antialiasingSamples: 4,
+        lightIntensity: 0.7,
     };
 }

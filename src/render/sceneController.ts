@@ -77,6 +77,8 @@ export default class SceneController
 
     private labels: TextLabels;
 
+    private light: BABYLON.HemisphericLight;
+
     // Gizmos
     private axisGizmo: AxisGizmo;
     private grid: SceneGrid;
@@ -112,7 +114,6 @@ export default class SceneController
         this.outline = new SceneOutline(this._scene, this.cameraControl.getCamera(), selectionColor01, hoverColor01, outlineWidth);
 
         this.labels = new TextLabels(this._scene);
-
 
         engine.runRenderLoop(() => {
             this._scene.render();
@@ -161,10 +162,12 @@ export default class SceneController
         });
 
         // This creates a light, aiming 0,1,0 - to the sky (non-mesh)
-        const light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
+        this.light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
+
+	    this.light.groundColor = new BABYLON.Color3(0.27, 0.18, 0.05);
 
         // Default intensity is 1. Let's dim the light a small amount
-        light.intensity = 0.7;
+        this.light.intensity = 0.8;
 
         this.grid = new SceneGrid(scene);
     }
@@ -388,6 +391,11 @@ export default class SceneController
     stopFollowEntity()
     {
         this.cameraControl.stopFollowEntity();
+    }
+
+    setLightIntensity(intensity: number)
+    {
+        this.light.intensity = intensity;
     }
 
     setAntiAliasingSamples(samples: number)
