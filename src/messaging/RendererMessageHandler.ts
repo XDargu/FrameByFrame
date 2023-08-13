@@ -90,6 +90,19 @@ export function initMessageHandling(renderer: Renderer)
                 renderer.openModal(arg.data as string);
                 break;
             }
+            case Messaging.MessageType.ImportFiltersResult:
+            {
+                const result = arg.data as string;
+                if (result)
+                {
+                    renderer.loadFilters(result);
+                }
+                else
+                {
+                    renderer.closeModal();
+                }
+                break;
+            }
         }
     });
 }

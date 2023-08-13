@@ -8,6 +8,25 @@ describe('Filters', () => {
     const frames = 50;
     var data: Recording.NaiveRecordedData;
 
+    let areResultsEqual = function(result1: Filters.FilteredResult, result2: Filters.FilteredResult) {
+        return result1.entityId == result2.entityId &&
+            result1.frameIdx == result2.frameIdx &&
+            result1.name == result2.name;
+    };
+
+    let areResultArraysEqual = function(results1: Filters.FilteredResult[], results2: Filters.FilteredResult[]) {
+        if (results1.length != results2.length)
+            return false;
+
+        for (let i=0; i<results1.length; ++i)
+        {
+            if (!areResultsEqual(results1[i], results2[i]))
+                return false;
+        }
+
+        return true;
+    };
+
     beforeEach(function() {
         data = new Recording.NaiveRecordedData();
         // Test data creates 1 event per entity per frame
@@ -202,6 +221,25 @@ describe('Filters', () => {
             const result = eventFilter.filter(data);
             expect(result.length).to.equal(0);
         });
+
+        it('Finds the same data after exporting and importing', () => {
+
+            let property: Filters.MemberFilter = {
+                name: "Test number",
+                type: Filters.MemberFilterType.Number, 
+                mode: Filters.FilterMode.Less,
+                value: entities * 0.5
+            };
+            let eventFilter = new Filters.EventFilter("", "", [property]);
+            const result = eventFilter.filter(data);
+
+            const exportedFilter = eventFilter.export();
+            let importedFilter = new Filters.EventFilter("", "", []);
+            importedFilter.import(exportedFilter);
+            const resultImported = importedFilter.filter(data);
+
+            expect(areResultArraysEqual(result, resultImported)).to.be.true;
+        });
     });
 
     describe('Property Filters', () => {
@@ -239,6 +277,19 @@ describe('Filters', () => {
             let propertyFilter = new Filters.PropertyFilter("Basic Information", []);
             const result = propertyFilter.filter(data);
             expect(result.length).to.equal(frames * entities);
+        });
+
+        it('Finds the same data after exporting and importing', () => {
+
+            let propertyFilter = new Filters.PropertyFilter("Basic Information", []);
+            const result = propertyFilter.filter(data);
+
+            const exportedFilter = propertyFilter.export();
+            let importedFilter = new Filters.PropertyFilter("", []);
+            importedFilter.import(exportedFilter);
+            const resultImported = importedFilter.filter(data);
+            
+            expect(areResultArraysEqual(result, resultImported)).to.be.true;
         });
     });
 });

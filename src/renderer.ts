@@ -24,7 +24,7 @@ import { createDefaultSettings, ISettings } from "./files/Settings";
 import { SettingsList } from "./frontend/SettingsList";
 import { RecordingInfoList } from "./frontend/RecordingInfoList";
 import { EntityTree } from "./frontend/EntityTree";
-import FiltersList, { FilterId } from "./frontend/FiltersList";
+import FiltersList, { ExportedFilters, FilterId } from "./frontend/FiltersList";
 import * as Utils from "./utils/utils";
 import FilterTickers from "./frontend/FilterTickers";
 import EntityPropertiesBuilder from "./frontend/EntityPropertiesBuilder";
@@ -362,7 +362,9 @@ export default class Renderer {
                 onFilterChanged: this.onFilterChanged.bind(this),
                 onFilterCreated: this.onFilterAdded.bind(this),
                 onFilterRemoved: this.onFilterRemoved.bind(this),
-                onFilterNameChanged: this.onFilterNameChanged.bind(this)
+                onFilterNameChanged: this.onFilterNameChanged.bind(this),
+                onImportFilters: this.onImportFilters.bind(this),
+                onExportFilters: this.onExportFilters.bind(this)
             }
         );
 
@@ -619,6 +621,22 @@ export default class Renderer {
         });
 
         return true;
+    }
+
+    async loadFilters(data: string)
+    {
+        this.openModal("Importing filters");
+        try {
+            const filters = JSON.parse(data) as ExportedFilters;
+            this.filterList.importFilters(filters);
+
+            this.closeModal();
+        }
+        catch (error)
+        {
+            Console.log(LogLevel.Error, LogChannel.Files, "Error importing filters: " + error.message);
+            this.closeModal();
+        }
     }
 
     async loadCompressedData(data: string)
@@ -1277,6 +1295,18 @@ export default class Renderer {
         this.timeoutFilter = setTimeout(() => {
             this.updateTimelineEvents();
         }, 500);
+    }
+
+    onImportFilters()
+    {
+        ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.RequestImportFilters, ""));
+    }
+
+    onExportFilters()
+    {
+        const exportedFilters = this.filterList.exportFilters();
+        const exportedFilterData = JSON.stringify(exportedFilters);
+        ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.RequestExportFilters, exportedFilterData));
     }
 
     onCameraMoved(pos: RECORDING.IVec3, up: RECORDING.IVec3, forward: RECORDING.IVec3)

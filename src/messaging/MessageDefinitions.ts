@@ -17,7 +17,10 @@ export enum MessageType { // TODO: Maybe rename these to make clear the directio
     SettingsChanged,
     SaveSettings,
     LongOperationOngoing,
-    OpenInExplorer
+    OpenInExplorer,
+    RequestExportFilters,
+    RequestImportFilters,
+    ImportFiltersResult
 }
 
 export interface IClearResultData

@@ -149,7 +149,54 @@ export default class FileManager
         this.loadSettings();
     }
 
-    openFile(callback: IOpenFileCallback, acceptedCallback: IFileAcceptedCallback)
+    doesFileExist(path: string)
+    {
+        return fs.existsSync(path);
+    }
+
+    async getSaveLocation(defaultName: string, extension: string, description: string, callback: ((path: string) => void))
+    {
+        const options = {
+            defaultPath: `${app.getPath('documents')}/${defaultName}.${extension}`,
+            filters: [
+                { name: description, extensions: [extension] },
+            ]
+        }
+
+        dialog.showSaveDialog(null, options, (path: string) => {
+            if (path === undefined){
+                console.log("You didn't save the file");
+                return;
+            }
+
+            callback(path);
+        });
+    }
+
+    async loadRecordingFile(path: string, callback: IOpenFileCallback)
+    {
+        const data = await fs.promises.readFile(path, 'utf8')
+        this.addPathToHistory(path);
+        callback(path, data);
+    }
+
+    async loadFiltersFile(path: string, callback: IOpenFileCallback)
+    {
+        const data = await fs.promises.readFile(path, 'utf8')
+        callback(path, data);
+    }
+
+    async getRecordingSaveLocation(defaultName: string, callback: ((path: string) => void))
+    {
+        this.getSaveLocation(defaultName, "fbf", "Recordings", callback);
+    }
+
+    async getFiltersSaveLocation(defaultName: string, callback: ((path: string) => void))
+    {
+        this.getSaveLocation(defaultName, "fbff", "Filters", callback);
+    }
+
+    openRecordingsFile(callback: IOpenFileCallback, acceptedCallback: IFileAcceptedCallback)
     {
         const options = {
             filters: [
@@ -164,62 +211,30 @@ export default class FileManager
             }
 
             acceptedCallback(paths[0]);
-
-            this.loadFile(paths[0], callback);
+            this.loadRecordingFile(paths[0], callback);
         });
     }
 
-    doesFileExist(path: string)
-    {
-        return fs.existsSync(path);
-    }
-
-    async loadFile(path: string, callback: IOpenFileCallback)
-    {
-        const data = await fs.promises.readFile(path, 'utf8')
-        this.addPathToHistory(path);
-        callback(path, data);
-    }
-
-    async getSaveLocation(defaultName: string, callback: ((path: string) => void))
+    openFiltersFile(callback: IOpenFileCallback, acceptedCallback: IFileAcceptedCallback)
     {
         const options = {
-            defaultPath: `${app.getPath('documents')}/${defaultName}.fbf`,
             filters: [
-                { name: 'Recordings', extensions: ['fbf'] },
+                { name: 'Filters', extensions: ['fbff'] },
             ]
-        }
+        };
 
-        dialog.showSaveDialog(null, options, (path: string) => {
-            if (path === undefined){
-                console.log("You didn't save the file");
+        dialog.showOpenDialog(null, options, (paths: string[]) => {
+            if (paths === undefined || paths.length == 0){
+                console.log("You didn't open a file");
                 return;
             }
 
-            callback(path);
+            acceptedCallback(paths[0]);
+            this.loadFiltersFile(paths[0], callback);
         });
     }
 
-    saveFile(defaultName: string, content: string)
-    {
-        const options = {
-            defaultPath: `${app.getPath('documents')}/${defaultName}.fbf`,
-            filters: [
-                { name: 'Recordings', extensions: ['fbf'] },
-            ]
-        }
-
-        dialog.showSaveDialog(null, options, (path: string) => {
-            if (path === undefined){
-                console.log("You didn't save the file");
-                return;
-            }
-
-            this.saveToFile(path, content);
-        });
-    }
-
-    saveToFile(path: string, content: string)
+    saveRecordingToFile(path: string, content: string)
     {
         fs.writeFile(path, content, (err) => {
             if(err){
@@ -227,6 +242,17 @@ export default class FileManager
             }
 
             this.addPathToHistory(path);
+            console.log("The file has been succesfully saved");
+        });
+    }
+
+    saveFiltersToFile(path: string, content: string)
+    {
+        fs.writeFile(path, content, (err) => {
+            if(err){
+                console.log("An error ocurred creating the file "+ err.message)
+            }
+
             console.log("The file has been succesfully saved");
         });
     }
