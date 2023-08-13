@@ -105,3 +105,15 @@ In the case of a vector with 3 components, you can write the name of the propert
 If you don't specify a component, the vector will filter all components, any component matching the value will pass the filter.
 
 ![Frame by Frame Filter Vector Component](/FrameByFrame/assets/images/screenshots/FilterVectorComponent.png)
+
+## Importing and exporting filters
+
+It is possible to export your current filters, as well as import any previously exported ones.
+
+To export your current filters, click on the *Export Filters* button. This will open a dialog that will let you choose the location to save your filters. The extensions of stored filters is **.fbff**.
+
+![Exporting filters in Frame by Frame](/FrameByFrame/assets/images/screenshots/FilterExport.png)
+
+To import filters, click on the *Import Filters* button. This will open a dialog that lets you choose which filters to import. Select the filters and confirm the dialog, and you should see the new filters showing up in the filters window.
+
+![Importing filters in Frame by Frame](/FrameByFrame/assets/images/screenshots/FilterImport.png)

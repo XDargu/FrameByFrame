@@ -100,6 +100,20 @@ You can control what is visible in the viewer by toggling [layers](#layers).
 
 ![Frame by Frame Viewer](/FrameByFrame/assets/images/screenshots/Viewer.png)
 
+When hovering over a shape of a selected entity, the shape will be highlighted, and its name will be displayed on screen. This can be disabled on the settings.
+
+![Hovering over a Shape in the Viewer](/FrameByFrame/assets/images/screenshots/ShapeHover.png)
+
+When hovering on a shape in the [entity data](#entity-data), a helper line will link its 3D location on the viewer with the property in the UI. The line is meant to help you easily locate the position of a shape on the viewer. This can be disabled on the settings.
+**Note:** This only works if the shape is currently being rendered on screen. The shape might not appear due to your current active [layers](#layers).
+
+![Hovering over a Shape in the Property Tree](/FrameByFrame/assets/images/screenshots/ShapeLine.png)
+
+In case you need to quickly go to the 3D location of a shape, you can also right click on the property, and select *Go to Shape* in the contextm menu. This will move the camera to the position of the shape.
+**Note:** This only works if the shape is currently being rendered on screen. The shape might not appear due to your current active [layers](#layers).
+
+![Going to a Shape in the Property Tree](/FrameByFrame/assets/images/screenshots/GoToShapeContextMenu.png)
+
 ## Entity List
 
 In the side bar, the first tab contains the entity list and the layers.

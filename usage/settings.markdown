@@ -30,14 +30,20 @@ parent: Using Frame by Frame
  - **Open entity list on selection**: If enabled, the [Entity Data Panel](/FrameByFrame/user-interface#entity-data) will automatically be opened after selecting an entity.
  - **Follow selected entity**: If enabled, the camera will follow the selected entity on the viewer when it moves. Useful when there is an entity that moves quickly and you need to focus on it. For example, an AI charater or a player running around.
  - **Show all layers on start**: If enabled, all layers will be set automatically to `all` when opening a recording.
+ - **Highlight shapes on hover**: If enabled, it will highlight shapes of the currently selected entity when hovering over them, and display its name.
+ - **Show shapes line on hover**: If enabled, when hovering over a shape on the property tree, a line linking the property and its location in the viewer will be displayed. The line will only be there if the shape is currently being rendered.
  - **Background color**: Controls the background color of the viewer. Click on the button on the right to reset to the default value.
  - **Selection color**: Controls the color of the outline of a selected entity. Click on the button on the right to reset to the default value.
  - **Hover color**: Controls the color of the outline of a hovered entity. Click on the button on the right to reset to the default value.
+ - **Shape Hover Color**: Controls the color of the shape higlight effect. Click on the button on the right to reset to the default value.
   - **Outline width**: Controls the width of the outline of selected and hovered entities. Click on the button on the right to reset to the default value.
 
 ## Syncing
  - **Sync Visible Shapes**: If enabled, Frame by Frame will send the current rendered shapes back to the 3D application.
  - **Sync Camera Position**: If enabled, Frame by Frame will send the current camera position back to the 3D application.
+
+## Timeline
+ - **Show event popup**: If enabled, it will display a popup when hovering on events of the timeline. The popup shows all events happening on that frame.
 
 ## Grid
  - **Grid height**: Determines at which height should the grid be rendered. By default is zero, but your game might have levels with a different height, and the grid might appear very far away.
@@ -45,6 +51,7 @@ parent: Using Frame by Frame
 
 ## Graphics
  - **Anti-aliasing samples**: How many samples to use in the anti-aliasign post-process. More will make the 3D shapes smoother, at the cost of performance.
+ - **Light intensity**: Intensity of the light of the viewer. Use values from 0 to 1 to get the best results.
 
 ## Exporting
  - **Exporting name format**: This defaines the format of the default name of a recording when exporting. When asking for saving a recording, this name will be used. You can use a couple of macros to adapt the format to your needs. The macros are:
