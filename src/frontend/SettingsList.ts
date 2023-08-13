@@ -394,6 +394,12 @@ export class SettingsList
         {
             let group = SettingsBuilder.createGroup("Graphics");
             SettingsBuilder.addNumberOptionsSetting(group, "Anti-aliasing samples", settings.antialiasingSamples, [1, 2, 4, 8, 16], (value) => {  settings.antialiasingSamples = value; this.onSettingsChanged(); });
+            SettingsBuilder.addNumberSetting(group,
+                "Light intensity",
+                "Changes how intense is the light on the 3D viewer. Range is 0-1",
+                defaultSettings.lightIntensity,
+                settings.lightIntensity,
+                (value) => {  settings.lightIntensity = Number.parseFloat(value); this.onSettingsChanged(); });
             this.settingsList.appendChild(group.fragment);
         }
 

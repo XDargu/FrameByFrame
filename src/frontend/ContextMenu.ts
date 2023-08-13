@@ -4,10 +4,15 @@ export interface IContextMenuCallback {
     (element: HTMLElement) : void
 }
 
+export interface IContextMenuCondition {
+    (element: HTMLElement) : boolean
+}
+
 export interface IContextMenuItem {
     text: string;
     icon?: string;
     callback: IContextMenuCallback;
+    condition?: IContextMenuCondition;
 }
 
 function createMenuItem(element: HTMLElement, item: IContextMenuItem)
@@ -40,7 +45,13 @@ function createContextMenu(posX:  number, posY: number, element: HTMLElement, it
     let list = document.createElement("ul");
     list.className = "menu";
 
-    const menuItems = items.map((item) => { return createMenuItem(element, item); })
+    let filteredItems = items.filter((item) => {
+        if (item.condition != undefined)
+            return item.condition(element);
+        return true;
+    });
+
+    const menuItems = filteredItems.map((item) => { return createMenuItem(element, item); })
     list.append(...menuItems);
 
     menu.append(list);
@@ -62,5 +73,10 @@ export function addContextMenu(element: HTMLElement, items: IContextMenuItem[])
 {
     element.oncontextmenu = (ev: MouseEvent) => {
         createContextMenu(ev.pageX, ev.pageY, ev.target as HTMLElement, items);
-    }; 
+    };
+}
+
+export function removeContextMenu(element: HTMLElement)
+{
+    element.oncontextmenu = null;
 }

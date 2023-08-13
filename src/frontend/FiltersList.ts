@@ -10,6 +10,18 @@ class FilterIdGenerator
     static nextId() { return ++this.lastId; }
 }
 
+export interface ExportedFilters
+{
+    filters: ExportedFilter[]
+}
+
+interface ExportedFilter
+{
+    name: string,
+    type: FilterType,
+    data: any
+}
+
 interface FilterData
 {
     name: string;
@@ -23,7 +35,12 @@ export interface IFilterCallback
     (id: FilterId, name: string, filter: Filter) : void
 }
 
-interface IFilterParamChanged
+export interface IFilterActionCallback
+{
+    () : void
+}
+
+export interface IFilterParamChanged
 {
     (id: FilterId, param: string) : void
 }
@@ -103,6 +120,8 @@ export interface FilterListCallbacks
     onFilterCreated: IFilterCallback;
     onFilterRemoved: IFilterRemoved;
     onFilterNameChanged: IFilterParamChanged;
+    onImportFilters: IFilterActionCallback;
+    onExportFilters: IFilterActionCallback;
 }
 
 namespace UI
@@ -525,6 +544,11 @@ export default class FiltersList
             const isNearBottom = window.innerHeight - this.addDropdown.getBoundingClientRect().bottom < 70;
             Utils.setClass(content, "bottom", isNearBottom);
         };
+
+        let importFilter = document.getElementById("import-filters-button");
+        let exportFilter = document.getElementById("export-filters-button");
+        importFilter.onclick = () => { this.callbacks.onImportFilters(); }
+        exportFilter.onclick = () => { this.callbacks.onExportFilters(); }
     }
 
     getFilters()
@@ -541,6 +565,58 @@ export default class FiltersList
         }
     }
 
+    exportFilters() : ExportedFilters
+    {
+        let exportedFilters : ExportedFilters = {
+            filters: []
+        };
+
+        for (let [id, filter] of this.filters)
+        {
+            const name = filter.name;
+            const filterData = filter.filter;
+            
+            let exportedFilter: ExportedFilter = {
+                name: name,
+                type: filterData.type,
+                data: filterData.export()
+            }
+
+            exportedFilters.filters.push(exportedFilter);
+        }
+
+        return exportedFilters;
+    }
+
+    importFilters(filters: ExportedFilters)
+    {
+        for (let importedFilter of filters.filters)
+        {
+            switch(importedFilter.type)
+            {
+                case FilterType.Event:
+                    {
+                        let filter = new EventFilter("", "", []);
+                        filter.import(importedFilter.data);
+                        this.addFilter(filter, importedFilter.name);
+                    }
+                    break;
+                case FilterType.Property:
+                    {
+                        let filter = new PropertyFilter("", []);
+                        filter.import(importedFilter.data);
+                        this.addFilter(filter, importedFilter.name);
+                    }
+                    break;
+                case FilterType.PropertyChanged:
+                    {
+                        // Not supported yet
+                    }
+                    break;
+            }
+        }
+    }
+
     addEventFilter()
     {
         this.addFilter(new EventFilter("", "", []));
@@ -551,10 +627,10 @@ export default class FiltersList
         this.addFilter(new PropertyFilter("", []));
     }
 
-    addFilter(filter: Filter)
+    addFilter(filter: Filter, name: string = null)
     {
         const filterId = FilterIdGenerator.nextId();
-        const filterName = "Filter " + filterId;
+        const filterName = name == null ? "Filter " + filterId : name;
 
         let filterElement = null;
         switch(filter.type)

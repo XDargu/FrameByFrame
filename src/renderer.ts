@@ -24,7 +24,7 @@ import { createDefaultSettings, ISettings } from "./files/Settings";
 import { SettingsList } from "./frontend/SettingsList";
 import { RecordingInfoList } from "./frontend/RecordingInfoList";
 import { EntityTree } from "./frontend/EntityTree";
-import FiltersList, { FilterId } from "./frontend/FiltersList";
+import FiltersList, { ExportedFilters, FilterId } from "./frontend/FiltersList";
 import * as Utils from "./utils/utils";
 import FilterTickers from "./frontend/FilterTickers";
 import EntityPropertiesBuilder from "./frontend/EntityPropertiesBuilder";
@@ -137,7 +137,9 @@ export default class Renderer {
                 // Note: twe need to convert to uniqueID here, because the ids are coming from the recording
                 // As an alternative, we could re-create the entityrefs when building the frame data
                 onGoToEntity: (id) => { this.selectEntity(Utils.toUniqueID(this.frameData.clientId, id)); },
-                isEntityInFrame: (id) => { return this.frameData?.entities[Utils.toUniqueID(this.frameData.clientId, id)] != undefined; }
+                onGoToShapePos: (id) => { this.moveCameraToShape(id); },
+                isEntityInFrame: (id) => { return this.frameData?.entities[Utils.toUniqueID(this.frameData.clientId, id)] != undefined; },
+                isPropertyVisible: (propId) => { return this.sceneController.isPropertyVisible(propId); }
             }
         );
 
@@ -360,7 +362,9 @@ export default class Renderer {
                 onFilterChanged: this.onFilterChanged.bind(this),
                 onFilterCreated: this.onFilterAdded.bind(this),
                 onFilterRemoved: this.onFilterRemoved.bind(this),
-                onFilterNameChanged: this.onFilterNameChanged.bind(this)
+                onFilterNameChanged: this.onFilterNameChanged.bind(this),
+                onImportFilters: this.onImportFilters.bind(this),
+                onExportFilters: this.onExportFilters.bind(this)
             }
         );
 
@@ -529,6 +533,7 @@ export default class Renderer {
         this.sceneController.setOutlineColors(settings.selectionColor, settings.hoverColor);
         this.sceneController.setShapeHoverSettings(settings.highlightShapesOnHover, settings.shapeHoverColor);
         this.sceneController.setOutlineWidth(settings.selectionOutlineWidth);
+        this.sceneController.setLightIntensity(settings.lightIntensity);
 
         this.shapeArrowController.setColor(settings.shapeHoverColor);
         this.shapeArrowController.setEnabled(settings.showShapeLineOnHover);
@@ -616,6 +621,22 @@ export default class Renderer {
         });
 
         return true;
+    }
+
+    async loadFilters(data: string)
+    {
+        this.openModal("Importing filters");
+        try {
+            const filters = JSON.parse(data) as ExportedFilters;
+            this.filterList.importFilters(filters);
+
+            this.closeModal();
+        }
+        catch (error)
+        {
+            Console.log(LogLevel.Error, LogChannel.Files, "Error importing filters: " + error.message);
+            this.closeModal();
+        }
     }
 
     async loadCompressedData(data: string)
@@ -796,8 +817,16 @@ export default class Renderer {
 
     moveCameraToSelection()
     {
-        this.logEntity(LogLevel.Verbose, LogChannel.Selection, `Moving camera to entity:`, this.frameData.frameId, this.selectedEntityId);
+        const uniqueId = Utils.toUniqueID(this.frameData.clientId, this.selectedEntityId);
+        this.logEntity(LogLevel.Verbose, LogChannel.Selection, `Moving camera to entity:`, this.frameData.frameId, uniqueId);
         this.sceneController.moveCameraToSelection();
+    }
+
+    moveCameraToShape(propertyId: number)
+    {
+        const uniqueId = Utils.toUniqueID(this.frameData.clientId, this.selectedEntityId);
+        this.logProperty(LogLevel.Verbose, LogChannel.Selection, `Moving camera to property:`, this.frameData.frameId, uniqueId, propertyId);
+        this.sceneController.moveCameraToShape(propertyId);
     }
 
     onEntityHovered(entityId: number)
@@ -830,7 +859,9 @@ export default class Renderer {
 
     onEntitySelectedOnScene(entityId: number, scrollIntoView: boolean)
     {
-        this.logEntity(LogLevel.Verbose, LogChannel.Selection, `Selected entity:`, this.frameData.frameId, entityId);
+        const uniqueId = Utils.toUniqueID(this.frameData.clientId, entityId);
+        this.logEntity(LogLevel.Verbose, LogChannel.Selection, `Selected entity:`, this.frameData.frameId, uniqueId);
+
         this.selectedEntityId = entityId;
         this.buildPropertyTree();
         if (this.settings.openEntityListOnSelection)
@@ -1115,7 +1146,9 @@ export default class Renderer {
 
     onTimelineEventClicked(entityId: string, frame: number)
     {
-        this.logEntity(LogLevel.Verbose, LogChannel.Timeline, "Event selected in timeline. ", frame, Number.parseInt(entityId));
+        const clientId = this.recordedData.buildFrameDataHeader(frame).clientId;
+        const uniqueId = Utils.toUniqueID(clientId, Number.parseInt(entityId));
+        this.logEntity(LogLevel.Verbose, LogChannel.Timeline, "Event selected in timeline. ", frame, uniqueId);
         this.applyFrame(frame);
         this.selectEntity(Number.parseInt(entityId));
     }
@@ -1264,6 +1297,18 @@ export default class Renderer {
         }, 500);
     }
 
+    onImportFilters()
+    {
+        ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.RequestImportFilters, ""));
+    }
+
+    onExportFilters()
+    {
+        const exportedFilters = this.filterList.exportFilters();
+        const exportedFilterData = JSON.stringify(exportedFilters);
+        ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.RequestExportFilters, exportedFilterData));
+    }
+
     onCameraMoved(pos: RECORDING.IVec3, up: RECORDING.IVec3, forward: RECORDING.IVec3)
     {
         // TODO: Optimize this by adding or removing the callback depending on the settings
@@ -1312,20 +1357,59 @@ export default class Renderer {
         Console.log(LogLevel.Error, LogChannel.Default, message);
     }
 
-    logEntity(level: LogLevel, channel: LogChannel, message: string, frameId: number, uniqueId: number)
+    buildEntityLogAction(frameId: number, uniqueId: number) : ILogAction
     {
-        Console.log(level, channel, `${message} `, {
-            text: `${this.findEntityName(uniqueId)} (id: ${Utils.getEntityIdUniqueId(uniqueId)}, clientId: ${Utils.getClientIdUniqueId(uniqueId)}) (frameID: ${frameId})`,
-            tooltip: `Go to frame ${frameId.toString()} and select entity ${this.findEntityName(uniqueId)}`,
+        const entityName = this.findEntityName(uniqueId);
+        const entityId = Utils.getEntityIdUniqueId(uniqueId);
+
+        return {
+            text: `${entityName} (id: ${entityId}, clientId: ${Utils.getClientIdUniqueId(uniqueId)}) (frameID: ${frameId})`,
+            tooltip: `Go to frame ${frameId.toString()} and select entity ${entityName}`,
             callback: () => {
                 const frame = this.findFrameById(frameId)
                 if (frame >= 0)
                 {
                     this.applyFrame(frame);
-                    this.selectEntity(uniqueId);
+                    this.selectEntity(entityId);
                 }
             }
-        });
+        };
+    }
+
+    buildPropertyLogAction(frameId: number, uniqueId: number, propertyId: number) : ILogAction
+    {
+        const entity = this.findEntityFromUniqueId(uniqueId);
+        const entityId = Utils.getEntityIdUniqueId(uniqueId);
+        const property = entity ? RECORDING.NaiveRecordedData.findPropertyIdInEntity(entity, propertyId) : null;
+        const propertyName = property ? property.name : "Unknown";
+
+        return {
+            text: `${propertyName} (id: ${propertyId})`,
+            tooltip: `Go to frame ${frameId.toString()} and view property ${propertyName}`,
+            callback: () => {
+                const frame = this.findFrameById(frameId)
+                if (frame >= 0)
+                {
+                    this.applyFrame(frame);
+                    this.selectEntity(entityId);
+                    this.moveCameraToShape(propertyId);
+                }
+            }
+        };
+    }
+
+    logEntity(level: LogLevel, channel: LogChannel, message: string, frameId: number, uniqueId: number)
+    {
+        Console.log(level, channel, `${message} `, this.buildEntityLogAction(frameId, uniqueId));
+    }
+
+    logProperty(level: LogLevel, channel: LogChannel, message: string, frameId: number, uniqueId: number, propertyId: number)
+    {
+        Console.log(level, channel,
+            `${message} `,
+            this.buildPropertyLogAction(frameId, uniqueId, propertyId),
+            " from entity ",
+            this.buildEntityLogAction(frameId, uniqueId));
     }
 
     logFrame(level: LogLevel, channel: LogChannel, message: string, frameId: number)
@@ -1361,10 +1445,15 @@ export default class Renderer {
     }
 
     // Utils
-    findEntityName(uniqueId: number) : string
+    findEntityFromUniqueId(uniqueId: number) : RECORDING.IEntity
     {
         const entityId = Utils.getEntityIdUniqueId(uniqueId);
-        const entity = this.frameData.entities[entityId];
+        return this.frameData.entities[entityId];
+    }
+
+    findEntityName(uniqueId: number) : string
+    {
+        const entity = this.findEntityFromUniqueId(uniqueId);
         if (entity)
         {
             return RECORDING.NaiveRecordedData.getEntityName(entity);

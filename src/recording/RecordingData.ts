@@ -492,6 +492,8 @@ export interface INaiveRecordedData extends IRecordedData {
 export class NaiveRecordedData implements INaiveRecordedData {
 	readonly version: number = 3;
 	readonly type: RecordingFileType = RecordingFileType.NaiveRecording;
+	static readonly UserProps = 0;
+	static readonly SpecialProps = 1;
 	frameData: IFrameData[];
 	layers: string[];
 	scenes: string[];
@@ -509,25 +511,30 @@ export class NaiveRecordedData implements INaiveRecordedData {
 	static getEntityName(entity: IEntity) : string
 	{
 		// Name is always part of the special groups
-		return (entity.properties[1] as IPropertyGroup).value[0].value as string;
+		return (entity.properties[NaiveRecordedData.SpecialProps] as IPropertyGroup).value[0].value as string;
 	}
 
 	static getEntityPosition(entity: IEntity) : IVec3
 	{
 		// Position is always part of the special groups
-		return (entity.properties[1] as IPropertyGroup).value[1].value as IVec3;
+		return (entity.properties[NaiveRecordedData.SpecialProps] as IPropertyGroup).value[1].value as IVec3;
+	}
+
+	static getEntityUserProperties(entity: IEntity) : IPropertyGroup
+	{
+		return (entity.properties[NaiveRecordedData.UserProps] as IPropertyGroup);
 	}
 
 	static getEntityUp(entity: IEntity) : IVec3
 	{
 		// Up vector is always part of the special groups
-		return (entity.properties[1] as IPropertyGroup).value[2].value as IVec3;
+		return (entity.properties[NaiveRecordedData.SpecialProps] as IPropertyGroup).value[2].value as IVec3;
 	}
 
 	static getEntityForward(entity: IEntity) : IVec3
 	{
 		// Forward vector is always part of the special groups
-		return (entity.properties[1] as IPropertyGroup).value[3].value as IVec3;
+		return (entity.properties[NaiveRecordedData.SpecialProps] as IPropertyGroup).value[3].value as IVec3;
 	}
 
 	loadFromData(dataJson: INaiveRecordedData)
@@ -623,20 +630,65 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		this.updateClientIDsOfFrame(frame);
 	}
 
-	static findPropertyIdInProperties(frameData: IFrameData, propertyId: number) : IProperty
+	static findPropertyIdInEntityProperties(entity: IEntity, propertyId: number) : IProperty
 	{
 		let result: IProperty = null;
-		for (let entityID in frameData.entities)
-		{
-			const entity = frameData.entities[entityID];
+		NaiveRecordedData.visitEntityProperties(entity, (property) => {
+			if (property.id == propertyId)
+			{
+				result = property;
+				return VisitorResult.Stop;
+			}
+		});
+		return result;
+	}
 
-			NaiveRecordedData.visitEntityProperties(entity, (property) => {
+	static findPropertyIdInEntityEvents(entity: IEntity, propertyId: number)
+	{
+		let resultProp: IProperty = null;
+		let resultEvent: IEvent = null;
+
+		NaiveRecordedData.visitEvents(entity.events, (event) => {
+			NaiveRecordedData.visitProperties([event.properties], (property) => {
 				if (property.id == propertyId)
 				{
-					result = property;
+					resultEvent = event;
+					resultProp = property;
 					return VisitorResult.Stop;
 				}
 			});
+		});
+
+		if (resultEvent != null) {
+			return { resultEvent, resultProp };
+		}
+
+		return null;
+	}
+
+	static findPropertyIdInEntity(entity: IEntity, propertyId: number) : IProperty
+	{
+		const resultProps = NaiveRecordedData.findPropertyIdInEntityProperties(entity, propertyId);
+		if (resultProps)
+		{
+			return resultProps;
+		}
+
+		const resultEvent = NaiveRecordedData.findPropertyIdInEntityEvents(entity, propertyId);
+		if (resultEvent)
+		{
+			return resultEvent.resultProp;
+		}
+
+		return null;
+	}
+
+	static findPropertyIdInProperties(frameData: IFrameData, propertyId: number) : IProperty
+	{
+		for (let entityID in frameData.entities)
+		{
+			const entity = frameData.entities[entityID];
+			const result = NaiveRecordedData.findPropertyIdInEntityProperties(entity, propertyId);
 
 			if (result != null) {
 				return result;
@@ -648,25 +700,13 @@ export class NaiveRecordedData implements INaiveRecordedData {
 
 	static findPropertyIdInEvents(frameData: IFrameData, propertyId: number)
 	{
-		let resultProp: IProperty = null;
-		let resultEvent: IEvent = null;
 		for (let entityID in frameData.entities)
 		{
 			const entity = frameData.entities[entityID];
-
-			NaiveRecordedData.visitEvents(entity.events, (event) => {
-				NaiveRecordedData.visitProperties([event.properties], (property) => {
-					if (property.id == propertyId)
-					{
-						resultEvent = event;
-						resultProp = property;
-						return VisitorResult.Stop;
-					}
-				});
-			});
+			const resultEvent = NaiveRecordedData.findPropertyIdInEntityEvents(entity, propertyId);
 
 			if (resultEvent != null) {
-				return { resultEvent, resultProp };
+				return resultEvent;
 			}
 		}
 

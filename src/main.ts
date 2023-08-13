@@ -107,7 +107,7 @@ function onSettingsChanged(settings: ISettings)
 
 function onOpenFileClicked()
 {
-  fileManager.openFile((pathName: string, content: string) => {
+  fileManager.openRecordingsFile((pathName: string, content: string) => {
     mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.FileOpened, pathName));
     mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
   }, (pathName: string) => {
@@ -123,7 +123,7 @@ function onExportFileClicked()
 function onOpenRecentFileClicked(pathName : string)
 {
   mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LongOperationOngoing, "Opening File"));
-  fileManager.loadFile(pathName, (pathName: string, content: string) => {
+  fileManager.loadRecordingFile(pathName, (pathName: string, content: string) => {
     mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.FileOpened, pathName));
     mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
   });
@@ -187,7 +187,7 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
       const request = arg.data as Messaging.IRequestSavePathData;
       const requestSave = (saveOnlySelection: boolean) =>
       {
-        fileManager.getSaveLocation(request.defaultName, (path: string) => {
+        fileManager.getRecordingSaveLocation(request.defaultName, (path: string) => {
           event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.SavePathResult, {
             path: path,
             saveOnlySelection: saveOnlySelection
@@ -226,7 +226,7 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
     case Messaging.MessageType.SaveToFile:
     {
       const fileSaveData = arg.data as Messaging.ISaveFileData;
-      fileManager.saveToFile(fileSaveData.path, fileSaveData.content)
+      fileManager.saveRecordingToFile(fileSaveData.path, fileSaveData.content)
       break;
     }
     case Messaging.MessageType.Load:
@@ -235,7 +235,7 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
       try {
         if (fileManager.doesFileExist(filePath))
         {
-          fileManager.loadFile(filePath, (pathName: string, content: string) => {
+          fileManager.loadRecordingFile(filePath, (pathName: string, content: string) => {
             event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.FileOpened, pathName));
             event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
           });
@@ -273,7 +273,7 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
     }
     case Messaging.MessageType.Open:
     {
-      fileManager.openFile((pathName: string, content: string) => {
+      fileManager.openRecordingsFile((pathName: string, content: string) => {
         event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.FileOpened, pathName));
         event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
       }, () => {
@@ -317,7 +317,24 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
     }
     case Messaging.MessageType.OpenInExplorer:
     {
-      shell.showItemInFolder(path.resolve(arg.data as string))
+      shell.showItemInFolder(path.resolve(arg.data as string));
+      break;
+    }
+    case Messaging.MessageType.RequestExportFilters:
+    {
+      fileManager.getFiltersSaveLocation("filters", (path: string) => {
+        fileManager.saveFiltersToFile(path, arg.data as string);
+      });
+      break;
+    }
+    case Messaging.MessageType.RequestImportFilters:
+    {
+      fileManager.openFiltersFile((path: string, content: string) => {
+        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.ImportFiltersResult, content));
+      }, () => {
+        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LongOperationOngoing, "Importing Filters"));
+      });
+      break;
     }
   }
 })

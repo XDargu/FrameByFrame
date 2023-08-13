@@ -557,6 +557,12 @@ export class Filter {
     public filter(recordedData: RECORDING.NaiveRecordedData): FilteredResult[] {
         return [];
     }
+
+    public export() : any {
+        return {};
+    }
+
+    public import(data: any) { }
 }
 
 // Filter specific event happening
@@ -570,6 +576,20 @@ export class EventFilter extends Filter {
         this.members = members;
         this.tag = tag;
         this.name = name;
+    }
+
+    public export() : any {
+        return {
+            name: this.name,
+            tag: this.tag,
+            members: this.members
+        };
+    }
+
+    public import(data: any) {
+        this.name = data.name;
+        this.tag = data.tag;
+        this.members = data.members;
     }
 
     public filter(recordedData: RECORDING.NaiveRecordedData): FilteredResult[] {
@@ -621,7 +641,17 @@ export class PropertyFilter extends Filter {
         this.members = members;
     }
 
+    public export() : any {
+        return {
+            group: this.group,
+            members: this.members
+        };
+    }
 
+    public import(data: any) {
+        this.group = data.group;
+        this.members = data.members;
+    }
 
     public filter(recordedData: RECORDING.NaiveRecordedData): FilteredResult[] {
         let results: FilteredResult[] = [];
