@@ -27,4 +27,4 @@ Your integration should create a Web Socket server, with the following configura
 
 Frame by Frame will connect to the Web Socket as a client. Your integration should send the list of available recording options, and start sending frame data.
 
-The format of the messages is documented in the [Data Format section](../data-format).
+The format of the messages is documented in the [Data Format section](../data-format/).
