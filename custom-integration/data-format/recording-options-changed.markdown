@@ -37,8 +37,8 @@ The Game/Engine should receive this message, and enable or disable that recordin
 The format of the data is a JSON with the following layout:
 ```js
 {
-    name: string,
-    enabled: boolean
+    "name": string,
+    "enabled": boolean
 }
 ```
 

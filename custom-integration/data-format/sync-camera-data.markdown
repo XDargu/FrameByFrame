@@ -37,9 +37,9 @@ The Game/Engine should receive this message, and set the camera position in the 
 The format of the data is a JSON with the following layout:
 ```js
 {
-    position: Vec3,
-    up: Vec3,
-    forward: Vec3
+    "position": Vec3,
+    "up": Vec3,
+    "forward": Vec3
 }
 ```
 

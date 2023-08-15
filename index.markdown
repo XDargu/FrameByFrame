@@ -36,9 +36,13 @@ Connect to any game or engine, Frame by Frame can be integrated with anything. I
 ### Installing Frame by Frame
 Download the latest release of Frame by Frame and install it.
 
-[Get Frame by Frame 0.5.0](https://github.com/XDargu/FrameByFrame/releases/tag/v0.5.0){: .btn .btn-primary .fs-3 .mb-4 .mb-md-0 .mr-2 }
+[Get Frame by Frame 0.5.0](https://github.com/XDargu/FrameByFrame/releases/tag/v0.5.0){: .btn .btn-purple } [Download Directly](https://github.com/XDargu/FrameByFrame/releases/download/v0.5.0/Frame.By.Frame.Setup.0.5.0.exe){: .btn }
 
 [Get older versions of Frame by Frame](https://github.com/XDargu/FrameByFrame/releases)
+
+If you want to see Frame by Frame in action straight away, you can download the example recording and open it:
+
+[Download example recording](/FrameByFrame/assets/files/ExampleRecording.fbf){: .btn .btn-purple .fs-3 }
 
 ### Using Frame by Frame with Unity
 Get the free Unity Plugin and learn how to use it [here](/FrameByFrame/unity/).

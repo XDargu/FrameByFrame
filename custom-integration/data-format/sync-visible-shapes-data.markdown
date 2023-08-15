@@ -37,8 +37,8 @@ The Game/Engine should receive this message, and render all the shapes, if shape
 The format of the data is a JSON with the following layout:
 ```js
 {
-    entities: RemoteEntity[],
-    coordinateSystem: Vec3,
+    "entities": RemoteEntity[],
+    "coordinateSystem": Vec3,
 }
 ```
 
@@ -50,10 +50,10 @@ The format of the data is a JSON with the following layout:
 The format of the **RemoteEntity** type is the following:
 ```js
 {
-    id: number,
-    name: string,
-    position: Vec3,
-    shapes: Property[],
+    "id": number,
+    "name": string,
+    "position": Vec3,
+    "shapes": Property[],
 }
 ```
 - `id`: Entity Id.

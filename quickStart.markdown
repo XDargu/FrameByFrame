@@ -27,6 +27,10 @@ description: "Learn how to quickly start using Frame by Frame"
 
 2. You can use the portable version or use the installer. *Note:* If you install it, the file extension .fbf will automatically be associated to Frame by Frame.
 
+3. If you want to see Frame by Frame in action straight away, you can download the example recording and open it:
+
+    [Download example recording](/FrameByFrame/assets/files/ExampleRecording.fbf){: .btn .btn-primary .fs-3 .mb-4 .mb-md-0 .mr-2 }
+
 # Prepare your game engine
 
 1. Download and install the plugin for [Unity](/FrameByFrame/unity/) or Unreal Engine

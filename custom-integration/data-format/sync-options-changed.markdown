@@ -37,8 +37,8 @@ The message is bi-directional. Frame by Frame can send it to the Game/Engine, an
 The format of a Frame by Frame message is a JSON with the following layout:
 ```js
 {
-    syncVisibleShapes: boolean,
-    syncCamera: boolean
+    "syncVisibleShapes": boolean,
+    "syncCamera": boolean
 }
 ```
 

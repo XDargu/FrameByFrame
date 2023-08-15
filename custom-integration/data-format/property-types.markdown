@@ -425,8 +425,8 @@ Example:
     "name": string,
     "type": "eref",
     "value": {
-        name: string,
-        id: number
+        "name": string,
+        "id": number
     },
     "flags": number
 }
