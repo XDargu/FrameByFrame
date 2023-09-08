@@ -29,7 +29,7 @@ The goal of Frame by Frame is to help developers and companies make debugging ea
 
 ## What game engines are supported?
 
-At the moment there is only official support for Unity. However, you can integrate Frame by Frame with any engine manually by following the documentation about [custom integrations](/FrameByFrame/custom-integrations/).
+At the moment there is only official support for Unity. However, you can integrate Frame by Frame with any engine manually by following the documentation about [custom integrations](/FrameByFrame/custom-integrations).
 
 ## Why use Frame by Frame?
 
@@ -47,11 +47,11 @@ Frame by Frame will record what happens in the game, and let you examine the rec
 
 The data is organized by frame, and within a frame it's split into entities. Each entity can have properties and events. The information is structured in a way that is familiar to us game devs.
 
-You can find more information in the [usage section](/FrameByFrame/usage/).
+You can find more information in the [usage section](/FrameByFrame/usage).
 
 ## Can I use Frame by Frame with my engine?
 
-Yes, visit the [custom integrations](/FrameByFrame/custom-integrations/) section to find out how to connect Frame by Frame to any engine.
+Yes, visit the [custom integrations](/FrameByFrame/custom-integrations) section to find out how to connect Frame by Frame to any engine.
 
 ## Can I use Frame by Frame with a free Unity license?
 
