@@ -703,7 +703,6 @@ export default class FiltersList
         let filterData = this.filters.get(id);
         filterData.name = filterName;
         this.callbacks.onFilterNameChanged(id, filterName);
-        this.onFilterChanged(id);
     }
 
     private onFilterRemoved(id: FilterId)
