@@ -457,39 +457,40 @@ export namespace Common {
         return false;
     }
 
-    export function filterProperty(property: RECORDING.IProperty, filters: MemberFilter[]): boolean {
+    export function filterProperty(property: RECORDING.IProperty, filters: MemberFilter[]): RECORDING.IProperty {
         const Type = CorePropertyTypes;
 
         switch (property.type) {
-            case Type.String: return filterPropertyString(property, filters);
-            case Type.Number: return filterPropertyNumber(property, filters);
-            case Type.Bool: return filterPropertyBoolean(property, filters);
-            case Type.EntityRef: return filterPropertyEntityRef(property, filters);
-            case Type.Quat: return filterPropertyQuat(property, filters);
+            case Type.String: return filterPropertyString(property, filters) ? property : null;
+            case Type.Number: return filterPropertyNumber(property, filters) ? property : null;
+            case Type.Bool: return filterPropertyBoolean(property, filters) ? property : null;
+            case Type.EntityRef: return filterPropertyEntityRef(property, filters) ? property : null;
+            case Type.Quat: return filterPropertyQuat(property, filters) ? property : null;
             case Type.Group: return filterPropertyGroup(property as RECORDING.IPropertyGroup, filters);
-            case Type.Sphere: return filterPropertySphere(property as RECORDING.IPropertySphere, filters);
-            case Type.Line: return filterPropertyLine(property as RECORDING.IPropertyLine, filters);
-            case Type.Arrow: return filterPropertyArrow(property as RECORDING.IPropertyArrow, filters);
-            case Type.Vector: return filterPropertyVector(property as RECORDING.IPropertyVector, filters);
-            case Type.Plane: return filterPropertyPlane(property as RECORDING.IPropertyPlane, filters);
-            case Type.AABB: return filterPropertyAABB(property as RECORDING.IPropertyAABB, filters);
-            case Type.OOBB: return filterPropertyOOBB(property as RECORDING.IPropertyOOBB, filters);
-            case Type.Capsule: return filterPropertyCapsule(property as RECORDING.IPropertyCapsule, filters);
-            case Type.Mesh: return filterPropertyMesh(property as RECORDING.IPropertyMesh, filters);
-            case Type.Vec2: return filterPropertyVec2(property, filters);
-            case Type.Vec3: return filterPropertyVec3(property, filters);
-            case Type.Triangle: return filterPropertyTriangle(property as RECORDING.IPropertyTriangle, filters);
-            case Type.Path: return filterPropertyPath(property as RECORDING.IPropertyPath, filters);
+            case Type.Sphere: return filterPropertySphere(property as RECORDING.IPropertySphere, filters) ? property : null;
+            case Type.Line: return filterPropertyLine(property as RECORDING.IPropertyLine, filters) ? property : null;
+            case Type.Arrow: return filterPropertyArrow(property as RECORDING.IPropertyArrow, filters) ? property : null;
+            case Type.Vector: return filterPropertyVector(property as RECORDING.IPropertyVector, filters) ? property : null;
+            case Type.Plane: return filterPropertyPlane(property as RECORDING.IPropertyPlane, filters) ? property : null;
+            case Type.AABB: return filterPropertyAABB(property as RECORDING.IPropertyAABB, filters) ? property : null;
+            case Type.OOBB: return filterPropertyOOBB(property as RECORDING.IPropertyOOBB, filters) ? property : null;
+            case Type.Capsule: return filterPropertyCapsule(property as RECORDING.IPropertyCapsule, filters) ? property : null;
+            case Type.Mesh: return filterPropertyMesh(property as RECORDING.IPropertyMesh, filters) ? property : null;
+            case Type.Vec2: return filterPropertyVec2(property, filters) ? property : null;
+            case Type.Vec3: return filterPropertyVec3(property, filters) ? property : null;
+            case Type.Triangle: return filterPropertyTriangle(property as RECORDING.IPropertyTriangle, filters) ? property : null;
+            case Type.Path: return filterPropertyPath(property as RECORDING.IPropertyPath, filters) ? property : null;
         }
 
-        return false;
+        return null;
     }
 
-    export function filterPropertyGroup(propertyGroup: RECORDING.IPropertyGroup, filters: MemberFilter[], visitChildGroups: boolean = true): boolean {
-        let found = false;
+    export function filterPropertyGroup(propertyGroup: RECORDING.IPropertyGroup, filters: MemberFilter[], visitChildGroups: boolean = true): RECORDING.IProperty {
+        let found = null;
         RECORDING.NaiveRecordedData.visitProperties(propertyGroup.value, (property: RECORDING.IProperty) => {
-            if (filterProperty(property, filters)) {
-                found = true;
+            const result = filterProperty(property, filters);
+            if (result) {
+                found = result;
                 return RECORDING.VisitorResult.Stop;
             }
         }, visitChildGroups);
@@ -515,35 +516,76 @@ export namespace Common {
         return false;
     }
 
-    export function filterEntityProperties(entity: RECORDING.IEntity, groupFilter: string, membersFilter: MemberFilter[]): boolean {
-        const properties = entity.properties[0] as RECORDING.IPropertyGroup;
-        const specialProperties = entity.properties[1] as RECORDING.IPropertyGroup;
+    export interface IFilerEntityPropertiesResult
+    {
+        property: RECORDING.IProperty;
+        category: string;
+        isCategory: boolean;
+    }
+
+    export function filterEntityProperties(entity: RECORDING.IEntity, groupFilter: string, membersFilter: MemberFilter[]): IFilerEntityPropertiesResult {
+        const properties = entity.properties[RECORDING.NaiveRecordedData.UserProps] as RECORDING.IPropertyGroup;
+        const specialProperties = entity.properties[RECORDING.NaiveRecordedData.SpecialProps] as RECORDING.IPropertyGroup;
 
         for (let i = 0; i < properties.value.length; ++i) {
             let group = properties.value[i];
             if (group.type == CorePropertyTypes.Group) {
-                if (filterEntityPropertyGroup(group as RECORDING.IPropertyGroup, group.name, groupFilter, membersFilter)) {
-                    return true;
+                const resultGroup = filterEntityPropertyGroup(group as RECORDING.IPropertyGroup, group.name, groupFilter, membersFilter);
+                if (resultGroup) {
+                    return {
+                        property: resultGroup,
+                        category: group.name,
+                        isCategory: resultGroup === group
+                    };
                 }
             }
         }
 
         // Filter properties as "Uncategorized", not recursively
-        if (filterEntityPropertyGroup(properties, "Uncategorized", groupFilter, membersFilter, false)) {
-            return true;
+        const resultUncategorized = filterEntityPropertyGroup(properties, "Uncategorized", groupFilter, membersFilter, false);
+        if (resultUncategorized) {
+            return {
+                property: resultUncategorized,
+                category: "Uncategorized",
+                isCategory: resultUncategorized === properties
+            };;
         }
 
-        return filterEntityPropertyGroup(specialProperties, "Basic Information", groupFilter, membersFilter);
+        const resultBasicInfo = filterEntityPropertyGroup(specialProperties, "Basic Information", groupFilter, membersFilter);
+        if (resultBasicInfo)
+        {
+            return {
+                property: resultBasicInfo,
+                category: "Basic Information",
+                isCategory: resultBasicInfo === specialProperties
+            };;
+        }
+
+        return null;
     }
 
-    export function filterEntityPropertyGroup(group: RECORDING.IPropertyGroup, groupName: string, groupFilter: string, members: MemberFilter[], visitChildGroups: boolean = true): boolean {
+    export function filterEntityPropertyGroup(group: RECORDING.IPropertyGroup, groupName: string, groupFilter: string, members: MemberFilter[], visitChildGroups: boolean = true): RECORDING.IProperty {
         if (filterTextOrEmpty(groupFilter, groupName.toLowerCase())) {
-            if (members.length == 0 || filterPropertyGroup(group, members, visitChildGroups)) {
-                return true;
+
+            let hasProps = false;
+            RECORDING.NaiveRecordedData.visitProperties(group.value, (property: RECORDING.IProperty) => {
+                if (property.type != CorePropertyTypes.Group) {
+                    hasProps = true;
+                    return RECORDING.VisitorResult.Stop;
+                }
+            }, false);
+
+            if (hasProps && members.length == 0) {
+                return group;
+            }
+            const result = filterPropertyGroup(group, members, visitChildGroups);
+            if (result)
+            {
+                return result;
             }
         }
 
-        return false;
+        return null;
     }
 }
 
@@ -675,17 +717,22 @@ export class PropertyFilter extends Filter {
             for (let entityID in frameData.entities) {
                 const entity = frameData.entities[entityID];
 
-                if (Common.filterEntityProperties(entity, groupFilter, [])) {
+                let resultMember = null;
+                const resultNoMembers = Common.filterEntityProperties(entity, groupFilter, []);
+                if (resultNoMembers) {
                     let allGood = true;
                     for (let i = 0; i < membersFilter.length; ++i) {
-                        if (!Common.filterEntityProperties(entity, groupFilter, [membersFilter[i]])) {
+                        resultMember = Common.filterEntityProperties(entity, groupFilter, [membersFilter[i]]);
+                        if (!resultMember) {
                             allGood = false;
                             break;
                         }
                     }
 
                     if (allGood) {
-                        results.push({ frameIdx: i, entityId: entity.id, name: "Filtered property" });
+                        const refProp = resultMember ? resultMember : resultNoMembers;
+                        const name = refProp.isCategory ? refProp.category : `${refProp.property.name} (${refProp.category})`;
+                        results.push({ frameIdx: i, entityId: entity.id, name: name });
                     }
                 }
             }
