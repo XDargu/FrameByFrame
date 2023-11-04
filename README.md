@@ -18,7 +18,7 @@ Learn more about it in the [documentation](https://xdargu.github.io/FrameByFrame
 
 ## How can I try Frame by Frame?
 
-You can visit the (quick start guide)[https://xdargu.github.io/FrameByFrame/quickStart/] in the documentation and download Frame by Frame and an example recording.
+You can visit the [quick start guide](https://xdargu.github.io/FrameByFrame/quickStart/) in the documentation and download Frame by Frame and an example recording.
 
 ## Sounds good, how can I help?
 
