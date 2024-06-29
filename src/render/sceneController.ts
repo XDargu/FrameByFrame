@@ -536,24 +536,44 @@ export default class SceneController
         if (property.type == CorePropertyTypes.Path)
         {
             const pathProperty = property as RECORDING.IPropertyPath;
-            if (pathProperty.points.length > 0)
+            if (pathProperty.points.length > 1)
             {
-                return RenderUtils.createVec3(pathProperty.points[0], this.coordSystem);
+                const origin = RenderUtils.createVec3(pathProperty.points[0], this.coordSystem);
+                const dest = RenderUtils.createVec3(pathProperty.points[1], this.coordSystem);
+                const midPoint = dest.subtract(origin).scale(0.5);
+
+                return origin.add(midPoint)
             }
         }
         if (property.type == CorePropertyTypes.Line)
         {
             const lineProperty = property as RECORDING.IPropertyLine;
-            return RenderUtils.createVec3(lineProperty.origin, this.coordSystem);
+
+            const origin = RenderUtils.createVec3(lineProperty.origin, this.coordSystem);
+            const dest = RenderUtils.createVec3(lineProperty.destination, this.coordSystem);
+            const midPoint = dest.subtract(origin).scale(0.5);
+
+            return origin.add(midPoint)
         }
         if (property.type == CorePropertyTypes.Arrow)
         {
             const arrowProperty = property as RECORDING.IPropertyArrow;
-            return RenderUtils.createVec3(arrowProperty.origin, this.coordSystem);
+
+            const origin = RenderUtils.createVec3(arrowProperty.origin, this.coordSystem);
+            const dest = RenderUtils.createVec3(arrowProperty.destination, this.coordSystem);
+            const midPoint = dest.subtract(origin).scale(0.5);
+
+            return origin.add(midPoint)
         }
         if (property.type == CorePropertyTypes.Vector)
         {
-            return entityMesh.getAbsolutePosition();
+            const vectorProperty = property as RECORDING.IPropertyVector;
+
+            const vector = RenderUtils.createVec3(vectorProperty.vector, this.coordSystem);
+            const origin = entityMesh.getAbsolutePosition();
+            const midPoint = vector.scale(0.5);
+
+            return origin.add(midPoint)
         }
 
         return propertyMesh.getAbsolutePosition();
