@@ -20,7 +20,8 @@ export enum MessageType { // TODO: Maybe rename these to make clear the directio
     OpenInExplorer,
     RequestExportFilters,
     RequestImportFilters,
-    ImportFiltersResult
+    ImportFiltersResult,
+    ModFileOpened,
 }
 
 export interface IClearResultData

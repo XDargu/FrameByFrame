@@ -180,7 +180,7 @@ export default class FileManager
         callback(path, data);
     }
 
-    async loadFiltersFile(path: string, callback: IOpenFileCallback)
+    async loadFile(path: string, callback: IOpenFileCallback)
     {
         const data = await fs.promises.readFile(path, 'utf8')
         callback(path, data);
@@ -230,7 +230,7 @@ export default class FileManager
             }
 
             acceptedCallback(paths[0]);
-            this.loadFiltersFile(paths[0], callback);
+            this.loadFile(paths[0], callback);
         });
     }
 
