@@ -887,7 +887,13 @@ export default class Renderer {
     buildPropertyTree()
     {
         const selectedEntity = this.selectedEntityId != null ? this.frameData.entities[this.selectedEntityId] : null;
-        this.entityPropsBuilder.buildPropertyTree(selectedEntity);
+        const globalData = 
+        {
+            elapsedTime: this.frameData.elapsedTime,
+            serverTime: this.frameData.serverTime
+        }
+        
+        this.entityPropsBuilder.buildPropertyTree(selectedEntity, globalData);
     }
 
     updateFrameDataEvents(frameData: RECORDING.IFrameData, frameIdx: number)
