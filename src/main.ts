@@ -90,6 +90,8 @@ function onRendererReady()
   {
     onOpenRecentFileClicked(parameters[0]);
   }
+
+  loadMods();
 }
 
 // File callbacks
@@ -127,6 +129,17 @@ function onOpenRecentFileClicked(pathName : string)
     mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.FileOpened, pathName));
     mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
   });
+}
+
+function loadMods()
+{
+  const modFile = app.getPath('userData') + "/mods/mod.js";
+  if (fileManager.doesFileExist(modFile))
+  {
+    fileManager.loadFile(modFile, (pathName: string, content: string) => {
+      mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.ModFileOpened, content));
+    });
+  }
 }
 
 // Message helpers

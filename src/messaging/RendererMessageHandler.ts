@@ -103,6 +103,15 @@ export function initMessageHandling(renderer: Renderer)
                 }
                 break;
             }
+            case Messaging.MessageType.ModFileOpened:
+            {
+                const result = arg.data as string;
+                if (result)
+                {
+                    renderer.loadMod(result);
+                }
+                break;
+            }
         }
     });
 }

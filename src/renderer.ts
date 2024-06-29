@@ -623,6 +623,12 @@ export default class Renderer {
         return true;
     }
 
+    loadMod(mod: string)
+    {
+        console.log("Running mod: " + mod);
+        eval(mod);
+    }
+
     async loadFilters(data: string)
     {
         this.openModal("Importing filters");
