@@ -700,8 +700,9 @@ export default class Renderer {
 
                     // Set client Id data
                     this.connectionsList.setConnectionName(id, frame.tag);
-
+                    
                     this.addFrameData(frame);
+                    this.removeOldFrames();
                     this.updateMetadata();
                     
                     break;
@@ -758,6 +759,22 @@ export default class Renderer {
         this.pendingEvents.pushPending(this.recordedData.getSize() - 1);
         this.pendingMarkers.pushPending(this.recordedData.getSize() - 1);
         this.unprocessedFiltersPending = true;
+    }
+
+    removeOldFrames()
+    {
+        if (this.settings.removeOldFrames)
+        {
+            const totalFrames = this.recordedData.getSize();
+            if (totalFrames > this.settings.removeOldFramesAmount)
+            {
+                const framesToRemove = totalFrames - this.settings.removeOldFramesAmount;
+                this.recordedData.frameData.splice(0, framesToRemove);
+
+                this.timeline.setLength(this.recordedData.getSize());
+                this.unprocessedFiltersPending = true;
+            }
+        }
     }
 
     getNextPropertyId() : string
