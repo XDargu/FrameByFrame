@@ -231,6 +231,12 @@ interface PropertyTreeGroup
     propertyTreeController: PropertyTreeController;
 }
 
+interface PropertyTreeGlobalData
+{
+    elapsedTime: number,
+    serverTime: number
+}
+
 class PropertyPathCache<Data>
 {
     cache: Map<string, Map<number, Data>>;
@@ -517,7 +523,34 @@ export default class EntityPropertiesBuilder
         }
     }
 
-    buildPropertyTree(entity: RECORDING.IEntity)
+    buildGlobalData(propertyTrees: HTMLElement, globalData: PropertyTreeGlobalData)
+    {
+        let groupsWithName = new Map<string, number>();
+
+        const globalDataGroup = {
+            type: CorePropertyTypes.Group,
+            name: "Global Data",
+            value: [
+                {
+                    type: CorePropertyTypes.Number,
+                    name: "Elapsed Time",
+                    value: globalData.elapsedTime,
+                    id: Number.MAX_SAFE_INTEGER - 2
+                },
+                {
+                    type: CorePropertyTypes.Number,
+                    name: "Server Time",
+                    value: globalData.serverTime,
+                    id: Number.MAX_SAFE_INTEGER - 3
+                }
+            ],
+            id: Number.MAX_SAFE_INTEGER - 1
+        };
+
+        this.buildSinglePropertyTreeBlock(propertyTrees, globalDataGroup, "Global Data", increaseNameId(groupsWithName, "Global Data"), null, false, true);
+    }
+
+    buildPropertyTree(entity: RECORDING.IEntity, globalData: PropertyTreeGlobalData)
     {
         // TODO: Instead of destroying everything, reuse/pool the already existing ones!
         let propertyTree = document.getElementById('properties');
@@ -531,6 +564,8 @@ export default class EntityPropertiesBuilder
             this.buildPropertiesPropertyTrees(propertyTree, entity.properties);
             this.buildEventsPropertyTree(eventTree, entity.events);
         }
+
+        this.buildGlobalData(propertyTree, globalData);
     }
 
     findItemWithValue(value: string)

@@ -428,6 +428,18 @@ You can use the following formatting options:
         }
 
         {
+            let group = SettingsBuilder.createGroup("Recording");
+            SettingsBuilder.addBooleanSetting(group, "Remove old frames", settings.removeOldFrames, (value) => {settings.removeOldFrames = value; this.onSettingsChanged(); })
+            SettingsBuilder.addNumberSetting(group,
+                "Frame removal threshold",
+                "Maximum number of frames to keep while recording. If a new frame is recorded, older frames will be discarded",
+                defaultSettings.removeOldFramesAmount,
+                settings.removeOldFramesAmount,
+                (value) => {  settings.removeOldFramesAmount = Math.max(1, Number.parseInt(value)); this.onSettingsChanged(); });
+            this.settingsList.appendChild(group.fragment);
+        }
+
+        {
             let group = SettingsBuilder.createGroup("Debug");
             SettingsBuilder.addBooleanSetting(group, "Show render debug info", settings.showRenderDebug, (value) => {settings.showRenderDebug = value; this.onSettingsChanged(); })
             this.settingsList.appendChild(group.fragment);

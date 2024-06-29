@@ -26,6 +26,9 @@ export interface ISettings
     gridSpacing: number,
     /* Export */
     exportNameFormat: string,
+    /* Recording */
+    removeOldFrames: boolean,
+    removeOldFramesAmount: number,
     /* Debug */
     showRenderDebug: boolean,
     /* Graphics */
@@ -62,6 +65,9 @@ export function createDefaultSettings() : ISettings
         gridSpacing: 1,
         /* Export */
         exportNameFormat: "recording_%Y-%M-%D_%h_%m_%s",
+        /* Recording */
+        removeOldFrames: false,
+        removeOldFramesAmount: 500,
         /* Debug */
         showRenderDebug: false,
         /* Graphics */
