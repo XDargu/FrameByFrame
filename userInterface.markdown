@@ -80,6 +80,8 @@ You can select part of the timeline by clicking and dragging on the selection ma
 
 By selecting only part of the timeline, you can control the portion of the recording that the [Playback Bar](#playback-bar) will use.
 
+You can also select part of the timeline by left clicking while pressing shift on the timeline, and dragging the mouse to the right.
+
 If you have part of the timeline selected and save the recording, a popup window will ask you if you prefer saving the entire recording or only the selection. That way it is possible to crop recordings that contain frames you don't need.
 
 ![Frame by Frame Save Dialog Popup when part of the Timeline is selected](/FrameByFrame/assets/images/screenshots/SaveDialogPopup.png)

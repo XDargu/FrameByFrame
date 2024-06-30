@@ -52,6 +52,7 @@ parent: Using Frame by Frame
 ## Graphics
  - **Anti-aliasing samples**: How many samples to use in the anti-aliasign post-process. More will make the 3D shapes smoother, at the cost of performance.
  - **Light intensity**: Intensity of the light of the viewer. Use values from 0 to 1 to get the best results.
+ - **Backface culling**: Controls if backface culling is enabled or not. Can be useful to disble it in order to view the "inside" of 3D shapes.
 
 ## Exporting
  - **Exporting name format**: This defaines the format of the default name of a recording when exporting. When asking for saving a recording, this name will be used. You can use a couple of macros to adapt the format to your needs. The macros are:
@@ -62,6 +63,10 @@ parent: Using Frame by Frame
     - %M: Month (MM)
     - %D: Day (DD)
     - %%: % (Escape character)
+
+## Recording
+ - **Remove old frames**: If enabled, old frames will automatically be removed when recording.
+ - **Frame remval threshold**: Controls how many frames to keep when automatically removing old frames.
 
 ## Debug
  - **Show render debug info**: Enable to display debug information on the viewer.
