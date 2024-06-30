@@ -400,6 +400,7 @@ export class SettingsList
                 defaultSettings.lightIntensity,
                 settings.lightIntensity,
                 (value) => {  settings.lightIntensity = Number.parseFloat(value); this.onSettingsChanged(); });
+            SettingsBuilder.addBooleanSetting(group, "Backface Culling", settings.backFaceCulling, (value) => {settings.backFaceCulling = value; this.onSettingsChanged(); })
             this.settingsList.appendChild(group.fragment);
         }
 

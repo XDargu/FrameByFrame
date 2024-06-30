@@ -5,11 +5,13 @@ export class MaterialPool
 {
     private pool: Map<string, BABYLON.StandardMaterial>;
     private scene: BABYLON.Scene;
+    private backFaceCullingEnabled: boolean;
 
     constructor(scene: BABYLON.Scene)
     {
         this.pool = new Map<string, BABYLON.StandardMaterial>();
         this.scene = scene;
+        this.backFaceCullingEnabled = false;
     }
 
     getMaterialByColor(color: RECORDING.IColor): BABYLON.StandardMaterial
@@ -35,10 +37,20 @@ export class MaterialPool
 
         let material = new BABYLON.StandardMaterial("cachedMaterial", this.scene);
         material.diffuseColor = new BABYLON.Color3(r, g, b);
+        material.backFaceCulling = this.backFaceCullingEnabled;
         material.alpha = a;
 
         this.pool.set(hash, material);
         return material;
+    }
+
+    setBackfaceCulling(active: boolean)
+    {
+        for (let [hash, material] of this.pool)
+        {
+            material.backFaceCulling = active;
+        }
+        this.backFaceCullingEnabled = active;
     }
 
     getPoolSize() : number
