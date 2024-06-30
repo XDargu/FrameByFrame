@@ -34,6 +34,7 @@ export interface ISettings
     /* Graphics */
     antialiasingSamples: number,
     lightIntensity: number,
+    backFaceCulling: boolean,
 }
 
 export function createDefaultSettings() : ISettings
@@ -73,5 +74,6 @@ export function createDefaultSettings() : ISettings
         /* Graphics */
         antialiasingSamples: 4,
         lightIntensity: 0.7,
+        backFaceCulling: true,
     };
 }

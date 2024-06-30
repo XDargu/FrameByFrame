@@ -403,6 +403,11 @@ export default class SceneController
         this.outline.setAntiAliasingSamples(samples);
     }
 
+    setBackfaceCulling(active: boolean)
+    {
+        this.pools.materialPool.setBackfaceCulling(active);
+    }
+
     setBackgroundColor(hexColor: string)
     {
         this._scene.clearColor = RenderUtils.createColor4(Utils.RgbToRgb01(Utils.hexToRgb(hexColor)));
