@@ -152,7 +152,7 @@ export default class Renderer {
 
         this.shapeArrowController = new ShapeLineController(
             (propertyId) => { return this.entityPropsBuilder.findItemWithValue(propertyId + "") as HTMLElement; },
-            (propertyId) => { return this.sceneController.getCanvasPositionOfProperty(propertyId); },
+            (propertyId, subIndex) => { return this.sceneController.getCanvasPositionOfProperty(propertyId, subIndex); },
             defaultSettings.shapeHoverColor
         );
 
@@ -1125,14 +1125,14 @@ export default class Renderer {
     }
 
     // Property tree callbacks
-    onPropertyHover(propertyId: number)
+    onPropertyHover(propertyId: number, subIndex: number)
     {
         this.sceneController.showProperty(propertyId);
 
-        const pos = this.sceneController.getCanvasPositionOfProperty(propertyId);
+        const pos = this.sceneController.getCanvasPositionOfProperty(propertyId, subIndex);
         if (pos)
         {
-            this.shapeArrowController.activate(propertyId);
+            this.shapeArrowController.activate(propertyId, subIndex);
         }
     }
 

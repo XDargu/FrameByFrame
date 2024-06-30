@@ -510,7 +510,7 @@ export default class SceneController
         return visibleShapes;
     }
 
-    getCanvasPositionOfProperty(propertyId: number) : RECORDING.IVec3
+    getCanvasPositionOfProperty(propertyId: number, subIndex: number) : RECORDING.IVec3
     {
         const entity = this.entitySelection.getSelectedEntity();
         if (entity)
@@ -519,7 +519,7 @@ export default class SceneController
             const property = entity.properties.get(propertyId);
             if (property)
             {
-                const propertyPos = this.getPositionOfPropertyMesh(property.property, property.mesh, entity.mesh);
+                const propertyPos = this.getPositionOfPropertyMesh(property.property, subIndex, property.mesh, entity.mesh);
 
                 const target_screen_pos = BABYLON.Vector3.Project(
                     propertyPos,
@@ -536,18 +536,20 @@ export default class SceneController
         }
     }
 
-    private getPositionOfPropertyMesh(property: RECORDING.IProperty, propertyMesh: BABYLON.Mesh, entityMesh: BABYLON.Mesh)
+    private getPositionOfPropertyMesh(property: RECORDING.IProperty, subIndex: number, propertyMesh: BABYLON.Mesh, entityMesh: BABYLON.Mesh)
     {
         if (property.type == CorePropertyTypes.Path)
         {
             const pathProperty = property as RECORDING.IPropertyPath;
-            if (pathProperty.points.length > 1)
+            if (subIndex >= 0 && pathProperty.points.length > subIndex)
             {
-                const origin = RenderUtils.createVec3(pathProperty.points[0], this.coordSystem);
-                const dest = RenderUtils.createVec3(pathProperty.points[1], this.coordSystem);
-                const midPoint = dest.subtract(origin).scale(0.5);
+                return RenderUtils.createVec3(pathProperty.points[subIndex], this.coordSystem);
+            }
 
-                return origin.add(midPoint)
+            // Select path as a whole
+            if (pathProperty.points.length > 0)
+            {
+                return RenderUtils.createVec3(pathProperty.points[0], this.coordSystem);
             }
         }
         if (property.type == CorePropertyTypes.Line)
@@ -558,6 +560,9 @@ export default class SceneController
             const dest = RenderUtils.createVec3(lineProperty.destination, this.coordSystem);
             const midPoint = dest.subtract(origin).scale(0.5);
 
+            if (subIndex == 0) { return origin; }
+            if (subIndex == 1) { return dest; }
+
             return origin.add(midPoint)
         }
         if (property.type == CorePropertyTypes.Arrow)
@@ -567,6 +572,9 @@ export default class SceneController
             const origin = RenderUtils.createVec3(arrowProperty.origin, this.coordSystem);
             const dest = RenderUtils.createVec3(arrowProperty.destination, this.coordSystem);
             const midPoint = dest.subtract(origin).scale(0.5);
+
+            if (subIndex == 0) { return origin; }
+            if (subIndex == 1) { return dest; }
 
             return origin.add(midPoint)
         }

@@ -13,7 +13,7 @@ export interface IIsEntityInFrame
 }
 
 export interface IPropertyHoverCallback {
-    (propertyId: number) : void;
+    (propertyId: number, subIndex: number) : void;
 }
 
 export interface ICreateFilterFromPropCallback {
@@ -364,7 +364,31 @@ export class PropertyTreeController {
         const propertyId = this.propertyTree.getValueOfItem(item);
         if (propertyId != null)
         {
-            this.callbacks.onPropertyHover(Number.parseInt(propertyId));
+            const propertyElement = this.propertyTree.getItemWithValue(propertyId);
+            let subIndex = -1;
+
+            if (item != propertyElement)
+            {
+                let current = item;
+                while (current.parentElement?.parentElement != propertyElement && current.parentElement != null)
+                {
+                    current = current.parentElement;
+                }
+
+                if (current.parentElement?.parentElement == propertyElement)
+                {
+                    for (let i=0; i<current.parentElement.children.length; ++i)
+                    {
+                        if (current.parentElement.children[i] == current)
+                        {
+                            subIndex = i;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            this.callbacks.onPropertyHover(Number.parseInt(propertyId), subIndex);
         }
     }
 
@@ -372,7 +396,7 @@ export class PropertyTreeController {
         const propertyId = this.propertyTree.getValueOfItem(item);
         if (propertyId != null)
         {
-            this.callbacks.onPropertyStopHovering(Number.parseInt(propertyId));
+            this.callbacks.onPropertyStopHovering(Number.parseInt(propertyId), -1);
         }
     }
 

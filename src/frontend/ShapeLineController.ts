@@ -6,13 +6,14 @@ export interface IGetPropertyItemCallback {
 }
 
 export interface IGetPropertyCanvasPosCallback {
-    (propertyId: number) : RECORDING.IVec3;
+    (propertyId: number, subIndex: number) : RECORDING.IVec3;
 }
 
 export default class ShapeLineController
 {
     private hoveredPropertyitem: HTMLElement = null;
     private hoveredPropertyId: number = 0;
+    private hoveredPropertySubIndex: number = -1;
     private isEnabled: boolean = true;
     private isActive: boolean = false;
     private getPropertyItem: IGetPropertyItemCallback;
@@ -46,7 +47,7 @@ export default class ShapeLineController
         this.isEnabled = enabled;
     }
 
-    activate(propertyId: number)
+    activate(propertyId: number, subIndex: number)
     {
         if (!this.isEnabled) return;
         
@@ -57,6 +58,7 @@ export default class ShapeLineController
         this.lineElement.classList.remove("disabled");
 
         this.hoveredPropertyId = propertyId;
+        this.hoveredPropertySubIndex = subIndex;
 
         this.updateShapeLine();
         window.requestAnimationFrame(this.updateShapeLine.bind(this));
@@ -92,7 +94,7 @@ export default class ShapeLineController
             return;
         }
 
-        const pos = this.getPropertyCanvasPos(this.hoveredPropertyId);
+        const pos = this.getPropertyCanvasPos(this.hoveredPropertyId, this.hoveredPropertySubIndex);
         if (!pos)
         {
             this.deactivate();
