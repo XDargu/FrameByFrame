@@ -432,8 +432,21 @@ class TimelineInputHandler {
         this.renderer.hoveredEvent = this.renderer.findEventAtPosition(event.offsetX, event.offsetY);
         this.renderer.hoveredLeftRange = this.renderer.isInRange(event.offsetX, event.offsetY, true);
         this.renderer.hoveredRightRange = this.renderer.isInRange(event.offsetX, event.offsetY, false);
+        const canvasPosition : number = event.offsetX;
 
-        if (event.button == 2)
+        if (event.shiftKey && event.button == 0)
+        {
+            // Set initial values
+            const targetInitFrame = Math.round(this.renderer.canvas2frame(canvasPosition));
+            const targetEndFrame = Math.round(this.renderer.canvas2frame(canvasPosition));
+
+            // Prevent overlapping
+            this.data.range.initFrame = Utils.clamp(targetInitFrame, 0, this.data.length - 1);
+            this.data.range.endFrame = Utils.clamp(targetEndFrame, this.data.range.initFrame + 1, this.data.length - 1);
+
+            this.inputOperation = InputOperation.MovingRightRange;
+        }
+        else if (event.button == 2)
         {
             this.inputOperation = InputOperation.MovingTimeline;
         }
