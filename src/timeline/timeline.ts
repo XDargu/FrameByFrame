@@ -48,6 +48,7 @@ enum InputOperation
     MovingTimeline,
     MovingLeftRange,
     MovingRightRange,
+    MovingAnyRange,
     PressingTimeline
 }
 
@@ -291,6 +292,7 @@ class TimelineInputHandler {
 
     // Input control
     private inputOperation: InputOperation;
+    private initFrameDrag: number;
 
     // Data
     private data: TimelineData;
@@ -306,9 +308,12 @@ class TimelineInputHandler {
 
     constructor(canvas: HTMLCanvasElement, renderer: TimelineRenderer, data: TimelineData, popup: EventPopup) {
 
-        canvas.addEventListener("mousemove", this.onMouseMove.bind(this));
+        
+        document.body.addEventListener("mousemove", this.onPageMouseMove.bind(this));
+        document.body.addEventListener("mouseup", this.onPageMouseUp.bind(this));
+        document.body.addEventListener("mouseleave", this.onPageMouseLeave.bind(this));
+
         canvas.addEventListener("mousedown", this.onMouseDown.bind(this));
-        canvas.addEventListener("mouseup", this.onMouseUp.bind(this));
         canvas.addEventListener("wheel", this.onMouseWheel.bind(this));
         canvas.addEventListener("mouseleave", this.onMouseLeave.bind(this));
         canvas.addEventListener("contextmenu", this.disableEvent);
@@ -327,19 +332,30 @@ class TimelineInputHandler {
         this.inputOperation = InputOperation.None;
     }
 
-    private onMouseUp(event : MouseEvent)
+    private pageToCanvas(x: number, y: number)
+    {
+        var rect = this.canvas.getBoundingClientRect();
+        var canvasX = x - rect.left; //x position within the element.
+        var canvasY = y- rect.top;  //y position within the element.
+
+        return { x: canvasX, y: canvasY };
+    }
+
+    private onPageMouseUp(event : MouseEvent)
     {
         this.inputOperation = InputOperation.None;
     }
 
-    private onMouseMove(event : MouseEvent)
+    private onPageMouseMove(event : MouseEvent)
     {
-        if (this.data.length == 0) { return; }
-        this.renderer.hoveredEvent = this.renderer.findEventAtPosition(event.offsetX, event.offsetY);
-        this.renderer.hoveredLeftRange = this.renderer.isInRange(event.offsetX, event.offsetY, true);
-        this.renderer.hoveredRightRange = this.renderer.isInRange(event.offsetX, event.offsetY, false);
+        const canvasPos = this.pageToCanvas(event.pageX, event.pageY);
 
-        const canvasPosition : number = event.offsetX;
+        if (this.data.length == 0) { return; }
+        this.renderer.hoveredEvent = this.renderer.findEventAtPosition(canvasPos.x, canvasPos.y);
+        this.renderer.hoveredLeftRange = this.renderer.isInRange(canvasPos.x, canvasPos.y, true);
+        this.renderer.hoveredRightRange = this.renderer.isInRange(canvasPos.x, canvasPos.y, false);
+
+        const canvasPosition : number = canvasPos.x;
         let targetFrame = null;
 
         switch(this.inputOperation)
@@ -349,38 +365,32 @@ class TimelineInputHandler {
                 break;
             case InputOperation.MovingRightRange:
                 {
-                    const prevEndFrame = this.data.range.endFrame;
                     const targetEndFrame = Math.round(this.renderer.canvas2frame(canvasPosition));
-                    // Prevent overlapping
-                    this.data.range.endFrame = Utils.clamp(targetEndFrame, this.data.range.initFrame + 1, this.data.length - 1);
-
-                    this.renderer.hoveredRightRange = true;
-                    if (this.data.currentFrame <= prevEndFrame && this.data.currentFrame > this.data.range.endFrame)
-                    {
-                        targetFrame = this.data.range.endFrame;
-                    }
-                    if (this.onRangeChanged)
-                    {
-                        this.onRangeChanged(this.data.range.initFrame, this.data.range.endFrame);
-                    }
+                    targetFrame = this.HandleMoveRightRange(targetEndFrame);
                     break;
                 }
             case InputOperation.MovingLeftRange:
                 {
-                    const prevInitFrame = this.data.range.initFrame;
                     const targetInitFrame = Math.round(this.renderer.canvas2frame(canvasPosition));
-                    // Prevent overlapping
-                    this.data.range.initFrame = Utils.clamp(targetInitFrame, 0, this.data.range.endFrame - 1);
-                    this.renderer.hoveredLeftRange = true;
+                    targetFrame = this.HandleMoveLeftRange(targetInitFrame);
+                    break;
+                }
+                case InputOperation.MovingAnyRange:
+                {
+                    const pivotFrame = this.initFrameDrag;
+                    const currentFrame = Math.round(this.renderer.canvas2frame(canvasPosition));
 
-                    if (this.data.currentFrame >= prevInitFrame && this.data.currentFrame < this.data.range.initFrame)
+                    if (currentFrame > pivotFrame)
                     {
-                        targetFrame = this.data.range.initFrame;
+                        this.data.range.initFrame = Utils.clamp(pivotFrame, 0, this.data.length - 1);
+                        this.HandleMoveRightRange(currentFrame);
                     }
-                    if (this.onRangeChanged)
+                    else if (currentFrame < pivotFrame)
                     {
-                        this.onRangeChanged(this.data.range.initFrame, this.data.range.endFrame);
+                        this.data.range.endFrame = Utils.clamp(pivotFrame, 0, this.data.length - 1);
+                        this.HandleMoveLeftRange(currentFrame);
                     }
+
                     break;
                 }
             case InputOperation.PressingTimeline:
@@ -419,9 +429,13 @@ class TimelineInputHandler {
         this.renderer.zoomInPosition(event.offsetX, event.deltaY);
     }
 
-    private onMouseLeave(event : MouseEvent)
+    private onPageMouseLeave(event : MouseEvent)
     {
         this.inputOperation = InputOperation.None;
+    }
+
+    private onMouseLeave(event : MouseEvent)
+    {
         this.popup.hide();
     }
 
@@ -436,15 +450,8 @@ class TimelineInputHandler {
 
         if (event.shiftKey && event.button == 0)
         {
-            // Set initial values
-            const targetInitFrame = Math.round(this.renderer.canvas2frame(canvasPosition));
-            const targetEndFrame = Math.round(this.renderer.canvas2frame(canvasPosition));
-
-            // Prevent overlapping
-            this.data.range.initFrame = Utils.clamp(targetInitFrame, 0, this.data.length - 1);
-            this.data.range.endFrame = Utils.clamp(targetEndFrame, this.data.range.initFrame + 1, this.data.length - 1);
-
-            this.inputOperation = InputOperation.MovingRightRange;
+            this.initFrameDrag = Math.round(this.renderer.canvas2frame(canvasPosition));
+            this.inputOperation = InputOperation.MovingAnyRange;
         }
         else if (event.button == 2)
         {
@@ -478,6 +485,48 @@ class TimelineInputHandler {
                 }
             }
         }
+    }
+
+    private HandleMoveRightRange(targetEndFrame: number)
+    {
+        let targetFrame = null;
+
+        const prevEndFrame = this.data.range.endFrame;
+        // Prevent overlapping
+        this.data.range.endFrame = Utils.clamp(targetEndFrame, this.data.range.initFrame + 1, this.data.length - 1);
+
+        this.renderer.hoveredRightRange = true;
+        if (this.data.currentFrame <= prevEndFrame && this.data.currentFrame > this.data.range.endFrame)
+        {
+            targetFrame = this.data.range.endFrame;
+        }
+        if (this.onRangeChanged)
+        {
+            this.onRangeChanged(this.data.range.initFrame, this.data.range.endFrame);
+        }
+
+        return targetFrame;
+    }
+
+    private HandleMoveLeftRange(targetInitFrame: number)
+    {
+        let targetFrame = null;
+
+        const prevInitFrame = this.data.range.initFrame;
+        // Prevent overlapping
+        this.data.range.initFrame = Utils.clamp(targetInitFrame, 0, this.data.range.endFrame - 1);
+        this.renderer.hoveredLeftRange = true;
+
+        if (this.data.currentFrame >= prevInitFrame && this.data.currentFrame < this.data.range.initFrame)
+        {
+            targetFrame = this.data.range.initFrame;
+        }
+        if (this.onRangeChanged)
+        {
+            this.onRangeChanged(this.data.range.initFrame, this.data.range.endFrame);
+        }
+
+        return targetFrame;
     }
 
     private disableEvent(event : any) {

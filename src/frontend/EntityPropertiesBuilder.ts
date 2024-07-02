@@ -529,7 +529,7 @@ export default class EntityPropertiesBuilder
 
         const globalDataGroup = {
             type: CorePropertyTypes.Group,
-            name: "Global Data",
+            name: "Frame Data",
             value: [
                 {
                     type: CorePropertyTypes.Number,
@@ -547,7 +547,7 @@ export default class EntityPropertiesBuilder
             id: Number.MAX_SAFE_INTEGER - 1
         };
 
-        this.buildSinglePropertyTreeBlock(propertyTrees, globalDataGroup, "Global Data", increaseNameId(groupsWithName, "Global Data"), null, false, true);
+        this.buildSinglePropertyTreeBlock(propertyTrees, globalDataGroup, "Frame Data", increaseNameId(groupsWithName, "Frame Data"), null, false, true);
     }
 
     buildPropertyTree(entity: RECORDING.IEntity, globalData: PropertyTreeGlobalData)

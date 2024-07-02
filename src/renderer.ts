@@ -45,11 +45,19 @@ enum TabIndices
     Settings
 }
 
+export interface FrameRequest
+{
+    frame: number;
+    entityIdSel?: number;
+}
+
 export default class Renderer {
     private sceneController: SceneController;
     private recordedData: RECORDING.NaiveRecordedData;
     private timeline: Timeline;
     private currentPropertyId: number;
+
+    private currentFrameRequest: FrameRequest;
 
     // Per frame cache
     private frameData: RECORDING.IFrameData;
@@ -177,7 +185,25 @@ export default class Renderer {
 
         this.pendingMarkers = new PendingFrames();
 
-        this.applyFrame(0);
+        this.currentFrameRequest = null;
+        window.requestAnimationFrame(this.render.bind(this));
+
+        this.requestApplyFrame({ frame: 0});
+    }
+
+    render()
+    {
+        if (this.currentFrameRequest)
+        {
+            this.applyFrame(this.currentFrameRequest.frame);
+            if (this.currentFrameRequest.entityIdSel)
+            {
+                this.selectEntity(this.currentFrameRequest.entityIdSel);
+            }
+
+            this.currentFrameRequest = null;
+        }
+        window.requestAnimationFrame(this.render.bind(this));
     }
 
     initializePlaybackBarUI()
@@ -708,8 +734,8 @@ export default class Renderer {
                     // Set client Id data
                     this.connectionsList.setConnectionName(id, frame.tag);
                     
-                    this.addFrameData(frame);
                     this.removeOldFrames();
+                    this.addFrameData(frame);
                     this.updateMetadata();
                     
                     break;
@@ -772,14 +798,22 @@ export default class Renderer {
     {
         if (this.settings.removeOldFrames)
         {
-            const totalFrames = this.recordedData.getSize();
+            const totalFrames = this.recordedData.getSize() + 1;
             if (totalFrames > this.settings.removeOldFramesAmount)
             {
                 const framesToRemove = totalFrames - this.settings.removeOldFramesAmount;
                 this.recordedData.frameData.splice(0, framesToRemove);
 
                 this.timeline.setLength(this.recordedData.getSize());
+                
+                this.pendingEvents.markAllPending();
+                this.pendingMarkers.markAllPending();
                 this.unprocessedFiltersPending = true;
+
+                if (this.settings.removeOldFramesUpdate)
+                {
+                    this.requestApplyFrame({ frame: this.getCurrentFrame() });
+                }
             }
         }
     }
@@ -787,6 +821,11 @@ export default class Renderer {
     getNextPropertyId() : string
     {
         return (++this.currentPropertyId).toString();
+    }
+
+    requestApplyFrame(request: FrameRequest)
+    {
+        this.currentFrameRequest = request;
     }
 
     applyFrame(frame : number) {
@@ -1172,7 +1211,7 @@ export default class Renderer {
     // Timeline callbacks
     onTimelineClicked(frame: number)
     {
-        this.applyFrame(frame);
+        this.requestApplyFrame({ frame: frame });
     }
 
     onTimelineEventClicked(entityId: string, frame: number)
@@ -1180,8 +1219,7 @@ export default class Renderer {
         const clientId = this.recordedData.buildFrameDataHeader(frame).clientId;
         const uniqueId = Utils.toUniqueID(clientId, Number.parseInt(entityId));
         this.logEntity(LogLevel.Verbose, LogChannel.Timeline, "Event selected in timeline. ", frame, uniqueId);
-        this.applyFrame(frame);
-        this.selectEntity(Number.parseInt(entityId));
+        this.requestApplyFrame({ frame: frame, entityIdSel: Number.parseInt(entityId) });
     }
 
     onTimelineUpdated(elapsedSeconds: number)

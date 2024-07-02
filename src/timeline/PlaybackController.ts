@@ -52,7 +52,7 @@ export class PlaybackController {
             const playbackResult = this.findNextPlayableFrameSameClient() || this.findNextPlayableFrameAnyClient();
             this.elapsedTime = playbackResult.nextElapsedTime;
             const nextFrame = Utils.clamp(playbackResult.nextFrame, this.renderer.getCurrentFrame(), lastFrame);
-            this.renderer.applyFrame(nextFrame);
+            this.renderer.requestApplyFrame({ frame: nextFrame });
 
             // Stop in the last frame
             if (nextFrame == lastFrame) {
@@ -203,14 +203,14 @@ export class PlaybackController {
 
     onTimelineNextClicked() {
         if (this.timeline.getCurrentFrame() < this.getLastFrame()) {
-            this.renderer.applyFrame(this.timeline.getCurrentFrame() + 1);
+            this.renderer.requestApplyFrame({ frame: this.timeline.getCurrentFrame() + 1 });
             this.updateUI();
         }
     }
 
     onTimelinePrevClicked() {
         if (this.timeline.getCurrentFrame() > this.getFirstFrame()) {
-            this.renderer.applyFrame(this.timeline.getCurrentFrame() - 1);
+            this.renderer.requestApplyFrame({ frame: this.timeline.getCurrentFrame() - 1 });
             this.updateUI();
         }
     }
@@ -218,7 +218,7 @@ export class PlaybackController {
     onTimelineFirstClicked() {
         const firstFrame = this.getFirstFrame(true);
         if (this.timeline.getCurrentFrame() != firstFrame) {
-            this.renderer.applyFrame(firstFrame);
+            this.renderer.requestApplyFrame({ frame: firstFrame });
             this.updateUI();
         }
     }
@@ -226,7 +226,7 @@ export class PlaybackController {
     onTimelineLastClicked() {
         const lastFrame = this.getLastFrame(true);
         if (this.timeline.getCurrentFrame() != lastFrame) {
-            this.renderer.applyFrame(lastFrame);
+            this.renderer.requestApplyFrame({ frame: lastFrame });
             this.updateUI();
         }
     }
@@ -234,8 +234,11 @@ export class PlaybackController {
     onTimelinePrevEventClicked(filterSelection: boolean) {
         const prevEvent = this.getPreviousEventFrame(filterSelection);
         if (prevEvent) {
-            this.renderer.applyFrame(prevEvent.frame);
-            this.renderer.selectEntity(Number.parseInt(prevEvent.entityId))
+            this.renderer.requestApplyFrame(
+            {
+                frame: prevEvent.frame,
+                entityIdSel: Number.parseInt(prevEvent.entityId)
+            });
             this.updateUI();
         }
     }
@@ -243,8 +246,11 @@ export class PlaybackController {
     onTimelineNextEventClicked(filterSelection: boolean) {
         const nextEvent = this.getNextEventFrame(filterSelection);
         if (nextEvent) {
-            this.renderer.applyFrame(nextEvent.frame);
-            this.renderer.selectEntity(Number.parseInt(nextEvent.entityId))
+            this.renderer.requestApplyFrame(
+            {
+                frame: nextEvent.frame,
+                entityIdSel: Number.parseInt(nextEvent.entityId)
+            });
             this.updateUI();
         }
     }
