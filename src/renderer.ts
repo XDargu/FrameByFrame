@@ -30,6 +30,9 @@ import EntityPropertiesBuilder from "./frontend/EntityPropertiesBuilder";
 import { CorePropertyTypes } from "./types/typeRegistry";
 import PendingFrames from "./utils/pendingFrames";
 import { LIB_VERSION } from "./version";
+import OpenAI from "openai";
+
+const openai = new OpenAI({ dangerouslyAllowBrowser: true });
 
 const zlib = require('zlib');
 
@@ -251,6 +254,7 @@ export default class Renderer {
             document.getElementById("var-list"),
             document.getElementById("connection-list"),
             document.getElementById("filters-list"),
+            document.getElementById("ai-list"),
             document.getElementById("recent-list"),
             document.getElementById("setting-list")
         ];
@@ -451,6 +455,40 @@ export default class Renderer {
             onConnectionDisconnecting: (id) => {
                 this.connectionButtons.onConnectionDisconnecting(id);
             },
+        });
+
+        // AI Stuff
+        document.getElementById("aiEntityButton").onclick = () => {
+            if (this.selectedEntityId)
+            {
+                const question = (document.getElementById("entity-ai-form") as HTMLTextAreaElement).value;
+                this.AskAIQuestion(this.selectedEntityId, question);
+            }
+        };
+
+        document.getElementById("aiEntityButtonRange").onclick = () => {
+            if (this.selectedEntityId)
+            {
+                const question = (document.getElementById("entity-ai-form") as HTMLTextAreaElement).value;
+                this.AskAIQuestionRange(this.selectedEntityId, question);
+            }
+        };
+
+        const questionsList = document.getElementById("aiQuestionsList");
+
+        const questions : string[] = [
+            "Explain what the entity is doing on this frame in a concise way with a few bullet points. Make a brief list of any possible bugs or anomalies.",
+            "Make a 150 word summary of the current state of the entity on the selected frame or frames.",
+        ];
+
+        questions.forEach(question =>
+        {
+            const div = document.createElement("div");
+            div.classList.add("basico-list-item");
+            div.innerText = question;
+            div.onclick = () => { (document.getElementById("entity-ai-form") as HTMLTextAreaElement).value = question; };
+
+            questionsList.append(div);
         });
     }
 
@@ -789,6 +827,146 @@ export default class Renderer {
         {
             this.moveCameraToSelection();
         }
+    }
+
+    async Test(entityId: number) 
+    {
+        Console.log(LogLevel.Information, LogChannel.Default, "Calculating AI Analysis...");
+        const userQuery = JSON.stringify(this.frameData.entities[entityId]);
+
+        const completion = await openai.chat.completions.create({
+          messages: [
+            {
+                role: "system",
+                content: "You will receive a JSON with information about a single entity, on one frame, on a videogame. The entity will have properties that describe its current state on the frame, and events that happened on that frame. Explain what the entity is doing on this frame in a concise way with a few bullet points. Make a brief list of any possibl bugs or anomalies."
+            },
+            {
+                role: "user",
+                content: userQuery
+            }
+        ],
+          model: "gpt-3.5-turbo",
+        });
+
+        const uniqueId = entityId;
+        const frameId = this.frameData.frameId;
+
+        console.log(completion.choices[0]);
+        Console.log(LogLevel.Information, LogChannel.Default, 
+            "AI Analysis: of entity", 
+            {
+                text: `${this.findEntityName(uniqueId)} (id: ${Utils.getEntityIdUniqueId(uniqueId)}, clientId: ${Utils.getClientIdUniqueId(uniqueId)}) (frameID: ${frameId})`,
+                tooltip: `Go to frame ${frameId.toString()} and select entity ${this.findEntityName(uniqueId)}`,
+                callback: () => {
+                    const frame = this.findFrameById(frameId)
+                    if (frame >= 0)
+                    {
+                        this.applyFrame(frame);
+                        this.selectEntity(uniqueId);
+                    }
+                }
+            },
+            "\n\n",
+            completion.choices[0].message.content);
+    }
+
+    async AskAIQuestionRange(entityId: number, question: string)
+    {
+        const init = this.timeline.getSelectionInit();
+        const end = this.timeline.getSelectionEnd();
+
+        let totalData = "";
+        for (let i = init; i<end; ++i)
+        {
+            const fdata = this.recordedData.buildFrameData(i);
+            if (fdata.entities[entityId])
+            {
+                const data = JSON.stringify(fdata.entities[entityId]);
+                totalData += "\nThis is the frame " + i + ": " + data;
+            }
+        }
+
+        console.log(totalData);
+
+        Console.log(LogLevel.Information, LogChannel.Default, "Calculating AI Analysis...");
+        const userQuery = "This is the question: " + question + "\nAnd this is the data: " + totalData;
+
+        const completion = await openai.chat.completions.create({
+          messages: [
+            {
+                role: "system",
+                content: "You are an expert game developer with high debugging skills. You will receive one ore more JSONs with information about a single entity, on one or multiple frames, on a videogame. The entity will have properties that describe its current state on the frame, and events that happened on that frame. You will also receive a question about the entity information. Analyze the frame info and answer the question."
+            },
+            {
+                role: "user",
+                content: userQuery
+            }
+        ],
+          model: "gpt-3.5-turbo",
+        });
+
+        const uniqueId = entityId;
+        const frameId = this.frameData.frameId;
+
+        console.log(completion.choices[0]);
+        Console.log(LogLevel.Information, LogChannel.Default, 
+            "AI Analysis: of entity", 
+            {
+                text: `${this.findEntityName(uniqueId)} (id: ${Utils.getEntityIdUniqueId(uniqueId)}, clientId: ${Utils.getClientIdUniqueId(uniqueId)}) (frameID: ${frameId})`,
+                tooltip: `Go to frame ${frameId.toString()} and select entity ${this.findEntityName(uniqueId)}`,
+                callback: () => {
+                    const frame = this.findFrameById(frameId)
+                    if (frame >= 0)
+                    {
+                        this.applyFrame(frame);
+                        this.selectEntity(uniqueId);
+                    }
+                }
+            },
+            "\n\n",
+            completion.choices[0].message.content);
+    }
+
+    async AskAIQuestion(entityId: number, question: string) 
+    {
+        Console.log(LogLevel.Information, LogChannel.Default, "Calculating AI Analysis...");
+        const data = JSON.stringify(this.frameData.entities[entityId]);
+        const userQuery = "This is the question: " + question + "\nAnd this is the data: " + data;
+
+        const completion = await openai.chat.completions.create({
+          messages: [
+            {
+                role: "system",
+                content: "You will receive a JSON with information about a single entity, on one frame, on a videogame. The entity will have properties that describe its current state on the frame, and events that happened on that frame. You will also receive a question about the entity information. Analyze the frame info and answer the question."
+            },
+            {
+                role: "user",
+                content: userQuery
+            }
+        ],
+          model: "gpt-3.5-turbo",
+        });
+
+        const uniqueId = entityId;
+        const frameId = this.frameData.frameId;
+
+        console.log(completion.choices[0]);
+        Console.log(LogLevel.Information, LogChannel.Default, 
+            "AI Analysis: of entity", 
+            {
+                text: `${this.findEntityName(uniqueId)} (id: ${Utils.getEntityIdUniqueId(uniqueId)}, clientId: ${Utils.getClientIdUniqueId(uniqueId)}) (frameID: ${frameId})`,
+                tooltip: `Go to frame ${frameId.toString()} and select entity ${this.findEntityName(uniqueId)}`,
+                callback: () => {
+                    const frame = this.findFrameById(frameId)
+                    if (frame >= 0)
+                    {
+                        this.applyFrame(frame);
+                        this.selectEntity(uniqueId);
+                    }
+                }
+            },
+            "\n\n",
+            completion.choices[0].message.content);
     }
 
     onEntitySelectedOnScene(entityId: number, scrollIntoView: boolean)

@@ -76,6 +76,7 @@
                     <div class="basico-tabs-item" title="Recording Options"><i class="fas fa-check-square"></i></div>
                     <div class="basico-tabs-item" title="Connections"><i class="fas fa-network-wired"></i></div>
                     <div class="basico-tabs-item" title="Filters"><i class="fas fa-filter"></i></div>
+                    <div class="basico-tabs-item" title="AI Assistant"><i class="fas fa-question"></i></div>
                     <div class="basico-tabs-item" title="Recent Files"><i class="fas fa-folder"></i></div>
                     <div class="basico-tabs-item" title="Settings"><i class="fas fa-cog"></i></div>
                 </div>
@@ -155,6 +156,30 @@
                     <div class="basico-dropdown" id="add-filter-dropdown">
                         <button class="basico-dropdown-button">Add new filter</button>
                         <div class="basico-dropdown-content">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="sidebar basico-container basico-container-compact" id="ai-list">
+                <div class="basico-title basico-title-compact uppercase">AI Assistant</div>
+                <div class="basico-container">
+                    <div class="basico-title">Common questions</div>
+                    <div class="basico-container">
+                        <div class="basico-list" id="aiQuestionsList"></div>
+                    </div>
+                    <div class="basico-card">
+                        <div class="basico-card-element">
+                            <div class="basico-form">
+                                <div class="basico-form-field">
+                                    <div class="basico-form-field-label">Ask about the current entity:</div>
+                                    <textarea style="height: 150px;" id="entity-ai-form" placeholder="" class="basico-input"  name="w3review" rows="4" cols="50"></textarea>
+                                </div>
+                                <div class="basico-form-field">
+                                    <button class="basico-button basico-small" id="aiEntityButton">Ask Question Current Frame</button>
+                                    <br>
+                                    <button class="basico-button basico-small" id="aiEntityButtonRange">Ask Question Frame Selection</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

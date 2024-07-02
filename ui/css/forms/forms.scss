@@ -105,3 +105,11 @@
     background: $primary-color;
     cursor: pointer;
 }
+
+.basico-form textarea {
+    height: 134px;
+    line-height: 20px;
+    font-family: sans-serif;
+    padding: 5px;
+    resize: vertical;
+}

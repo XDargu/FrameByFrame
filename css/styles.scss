@@ -14,3 +14,21 @@
 @import "settings.scss";
 @import "contextMenu.scss";
 @import "eventPopup.scss";
+
+
+/*#ai-questions-list div {
+    font-size: 12px;
+    padding: 10px 5px;
+    cursor: pointer;
+}*/
+
+/* AI stuff*/
+#recent-list .basico-list-item{
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+#aiEntityButton {
+    margin-bottom: 10px;
+}

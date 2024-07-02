@@ -110,7 +110,7 @@ export default class SceneController
 
             this.propertySelection = new ScenePropertySelection(this.sceneEntityData, this.pools);
 
-        }, 100);
+        }, 1000);
 
         this.sceneEntityData = new SceneEntityData();
 

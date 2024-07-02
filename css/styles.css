@@ -847,7 +847,8 @@
   font-size: 12px;
   text-align: left;
   padding-top: 4px;
-  padding-bottom: 4px; }
+  padding-bottom: 4px;
+  white-space: pre-wrap; }
 
 .basico-console-icon {
   padding: 0px 10px;
@@ -1075,6 +1076,13 @@
   height: 12px;
   background: #bb86fc;
   cursor: pointer; }
+
+.basico-form textarea {
+  height: 134px;
+  line-height: 20px;
+  font-family: sans-serif;
+  padding: 5px;
+  resize: vertical; }
 
 html, body {
   padding: 0;
@@ -3156,5 +3164,19 @@ body {
   content: ' ';
   position: absolute;
   display: block; }
+
+/*#ai-questions-list div {
+    font-size: 12px;
+    padding: 10px 5px;
+    cursor: pointer;
+}*/
+/* AI stuff*/
+#recent-list .basico-list-item {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden; }
+
+#aiEntityButton {
+  margin-bottom: 10px; }
 
 /*# sourceMappingURL=styles.css.map */
