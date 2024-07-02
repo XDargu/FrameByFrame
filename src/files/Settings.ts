@@ -29,6 +29,7 @@ export interface ISettings
     /* Recording */
     removeOldFrames: boolean,
     removeOldFramesAmount: number,
+    removeOldFramesUpdate: boolean,
     /* Debug */
     showRenderDebug: boolean,
     /* Graphics */
@@ -69,6 +70,7 @@ export function createDefaultSettings() : ISettings
         /* Recording */
         removeOldFrames: false,
         removeOldFramesAmount: 500,
+        removeOldFramesUpdate: true,
         /* Debug */
         showRenderDebug: false,
         /* Graphics */

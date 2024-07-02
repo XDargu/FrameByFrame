@@ -437,6 +437,7 @@ You can use the following formatting options:
                 defaultSettings.removeOldFramesAmount,
                 settings.removeOldFramesAmount,
                 (value) => {  settings.removeOldFramesAmount = Math.max(1, Number.parseInt(value)); this.onSettingsChanged(); });
+            SettingsBuilder.addBooleanSetting(group, "Update frame on removal", settings.removeOldFramesUpdate, (value) => {settings.removeOldFramesUpdate = value; this.onSettingsChanged(); })
             this.settingsList.appendChild(group.fragment);
         }
 

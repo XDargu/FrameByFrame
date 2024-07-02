@@ -708,8 +708,8 @@ export default class Renderer {
                     // Set client Id data
                     this.connectionsList.setConnectionName(id, frame.tag);
                     
-                    this.addFrameData(frame);
                     this.removeOldFrames();
+                    this.addFrameData(frame);
                     this.updateMetadata();
                     
                     break;
@@ -772,14 +772,22 @@ export default class Renderer {
     {
         if (this.settings.removeOldFrames)
         {
-            const totalFrames = this.recordedData.getSize();
+            const totalFrames = this.recordedData.getSize() + 1;
             if (totalFrames > this.settings.removeOldFramesAmount)
             {
                 const framesToRemove = totalFrames - this.settings.removeOldFramesAmount;
                 this.recordedData.frameData.splice(0, framesToRemove);
 
                 this.timeline.setLength(this.recordedData.getSize());
+                
+                this.pendingEvents.markAllPending();
+                this.pendingMarkers.markAllPending();
                 this.unprocessedFiltersPending = true;
+
+                if (this.settings.removeOldFramesUpdate)
+                {
+                    this.applyFrame(this.getCurrentFrame());
+                }
             }
         }
     }

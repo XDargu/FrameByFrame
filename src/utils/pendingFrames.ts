@@ -1,4 +1,5 @@
 import * as RECORDING from '../recording/RecordingData';
+import * as Utils from "../utils/utils";
 
 export interface PendingFramesCallback
 {
@@ -35,7 +36,7 @@ export default class PendingFrames
 
     pushPending(value: number)
     {
-        this.pendingFrames.push(value);
+        Utils.pushUnique(this.pendingFrames, value);
     }
 
     markAllPending()
