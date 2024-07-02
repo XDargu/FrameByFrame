@@ -308,9 +308,12 @@ class TimelineInputHandler {
 
     constructor(canvas: HTMLCanvasElement, renderer: TimelineRenderer, data: TimelineData, popup: EventPopup) {
 
-        canvas.addEventListener("mousemove", this.onMouseMove.bind(this));
+        
+        document.body.addEventListener("mousemove", this.onPageMouseMove.bind(this));
+        document.body.addEventListener("mouseup", this.onPageMouseUp.bind(this));
+        document.body.addEventListener("mouseleave", this.onPageMouseLeave.bind(this));
+
         canvas.addEventListener("mousedown", this.onMouseDown.bind(this));
-        canvas.addEventListener("mouseup", this.onMouseUp.bind(this));
         canvas.addEventListener("wheel", this.onMouseWheel.bind(this));
         canvas.addEventListener("mouseleave", this.onMouseLeave.bind(this));
         canvas.addEventListener("contextmenu", this.disableEvent);
@@ -329,19 +332,30 @@ class TimelineInputHandler {
         this.inputOperation = InputOperation.None;
     }
 
-    private onMouseUp(event : MouseEvent)
+    private pageToCanvas(x: number, y: number)
+    {
+        var rect = this.canvas.getBoundingClientRect();
+        var canvasX = x - rect.left; //x position within the element.
+        var canvasY = y- rect.top;  //y position within the element.
+
+        return { x: canvasX, y: canvasY };
+    }
+
+    private onPageMouseUp(event : MouseEvent)
     {
         this.inputOperation = InputOperation.None;
     }
 
-    private onMouseMove(event : MouseEvent)
+    private onPageMouseMove(event : MouseEvent)
     {
-        if (this.data.length == 0) { return; }
-        this.renderer.hoveredEvent = this.renderer.findEventAtPosition(event.offsetX, event.offsetY);
-        this.renderer.hoveredLeftRange = this.renderer.isInRange(event.offsetX, event.offsetY, true);
-        this.renderer.hoveredRightRange = this.renderer.isInRange(event.offsetX, event.offsetY, false);
+        const canvasPos = this.pageToCanvas(event.pageX, event.pageY);
 
-        const canvasPosition : number = event.offsetX;
+        if (this.data.length == 0) { return; }
+        this.renderer.hoveredEvent = this.renderer.findEventAtPosition(canvasPos.x, canvasPos.y);
+        this.renderer.hoveredLeftRange = this.renderer.isInRange(canvasPos.x, canvasPos.y, true);
+        this.renderer.hoveredRightRange = this.renderer.isInRange(canvasPos.x, canvasPos.y, false);
+
+        const canvasPosition : number = canvasPos.x;
         let targetFrame = null;
 
         switch(this.inputOperation)
@@ -415,9 +429,13 @@ class TimelineInputHandler {
         this.renderer.zoomInPosition(event.offsetX, event.deltaY);
     }
 
-    private onMouseLeave(event : MouseEvent)
+    private onPageMouseLeave(event : MouseEvent)
     {
         this.inputOperation = InputOperation.None;
+    }
+
+    private onMouseLeave(event : MouseEvent)
+    {
         this.popup.hide();
     }
 
