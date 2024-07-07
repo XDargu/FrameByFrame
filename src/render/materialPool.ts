@@ -53,12 +53,15 @@ export class MaterialPool
         material.diffuseColor = new BABYLON.Color3(r, g, b);
         material.backFaceCulling = this.backFaceCullingEnabled;
         material.alpha = a;
+        material.useAlphaFromDiffuseTexture = true;
 
         const resource = this.getResourceFunc(path);
         if (resource)
         {
             loadImageResource(resource).then((result)=>{
-                material.diffuseTexture = new BABYLON.Texture(URL.createObjectURL(result.data), this.scene);
+                const url = URL.createObjectURL(result.data);
+                material.diffuseTexture = new BABYLON.Texture(url, this.scene);
+                material.diffuseTexture.hasAlpha = true;
             }).catch((e) => {
                 // Apply invalid texture
                 Console.log(LogLevel.Error, LogChannel.Default, "Error: " + e.message);
