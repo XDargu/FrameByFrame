@@ -61,13 +61,6 @@ export class MaterialPool
             return cachedMaterial;
         }
 
-        const textureBlob = new Blob([textureArrayBuffer])
-        const textureUrl = URL.createObjectURL(textureBlob)
-
-        BABYLON.LoadFile(textureOriginalUrl, (textureArrayBuffer) => {
-
-        });
-
         let material = new BABYLON.StandardMaterial("cachedMaterial", this.scene);
         material.diffuseColor = new BABYLON.Color3(r, g, b);
         material.backFaceCulling = this.backFaceCullingEnabled;
