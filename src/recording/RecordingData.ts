@@ -91,6 +91,7 @@ export interface IProperty {
 export interface IProperyShape extends IProperty {
 	layer: string;
 	color: IColor;
+	texture?: string;
 }
 
 export interface IPropertySphere extends IProperyShape {

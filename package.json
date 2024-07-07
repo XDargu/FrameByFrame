@@ -22,7 +22,7 @@
   },
   "scripts": {
     "prebuild": "node -p \"'export const LIB_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/version.ts",
-    "build": "sass css/styles.scss css/styles.css tsc",
+    "build": "tsc",
     "start": "electron ./app/main.js",
     "dist": "build",
     "test": "mocha -r ts-node/register src/**/*.test.ts"

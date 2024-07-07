@@ -181,6 +181,12 @@ export class PropertyTreeController {
         this.addValueToPropertyTree(parent, name, [content], propertyId);
     }
 
+    addPath(parent: HTMLElement, name: string, value: string, propertyId: number = null)
+    {
+        const content = UI.getLayoutOfPrimitiveType(value, TypeSystem.EPrimitiveType.String)
+        this.addValueToPropertyTree(parent, name, [content], propertyId);
+    }
+
     addToPropertyTree(parent: HTMLElement, property: RECORDING.IProperty)
     {
         const treeItemOptions : TREE.ITreeItemOptions = {
@@ -243,6 +249,8 @@ export class PropertyTreeController {
                             let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
                             this.addVec3(addedItem, "Position", sphere.position, property.id);
                             this.addNumber(addedItem, "Radius", sphere.radius, property.id);
+                            if (sphere.texture != undefined)
+                                this.addPath(addedItem, "Texture", sphere.texture, property.id);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Capsule:
@@ -274,6 +282,8 @@ export class PropertyTreeController {
                             this.addVec3(addedItem, "Size", oobb.size, property.id);
                             this.addVec3(addedItem, "Forward", oobb.forward, property.id);
                             this.addVec3(addedItem, "Up", oobb.up, property.id);
+                            if (oobb.texture != undefined)
+                                this.addPath(addedItem, "Texture", oobb.texture, property.id);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Plane:
