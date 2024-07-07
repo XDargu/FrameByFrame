@@ -181,7 +181,7 @@ export class PropertyTreeController {
         this.addValueToPropertyTree(parent, name, [content], propertyId);
     }
 
-    addPath(parent: HTMLElement, name: string, value: string, propertyId: number = null)
+    addResource(parent: HTMLElement, name: string, value: string, propertyId: number = null)
     {
         const content = UI.getLayoutOfPrimitiveType(value, TypeSystem.EPrimitiveType.String)
         this.addValueToPropertyTree(parent, name, [content], propertyId);
@@ -250,7 +250,7 @@ export class PropertyTreeController {
                             this.addVec3(addedItem, "Position", sphere.position, property.id);
                             this.addNumber(addedItem, "Radius", sphere.radius, property.id);
                             if (sphere.texture != undefined)
-                                this.addPath(addedItem, "Texture", sphere.texture, property.id);
+                                this.addResource(addedItem, "Texture", sphere.texture, property.id);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Capsule:
@@ -262,6 +262,8 @@ export class PropertyTreeController {
                             this.addVec3(addedItem, "Direction", capsule.direction, property.id);
                             this.addNumber(addedItem, "Radius", capsule.radius, property.id);
                             this.addNumber(addedItem, "Height", capsule.height, property.id);
+                            if (capsule.texture != undefined)
+                                this.addResource(addedItem, "Texture", capsule.texture, property.id);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.AABB:
@@ -271,6 +273,8 @@ export class PropertyTreeController {
                             let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
                             this.addVec3(addedItem, "Position", aabb.position, property.id);
                             this.addVec3(addedItem, "Size", aabb.size, property.id);
+                            if (aabb.texture != undefined)
+                                this.addResource(addedItem, "Texture", aabb.texture, property.id);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.OOBB:
@@ -283,7 +287,7 @@ export class PropertyTreeController {
                             this.addVec3(addedItem, "Forward", oobb.forward, property.id);
                             this.addVec3(addedItem, "Up", oobb.up, property.id);
                             if (oobb.texture != undefined)
-                                this.addPath(addedItem, "Texture", oobb.texture, property.id);
+                                this.addResource(addedItem, "Texture", oobb.texture, property.id);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Plane:
@@ -296,6 +300,8 @@ export class PropertyTreeController {
                             this.addVec3(addedItem, "Up", plane.up, property.id);
                             this.addNumber(addedItem, "Width", plane.width, property.id);
                             this.addNumber(addedItem, "Length", plane.length, property.id);
+                            if (plane.texture != undefined)
+                                this.addResource(addedItem, "Texture", plane.texture, property.id);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Line:
@@ -326,8 +332,12 @@ export class PropertyTreeController {
                         }
                         case TypeSystem.CorePropertyTypes.Mesh:
                         {
+                            const mesh = property as RECORDING.IPropertyMesh;
+
                             let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
                             // Ignore vertices/indices
+                            if (mesh.texture != undefined)
+                                this.addResource(addedItem, "Texture", mesh.texture, property.id);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Path:
@@ -350,6 +360,8 @@ export class PropertyTreeController {
                             this.addVec3(addedItem, "p1", triangle.p1, property.id);
                             this.addVec3(addedItem, "p2", triangle.p2, property.id);
                             this.addVec3(addedItem, "p3", triangle.p3, property.id);
+                            if (triangle.texture != undefined)
+                                this.addResource(addedItem, "Texture", triangle.texture, property.id);
                             break;
                         }
                     }
