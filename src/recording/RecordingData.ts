@@ -38,6 +38,18 @@ export function isPropertyShape(property: IProperty)
 		property.type == Type.Triangle;
 }
 
+export function isPropertyTextured(property: IProperty)
+{
+    const Type = CorePropertyTypes;
+    return property.type == Type.Sphere || 
+        property.type == Type.Plane ||
+        property.type == Type.AABB ||
+        property.type == Type.OOBB ||
+        property.type == Type.Capsule ||
+        property.type == Type.Mesh ||
+		property.type == Type.Triangle;
+}
+
 export interface IVec2 {
 	x: number;
 	y: number;
@@ -91,13 +103,13 @@ export interface IProperty {
 export interface IProperyShape extends IProperty {
 	layer: string;
 	color: IColor;
-	texture?: string;
 }
 
 export interface IPropertySphere extends IProperyShape {
 	position: IVec3;
 	radius: number;
 	value: string;
+	texture?: string;
 }
 
 export interface IPropertyCapsule extends IProperyShape {
@@ -106,12 +118,14 @@ export interface IPropertyCapsule extends IProperyShape {
 	radius: number;
 	height: number;
 	value: string;
+    texture?: string;
 }
 
 export interface IPropertyAABB extends IProperyShape {
 	position: IVec3;
 	size: IVec3;
 	value: string;
+    texture?: string;
 }
 
 export interface IPropertyOOBB extends IProperyShape {
@@ -120,6 +134,7 @@ export interface IPropertyOOBB extends IProperyShape {
 	up: IVec3;
 	forward: IVec3;
 	value: string;
+    texture?: string;
 }
 
 export interface IPropertyPlane extends IProperyShape {
@@ -129,6 +144,7 @@ export interface IPropertyPlane extends IProperyShape {
 	width: number;
 	length: number;
 	value: string;
+    texture?: string;
 }
 
 export interface IPropertyLine extends IProperyShape {
@@ -153,6 +169,7 @@ export interface IPropertyMesh extends IProperyShape {
 	indices?: number[];
 	wireframe?: boolean;
 	value: string;
+    texture?: string;
 }
 
 export interface IPropertyPath extends IProperyShape {
@@ -165,7 +182,10 @@ export interface IPropertyTriangle extends IProperyShape {
 	p2: IVec3;
 	p3: IVec3;
 	value: string;
+    texture?: string;
 }
+
+export type IPropertyTextured = IPropertySphere | IPropertyAABB | IPropertyOOBB | IPropertyCapsule | IPropertyMesh | IPropertyTriangle;
 
 export interface IPropertyGroup {
 	type: string;
@@ -960,9 +980,9 @@ export class NaiveRecordedData implements INaiveRecordedData {
 				}
 
                 // Resource
-                if (isPropertyShape(property))
+                if (isPropertyTextured(property))
                 {
-                    const shape = property as IProperyShape;
+                    const shape = property as IPropertyTextured;
                     if (shape.texture)
                     {
                         if (!resources[shape.texture]) {
