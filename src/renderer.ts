@@ -32,6 +32,7 @@ import PendingFrames from "./utils/pendingFrames";
 import { LIB_VERSION } from "./version";
 import ShapeLineController from "./frontend/ShapeLineController";
 import { loadImageResource } from "./render/resources/images";
+import { ResourcePreview } from "./frontend/ResourcePreview";
 
 const zlib = require('zlib');
 
@@ -522,6 +523,9 @@ export default class Renderer {
             this.sceneTooltip.style.left = x + "px";
             this.sceneTooltip.style.top = y + "px";
         });
+
+        // Resource previewer
+        ResourcePreview.Init(document.getElementById("resourcePreview"));
     }
 
     onSettingsChanged()
@@ -627,6 +631,8 @@ export default class Renderer {
             }
         }
 
+        ResourcePreview.Instance().setResourceData(this.recordedData.resources);
+
         this.timeline.setLength(this.recordedData.getSize());
         this.pendingEvents.markAllPending();
         this.pendingMarkers.markAllPending();
@@ -720,6 +726,7 @@ export default class Renderer {
         this.layerController.setLayers([]);
         this.applyFrame(0);
         this.updateMetadata();
+        ResourcePreview.Instance().setResourceData(this.recordedData.resources);
 
         // Trigger Garbace Collection
         global.gc();

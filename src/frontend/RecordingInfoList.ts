@@ -1,5 +1,6 @@
 import * as Utils from '../utils/utils';
 import * as RECORDING from '../recording/RecordingData';
+import { ResourcePreview } from './ResourcePreview';
 
 interface InfoBuilderGroup
 {
@@ -25,14 +26,18 @@ namespace InfoBuiler
         return { fragment: fragment, list: list };
     }
 
-    export function addElement(group: InfoBuilderGroup, name: string, tooltip: string)
+    export function addElement(group: InfoBuilderGroup, name: string, tooltip: string) : HTMLElement
     {
-        group.list.appendChild(createElement(name, tooltip));
+        const element = createElement(name, tooltip);
+        group.list.appendChild(element);
+        return element;
     }
 
-    export function addElementWithTag(group: InfoBuilderGroup, name: string, tooltip: string, tag: string)
+    export function addElementWithTag(group: InfoBuilderGroup, name: string, tooltip: string, tag: string) : HTMLElement
     {
-        group.list.appendChild(createElementWithTag(name, tooltip, tag));
+        const element = createElementWithTag(name, tooltip, tag);
+        group.list.appendChild(element);
+        return element;
     }
 
     function createElement(name: string, tooltip: string) : HTMLElement
@@ -112,6 +117,24 @@ export class RecordingInfoList
             for (let scene of recording.scenes)
             {
                 InfoBuiler.addElement(group, scene, "");
+            }
+            this.infoList.appendChild(group.fragment);
+        }
+
+        {
+            let group = InfoBuiler.createGroup("Resources");
+            for (let path in recording.resources)
+            {
+                const element = InfoBuiler.addElement(group, path, "");
+                element.onmouseenter = (ev) => {
+                    ResourcePreview.Instance().showAtPosition(ev.pageX, ev.pageY, path);
+                };
+                element.onmousemove = (ev) => {
+                    ResourcePreview.Instance().setPosition(ev.pageX, ev.pageY);
+                };
+                element.onmouseout = () => {
+                    ResourcePreview.Instance().hide();
+                }
             }
             this.infoList.appendChild(group.fragment);
         }

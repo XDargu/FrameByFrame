@@ -2,6 +2,7 @@ import * as RECORDING from '../recording/RecordingData';
 import * as TREE from '../ui/tree';
 import * as TypeSystem from "../types/typeRegistry";
 import { Console, LogChannel, LogLevel } from './ConsoleController';
+import { ResourcePreview } from './ResourcePreview';
 
 export interface IGoToEntityCallback {
     (entityId: number) : void;
@@ -187,6 +188,15 @@ export class PropertyTreeController {
         {
             const content = UI.getLayoutOfPrimitiveType(value, TypeSystem.EPrimitiveType.String)
             this.addValueToPropertyTree(parent, name, [content], propertyId);
+            content.onmouseenter = (ev) => {
+                ResourcePreview.Instance().showAtPosition(ev.pageX, ev.pageY, value);
+            };
+            content.onmousemove = (ev) => {
+                ResourcePreview.Instance().setPosition(ev.pageX, ev.pageY);
+            };
+            content.onmouseout = () => {
+                ResourcePreview.Instance().hide();
+            }
         }
     }
 
