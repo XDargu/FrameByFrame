@@ -124,6 +124,7 @@ export default class Renderer {
             canvas,
             (entityId: number) => { this.onEntitySelectedOnScene(entityId, true) },
             (pos: RECORDING.IVec3, up: RECORDING.IVec3, forward: RECORDING.IVec3) => { this.onCameraMoved(pos, up, forward) },
+            (path: string) => { return this.recordedData.findResource(path); },
             defaultSettings.selectionColor,
             defaultSettings.hoverColor,
             defaultSettings.shapeHoverColor,

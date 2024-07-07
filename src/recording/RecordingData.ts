@@ -481,13 +481,25 @@ export interface IRecordedData {
 	type: RecordingFileType;
 }
 
+export interface IResource {
+    path: string;
+    data: Blob;
+    textData: string;
+    type: string;
+}
+
+export interface IResourcesData {
+	[key:string]: IResource;
+}
+
 export interface INaiveRecordedData extends IRecordedData {
 	version: number;
 	storageVersion: number; // Version of the data file before patching
 	frameData: IFrameData[];
 	layers: string[];
 	scenes: string[];
-	clientIds: Map<number, ClientData>
+	clientIds: Map<number, ClientData>;
+    resources: IResourcesData;
 }
 
 export class NaiveRecordedData implements INaiveRecordedData {
@@ -499,6 +511,7 @@ export class NaiveRecordedData implements INaiveRecordedData {
 	layers: string[];
 	scenes: string[];
 	clientIds: Map<number, ClientData>
+	resources: IResourcesData;
 	storageVersion: number;
 
 	constructor() {
@@ -506,8 +519,14 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		this.layers = [];
 		this.scenes = [];
 		this.clientIds = new Map<number, ClientData>();
+		this.resources = {};
 		this.storageVersion = this.version;
 	}
+
+    findResource(path: string) : IResource
+    {
+        return this.resources[path];
+    }
 
 	static getEntityName(entity: IEntity) : string
 	{
@@ -544,6 +563,7 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		this.layers = dataJson.layers;
 		this.scenes = dataJson.scenes;
 		this.storageVersion = dataJson.storageVersion != undefined ? dataJson.storageVersion : dataJson.version;
+        this.resources = dataJson.resources;
 
 		if (this.layers == undefined)
 		{
@@ -552,7 +572,7 @@ export class NaiveRecordedData implements INaiveRecordedData {
 
 		for (let frame of this.frameData)
 		{
-			this.updateLayersOfFrame(frame);
+			this.updateLayersAndResourcesOfFrame(frame);
 			this.updateScenesOfFrame(frame);
 			this.updateClientIDsOfFrame(frame);
 
@@ -618,6 +638,7 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		this.layers.length = 0;
 		this.scenes.length = 0;
 		this.clientIds.clear();
+        this.resources = {};
 	}
 
 	pushFrame(frame: IFrameData)
@@ -626,7 +647,7 @@ export class NaiveRecordedData implements INaiveRecordedData {
 			return value.serverTime > frameData.serverTime;
 		});
 
-		this.updateLayersOfFrame(frame);
+		this.updateLayersAndResourcesOfFrame(frame);
 		this.updateScenesOfFrame(frame);
 		this.updateClientIDsOfFrame(frame);
 	}
@@ -924,17 +945,36 @@ export class NaiveRecordedData implements INaiveRecordedData {
 			this.clientIds.set(frame.clientId, { tag: frame.tag });
 		}
 	}
-
-	private updateLayersOfFrame(frame: IFrameData) {
-		// TODO: Optimize this. Decide how to handle layers, should it be responsability of the sender to group them?
+	private updateLayersAndResourcesOfFrame(frame: IFrameData) {
+        
 		let layerMap: Map<string, boolean> = new Map<string, boolean>();
+        let resources = this.resources;
 
 		for (let id in frame.entities) {
 			let visitor = (property: IProperty) => {
+
+                // Layer
 				const layer: string = (property as any).layer;
 				if (layer != undefined) {
 					layerMap.set(layer, true);
 				}
+
+                // Resource
+                if (isPropertyShape(property))
+                {
+                    const shape = property as IProperyShape;
+                    if (shape.texture)
+                    {
+                        if (!resources[shape.texture]) {
+                            resources[shape.texture] = {
+                                path: shape.texture,
+                                data: null,
+                                textData: null,
+                                type: null,
+                            };
+                        }
+                    }
+                }
 			};
 			NaiveRecordedData.visitProperties(frame.entities[id].properties, visitor);
 			NaiveRecordedData.visitEvents(frame.entities[id].events, (event: IEvent) => {
