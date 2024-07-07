@@ -1,7 +1,7 @@
 {
   "name": "frame-by-frame",
   "productName": "Frame By Frame",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Visual Debugging and Recording Tool for 3D applications",
   "main": "./app/main.js",
   "build": {
@@ -22,7 +22,7 @@
   },
   "scripts": {
     "prebuild": "node -p \"'export const LIB_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/version.ts",
-    "build": "tsc",
+    "build": "sass css/styles.scss css/styles.css tsc",
     "start": "electron ./app/main.js",
     "dist": "build",
     "test": "mocha -r ts-node/register src/**/*.test.ts"

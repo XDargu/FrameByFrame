@@ -34,6 +34,10 @@ import ShapeLineController from "./frontend/ShapeLineController";
 
 const zlib = require('zlib');
 
+// Give access to manually trigger garbage collection
+require("v8").setFlagsFromString("--expose_gc");
+global.gc = require("vm").runInNewContext("gc");
+
 enum TabIndices
 {
     EntityList = 0,
@@ -714,6 +718,9 @@ export default class Renderer {
         this.layerController.setLayers([]);
         this.applyFrame(0);
         this.updateMetadata();
+
+        // Trigger Garbace Collection
+        global.gc();
     }
 
     onMessageArrived(id: ConnectionId, data: string) : void
@@ -761,6 +768,17 @@ export default class Renderer {
 
     addFrameData(frame: NET_TYPES.IMessageFrameData)
     {
+        const heapStats = process.getHeapStatistics();
+        const maxPercentage = 0.9;
+        const memoryLimit = heapStats.heapSizeLimit * maxPercentage;
+        if (heapStats.totalHeapSize > memoryLimit)
+        {
+            Console.log(LogLevel.Error, LogChannel.Default,
+                `New frame data arrived, but memory is over ${maxPercentage * 100}% of its limit. Discarding frame. Available: ${Utils.memoryToString(memoryLimit * 1000)}, current: ${Utils.memoryToString(heapStats.totalHeapSize * 1000)}`);
+            return;
+        }
+
+
         // Build frame
         let frameToBuild: RECORDING.IFrameData = {
             entities: {},
