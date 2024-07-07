@@ -1,6 +1,7 @@
 import * as BABYLON from 'babylonjs';
 import * as RECORDING from '../recording/RecordingData';
 import { Console, LogChannel, LogLevel } from '../frontend/ConsoleController';
+import { loadImageResource } from './resources/images';
 
 export interface IGetResourceFunction
 {
@@ -22,9 +23,9 @@ export class MaterialPool
         this.getResourceFunc = getResourceFunc;
     }
 
-    getMaterialByTexture(texture: string): BABYLON.StandardMaterial
+    getMaterialByTexture(texture: string, color: RECORDING.IColor): BABYLON.StandardMaterial
     {
-        return this.getMaterialTexture(texture);
+        return this.getMaterialTexture(texture, color.r, color.g, color.b, color.a);
     }
 
     getMaterialByColor(color: RECORDING.IColor): BABYLON.StandardMaterial
@@ -37,10 +38,10 @@ export class MaterialPool
         return r.toString() + g.toString() + b.toString() + a.toString();
     }
 
-    getMaterialTexture(path: string) : BABYLON.StandardMaterial
+    getMaterialTexture(path: string, r: number, g: number, b:number, a:number) : BABYLON.StandardMaterial
     {
         // TODO: Do a proper hash not string based
-        const hash: string = path;
+        const hash: string = path + this.hash(r, g, b, a);
         const cachedMaterial = this.pool.get(hash);
         if (cachedMaterial != undefined)
         {
@@ -48,65 +49,21 @@ export class MaterialPool
             return cachedMaterial;
         }
 
-        let material = new BABYLON.StandardMaterial("cachedMaterial", this.scene);
-        //material.diffuseTexture = new BABYLON.Texture(path, this.scene);
-        material.diffuseColor = new BABYLON.Color3(1, 1, 1);
+        const material = new BABYLON.StandardMaterial("cachedMaterial", this.scene);
+        material.diffuseColor = new BABYLON.Color3(r, g, b);
         material.backFaceCulling = this.backFaceCullingEnabled;
-        material.alpha = 1;
+        material.alpha = a;
 
-        try
+        const resource = this.getResourceFunc(path);
+        if (resource)
         {
-            const resource = this.getResourceFunc(path);
-            const hasValidData = resource.data && resource.data instanceof Blob;
-
-            if (hasValidData)
-            {
-                // Load data, if possible
-                material.diffuseTexture = new BABYLON.Texture(URL.createObjectURL(resource.data), this.scene);
-            }
-            else if (resource.textData && resource.type)
-            {
-                const parsed = JSON.parse(resource.textData);
-                
-                fetch(parsed.blob).then((res) => {
-                    res.blob().then((blob) => {
-                        resource.data = blob;
-                        material.diffuseTexture = new BABYLON.Texture(URL.createObjectURL(resource.data), this.scene);
-                    });
-                });
-            }
-            else
-            {
-                // If everything else fails, try to load the texture
-                fetch(path).then(data => {
-                    data.blob().then(blob => {
-                        
-                        resource.data = blob;
-                        material.diffuseTexture = new BABYLON.Texture(URL.createObjectURL(resource.data), this.scene);
-
-                        // And generate the needed data
-                        let reader = new FileReader();
-                        reader.onload = () => {
-                            const b64 = reader.result;
-                            const jsonString = JSON.stringify({blob: b64});
-                            resource.textData = jsonString;
-                            resource.type = blob.type;
-                        }
-                        reader.readAsDataURL(blob);
-                    })
-                }).catch(error => {
-                    // Apply invalid texture
-                    material.diffuseTexture = new BABYLON.Texture("", this.scene);
-                    Console.log(LogLevel.Error, LogChannel.Default, "Exception: " + error);
-                    Console.log(LogLevel.Error, LogChannel.Default, "Couldn't find texture: " + path);
-                });
-            }
-        } catch(e)
-        {
-            // Apply invalid texture
-            material.diffuseTexture = new BABYLON.Texture("", this.scene);
-            Console.log(LogLevel.Error, LogChannel.Default, "Exception: " + e.message);
-            Console.log(LogLevel.Error, LogChannel.Default, "Couldn't find texture: " + path);
+            loadImageResource(resource).then((result)=>{
+                material.diffuseTexture = new BABYLON.Texture(URL.createObjectURL(result.data), this.scene);
+            }).catch((e) => {
+                // Apply invalid texture
+                Console.log(LogLevel.Error, LogChannel.Default, "Error: " + e.message);
+                Console.log(LogLevel.Error, LogChannel.Default, "Couldn't find texture: " + path);
+            });
         }
 
         this.pool.set(hash, material);

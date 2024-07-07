@@ -11,7 +11,7 @@ export function setShapeCommonData(shape: RECORDING.IProperyShape, mesh: BABYLON
     if (shape.texture == undefined || shape.texture == "")
         mesh.material = pools.materialPool.getMaterialByColor(color);
     else
-        mesh.material = pools.materialPool.getMaterialByTexture(shape.texture);
+        mesh.material = pools.materialPool.getMaterialByTexture(shape.texture, color);
 }
 
 export function buildSphereShape(shape: RECORDING.IProperyShape, pools: RenderPools, pivotPos: BABYLON.Vector3, system: RECORDING.ECoordinateSystem) : BABYLON.Mesh

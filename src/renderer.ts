@@ -31,6 +31,7 @@ import EntityPropertiesBuilder from "./frontend/EntityPropertiesBuilder";
 import PendingFrames from "./utils/pendingFrames";
 import { LIB_VERSION } from "./version";
 import ShapeLineController from "./frontend/ShapeLineController";
+import { loadImageResource } from "./render/resources/images";
 
 const zlib = require('zlib');
 
@@ -1268,7 +1269,7 @@ export default class Renderer {
         const do_zip = promisify(zlib.gzip);
         
         try {
-            this.openModal("Serializing data");
+            this.openModal("Gathering data");
             await Utils.delay(10);
 
             // Build data to save
@@ -1289,6 +1290,23 @@ export default class Renderer {
 
                 dataToSave = data;
             }
+
+            this.openModal("Loading resources");
+            await Utils.delay(10);
+
+            for (let path in dataToSave.resources)
+            {
+                try {
+                    const resource = dataToSave.resources[path];
+                    await loadImageResource(resource);
+                }
+                catch(e) {
+                    Console.log(LogLevel.Warning, LogChannel.Files, "Coudn't load resource, skipping: " + path);
+                }
+            }
+
+            this.openModal("Serializing data");
+            await Utils.delay(10);
 
             const data = JSON.stringify(dataToSave);
             this.openModal("Compressing data");
