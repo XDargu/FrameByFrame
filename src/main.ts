@@ -157,6 +157,10 @@ function logToConsole(level: LogLevel, channel: LogChannel, ...message: (string 
   mainWindow.webContents.send('asynchronous-reply', createLogMessage(level, channel, ...message));
 };
 
+
+// Increase available memory
+app.commandLine.appendSwitch('js-flags', '--max-old-space-size=8192');
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
