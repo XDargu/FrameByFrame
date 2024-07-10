@@ -240,3 +240,8 @@ export const emptyFrameData: IFrameData = {
 	scene: "",
 	coordSystem: ECoordinateSystem.LeftHand
 };
+
+export interface ClientData
+{
+	tag: string;
+}

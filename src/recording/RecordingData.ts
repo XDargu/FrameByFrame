@@ -1,12 +1,8 @@
 import { CorePropertyTypes } from '../types/typeRegistry';
 import * as Utils from '../utils/utils'
-import { ECoordinateSystem, emptyFrameData, IEntity, IEvent, IFrameData, IProperty, IPropertyGroup, IPropertyTextured, isPropertyTextured, IVec3, Props, RecordingFileType } from './RecordingDefinitions'
+import { ClientData, ECoordinateSystem, emptyFrameData, IEntity, IEvent, IFrameData, IProperty, IPropertyGroup, IPropertyTextured, isPropertyTextured, IVec3, Props, RecordingFileType } from './RecordingDefinitions'
 import * as RecOps from './RecordingOperations'
 
-export interface ClientData
-{
-	tag: string;
-}
 
 export interface IRecordedData {
 	type: RecordingFileType;
