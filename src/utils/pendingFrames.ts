@@ -1,4 +1,5 @@
-import * as RECORDING from '../recording/RecordingData';
+import * as RECDATA from '../recording/RecordingData';
+import * as RECORDING from '../recording/RecordingDefinitions';
 import * as Utils from "../utils/utils";
 
 export interface PendingFramesCallback
@@ -11,7 +12,7 @@ export default class PendingFrames
     private pendingFrames: number[] = [];
     private areAllPending: boolean = false;
 
-    forEachPendingFrame(recordedData: RECORDING.INaiveRecordedData, callback: PendingFramesCallback)
+    forEachPendingFrame(recordedData: RECDATA.INaiveRecordedData, callback: PendingFramesCallback)
     {
         if (this.areAllPending)
         {

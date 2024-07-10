@@ -1,4 +1,6 @@
-import * as RECORDING from '../recording/RecordingData';
+import * as RECDATA from "../recording/RecordingData";
+import * as RECORDING from "../recording/RecordingDefinitions";
+import * as RecOps from '../recording/RecordingOperations'
 import * as TREE from '../ui/tree';
 import * as Utils from "../utils/utils";
 
@@ -104,7 +106,7 @@ export class EntityTree {
                 return false;
             }
 
-            if (RECORDING.NaiveRecordedData.getEntityName(entity) != listItem.name) {
+            if (RecOps.getEntityName(entity) != listItem.name) {
                 return false;
             }
         }
@@ -123,7 +125,7 @@ export class EntityTree {
                 return false;
             }
 
-            if (RECORDING.NaiveRecordedData.getEntityName(entity) != cachedItem.name) {
+            if (RecOps.getEntityName(entity) != cachedItem.name) {
                 return false;
             }
         }
@@ -144,7 +146,7 @@ export class EntityTree {
         return defaultRoot;
     }
 
-    setEntities(entities: RECORDING.IFrameEntityData, recordedData: RECORDING.NaiveRecordedData)
+    setEntities(entities: RECORDING.IFrameEntityData, recordedData: RECDATA.NaiveRecordedData)
     {
         // The wrapper will be used as the placeholder element to add new items
         let wrapper = document.createElement("div");
@@ -198,17 +200,17 @@ export class EntityTree {
         this.filterElements();
     }
 
-    private addEntityToTree(entity: RECORDING.IEntity, wrapper: HTMLDivElement, recordedData: RECORDING.NaiveRecordedData)
+    private addEntityToTree(entity: RECORDING.IEntity, wrapper: HTMLDivElement, recordedData: RECDATA.NaiveRecordedData)
     {
         let listItem = this.addEntity(this.findRoot(entity, wrapper), entity, recordedData);
         this.cachedItemsById.set(entity.id, {
             element: listItem,
             parentId: entity.parentId,
-            name: RECORDING.NaiveRecordedData.getEntityName(entity)
+            name: RecOps.getEntityName(entity)
         });
     }
 
-    addEntity(root :HTMLElement, entity: RECORDING.IEntity, recordedData: RECORDING.NaiveRecordedData) : HTMLElement
+    addEntity(root :HTMLElement, entity: RECORDING.IEntity, recordedData: RECDATA.NaiveRecordedData) : HTMLElement
     {
         let listItem = this.pool.get();
 
@@ -225,7 +227,7 @@ export class EntityTree {
             tagElement.style.backgroundColor = Utils.colorFromHash(clientId, clientLabelColors);
         }
         
-        textElement.textContent = RECORDING.NaiveRecordedData.getEntityName(entity);
+        textElement.textContent = RecOps.getEntityName(entity);
         listItem.setAttribute("data-tree-value", entity.id.toString());
 
         if (!listItem.classList.contains("basico-tree-leaf"))

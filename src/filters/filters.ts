@@ -1,5 +1,7 @@
 import { filterText } from "../utils/utils";
-import * as RECORDING from "../recording/RecordingData";
+import * as RECDATA from "../recording/RecordingData";
+import * as RECORDING from "../recording/RecordingDefinitions";
+import * as RecOps from '../recording/RecordingOperations'
 import { CorePropertyTypes } from "../types/typeRegistry";
 
 export enum FilterType {
@@ -487,11 +489,11 @@ export namespace Common {
 
     export function filterPropertyGroup(propertyGroup: RECORDING.IPropertyGroup, filters: MemberFilter[], visitChildGroups: boolean = true): RECORDING.IProperty {
         let found = null;
-        RECORDING.NaiveRecordedData.visitProperties(propertyGroup.value, (property: RECORDING.IProperty) => {
+        RecOps.visitProperties(propertyGroup.value, (property: RECORDING.IProperty) => {
             const result = filterProperty(property, filters);
             if (result) {
                 found = result;
-                return RECORDING.VisitorResult.Stop;
+                return RecOps.VisitorResult.Stop;
             }
         }, visitChildGroups);
         return found;
@@ -524,8 +526,8 @@ export namespace Common {
     }
 
     export function filterEntityProperties(entity: RECORDING.IEntity, groupFilter: string, membersFilter: MemberFilter[]): IFilerEntityPropertiesResult {
-        const properties = entity.properties[RECORDING.NaiveRecordedData.UserProps] as RECORDING.IPropertyGroup;
-        const specialProperties = entity.properties[RECORDING.NaiveRecordedData.SpecialProps] as RECORDING.IPropertyGroup;
+        const properties = entity.properties[RECORDING.Props.UserProps] as RECORDING.IPropertyGroup;
+        const specialProperties = entity.properties[RECORDING.Props.SpecialProps] as RECORDING.IPropertyGroup;
 
         for (let i = 0; i < properties.value.length; ++i) {
             let group = properties.value[i];
@@ -568,10 +570,10 @@ export namespace Common {
         if (filterTextOrEmpty(groupFilter, groupName.toLowerCase())) {
 
             let hasProps = false;
-            RECORDING.NaiveRecordedData.visitProperties(group.value, (property: RECORDING.IProperty) => {
+            RecOps.visitProperties(group.value, (property: RECORDING.IProperty) => {
                 if (property.type != CorePropertyTypes.Group) {
                     hasProps = true;
-                    return RECORDING.VisitorResult.Stop;
+                    return RecOps.VisitorResult.Stop;
                 }
             }, false);
 
@@ -596,7 +598,7 @@ export class Filter {
         this.type = type;
     }
 
-    public filter(recordedData: RECORDING.NaiveRecordedData): FilteredResult[] {
+    public filter(recordedData: RECDATA.NaiveRecordedData): FilteredResult[] {
         return [];
     }
 
@@ -634,7 +636,7 @@ export class EventFilter extends Filter {
         this.members = data.members;
     }
 
-    public filter(recordedData: RECORDING.NaiveRecordedData): FilteredResult[] {
+    public filter(recordedData: RECDATA.NaiveRecordedData): FilteredResult[] {
         let results: FilteredResult[] = [];
 
         // Actual filters, so we don't override the existing ones.
@@ -657,7 +659,7 @@ export class EventFilter extends Filter {
             for (let entityID in frameData.entities) {
                 const entity = frameData.entities[entityID];
 
-                RECORDING.NaiveRecordedData.visitEvents(entity.events, (event: RECORDING.IEvent) => {
+                RecOps.visitEvents(entity.events, (event: RECORDING.IEvent) => {
                     if (Common.filterEvent(event, nameFilter, tagFilter, membersFilter)) {
                         results.push({ frameIdx: i, entityId: entity.id, name: event.name });
                     }
@@ -695,7 +697,7 @@ export class PropertyFilter extends Filter {
         this.members = data.members;
     }
 
-    public filter(recordedData: RECORDING.NaiveRecordedData): FilteredResult[] {
+    public filter(recordedData: RECDATA.NaiveRecordedData): FilteredResult[] {
         let results: FilteredResult[] = [];
 
         // Actual filters, so we don't override the existing ones.

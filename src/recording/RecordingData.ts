@@ -1,261 +1,7 @@
 import { CorePropertyTypes } from '../types/typeRegistry';
 import * as Utils from '../utils/utils'
-
-export enum ECoordinateSystem
-{
-    RightHand = 0,
-    LeftHand
-}
-
-export enum RecordingFileType {
-	NaiveRecording,
-	RawFrames
-}
-
-export function RecordingFileTypeToString(type: RecordingFileType)
-{
-	switch(type)
-	{
-		case RecordingFileType.NaiveRecording: return "Standard";
-		case RecordingFileType.RawFrames: return "RawData";
-	}
-	return "Unknown";
-}
-
-export function isPropertyShape(property: IProperty)
-{
-    const Type = CorePropertyTypes;
-    return property.type == Type.Sphere || 
-        property.type == Type.Line ||
-		property.type == Type.Arrow ||
-		property.type == Type.Vector ||
-        property.type == Type.Plane ||
-        property.type == Type.AABB ||
-        property.type == Type.OOBB ||
-        property.type == Type.Capsule ||
-        property.type == Type.Mesh ||
-		property.type == Type.Path ||
-		property.type == Type.Triangle;
-}
-
-export function isPropertyTextured(property: IProperty)
-{
-    const Type = CorePropertyTypes;
-    return property.type == Type.Sphere || 
-        property.type == Type.Plane ||
-        property.type == Type.AABB ||
-        property.type == Type.OOBB ||
-        property.type == Type.Capsule ||
-        property.type == Type.Mesh ||
-		property.type == Type.Triangle;
-}
-
-export interface IVec2 {
-	x: number;
-	y: number;
-}
-
-export interface IVec3 {
-	x: number;
-	y: number;
-	z: number;
-}
-
-export interface IQuat
-{
-	x: number;
-	y: number;
-	z: number;
-	w: number;
-}
-
-export interface IColor {
-	r: number;
-	g: number;
-	b: number;
-	a: number;
-}
-
-export interface IPropertyCustomType {
-	[nameId: string] : string | number | boolean;
-}
-
-export interface IEntityRef {
-	name: string;
-	id: number;
-}
-
-export enum EPropertyFlags
-{
-	None = 0,
-	Hidden = 1 << 0,
-	Collapsed = 1 << 1,
-}
-
-export interface IProperty {
-	type: string;
-	name?: string;
-	value: string | number | boolean | IVec2 | IVec3 | IPropertyCustomType | IEntityRef | IProperty[];
-	id?: number;
-	flags?: EPropertyFlags;
-}
-
-export interface IProperyShape extends IProperty {
-	layer: string;
-	color: IColor;
-}
-
-export interface IPropertySphere extends IProperyShape {
-	position: IVec3;
-	radius: number;
-	value: string;
-	texture?: string;
-}
-
-export interface IPropertyCapsule extends IProperyShape {
-	position: IVec3;
-	direction: IVec3;
-	radius: number;
-	height: number;
-	value: string;
-    texture?: string;
-}
-
-export interface IPropertyAABB extends IProperyShape {
-	position: IVec3;
-	size: IVec3;
-	value: string;
-    texture?: string;
-}
-
-export interface IPropertyOOBB extends IProperyShape {
-	position: IVec3;
-	size: IVec3;
-	up: IVec3;
-	forward: IVec3;
-	value: string;
-    texture?: string;
-}
-
-export interface IPropertyPlane extends IProperyShape {
-	position: IVec3;
-	normal: IVec3;
-	up: IVec3;
-	width: number;
-	length: number;
-	value: string;
-    texture?: string;
-}
-
-export interface IPropertyLine extends IProperyShape {
-	origin: IVec3;
-	destination: IVec3;
-	value: string;
-}
-
-export interface IPropertyArrow extends IProperyShape {
-	origin: IVec3;
-	destination: IVec3;
-	value: string;
-}
-
-export interface IPropertyVector extends IProperyShape {
-	vector: IVec3;
-	value: string;
-}
-
-export interface IPropertyMesh extends IProperyShape {
-	vertices: number[];
-	indices?: number[];
-	wireframe?: boolean;
-	value: string;
-    texture?: string;
-}
-
-export interface IPropertyPath extends IProperyShape {
-	points: IVec3[];
-	value: string;
-}
-
-export interface IPropertyTriangle extends IProperyShape {
-	p1: IVec3;
-	p2: IVec3;
-	p3: IVec3;
-	value: string;
-    texture?: string;
-}
-
-export type IPropertyTextured = IPropertySphere | IPropertyAABB | IPropertyOOBB | IPropertyCapsule | IPropertyMesh | IPropertyTriangle;
-
-export interface IPropertyGroup {
-	type: string;
-	name: string;
-	value: IProperty[];
-	id?: number;
-}
-
-export interface IEvent {
-	name: string;
-	tag: string;
-	properties: IPropertyGroup;
-	idx: number;
-	id?: number;
-}
-
-export interface IEntity {
-	id: number;
-	parentId: number;
-	groupMap?: any;
-	properties: IPropertyGroup[];
-	events: IEvent[];
-}
-
-export interface IFrameEntityData {
-	[key:number]: IEntity;
-}
-
-export interface IFrameData {
-	entities: IFrameEntityData;
-	serverTime: number;
-	clientId: number;
-	frameId: number;
-	elapsedTime: number;
-	scene: string;
-	tag: string;
-	coordSystem?: ECoordinateSystem;
-}
-
-export enum VisitorResult
-{
-	Continue,
-	Stop
-}
-
-export interface IPropertyVisitorCallback
-{
-    (property: IProperty) : VisitorResult | void
-}
-
-export interface IEventVisitorCallback
-{
-    (event: IEvent) : VisitorResult | void
-}
-
-export interface IShapeVisitorCallback
-{
-    (event: IEvent) : VisitorResult | void
-}
-
-const emptyFrameData: IFrameData = {
-	entities: [],
-	frameId: 0,
-	serverTime: 0,
-	elapsedTime: 0,
-	clientId: 0,
-	tag: "",
-	scene: "",
-	coordSystem: ECoordinateSystem.LeftHand
-};
+import { ECoordinateSystem, emptyFrameData, IEntity, IEvent, IFrameData, IProperty, IPropertyGroup, IPropertyTextured, isPropertyTextured, IVec3, Props, RecordingFileType } from './RecordingDefinitions'
+import * as RecOps from './RecordingOperations'
 
 export class PropertyTable {
 	types: any[];
@@ -525,8 +271,6 @@ export interface INaiveRecordedData extends IRecordedData {
 export class NaiveRecordedData implements INaiveRecordedData {
 	readonly version: number = 3;
 	readonly type: RecordingFileType = RecordingFileType.NaiveRecording;
-	static readonly UserProps = 0;
-	static readonly SpecialProps = 1;
 	frameData: IFrameData[];
 	layers: string[];
 	scenes: string[];
@@ -546,36 +290,7 @@ export class NaiveRecordedData implements INaiveRecordedData {
     findResource(path: string) : IResource
     {
         return this.resources[path];
-    }
-
-	static getEntityName(entity: IEntity) : string
-	{
-		// Name is always part of the special groups
-		return (entity.properties[NaiveRecordedData.SpecialProps] as IPropertyGroup).value[0].value as string;
-	}
-
-	static getEntityPosition(entity: IEntity) : IVec3
-	{
-		// Position is always part of the special groups
-		return (entity.properties[NaiveRecordedData.SpecialProps] as IPropertyGroup).value[1].value as IVec3;
-	}
-
-	static getEntityUserProperties(entity: IEntity) : IPropertyGroup
-	{
-		return (entity.properties[NaiveRecordedData.UserProps] as IPropertyGroup);
-	}
-
-	static getEntityUp(entity: IEntity) : IVec3
-	{
-		// Up vector is always part of the special groups
-		return (entity.properties[NaiveRecordedData.SpecialProps] as IPropertyGroup).value[2].value as IVec3;
-	}
-
-	static getEntityForward(entity: IEntity) : IVec3
-	{
-		// Forward vector is always part of the special groups
-		return (entity.properties[NaiveRecordedData.SpecialProps] as IPropertyGroup).value[3].value as IVec3;
-	}
+    }	
 
 	loadFromData(dataJson: INaiveRecordedData)
 	{
@@ -672,125 +387,7 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		this.updateClientIDsOfFrame(frame);
 	}
 
-	static findPropertyIdInEntityProperties(entity: IEntity, propertyId: number) : IProperty
-	{
-		let result: IProperty = null;
-		NaiveRecordedData.visitEntityProperties(entity, (property) => {
-			if (property.id == propertyId)
-			{
-				result = property;
-				return VisitorResult.Stop;
-			}
-		});
-		return result;
-	}
-
-	static findPropertyIdInEntityEvents(entity: IEntity, propertyId: number)
-	{
-		let resultProp: IProperty = null;
-		let resultEvent: IEvent = null;
-
-		NaiveRecordedData.visitEvents(entity.events, (event) => {
-			NaiveRecordedData.visitProperties([event.properties], (property) => {
-				if (property.id == propertyId)
-				{
-					resultEvent = event;
-					resultProp = property;
-					return VisitorResult.Stop;
-				}
-			});
-		});
-
-		if (resultEvent != null) {
-			return { resultEvent, resultProp };
-		}
-
-		return null;
-	}
-
-	static findPropertyIdInEntity(entity: IEntity, propertyId: number) : IProperty
-	{
-		const resultProps = NaiveRecordedData.findPropertyIdInEntityProperties(entity, propertyId);
-		if (resultProps)
-		{
-			return resultProps;
-		}
-
-		const resultEvent = NaiveRecordedData.findPropertyIdInEntityEvents(entity, propertyId);
-		if (resultEvent)
-		{
-			return resultEvent.resultProp;
-		}
-
-		return null;
-	}
-
-	static findPropertyIdInProperties(frameData: IFrameData, propertyId: number) : IProperty
-	{
-		for (let entityID in frameData.entities)
-		{
-			const entity = frameData.entities[entityID];
-			const result = NaiveRecordedData.findPropertyIdInEntityProperties(entity, propertyId);
-
-			if (result != null) {
-				return result;
-			}
-		}
-
-		return null;
-	}
-
-	static findPropertyIdInEvents(frameData: IFrameData, propertyId: number)
-	{
-		for (let entityID in frameData.entities)
-		{
-			const entity = frameData.entities[entityID];
-			const resultEvent = NaiveRecordedData.findPropertyIdInEntityEvents(entity, propertyId);
-
-			if (resultEvent != null) {
-				return resultEvent;
-			}
-		}
-
-		return null;
-	}
-
-	static visitEntityProperties(entity: IEntity, callback: IPropertyVisitorCallback)
-	{
-		NaiveRecordedData.visitProperties(entity.properties, callback);
-	}
-
-	static visitProperties(properties: IProperty[], callback: IPropertyVisitorCallback, visitChildGroups: boolean = true)
-	{
-		const propertyCount = properties.length;
-		for (let i=0; i<propertyCount; ++i)
-		{
-			if (properties[i].type == 'group')
-			{
-				const res = callback(properties[i]);
-				if (res == VisitorResult.Stop) { return; }
-				if (visitChildGroups)
-				{
-					NaiveRecordedData.visitProperties((properties[i] as IPropertyGroup).value, callback);
-				}
-			}
-			else
-			{
-				const res = callback(properties[i]);
-				if (res == VisitorResult.Stop) { return; }
-			}
-		}
-	}
-
-	static visitEvents(events: IEvent[], callback: IEventVisitorCallback)
-	{
-		const eventCount = events.length;
-		for (let i=0; i<eventCount; ++i)
-		{
-			const res = callback(events[i]);
-			if (res == VisitorResult.Stop) { return; }
-		}
-	}
+	
 
 	buildFrameDataHeader(frame: number) : IFrameData {
 		let frameData = this.frameData[frame];
@@ -857,13 +454,13 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		
 		for (let id in mergedFrameData.entities)
 		{
-			NaiveRecordedData.visitProperties(mergedFrameData.entities[id].properties, (property: IProperty) => {
+			RecOps.visitProperties(mergedFrameData.entities[id].properties, (property: IProperty) => {
 				property.id = propId++;
 			});
-			NaiveRecordedData.visitEvents(mergedFrameData.entities[id].events, (event: IEvent) => {
+			RecOps.visitEvents(mergedFrameData.entities[id].events, (event: IEvent) => {
 				event.id = eventId++;
 
-				NaiveRecordedData.visitProperties([event.properties], (property: IProperty) => {
+				RecOps.visitProperties([event.properties], (property: IProperty) => {
 					property.id = propId++;
 				});
 			});
@@ -996,9 +593,9 @@ export class NaiveRecordedData implements INaiveRecordedData {
                     }
                 }
 			};
-			NaiveRecordedData.visitProperties(frame.entities[id].properties, visitor);
-			NaiveRecordedData.visitEvents(frame.entities[id].events, (event: IEvent) => {
-				NaiveRecordedData.visitProperties([event.properties], visitor);
+			RecOps.visitProperties(frame.entities[id].properties, visitor);
+			RecOps.visitEvents(frame.entities[id].events, (event: IEvent) => {
+				RecOps.visitProperties([event.properties], visitor);
 			});
 		}
 

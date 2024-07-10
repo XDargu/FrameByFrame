@@ -1,4 +1,5 @@
-import * as RECORDING from "../recording/RecordingData";
+import * as RECORDING from "../recording/RecordingDefinitions";
+import * as RecOps from '../recording/RecordingOperations'
 import { IListCallbacks, ListControl } from "../ui/list";
 import { filterText } from "../utils/utils";
 
@@ -49,7 +50,7 @@ export class EntityList
             let element = <HTMLElement>listElement.children[counter];
 
             const entity = entities[entityID];
-            const entityName = RECORDING.NaiveRecordedData.getEntityName(entity);
+            const entityName = RecOps.getEntityName(entity);
 
             if (element) {
                 element.innerText = entityName;

@@ -1,5 +1,5 @@
-import * as Utils from '../utils/utils';
-import * as RECORDING from '../recording/RecordingData';
+import * as RECDATA from "../recording/RecordingData";
+import * as RECORDING from "../recording/RecordingDefinitions";
 import { ResourcePreview } from './ResourcePreview';
 
 interface InfoBuilderGroup
@@ -91,7 +91,7 @@ export class RecordingInfoList
         this.infoList = infoList;
     }
 
-    buildInfoList(recording: RECORDING.INaiveRecordedData)
+    buildInfoList(recording: RECDATA.INaiveRecordedData)
     {
         this.infoList.innerHTML = "";
 

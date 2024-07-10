@@ -1,7 +1,6 @@
 import * as BABYLON from 'babylonjs';
-import * as RECORDING from '../recording/RecordingData';
+import * as RECORDING from '../recording/RecordingDefinitions';
 import * as RenderUtils from '../render/renderUtils';
-import { LinesMesh, } from 'babylonjs/Meshes/linesMesh';
 import { CustomLinesMesh, createCustomLinesystem } from './customLineMesh';
 
 export interface IPooledMesh

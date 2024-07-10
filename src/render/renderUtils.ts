@@ -1,5 +1,5 @@
 import * as BABYLON from 'babylonjs';
-import * as RECORDING from '../recording/RecordingData';
+import * as RECORDING from '../recording/RecordingDefinitions';
 import * as Utils from '../utils/utils';
 import { IEntityRenderData } from './commonTypes';
 

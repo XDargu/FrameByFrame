@@ -1,4 +1,4 @@
-import * as RECORDING from '../recording/RecordingData';
+import * as RECORDING from "../recording/RecordingDefinitions";
 import * as Utils from "../utils/utils";
 import { CorePropertyTypes } from "../types/typeRegistry";
 import { TreeControl } from "../ui/tree";

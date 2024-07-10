@@ -8,7 +8,9 @@ import { CoreLayers, getLayerStateName, LayerController, LayerState } from "./fr
 import * as Messaging from "./messaging/MessageDefinitions";
 import { initMessageHandling } from "./messaging/RendererMessageHandler";
 import * as NET_TYPES from './network/types';
-import * as RECORDING from './recording/RecordingData';
+import * as RECDATA from './recording/RecordingData';
+import * as RECORDING from './recording/RecordingDefinitions';
+import * as RecOps from './recording/RecordingOperations'
 import SceneController from './render/sceneController';
 import { PlaybackController } from "./timeline/PlaybackController";
 import Timeline from './timeline/timeline';
@@ -59,7 +61,7 @@ export interface FrameRequest
 
 export default class Renderer {
     private sceneController: SceneController;
-    private recordedData: RECORDING.NaiveRecordedData;
+    private recordedData: RECDATA.NaiveRecordedData;
     private timeline: Timeline;
     private currentPropertyId: number;
 
@@ -173,7 +175,7 @@ export default class Renderer {
 
         this.playbackController = new PlaybackController(this, this.timeline);
 
-        this.recordedData = new RECORDING.NaiveRecordedData();
+        this.recordedData = new RECDATA.NaiveRecordedData();
 
         this.timeline.setLength(this.recordedData.getSize());
 
@@ -597,7 +599,7 @@ export default class Renderer {
     loadJsonData(data: string) : boolean
     {
         this.clear();
-        const dataJson = JSON.parse(data) as RECORDING.IRecordedData;
+        const dataJson = JSON.parse(data) as RECDATA.IRecordedData;
 
         switch(dataJson.type)
         {
@@ -615,13 +617,13 @@ export default class Renderer {
             break;
             case RECORDING.RecordingFileType.NaiveRecording:
             {
-                this.recordedData.loadFromData(dataJson as RECORDING.INaiveRecordedData);
+                this.recordedData.loadFromData(dataJson as RECDATA.INaiveRecordedData);
             }
             break;
             default:
             {
                 // Used for legacy load, remove once not needed
-                const recordingData = dataJson as RECORDING.INaiveRecordedData;
+                const recordingData = dataJson as RECDATA.INaiveRecordedData;
                 if (recordingData.frameData) {
                     this.recordedData.loadFromData(recordingData);
                 }
@@ -991,7 +993,7 @@ export default class Renderer {
         for (let entityID in frameData.entities) {
             const entity = frameData.entities[entityID];
             const uniqueEntityID = Utils.toUniqueID(frameData.clientId, entity.id);
-            NaiveRecordedData.visitEvents(entity.events, (event: RECORDING.IEvent) => {
+            RecOps.visitEvents(entity.events, (event: RECORDING.IEvent) => {
                 this.timeline.addEvent(event.id, uniqueEntityID.toString(), frameIdx, "#D6A3FF", event.name, 0);
             });
         }
@@ -1077,8 +1079,8 @@ export default class Renderer {
                 const entityVisibleShapes = this.sceneController.collectVisibleShapesOfEntity(entity);
                 const remoteEntity : NET_TYPES.IRemoteEntityData = {
                     id: entity.id,
-                    name: NaiveRecordedData.getEntityName(entity),
-                    position: NaiveRecordedData.getEntityPosition(entity),
+                    name: RecOps.getEntityName(entity),
+                    position: RecOps.getEntityPosition(entity),
                     shapes: entityVisibleShapes
                 };
                 remoteEntities.push(remoteEntity);
@@ -1105,12 +1107,12 @@ export default class Renderer {
             for (let entityID in this.frameData.entities) {
                 const entity = this.frameData.entities[entityID];
 
-                NaiveRecordedData.visitEntityProperties(entity, (property: RECORDING.IProperty) => {
+                RecOps.visitEntityProperties(entity, (property: RECORDING.IProperty) => {
                     sceneController.addProperty(entity, property);
                 });
 
-                NaiveRecordedData.visitEvents(entity.events, (event: RECORDING.IEvent) => {
-                    NaiveRecordedData.visitProperties([event.properties], (eventProperty: RECORDING.IProperty) => {
+                RecOps.visitEvents(entity.events, (event: RECORDING.IEvent) => {
+                    RecOps.visitProperties([event.properties], (eventProperty: RECORDING.IProperty) => {
                         sceneController.addProperty(entity, eventProperty);
                     });
                 });
@@ -1210,7 +1212,7 @@ export default class Renderer {
 
     onCreateFilterFromProperty(propertyId: number)
     {
-        const eventData = NaiveRecordedData.findPropertyIdInEvents(this.frameData, propertyId);
+        const eventData = RecOps.findPropertyIdInEvents(this.frameData, propertyId);
         if (eventData != null)
         {
             this.filterList.addFilter(new Filters.EventFilter(eventData.resultEvent.name, eventData.resultEvent.tag, Filters.createMemberFilterFromProperty(eventData.resultProp)));
@@ -1218,7 +1220,7 @@ export default class Renderer {
         }
         else
         {
-            const property: RECORDING.IProperty = NaiveRecordedData.findPropertyIdInProperties(this.frameData, propertyId);
+            const property: RECORDING.IProperty = RecOps.findPropertyIdInProperties(this.frameData, propertyId);
             this.filterList.addFilter(new Filters.PropertyFilter("", Filters.createMemberFilterFromProperty(property)));
             this.controlTabs.openTabByIndex(TabIndices.Filters);
         }
@@ -1493,7 +1495,7 @@ export default class Renderer {
     {
         const entity = this.findEntityFromUniqueId(uniqueId);
         const entityId = Utils.getEntityIdUniqueId(uniqueId);
-        const property = entity ? RECORDING.NaiveRecordedData.findPropertyIdInEntity(entity, propertyId) : null;
+        const property = entity ? RecOps.findPropertyIdInEntity(entity, propertyId) : null;
         const propertyName = property ? property.name : "Unknown";
 
         return {
@@ -1569,7 +1571,7 @@ export default class Renderer {
         const entity = this.findEntityFromUniqueId(uniqueId);
         if (entity)
         {
-            return RECORDING.NaiveRecordedData.getEntityName(entity);
+            return RecOps.getEntityName(entity);
         }
 
         return "";
@@ -1584,7 +1586,7 @@ export default class Renderer {
             const entity = frameInfo.entities[entityId];
             if (entity)
             {
-                return RECORDING.NaiveRecordedData.getEntityName(entity);
+                return RecOps.getEntityName(entity);
             }
         }
         return "";

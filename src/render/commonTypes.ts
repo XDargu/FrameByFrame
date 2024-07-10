@@ -1,5 +1,5 @@
 import * as BABYLON from 'babylonjs';
-import { IProperty } from '../recording/RecordingData';
+import { IProperty } from '../recording/RecordingDefinitions';
 
 export interface IPropertyRenderData
 {

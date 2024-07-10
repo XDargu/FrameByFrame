@@ -1,5 +1,6 @@
 import * as BABYLON from 'babylonjs';
-import * as RECORDING from '../recording/RecordingData';
+import * as RECORDING from "../recording/RecordingDefinitions";
+import * as RecOps from '../recording/RecordingOperations'
 import { CoreLayers, LayerState } from '../frontend/LayersController';
 import * as Utils from '../utils/utils';
 import * as RenderUtils from '../render/renderUtils';
@@ -239,7 +240,7 @@ export default class SceneController
         sphere.material = this.pools.materialPool.getMaterial(1, 1, 1, 0.8);;
         sphere.isPickable = true;
         sphere.id = entity.id.toString();
-        const labelMesh = this.labels.buildLabel(RECORDING.NaiveRecordedData.getEntityName(entity));
+        const labelMesh = this.labels.buildLabel(RecOps.getEntityName(entity));
         let entityData: IEntityRenderData = { mesh: sphere, label: labelMesh, properties: new Map<number, IPropertyRenderData>() };
         this.sceneEntityData.setEntityData(entity.id, entityData);
         this.sceneEntityData.setEntityProperty(entity.id, entity.id);
@@ -255,9 +256,9 @@ export default class SceneController
             entityData = this.createEntity(entity);
         }
         
-        const position = RenderUtils.createVec3(RECORDING.NaiveRecordedData.getEntityPosition(entity), this.coordSystem);
-        const up = RenderUtils.createVec3(RECORDING.NaiveRecordedData.getEntityUp(entity), this.coordSystem);
-        const forward = RenderUtils.createVec3(RECORDING.NaiveRecordedData.getEntityForward(entity), this.coordSystem);
+        const position = RenderUtils.createVec3(RecOps.getEntityPosition(entity), this.coordSystem);
+        const up = RenderUtils.createVec3(RecOps.getEntityUp(entity), this.coordSystem);
+        const forward = RenderUtils.createVec3(RecOps.getEntityForward(entity), this.coordSystem);
 
         entityData.mesh.position.set(position.x, position.y, position.z);
         entityData.mesh.setEnabled(true);
@@ -272,7 +273,7 @@ export default class SceneController
         let entityData = this.sceneEntityData.getEntityById(entity.id);
         if (entityData)
         {
-            const position = RenderUtils.createVec3(RECORDING.NaiveRecordedData.getEntityPosition(entity), this.coordSystem);
+            const position = RenderUtils.createVec3(RecOps.getEntityPosition(entity), this.coordSystem);
 
             this.updateEntityLabelInternal(entityData, position, entity.id);
         }
@@ -502,10 +503,10 @@ export default class SceneController
             }
         };
 
-        RECORDING.NaiveRecordedData.visitEntityProperties(entity, collectProperty);
+        RecOps.visitEntityProperties(entity, collectProperty);
 
-        RECORDING.NaiveRecordedData.visitEvents(entity.events, (event: RECORDING.IEvent) => {
-            RECORDING.NaiveRecordedData.visitProperties([event.properties], collectProperty);
+        RecOps.visitEvents(entity.events, (event: RECORDING.IEvent) => {
+            RecOps.visitProperties([event.properties], collectProperty);
         });
         this.isLayerActiveForEntity
 

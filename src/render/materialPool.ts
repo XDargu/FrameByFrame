@@ -1,11 +1,12 @@
 import * as BABYLON from 'babylonjs';
-import * as RECORDING from '../recording/RecordingData';
+import * as RECDATA from "../recording/RecordingData";
+import * as RECORDING from "../recording/RecordingDefinitions";
 import { Console, LogChannel, LogLevel } from '../frontend/ConsoleController';
 import { loadImageResource } from './resources/images';
 
 export interface IGetResourceFunction
 {
-    (path: string) : RECORDING.IResource;
+    (path: string) : RECDATA.IResource;
 }
 
 export class MaterialPool

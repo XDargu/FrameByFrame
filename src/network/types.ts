@@ -1,4 +1,5 @@
-import * as RECORDING from '../recording/RecordingData';
+import * as RECDATA from "../recording/RecordingData";
+import * as RECORDING from "../recording/RecordingDefinitions";
 
 export enum MessageType {
 	FrameData = 0,
@@ -9,7 +10,7 @@ export enum MessageType {
 	SyncCameraData,
 }
 
-export interface IRawRecordingData extends RECORDING.IRecordedData {
+export interface IRawRecordingData extends RECDATA.IRecordedData {
 	version: number;
 	rawFrames: IMessageFrameData[];
 }

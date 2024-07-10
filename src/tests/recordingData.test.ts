@@ -1,13 +1,15 @@
 import { expect } from 'chai';
-import * as Recording from "../recording/RecordingData"
+import * as Recording from "../recording/RecordingDefinitions"
+import * as RecData from "../recording/RecordingData"
+import * as RecOps from "../recording/RecordingOperations"
 import * as Utils from "../utils/utils"
 
 describe('RecordingData', () => {
 
-    var data: Recording.NaiveRecordedData;
+    var data: RecData.NaiveRecordedData;
 
     beforeEach(function() {
-        data = new Recording.NaiveRecordedData();
+        data = new RecData.NaiveRecordedData();
         data.addTestData(100, 15);
     });
 
@@ -49,7 +51,7 @@ describe('RecordingData', () => {
             const entity = frameData.entities[firstEntityId];
             expect(entity).to.not.be.undefined;
 
-            const name = Recording.NaiveRecordedData.getEntityName(entity);
+            const name = RecOps.getEntityName(entity);
 
             expect(name).to.equal("My Entity Name 1");
         });
@@ -61,7 +63,7 @@ describe('RecordingData', () => {
             const entity = frameData.entities[firstEntityId];
             expect(entity).to.not.be.undefined;
 
-            const position = Recording.NaiveRecordedData.getEntityPosition(entity);
+            const position = RecOps.getEntityPosition(entity);
 
             expect(position).to.not.be.undefined;
 
@@ -77,7 +79,7 @@ describe('RecordingData', () => {
             const entity = frameData.entities[firstEntityId];
             expect(entity).to.not.be.undefined;
 
-            const up = Recording.NaiveRecordedData.getEntityUp(entity);
+            const up = RecOps.getEntityUp(entity);
 
             expect(up).to.not.be.undefined;
 
@@ -93,7 +95,7 @@ describe('RecordingData', () => {
             const entity = frameData.entities[firstEntityId];
             expect(entity).to.not.be.undefined;
 
-            const forward = Recording.NaiveRecordedData.getEntityForward(entity);
+            const forward = RecOps.getEntityForward(entity);
 
             expect(forward).to.not.be.undefined;
 
@@ -108,7 +110,7 @@ describe('RecordingData', () => {
         it('correctly converts to latest version', () => {
 
             const version = 1;
-            let dataV1 = new Recording.NaiveRecordedData();
+            let dataV1 = new RecData.NaiveRecordedData();
             dataV1.addTestData(100, 15, version);
 
             dataV1.patch(version);
@@ -120,8 +122,8 @@ describe('RecordingData', () => {
 
             const entity = frameData.entities[firstEntityId];
 
-            const forward = Recording.NaiveRecordedData.getEntityForward(entity);
-            const up = Recording.NaiveRecordedData.getEntityUp(entity);
+            const forward = RecOps.getEntityForward(entity);
+            const up = RecOps.getEntityUp(entity);
 
             expect(forward).to.not.be.undefined;
             expect(up).to.not.be.undefined;
@@ -134,7 +136,7 @@ describe('RecordingData', () => {
         it('correctly converts to latest version', () => {
 
             const version = 2;
-            let dataV1 = new Recording.NaiveRecordedData();
+            let dataV1 = new RecData.NaiveRecordedData();
             dataV1.addTestData(100, 15, version);
 
             dataV1.patch(version);
