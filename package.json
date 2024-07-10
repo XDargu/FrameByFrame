@@ -31,8 +31,10 @@
   "author": "Daniel Armesto",
   "license": "MIT",
   "dependencies": {
+    "archiver": "^3.1.1",
     "babylonjs": "^4.2.0",
     "babylonjs-materials": "^4.0.3",
+    "node-stream-zip": "^1.15.0",
     "resize-observer": "^1.0.0"
   },
   "devDependencies": {
