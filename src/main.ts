@@ -9,7 +9,11 @@ import { ISettings } from "./files/Settings";
 import { LogChannel, LogLevel, ILogAction } from "./frontend/ConsoleController";
 import * as Messaging from "./messaging/MessageDefinitions";
 
+import * as FileRec from "./recording/FileRecording";
+import { FileRecordingHandler, ILoadRecordingResult } from "./io/recordingOperations";
+
 import * as StreamZip from 'node-stream-zip';
+import { RecordingFileType } from "./recording/RecordingDefinitions";
 
 
 
@@ -20,6 +24,8 @@ const shell = require('electron').shell;
 // File Manager
 let fileManager: FileManager;
 let menuBuilder: MenuBuilder;
+
+let recordingHandler: FileRecordingHandler;
 
 function createWindow() {
   // Create the browser window.
@@ -64,7 +70,9 @@ function createWindow() {
   menuBuilder = new MenuBuilder(onOpenFileClicked, onExportFileClicked, onOpenRecentFileClicked);
   Menu.setApplicationMenu(menuBuilder.buildMenu(mainWindow));
 
-  fileManager = new FileManager();
+  recordingHandler = new FileRecordingHandler(mainWindow);
+
+  fileManager = new FileManager(recordingHandler);
   fileManager.initialize(onFileHistoryChanged, onSettingsChanged);
 
   mainWindow.webContents.once('dom-ready', onRendererReady);
@@ -77,6 +85,7 @@ function createWindow() {
       shell.openExternal(url);
     }
   });
+
 }
 
 function onRendererReady()
@@ -114,14 +123,61 @@ function onSettingsChanged(settings: ISettings)
   mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.SettingsChanged, settings));
 }
 
-function onOpenFileClicked()
+async function loadRecordingFile(filePath: string)
 {
-  fileManager.openRecordingsFile((pathName: string, content: string) => {
-    mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.FileOpened, pathName));
-    mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
-  }, (pathName: string) => {
-    mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LongOperationOngoing, "Opening File"));
-  });
+    try {
+        fileManager.addPathToHistory(filePath);
+        const isZip = await recordingHandler.isZipFile(filePath);
+        if (isZip)
+        {
+            mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LongOperationOngoing, "Opening File"));
+
+            // Unzip global data to disk and send path
+            const recording = await recordingHandler.loadEntireRecording(filePath);
+            
+            const openFileResult : Messaging.IOpenFileResult = {
+                isZip: isZip,
+                data: recording,
+                path: filePath
+            }
+
+            mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, openFileResult));
+        }
+        else
+        {
+            mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LongOperationOngoing, "Opening File"));
+
+            // Send entire data
+            const data = await fs.promises.readFile(filePath, 'utf8');
+
+            const openFileResult : Messaging.IOpenFileResult = {
+                isZip: isZip,
+                data: data,
+                path: filePath
+            }
+
+            mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, openFileResult));
+        }
+    }
+    catch(err) {
+        const options = {
+            type: 'error',
+            buttons: ['OK'],
+            title: 'Error reading file',
+            message: 'An error ocurred reading the file:',
+            detail: err.message,
+            checkboxChecked: false,
+        };
+        dialog.showMessageBox(null, options);
+
+        mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, null));
+    }
+}
+
+async function onOpenFileClicked()
+{
+    const filePath = await fileManager.openRecordingDialog();
+    loadRecordingFile(filePath);
 }
 
 function onExportFileClicked()
@@ -129,13 +185,9 @@ function onExportFileClicked()
   mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.RequestSave, ""));
 }
 
-function onOpenRecentFileClicked(pathName : string)
+function onOpenRecentFileClicked(filePath: string) 
 {
-  mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LongOperationOngoing, "Opening File"));
-  fileManager.loadRecordingFile(pathName, (pathName: string, content: string) => {
-    mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.FileOpened, pathName));
-    mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
-  });
+    loadRecordingFile(filePath);
 }
 
 function loadMods()
@@ -208,6 +260,8 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
   {
     case Messaging.MessageType.RequestSavePath:
     {
+        return;
+
       const request = arg.data as Messaging.IRequestSavePathData;
       const requestSave = (saveOnlySelection: boolean) =>
       {
@@ -249,85 +303,42 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
     }
     case Messaging.MessageType.SaveToFile:
     {
-      const fileSaveData = arg.data as Messaging.ISaveFileData;
-      fileManager.saveRecordingToFile(fileSaveData.path, fileSaveData.content)
-      break;
+        return;
+        const fileSaveData = arg.data as Messaging.ISaveFileData;
+        fileManager.saveRecordingToFile(fileSaveData.path, fileSaveData.content)
+        break;
     }
     case Messaging.MessageType.Load:
     {
-      const filePath = arg.data as string;
-      try {
+        const filePath = arg.data as string;
         if (fileManager.doesFileExist(filePath))
         {
-          /*fileManager.loadRecordingFile(filePath, (pathName: string, content: string) => {
-            event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.FileOpened, pathName));
-            event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
-          });*/
-
-
-
-
+            loadRecordingFile(filePath);
         }
         else
         {
-          const options = {
-            type: 'question',
-            buttons: ['Keep file', 'Remove from recent'],
-            title: 'File does not exist',
-            message: 'Looks like the file has been removed. Do you want to remove it from the recent file list?',
-          };
-        dialog.showMessageBox(null, options, (response) => {
-          const souldRemove: boolean = response == 1;
-          if (souldRemove) {
-            fileManager.removePathFromHistory(filePath);
-          }
-        });
-        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, null));
-        }
-      }
-      catch(err) {
-          const options = {
-              type: 'error',
-              buttons: ['OK'],
-              title: 'Error reading file',
-              message: 'An error ocurred reading the file',
-              detail: err.message,
-              checkboxChecked: false,
+            const options = {
+                type: 'question',
+                buttons: ['Keep file', 'Remove from recent'],
+                title: 'File does not exist',
+                message: 'Looks like the file has been removed. Do you want to remove it from the recent file list?',
             };
-          dialog.showMessageBox(null, options);
-          event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, null));
-      }
+        
+            dialog.showMessageBox(null, options, (response) => {
+                const souldRemove: boolean = response == 1;
+                if (souldRemove) {
+                    fileManager.removePathFromHistory(filePath);
+                }
+            });
+            
+            event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, null));
+        }
+     
       break;
     }
     case Messaging.MessageType.Open:
     {
-      /*fileManager.openRecordingsFile((pathName: string, content: string) => {
-        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.FileOpened, pathName));
-        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
-      }, () => {
-        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LongOperationOngoing, "Opening File"));
-      });*/
-        try {
-
-            testUncompress();
-            event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, null));
-
-        }
-        catch(err) {
-            const options = {
-                type: 'error',
-                buttons: ['OK'],
-                title: 'Error reading file',
-                message: 'An error ocurred reading the file',
-                detail: err.message,
-                checkboxChecked: false,
-              };
-            dialog.showMessageBox(null, options);
-            event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, null));
-        }
-
-
-
+        onOpenFileClicked();
       break;
     }
     case Messaging.MessageType.Clear:
@@ -388,28 +399,8 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
   }
 })
 
-function testUncompress()
-{
-    const options = {
-        filters: [
-            { name: 'Recordings', extensions: ['fbf'] },
-        ]
-    };
 
-    dialog.showOpenDialog(null, options, (paths: string[]) => {
-        if (paths === undefined || paths.length == 0){
-            console.log("You didn't open a file");
-            return;
-        }
-
-        const pathName = paths[0];
-
-        UncompressData(pathName);
-        
-    });
-}
-
-async function UncompressData(pathName: string)
+async function TestCompressUncompress(pathName: string)
 {
     // Create cache
     const uncompressedTest = path.join(app.getPath('userData'), "./test/cache/fbf0");
@@ -475,7 +466,7 @@ async function UncompressData(pathName: string)
 
     const name = path.basename(pathName);
 
-    const output = fs.createWriteStream(path.join(uncompressedTest, `./${name}.fbf`));
+    const output = fs.createWriteStream(path.join(uncompressedTest, `./${name}`));
     const archive = archiver('zip', {
         zlib: { level: 9 } // Sets the compression level.
     });
@@ -490,7 +481,7 @@ async function UncompressData(pathName: string)
     // pipe archive data to the file
     archive.pipe(output);
 
-    logToConsole(LogLevel.Information, LogChannel.Default, `Adding folder: ${path.join(uncompressedTest, './root')}`);
+    logToConsole(LogLevel.Information, LogChannel.Default, `Adding folder: ${path.join(uncompressedTest, './')}`);
 
     // append files from a sub-directory, putting its contents at the root of archive
     archive.directory(path.join(uncompressedTest, './root'), false);

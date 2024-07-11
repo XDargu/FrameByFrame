@@ -1,6 +1,7 @@
 import { app, remote, dialog } from "electron";
 import * as fs from 'fs';
 import { createDefaultSettings, ISettings } from "./Settings";
+import { FileRecordingHandler, ILoadRecordingResult } from "../io/recordingOperations";
 
 export interface IFileAcceptedCallback
 {
@@ -126,10 +127,12 @@ export default class FileManager
     pathHistory : IPathHistory;
     settings : ISettings;
 
+    recordingHandler: FileRecordingHandler;
+
     onHistoryChangedCallback : IHistoryChangedCallback;
     onSettingsChangedCallback: ISettingsChangedCallback;
 
-    constructor()
+    constructor(recordingHandler: FileRecordingHandler)
     {
         const {app} = require('electron');
 
@@ -139,6 +142,7 @@ export default class FileManager
         this.settingsFile = "settings.json";
         this.pathHistory = { paths: [] };
         this.settings = createDefaultSettings();
+        this.recordingHandler = recordingHandler;
     }
 
     initialize(onHistoryChangedCallback : IHistoryChangedCallback, onSettingsChangedCallback: ISettingsChangedCallback)
@@ -173,11 +177,10 @@ export default class FileManager
         });
     }
 
-    async loadRecordingFile(path: string, callback: IOpenFileCallback)
+    async loadRecordingFile(path: string)
     {
-        const data = await fs.promises.readFile(path, 'utf8')
         this.addPathToHistory(path);
-        callback(path, data);
+        return await this.recordingHandler.loadRecording(path);
     }
 
     async loadFile(path: string, callback: IOpenFileCallback)
@@ -196,22 +199,27 @@ export default class FileManager
         this.getSaveLocation(defaultName, "fbff", "Filters", callback);
     }
 
-    openRecordingsFile(callback: IOpenFileCallback, acceptedCallback: IFileAcceptedCallback)
+    async openRecordingDialog()
     {
-        const options = {
-            filters: [
-                { name: 'Recordings', extensions: ['fbf'] },
-            ]
-        };
+        return new Promise<string>((resolve, reject) => {
+            const options = {
+                filters: [
+                    { name: 'Recordings', extensions: ['fbf'] },
+                ]
+            };
+        
+            dialog.showOpenDialog(null, options, (paths: string[]) => {
+                if (paths === undefined || paths.length == 0){
+                    console.log("You didn't open a file");
+    
+                    resolve(null);
+                    return;
+                }
+        
+                const pathName = paths[0];
 
-        dialog.showOpenDialog(null, options, (paths: string[]) => {
-            if (paths === undefined || paths.length == 0){
-                console.log("You didn't open a file");
-                return;
-            }
-
-            acceptedCallback(paths[0]);
-            this.loadRecordingFile(paths[0], callback);
+                resolve(pathName);
+            });
         });
     }
 

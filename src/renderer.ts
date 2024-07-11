@@ -670,6 +670,18 @@ export default class Renderer {
         eval(mod);
     }
 
+    async onOpenResult(result: Messaging.IOpenFileResult)
+    {
+        if (result.isZip)
+        {
+            // DO nothing for now
+        }
+        else
+        {
+            this.loadCompressedData(result.data as string);
+        }
+    }
+
     async loadFilters(data: string)
     {
         this.openModal("Importing filters");

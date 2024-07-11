@@ -16,13 +16,25 @@ export function initMessageHandling(renderer: Renderer)
         {
             case Messaging.MessageType.OpenResult:
             {
-                const result = arg.data as string;
+                const result = arg.data as Messaging.IOpenFileResult;
                 if (result)
                 {
-                    renderer.loadCompressedData(result);
+                    renderer.onOpenResult(result);
+                    
+                    const pathName = result.path;
+                    Console.log(LogLevel.Information, LogChannel.Files, `Loading file `, {
+                        text: pathName,
+                        tooltip: "Open file in explorer",
+                        callback: () => { shell.showItemInFolder(path.resolve(pathName)); }
+                    });
+
+                    const title = path.basename(pathName) + " - Frame by Frame";
+                    document.title = title;
+                    document.getElementById("window-title-text").innerText = title;
+
+                    renderer.removeWelcomeMessage();
                 }
-                else
-                {
+                else {
                     renderer.closeModal();
                 }
                 break;
@@ -62,22 +74,6 @@ export function initMessageHandling(renderer: Renderer)
             {
                 const result = arg.data as Messaging.ILogData;
                 Console.log(result.level, result.channel, ...result.message);
-                break;
-            }
-            case Messaging.MessageType.FileOpened:
-            {
-                const pathName = arg.data as string;
-                Console.log(LogLevel.Information, LogChannel.Files, `Loading file `, {
-                    text: pathName,
-                    tooltip: "Open file in explorer",
-                    callback: () => { shell.showItemInFolder(path.resolve(pathName)); }
-                });
-                
-                let title = path.basename(pathName) + " - Frame by Frame";
-                document.title = title;
-                document.getElementById("window-title-text").innerText = title;
-
-                renderer.removeWelcomeMessage();
                 break;
             }
             case Messaging.MessageType.SettingsChanged:

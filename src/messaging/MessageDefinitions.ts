@@ -1,4 +1,6 @@
 import { ISettings } from "../files/Settings";
+import * as FileRec from "../recording/FileRecording";
+import * as RECORDING from "../recording/RecordingDefinitions";
 import { ConsoleWindow, LogLevel, ILogAction, LogChannel } from "../frontend/ConsoleController";
 
 export enum MessageType { // TODO: Maybe rename these to make clear the direction of the messge (main->render or render->main)
@@ -8,12 +10,11 @@ export enum MessageType { // TODO: Maybe rename these to make clear the directio
     SaveToFile,
     Load, // Load specific file
     Open, // Open file prompt
-    OpenResult,
+    OpenResult, // IOpenFileResult
     Clear,
     ClearResult,
     UpdateRecentFiles,
     LogToConsole,
-    FileOpened,
     SettingsChanged,
     SaveSettings,
     LongOperationOngoing,
@@ -55,7 +56,14 @@ export interface ISaveFileData
     path: string;
 }
 
-type MessageData = string | IClearResultData | ILogData | ISettings | ISaveFileData | IRequestSavePathData | IResultSavePathData;
+export interface IOpenFileResult
+{
+    isZip: boolean,
+    data: string | FileRec.FileRecording;
+    path: string;
+}
+
+type MessageData = string | IClearResultData | ILogData | ISettings | ISaveFileData | IRequestSavePathData | IResultSavePathData | IOpenFileResult;
 export class Message
 {
     public type: MessageType;

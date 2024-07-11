@@ -14,7 +14,9 @@ export enum ECoordinateSystem
 
 export enum RecordingFileType {
 	NaiveRecording,
-	RawFrames
+	RawFrames,
+
+    FileRecording
 }
 
 export function RecordingFileTypeToString(type: RecordingFileType)
@@ -23,6 +25,7 @@ export function RecordingFileTypeToString(type: RecordingFileType)
 	{
 		case RecordingFileType.NaiveRecording: return "Standard";
 		case RecordingFileType.RawFrames: return "RawData";
+		case RecordingFileType.FileRecording: return "FileRecording";
 	}
 	return "Unknown";
 }

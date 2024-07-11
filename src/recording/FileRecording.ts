@@ -2,6 +2,7 @@ import * as RECORDING from './RecordingDefinitions';
 import * as RecOps from './RecordingOperations'
 import * as fs from 'fs';
 import * as path from 'path';
+import * as StreamZip from 'node-stream-zip';
 
 export interface IResource {
     path: string;
@@ -25,6 +26,7 @@ interface GlobalData
 	clientIds: IClientData;
 	resources: IResourcesData;
 	storageVersion: number;
+    totalFrames: number;
 }
 
 interface FileRecPaths
@@ -54,10 +56,7 @@ export namespace Ops
         };
     }
 
-    export async function loadFile(path: string)
-    {
-        
-    }
+    
 }
 
 export class FileRecording
