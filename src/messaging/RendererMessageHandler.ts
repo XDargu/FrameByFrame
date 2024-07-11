@@ -108,6 +108,10 @@ export function initMessageHandling(renderer: Renderer)
                 }
                 break;
             }
+            case Messaging.MessageType.RequestConversionResult:
+            {
+                renderer.closeModal();
+            }
         }
     });
 }

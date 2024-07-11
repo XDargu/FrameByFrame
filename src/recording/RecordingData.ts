@@ -148,8 +148,6 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		this.updateClientIDsOfFrame(frame);
 	}
 
-	
-
 	buildFrameDataHeader(frame: number) : IFrameData {
 		let frameData = this.frameData[frame];
 

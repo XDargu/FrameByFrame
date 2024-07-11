@@ -9,12 +9,12 @@ import { ISettings } from "./files/Settings";
 import { LogChannel, LogLevel, ILogAction } from "./frontend/ConsoleController";
 import * as Messaging from "./messaging/MessageDefinitions";
 
-import * as FileRec from "./recording/FileRecording";
 import { FileRecordingHandler, ILoadRecordingResult } from "./io/recordingOperations";
 
 import * as StreamZip from 'node-stream-zip';
-import { RecordingFileType } from "./recording/RecordingDefinitions";
-
+import * as RECDATA from './recording/RecordingData';
+import * as FileRec from "./recording/FileRecording";
+import * as RECORDING from "./recording/RecordingDefinitions";
 
 
 let mainWindow: Electron.BrowserWindow;
@@ -121,6 +121,41 @@ function onFileHistoryChanged(paths: string[])
 function onSettingsChanged(settings: ISettings)
 {
   mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.SettingsChanged, settings));
+}
+
+async function uncompressNaiveRecording(data: RECDATA.INaiveRecordedData) {
+
+    const globalData: FileRec.GlobalData = {
+        layers: data.layers,
+        scenes: data.scenes,
+        clientIds: data.clientIds as unknown as FileRec.IClientData,
+        resources: data.resources,
+        storageVersion: data.storageVersion,
+        totalFrames: data.frameData.length,
+    }
+
+    logToConsole(LogLevel.Information, LogChannel.Default, `Exporting global data`);
+
+    await recordingHandler.writeGlobalData(globalData);
+
+    const totalFrames = data.frameData.length;
+    const totalChunks = Math.ceil(totalFrames / FileRec.FileRecording.frameCutOff);
+
+    logToConsole(LogLevel.Information, LogChannel.Default, `Chunks: ${totalChunks}`);
+
+    for (let i=0; i<totalChunks; ++i)
+    {
+        const offset = FileRec.FileRecording.frameCutOff * i;
+        const frameChunk = data.frameData.slice(offset, offset + FileRec.FileRecording.frameCutOff);
+
+        logToConsole(LogLevel.Information, LogChannel.Default, `Exporting chunk ${i} with offset ${offset}`);
+
+        await recordingHandler.writeFrameData(frameChunk, offset);
+    }
+}
+
+async function saveRecordingFile(filePath: string) {
+    
 }
 
 async function loadRecordingFile(filePath: string)
@@ -260,44 +295,42 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
   {
     case Messaging.MessageType.RequestSavePath:
     {
-        return;
+        const request = arg.data as Messaging.IRequestSavePathData;
+        const requestSave = (saveOnlySelection: boolean) =>
+        {
+            fileManager.getRecordingSaveLocation(request.defaultName, (path: string) => {
+                event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.SavePathResult, {
+                    path: path,
+                    saveOnlySelection: saveOnlySelection
+                }));
+            });
+        }
 
-      const request = arg.data as Messaging.IRequestSavePathData;
-      const requestSave = (saveOnlySelection: boolean) =>
-      {
-        fileManager.getRecordingSaveLocation(request.defaultName, (path: string) => {
-          event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.SavePathResult, {
-            path: path,
-            saveOnlySelection: saveOnlySelection
-          }));
-        });
-      }
+        if (request.askForPartialSave)
+        {
+            const options = {
+            type: 'question',
+            buttons: ['Save selection', 'Save all'],
+            defaultId: 0,
+            title: 'Save data',
+            message: 'Save only the selection or all data?',
+            detail: 'You have a partial selection of the recording. Do you want to save only the selected data, or the entire recording?',
+            };
+        
+            dialog.showMessageBox(null, options, (response) => {
+                const saveOnlySelection: boolean = response == 0;
+                const saveAll: boolean = response == 1;
 
-      if (request.askForPartialSave)
-      {
-        const options = {
-          type: 'question',
-          buttons: ['Save selection', 'Save all'],
-          defaultId: 0,
-          title: 'Save data',
-          message: 'Save only the selection or all data?',
-          detail: 'You have a partial selection of the recording. Do you want to save only the selected data, or the entire recording?',
-        };
-      
-        dialog.showMessageBox(null, options, (response) => {
-          const saveOnlySelection: boolean = response == 0;
-          const saveAll: boolean = response == 1;
-
-          if (saveOnlySelection || saveAll)
-          {
-            requestSave(saveOnlySelection);
-          }
-        });
-      }
-      else
-      {
-        requestSave(false);
-      }
+                if (saveOnlySelection || saveAll)
+                {
+                    requestSave(saveOnlySelection);
+                }
+            });
+        }
+        else
+        {
+            requestSave(false);
+        }
       
       break;
     }
@@ -339,7 +372,7 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
     case Messaging.MessageType.Open:
     {
         onOpenFileClicked();
-      break;
+        break;
     }
     case Messaging.MessageType.Clear:
     {
@@ -395,6 +428,14 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
         event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LongOperationOngoing, "Importing Filters"));
       });
       break;
+    }
+    case Messaging.MessageType.RequestConvertNaiveRecording:
+    {
+        const request = arg.data as Messaging.IRequestConvertRecording;
+
+        const naiveRecording = JSON.parse(request.data);
+        uncompressNaiveRecording(naiveRecording);
+        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.RequestConversionResult, null));
     }
   }
 })

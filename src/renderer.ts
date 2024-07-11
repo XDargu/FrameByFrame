@@ -11,6 +11,7 @@ import * as NET_TYPES from './network/types';
 import * as RECDATA from './recording/RecordingData';
 import * as RECORDING from './recording/RecordingDefinitions';
 import * as RecOps from './recording/RecordingOperations'
+import * as FileRec from "./recording/FileRecording";
 import SceneController from './render/sceneController';
 import { PlaybackController } from "./timeline/PlaybackController";
 import Timeline from './timeline/timeline';
@@ -596,6 +597,12 @@ export default class Renderer {
         ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.SaveSettings, this.settings));
     }
 
+    async convertNaiveToFileRecording(data: RECDATA.INaiveRecordedData)
+    {
+        const dataAsString = JSON.stringify(data);
+        ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.RequestConvertNaiveRecording, { data: dataAsString }));
+    }
+
     loadJsonData(data: string) : boolean
     {
         this.clear();
@@ -617,7 +624,7 @@ export default class Renderer {
             break;
             case RECORDING.RecordingFileType.NaiveRecording:
             {
-                this.recordedData.loadFromData(dataJson as RECDATA.INaiveRecordedData);
+                this.recordedData.loadFromData(dataJson as RECDATA.INaiveRecordedData);                
             }
             break;
             default:
@@ -674,7 +681,11 @@ export default class Renderer {
     {
         if (result.isZip)
         {
+            const fileRecording = result.data as FileRec.FileRecording;
             // DO nothing for now
+            console.log(fileRecording)
+
+            this.closeModal();
         }
         else
         {
@@ -711,6 +722,11 @@ export default class Renderer {
             this.openModal("Parsing file");
             await Utils.nextTick();
             this.loadJsonData(buffer.toString('utf8'));
+
+            this.openModal("Converting to new format");
+            await Utils.nextTick();
+            this.convertNaiveToFileRecording(this.recordedData);
+
             this.closeModal();
         }
         catch (error)
@@ -721,6 +737,12 @@ export default class Renderer {
             {
                 Console.log(LogLevel.Error, LogChannel.Files, "Error uncompressing file: " + error.message);
             }
+            else
+            {
+                await Utils.nextTick();
+                this.convertNaiveToFileRecording(this.recordedData);
+            }
+
             this.closeModal();
         }
     }

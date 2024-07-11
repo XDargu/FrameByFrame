@@ -19,7 +19,7 @@ export interface IClientData {
 	[key:number]: RECORDING.ClientData;
 }
 
-interface GlobalData
+export interface GlobalData
 {
 	layers: string[];
 	scenes: string[];
@@ -50,9 +50,9 @@ export namespace Ops
     {
         return {
             globaldata: path.join(rootPath, PathsConstant.globaldata),
-            frames: PathsConstant.frames,
-            resources: PathsConstant.resources,
-            resImages: PathsConstant.resImages
+            frames: path.join(rootPath, PathsConstant.frames),
+            resources: path.join(rootPath, PathsConstant.resources),
+            resImages: path.join(rootPath, PathsConstant.resImages)
         };
     }
 
@@ -61,6 +61,8 @@ export namespace Ops
 
 export class FileRecording
 {
+    static readonly frameCutOff = 100;
+    
     // Absolute path pointing towards the root folder of uncompressed data
     root: string;
     // Absolute paths pointing to different key folders

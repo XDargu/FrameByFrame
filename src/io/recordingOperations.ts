@@ -27,11 +27,11 @@ export class FileRecordingHandler
 
     private createLogMessage(level: LogLevel, channel: LogChannel, ...message: (string | ILogAction)[]) : Messaging.Message
     {
-    return new Messaging.Message(Messaging.MessageType.LogToConsole, {
-        message: message,
-        level: level,
-        channel: channel
-    });
+        return new Messaging.Message(Messaging.MessageType.LogToConsole, {
+            message: message,
+            level: level,
+            channel: channel
+        });
     }
 
     private logToConsole(level: LogLevel, channel: LogChannel, ...message: (string | ILogAction)[])
@@ -90,6 +90,13 @@ export class FileRecordingHandler
         this.logToConsole(LogLevel.Information, LogChannel.Default, `Extraction complete`);
     }
 
+    static getRootPath()
+    {
+        // We should try to find out how to count the number of open instances of FbF to get the path!
+        // Otherwise, we would only be able to open a single file
+        return path.join(app.getPath('userData'), "./test/cache/fbf0");
+    }
+
     async loadRecording(pathName: string)  : Promise<ILoadRecordingResult>
     {
         const isZip = await this.isZipFile(pathName);
@@ -128,7 +135,7 @@ export class FileRecordingHandler
 
     async loadEntireRecording(pathName: string)
     {
-        const targetPath = path.join(app.getPath('userData'), "./test/cache/fbf0");
+        const targetPath = FileRecordingHandler.getRootPath();
         await this.uncompressedFileRecording(pathName, targetPath);
 
         // Create file recording
@@ -183,6 +190,35 @@ export class FileRecordingHandler
             // 'close', 'end' or 'finish' may be fired right after calling this method so register to them beforehand
             archive.finalize();
         });
-        
+    }
+
+    async writeGlobalData(globalData: FileRec.GlobalData)
+    {
+        const targetPath = FileRecordingHandler.getRootPath();
+
+        const paths = FileRec.Ops.makePaths(targetPath);
+
+        if (!fs.existsSync(targetPath))
+            fs.mkdirSync(targetPath, { recursive: true });
+
+        const data = JSON.stringify(globalData);
+        await fs.promises.writeFile(paths.globaldata, data);
+    }
+
+    async writeFrameData(frames: RECORDING.IFrameData[], offset: number)
+    {
+        const targetPath = FileRecordingHandler.getRootPath();
+
+        const paths = FileRec.Ops.makePaths(targetPath);
+        const frameFilePath = path.join(paths.frames, `./${offset}.ffd`);
+        const data = JSON.stringify(frames);
+
+        this.logToConsole(LogLevel.Information, LogChannel.Default, `Target ${targetPath}. Frame path: ${paths.frames}. Final path: ${frameFilePath}`);
+        this.logToConsole(LogLevel.Information, LogChannel.Default, `Exporting chunk with ${frames.length} frames to ${frameFilePath}`);
+
+        if (!fs.existsSync(paths.frames))
+            fs.mkdirSync(paths.frames, { recursive: true });
+
+        await fs.promises.writeFile(frameFilePath, data);
     }
 }

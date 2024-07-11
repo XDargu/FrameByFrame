@@ -1,6 +1,7 @@
 import { ISettings } from "../files/Settings";
 import * as FileRec from "../recording/FileRecording";
 import * as RECORDING from "../recording/RecordingDefinitions";
+import * as RECDATA from '../recording/RecordingData';
 import { ConsoleWindow, LogLevel, ILogAction, LogChannel } from "../frontend/ConsoleController";
 
 export enum MessageType { // TODO: Maybe rename these to make clear the direction of the messge (main->render or render->main)
@@ -12,7 +13,7 @@ export enum MessageType { // TODO: Maybe rename these to make clear the directio
     Open, // Open file prompt
     OpenResult, // IOpenFileResult
     Clear,
-    ClearResult,
+    ClearResult, // IClearResultData
     UpdateRecentFiles,
     LogToConsole,
     SettingsChanged,
@@ -23,6 +24,13 @@ export enum MessageType { // TODO: Maybe rename these to make clear the directio
     RequestImportFilters,
     ImportFiltersResult,
     ModFileOpened,
+    RequestConvertNaiveRecording, // IRequestConvertRecording
+    RequestConversionResult, // Empty
+}
+
+export interface IRequestConvertRecording
+{
+    data: string
 }
 
 export interface IClearResultData
@@ -63,7 +71,7 @@ export interface IOpenFileResult
     path: string;
 }
 
-type MessageData = string | IClearResultData | ILogData | ISettings | ISaveFileData | IRequestSavePathData | IResultSavePathData | IOpenFileResult;
+type MessageData = string | IClearResultData | ILogData | ISettings | ISaveFileData | IRequestSavePathData | IResultSavePathData | IOpenFileResult | IRequestConvertRecording;
 export class Message
 {
     public type: MessageType;
