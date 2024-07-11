@@ -173,8 +173,11 @@ async function uncompressNaiveRecording(data: RECDATA.INaiveRecordedData)
     }
 }
 
-async function saveRecordingFile(filePath: string) {
-    
+async function saveRecordingFile(filePath: string)
+{
+    const rootPath = FileRecordingHandler.getRootPath();
+
+    recordingHandler.compressRecording(rootPath, filePath);
 }
 
 async function loadRecordingFile(filePath: string)
@@ -356,9 +359,9 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
     }
     case Messaging.MessageType.SaveToFile:
     {
-        return;
         const fileSaveData = arg.data as Messaging.ISaveFileData;
-        fileManager.saveRecordingToFile(fileSaveData.path, fileSaveData.content)
+        //fileManager.saveRecordingToFile(fileSaveData.path, fileSaveData.content)
+        saveRecordingFile(fileSaveData.path);
         break;
     }
     case Messaging.MessageType.Load:
@@ -459,96 +462,3 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
     }
   }
 })
-
-
-async function TestCompressUncompress(pathName: string)
-{
-    // Create cache
-    const uncompressedTest = path.join(app.getPath('userData'), "./test/cache/fbf0");
-
-    // TODO: Delete directory recursively
-
-    if (!fs.existsSync(uncompressedTest))
-    {
-        fs.mkdirSync(uncompressedTest, { recursive: true });
-    }
-
-    // Uncompress
-    const zip = new StreamZip.async({ file: pathName });
-
-    const entriesCount = await zip.entriesCount;
-    logToConsole(LogLevel.Information, LogChannel.Default, `Entries read: ${entriesCount}`);
-
-    const entries = await zip.entries();
-    const values = Object.values(entries);
-
-    let total = 0;
-
-    for (const entry of values) 
-    {
-        const desc = entry.isDirectory ? 'directory' : `${entry.size} bytes`;
-        if (entry.isFile)
-            total++;
-        logToConsole(LogLevel.Information, LogChannel.Default, `Entry ${entry.name}: ${desc}`);
-    }
-
-
-    // We are only going to extract the global data
-    //logToConsole(LogLevel.Information, LogChannel.Default, `Extracting globaldata to ${path.join(uncompressedTest, 'globaldata.ffd')}`);
-    //await zip.extract('root/globaldata.ffd', path.join(uncompressedTest, 'globaldata.ffd'));
-
-
-    // Extract everything
-    logToConsole(LogLevel.Information, LogChannel.Default, `Extracting everything`);
-
-    let filesProcessed = 0;
-
-    zip.on('extract', (entry, file) => {
-
-        filesProcessed++;
-        const percentage = filesProcessed / total * 100;
-
-        logToConsole(LogLevel.Information, LogChannel.Default, `Extracted ${entry.name} to ${file} (${percentage.toFixed(0)}%)`);
-    });
-
-    await zip.extract(null, uncompressedTest);
-
-    // Do not forget to close the file once you're done
-    await zip.close();
-    logToConsole(LogLevel.Information, LogChannel.Default, `Extraction complete`);
-
-    
-
-    logToConsole(LogLevel.Information, LogChannel.Default, `Compressing extracted files complete`);
-
-    const archiver = require('archiver');
-
-    logToConsole(LogLevel.Information, LogChannel.Default, `Compressing to: ${path.join(uncompressedTest, './example.fbf')}`);
-
-    const name = path.basename(pathName);
-
-    const output = fs.createWriteStream(path.join(uncompressedTest, `./${name}`));
-    const archive = archiver('zip', {
-        zlib: { level: 9 } // Sets the compression level.
-    });
-
-    // listen for all archive data to be written
-    // 'close' event is fired only when a file descriptor is involved
-    output.on('close', function() {
-        logToConsole(LogLevel.Information, LogChannel.Default, archive.pointer() + ' total bytes');
-        logToConsole(LogLevel.Information, LogChannel.Default, 'archiver has been finalized and the output file descriptor has closed.');
-    });
-
-    // pipe archive data to the file
-    archive.pipe(output);
-
-    logToConsole(LogLevel.Information, LogChannel.Default, `Adding folder: ${path.join(uncompressedTest, './')}`);
-
-    // append files from a sub-directory, putting its contents at the root of archive
-    archive.directory(path.join(uncompressedTest, './root'), false);
-
-    // finalize the archive (ie we are done appending files but streams have to finish yet)
-    // 'close', 'end' or 'finish' may be fired right after calling this method so register to them beforehand
-    archive.finalize();
-
-}

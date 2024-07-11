@@ -166,7 +166,7 @@ export class FileRecordingHandler
 
             // listen for all archive data to be written
             // 'close' event is fired only when a file descriptor is involved
-            output.on('close', function() {
+            output.on('close', () => {
                 this.logToConsole(LogLevel.Information, LogChannel.Default, archive.pointer() + ' total bytes');
                 this.logToConsole(LogLevel.Information, LogChannel.Default, 'archiver has been finalized and the output file descriptor has closed.');
 
@@ -174,7 +174,7 @@ export class FileRecordingHandler
             });
 
             // good practice to catch this error explicitly
-            archive.on('error', function(err: Error) {
+            archive.on('error', (err: Error) => {
                 reject(err.message);
             });
 
