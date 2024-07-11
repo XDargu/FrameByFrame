@@ -123,7 +123,26 @@ function onSettingsChanged(settings: ISettings)
   mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.SettingsChanged, settings));
 }
 
-async function uncompressNaiveRecording(data: RECDATA.INaiveRecordedData) {
+// TODO: Move to a better location
+function rimraf(dir_path: string) {
+    if (fs.existsSync(dir_path)) {
+        fs.readdirSync(dir_path).forEach(function(entry) {
+            var entry_path = path.join(dir_path, entry);
+            if (fs.lstatSync(entry_path).isDirectory()) {
+                rimraf(entry_path);
+            } else {
+                fs.unlinkSync(entry_path);
+            }
+        });
+        fs.rmdirSync(dir_path);
+    }
+}
+
+async function uncompressNaiveRecording(data: RECDATA.INaiveRecordedData)
+{
+    // Remove everything on the temp path
+    const rootPath = FileRecordingHandler.getRootPath();
+    rimraf(rootPath);
 
     const globalData: FileRec.GlobalData = {
         layers: data.layers,
@@ -212,7 +231,8 @@ async function loadRecordingFile(filePath: string)
 async function onOpenFileClicked()
 {
     const filePath = await fileManager.openRecordingDialog();
-    loadRecordingFile(filePath);
+    if (filePath)
+        loadRecordingFile(filePath);
 }
 
 function onExportFileClicked()
