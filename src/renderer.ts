@@ -677,6 +677,7 @@ export default class Renderer {
 
         this.frameLoader.initialize(fileRec.root);
 
+        this.openModal("Loading chunk");
         console.log("Requesting first chunk");
         // Request first chunk
         // Here, we need to request a frame from disk

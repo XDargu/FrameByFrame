@@ -106,8 +106,20 @@ export class FrameLoader
         const resultChunk = await this.requestFrameChunk(frame);
 
         // Add chunks to existing ones
-        for (let chunk of resultChunk.chunks)
+        for (let chunkRaw of resultChunk.chunks)
         {
+            const frameData = JSON.parse(chunkRaw.toString()) as RECORDING.IFrameData[];
+
+            const initFrame = FileRec.Ops.getChunkInit(frame);
+            const chunkFilename = FileRec.Ops.getFramePath(this.root, frame);
+            const end = initFrame + frameData.length;
+
+            const chunk : FrameChunk = {
+                path: chunkFilename,
+                init: initFrame,
+                end: end,
+                frameData: frameData,
+            }
             this.addChunk(chunk);
         }
 

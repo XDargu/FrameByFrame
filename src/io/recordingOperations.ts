@@ -290,14 +290,14 @@ export class FileRecordingHandler
 
     async loadChunks(paths: string[])
     {
-        let chunks : FrameLoader.FrameChunk[] = [];
+        let chunks : Buffer[] = [];
         for (let chunkPath of paths)
         {
             this.logToConsole(LogLevel.Information, LogChannel.Default, "Loading: " + chunkPath);
             if (fs.existsSync(chunkPath))
             {
                 const chunkRaw = await fs.promises.readFile(chunkPath);
-                const frameData = JSON.parse(chunkRaw.toString()) as RECORDING.IFrameData[];
+                /*const frameData = JSON.parse(chunkRaw.toString()) as RECORDING.IFrameData[];
                 const init = parseInt(path.parse(chunkPath).name);
                 const end = init + frameData.length;
 
@@ -306,9 +306,9 @@ export class FileRecordingHandler
                     init: init,
                     end: end,
                     frameData: frameData,
-                }
+                }*/
 
-                chunks.push(chunk);
+                chunks.push(chunkRaw);
             }
         }
 
