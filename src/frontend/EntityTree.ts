@@ -1,6 +1,6 @@
-import * as RECDATA from "../recording/RecordingData";
 import * as RECORDING from "../recording/RecordingDefinitions";
 import * as RecOps from '../recording/RecordingOperations'
+import * as FileRec from '../recording/FileRecording'
 import * as TREE from '../ui/tree';
 import * as Utils from "../utils/utils";
 
@@ -146,7 +146,7 @@ export class EntityTree {
         return defaultRoot;
     }
 
-    setEntities(entities: RECORDING.IFrameEntityData, recordedData: RECDATA.NaiveRecordedData)
+    setEntities(entities: RECORDING.IFrameEntityData, recordedData: FileRec.FileRecording)
     {
         // The wrapper will be used as the placeholder element to add new items
         let wrapper = document.createElement("div");
@@ -200,7 +200,7 @@ export class EntityTree {
         this.filterElements();
     }
 
-    private addEntityToTree(entity: RECORDING.IEntity, wrapper: HTMLDivElement, recordedData: RECDATA.NaiveRecordedData)
+    private addEntityToTree(entity: RECORDING.IEntity, wrapper: HTMLDivElement, recordedData: FileRec.FileRecording)
     {
         let listItem = this.addEntity(this.findRoot(entity, wrapper), entity, recordedData);
         this.cachedItemsById.set(entity.id, {
@@ -210,7 +210,7 @@ export class EntityTree {
         });
     }
 
-    addEntity(root :HTMLElement, entity: RECORDING.IEntity, recordedData: RECDATA.NaiveRecordedData) : HTMLElement
+    addEntity(root :HTMLElement, entity: RECORDING.IEntity, recordedData: FileRec.FileRecording) : HTMLElement
     {
         let listItem = this.pool.get();
 
@@ -219,7 +219,7 @@ export class EntityTree {
         let tagElement = listItem.children[0].children[2] as HTMLElement;
         let rootList = root.children[1] ? root.children[1] : root.children[0];
 
-        const isTagVisible = recordedData.clientIds.size > 1;
+        const isTagVisible = recordedData.globalData.clientIds.size > 1;
         tagElement.style.display = isTagVisible ? "block" : "none";
         if (isTagVisible) {
             const clientId = Utils.getClientIdUniqueId(entity.id);

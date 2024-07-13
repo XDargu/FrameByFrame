@@ -940,7 +940,7 @@ export default class Renderer {
 
         // Update entity list
         // TODO
-        this.entityTree.setEntities(this.frameData.entities, this.recordedData);
+        this.entityTree.setEntities(this.frameData.entities, this.fileRecording);
 
         // Update renderer
         this.sceneController.setCoordinateSystem(this.frameData.coordSystem ?? RECORDING.ECoordinateSystem.LeftHand);

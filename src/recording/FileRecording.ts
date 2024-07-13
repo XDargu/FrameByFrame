@@ -14,15 +14,11 @@ export interface IResourcesData {
 	[key:string]: IResource;
 }
 
-export interface IClientData {
-	[key:number]: RECORDING.ClientData;
-}
-
 export interface GlobalData
 {
 	layers: string[];
 	scenes: string[];
-	clientIds: IClientData;
+	clientIds: Map<number, RECORDING.ClientData>;
 	resources: IResourcesData;
 	storageVersion: number;
     totalFrames: number;
@@ -89,7 +85,7 @@ export class FileRecording implements IFileRecording
         this.globalData = {
             layers: [],
             scenes: [],
-            clientIds: {},
+            clientIds: new Map<number, RECORDING.ClientData>(),
             resources: {},
             storageVersion: 4,
             totalFrames: 0,
@@ -113,6 +109,12 @@ export class FileRecording implements IFileRecording
         // TODO
     }
 
+    getTagByClientId(clientId: number) : string
+	{
+		const data = this.globalData.clientIds.get(clientId);
+		return data?.tag;
+	}
+
     findResource(path: string) : IResource
     {
         return this.globalData.resources[path];
@@ -120,7 +122,7 @@ export class FileRecording implements IFileRecording
 
     pushFrame(frame: RECORDING.IFrameData)
     {
-
+        
     }
 
     getSize()

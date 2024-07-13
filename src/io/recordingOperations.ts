@@ -65,7 +65,7 @@ export class FileRecordingHandler
         const globalData: FileRec.GlobalData = {
             layers: data.layers,
             scenes: data.scenes,
-            clientIds: data.clientIds as unknown as FileRec.IClientData,
+            clientIds: data.clientIds,
             resources: data.resources,
             storageVersion: data.storageVersion,
             totalFrames: data.frameData.length,
