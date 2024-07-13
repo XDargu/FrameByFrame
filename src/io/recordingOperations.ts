@@ -135,6 +135,8 @@ export class FileRecordingHandler
             filesProcessed++;
             const percentage = filesProcessed / total * 100;
 
+            this.mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LongOperationOngoing, `Extracting Recording: ${percentage.toFixed(0)}%`));
+
             this.logToConsole(LogLevel.Information, LogChannel.Default, `Extracted ${entry.name} to ${file} (${percentage.toFixed(0)}%)`);
         });
 
@@ -143,6 +145,7 @@ export class FileRecordingHandler
         // Do not forget to close the file once you're done
         await zip.close();
         this.logToConsole(LogLevel.Information, LogChannel.Default, `Extraction complete`);
+        this.mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LongOperationOngoing, `Loading Recording`));
     }
 
     static getRootPath()

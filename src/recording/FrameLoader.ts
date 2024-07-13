@@ -18,6 +18,8 @@ interface ChunkRequestCallback
 
 interface ActiveRequest
 {
+    init: number, // Inclusive
+    end: number, // Inclusive
     callback: ChunkRequestCallback
 }
 
@@ -35,31 +37,61 @@ export class FrameLoader
     {
         this.idGenerator = 0;
         this.activeRequests = new Map<number, ActiveRequest>();
+        this.chunks = [];
     }
 
     updateFrames(fileRecording: FileRec.FileRecording)
     {
         // Temporary test function
+        let changes = false;
+
         for (let i=0; i<this.chunks.length; ++i)
         {
             const chunk = this.chunks[i];
-            const globalIdx = this.toGlobalIndex(chunk.init, chunk);
 
-            if (!fileRecording.frameData[globalIdx])
+            if (!fileRecording.frameData[chunk.init])
             {
                 for (let j=0; j<chunk.frameData.length; ++j)
                 {
                     const globalFrame = this.toGlobalIndex(j, chunk);
                     fileRecording.frameData[globalFrame] = chunk.frameData[j];
                 }
+
+                changes = true;
             }
         }
+
+        return changes;
     }
 
     initialize(path: string)
     {
         this.root = path;
         this.chunks = [];
+    }
+
+    getFramesLoading()
+    {
+        let result = "";
+        for (let request of this.activeRequests)
+        {
+            result += `From: ${request[1].init} to ${request[1].end}\n`;
+        }
+
+        return result;
+    }
+
+    isFrameLoading(frame: number)
+    {
+        for (let request of this.activeRequests)
+        {
+            if (request[1].init <= frame && frame <= request[1].end)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     async requestFrame(frame: number)
@@ -70,7 +102,7 @@ export class FrameLoader
             const chunkIdx = this.toChunkIndex(frame, chunk);
             return chunk.frameData[chunkIdx];
         }
-
+        
         const resultChunk = await this.requestFrameChunk(frame);
 
         // Add chunks to existing ones
@@ -104,7 +136,11 @@ export class FrameLoader
                 paths: [chunkFilename]
             };
 
+            const initFrame = FileRec.Ops.getChunkInit(frame);
+
             this.activeRequests.set(id, {
+                init: initFrame,
+                end: initFrame + FileRec.FileRecording.frameCutOff - 1,
                 callback: (result) => {
                     resolve(result);
                 }
@@ -129,7 +165,7 @@ export class FrameLoader
         for (let i=0; i<this.chunks.length; ++i)
         {
             const chunk = this.chunks[i];
-            if (chunk.init >= frame && frame <= chunk.end)
+            if (chunk.init <= frame && frame <= chunk.end)
             {
                 return chunk;
             }
@@ -155,7 +191,6 @@ export class FrameLoader
     onFrameChunkResult(result: Messaging.ILoadFrameChunksResult)
     {
         console.log("Chunk result");
-        console.log(result);
         const request = this.activeRequests.get(result.id);
         if (request)
         {

@@ -51,10 +51,15 @@ export namespace Ops
         };
     }
 
-    export function getFramePath(rootPath: string, frame: number)
+    export function getChunkInit(frame: number)
     {
         const remainder = frame % FileRecording.frameCutOff;
-        const frameNumber = frame - remainder;
+        return frame - remainder;
+    }
+
+    export function getFramePath(rootPath: string, frame: number)
+    {
+        const frameNumber = getChunkInit(frame);
         return path.join(rootPath, PathsConstant.frames, `./${frameNumber}.ffd`);
     }
 }

@@ -202,15 +202,34 @@ export default class Renderer {
         this.currentFrameRequest = null;
         window.requestAnimationFrame(this.render.bind(this));
 
-        this.requestApplyFrame({ frame: 0});
+        this.requestApplyFrame({ frame: 0 });
 
         this.frameLoader = new FrameLoader.FrameLoader();
     }
 
     render()
     {
+        // TODO: Move somewhere else!
+        const hasChanged = this.frameLoader.updateFrames(this.fileRecording);
+        if (hasChanged)
+        {
+            this.closeModal();
+            console.log("Updated frames");
+        }
+
         if (this.currentFrameRequest)
         {
+            const hasData = this.fileRecording.frameData[this.currentFrameRequest.frame] != undefined;
+            const requestAlreadyActive = this.frameLoader.isFrameLoading(this.currentFrameRequest.frame);
+
+            if (this.currentFrameRequest.frame < this.fileRecording.getSize()
+                && !hasData 
+                && !requestAlreadyActive)
+            {
+                this.frameLoader.requestFrame(this.currentFrameRequest.frame);
+                this.openModal("Loading chunk");
+            }
+
             this.applyFrame(this.currentFrameRequest.frame);
             if (this.currentFrameRequest.entityIdSel)
             {
@@ -663,9 +682,8 @@ export default class Renderer {
         // Here, we need to request a frame from disk
         await this.frameLoader.requestFrame(0);
 
-        // TEST: Send chunks to file recording
+        // Apply chunk request
         this.frameLoader.updateFrames(this.fileRecording);
-
 
         // InitFileRecording
         {
