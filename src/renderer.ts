@@ -926,8 +926,6 @@ export default class Renderer {
 
     applyFrame(frame : number) {
 
-        // TODO
-        
         this.frameData = this.fileRecording.buildFrameData(frame);
 
         this.timeline.setCurrentFrame(frame);
@@ -938,8 +936,7 @@ export default class Renderer {
         const frameText = (this.getFrameCount() > 0) ? (`Frame: ${frame + 1} / ${this.getFrameCount()} (Frame ID: ${this.frameData.frameId}, Tag: ${this.frameData.tag})`) : "No frames";
         document.getElementById("timeline-frame-counter").textContent = frameText;
 
-        // Update entity list
-        // TODO
+        // Update entity tree
         this.entityTree.setEntities(this.frameData.entities, this.fileRecording);
 
         // Update renderer
@@ -1364,6 +1361,30 @@ export default class Renderer {
 
     async saveToPath(path: string, saveOnlySelection: boolean)
     {
+        try {
+            this.openModal("Gathering data");
+            await Utils.delay(10);
+
+            if (saveOnlySelection)
+            {
+                // TODO: Save selection
+            }
+
+            const saveRequest : Messaging.ISaveFileData= {
+                content: '',
+                path: path
+            };
+
+            ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.SaveToFile, saveRequest));
+
+            this.closeModal();
+        }
+        catch (error)
+        {
+            Console.log(LogLevel.Error, LogChannel.Files, "Error compressing file");
+            this.closeModal();
+        }
+
         // TODO
         /*const { promisify } = require('util');
         const do_zip = promisify(zlib.gzip);

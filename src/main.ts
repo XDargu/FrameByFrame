@@ -129,7 +129,7 @@ async function saveRecordingFile(filePath: string)
         const rootPath = FileRecordingHandler.getRootPath();
 
         await recordingHandler.compressRecording(rootPath, filePath);
-        this.addPathToHistory(filePath);
+        fileManager.addPathToHistory(filePath);
     }
     catch(err) {
         const options = {
