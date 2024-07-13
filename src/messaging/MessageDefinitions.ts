@@ -1,7 +1,6 @@
 import { ISettings } from "../files/Settings";
 import * as FileRec from "../recording/FileRecording";
-import * as RECORDING from "../recording/RecordingDefinitions";
-import * as RECDATA from '../recording/RecordingData';
+import * as FrameLoader from "../recording/FrameLoader";
 import { ConsoleWindow, LogLevel, ILogAction, LogChannel } from "../frontend/ConsoleController";
 
 export enum MessageType { // TODO: Maybe rename these to make clear the direction of the messge (main->render or render->main)
@@ -25,7 +24,20 @@ export enum MessageType { // TODO: Maybe rename these to make clear the directio
     ImportFiltersResult,
     ModFileOpened,
     RequestConvertNaiveRecording, // IRequestConvertRecording
-    RequestConversionResult, // Empty
+    RequestLoadFrameChunks, // ILoadFrameChunksRequest
+    LoadFrameChunksResult, // ILoadFrameChunksResult
+}
+
+export interface ILoadFrameChunksResult
+{
+    id: number,
+    chunks: FrameLoader.FrameChunk[];
+}
+
+export interface ILoadFrameChunksRequest
+{
+    id: number,
+    paths: string[]
 }
 
 export interface IRequestConvertRecording
@@ -67,11 +79,11 @@ export interface ISaveFileData
 export interface IOpenFileResult
 {
     isZip: boolean,
-    data: string | FileRec.FileRecording;
+    data: string | FileRec.IFileRecording;
     path: string;
 }
 
-type MessageData = string | IClearResultData | ILogData | ISettings | ISaveFileData | IRequestSavePathData | IResultSavePathData | IOpenFileResult | IRequestConvertRecording;
+type MessageData = string | IClearResultData | ILogData | ISettings | ISaveFileData | IRequestSavePathData | IResultSavePathData | IOpenFileResult | IRequestConvertRecording | ILoadFrameChunksRequest | ILoadFrameChunksResult;
 export class Message
 {
     public type: MessageType;

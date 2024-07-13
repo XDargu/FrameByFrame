@@ -73,6 +73,7 @@ export function initMessageHandling(renderer: Renderer)
             case Messaging.MessageType.LogToConsole:
             {
                 const result = arg.data as Messaging.ILogData;
+                console.log(result.message);
                 Console.log(result.level, result.channel, ...result.message);
                 break;
             }
@@ -108,9 +109,13 @@ export function initMessageHandling(renderer: Renderer)
                 }
                 break;
             }
-            case Messaging.MessageType.RequestConversionResult:
+            case Messaging.MessageType.LoadFrameChunksResult:
             {
-                renderer.closeModal();
+                const result = arg.data as Messaging.ILoadFrameChunksResult;
+                if (result)
+                {
+                    renderer.onFrameChunkResult(result);
+                }
             }
         }
     });

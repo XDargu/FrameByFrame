@@ -123,56 +123,6 @@ function onSettingsChanged(settings: ISettings)
   mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.SettingsChanged, settings));
 }
 
-// TODO: Move to a better location
-function rimraf(dir_path: string) {
-    if (fs.existsSync(dir_path)) {
-        fs.readdirSync(dir_path).forEach(function(entry) {
-            var entry_path = path.join(dir_path, entry);
-            if (fs.lstatSync(entry_path).isDirectory()) {
-                rimraf(entry_path);
-            } else {
-                fs.unlinkSync(entry_path);
-            }
-        });
-        fs.rmdirSync(dir_path);
-    }
-}
-
-async function uncompressNaiveRecording(data: RECDATA.INaiveRecordedData)
-{
-    // Remove everything on the temp path
-    const rootPath = FileRecordingHandler.getRootPath();
-    rimraf(rootPath);
-
-    const globalData: FileRec.GlobalData = {
-        layers: data.layers,
-        scenes: data.scenes,
-        clientIds: data.clientIds as unknown as FileRec.IClientData,
-        resources: data.resources,
-        storageVersion: data.storageVersion,
-        totalFrames: data.frameData.length,
-    }
-
-    logToConsole(LogLevel.Information, LogChannel.Default, `Exporting global data`);
-
-    await recordingHandler.writeGlobalData(globalData);
-
-    const totalFrames = data.frameData.length;
-    const totalChunks = Math.ceil(totalFrames / FileRec.FileRecording.frameCutOff);
-
-    logToConsole(LogLevel.Information, LogChannel.Default, `Chunks: ${totalChunks}`);
-
-    for (let i=0; i<totalChunks; ++i)
-    {
-        const offset = FileRec.FileRecording.frameCutOff * i;
-        const frameChunk = data.frameData.slice(offset, offset + FileRec.FileRecording.frameCutOff);
-
-        logToConsole(LogLevel.Information, LogChannel.Default, `Exporting chunk ${i} with offset ${offset}`);
-
-        await recordingHandler.writeFrameData(frameChunk, offset);
-    }
-}
-
 async function saveRecordingFile(filePath: string)
 {
     try {
@@ -194,6 +144,37 @@ async function saveRecordingFile(filePath: string)
     }
 }
 
+async function loadChunks(request: Messaging.ILoadFrameChunksRequest)
+{
+    logToConsole(LogLevel.Information, LogChannel.Default, 'Loading chunks');
+    const chunks = await recordingHandler.loadChunks(request.paths);
+
+    logToConsole(LogLevel.Information, LogChannel.Default, 'Loaded chunks');
+
+    const result : Messaging.ILoadFrameChunksResult = {
+        id: request.id,
+        chunks: chunks
+    };
+
+    mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LoadFrameChunksResult, result));
+}
+
+async function onRequestNaiveRecordingConversion(naiveRecording: RECDATA.INaiveRecordedData)
+{
+    await recordingHandler.uncompressNaiveRecording(naiveRecording);
+
+    mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LongOperationOngoing, "Opening File"));
+
+    const recording = await recordingHandler.loadFromUncompressedData();
+    const openFileResult : Messaging.IOpenFileResult = {
+        isZip: true,
+        data: recording,
+        path: recording.root
+    }
+
+    mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, openFileResult));
+}
+
 async function loadRecordingFile(filePath: string)
 {
     try {
@@ -201,6 +182,7 @@ async function loadRecordingFile(filePath: string)
         const isZip = await recordingHandler.isZipFile(filePath);
         if (isZip)
         {
+            // Unzip global data to disk and send path
             mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LongOperationOngoing, "Opening File"));
 
             // Unzip global data to disk and send path
@@ -468,10 +450,17 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
     case Messaging.MessageType.RequestConvertNaiveRecording:
     {
         const request = arg.data as Messaging.IRequestConvertRecording;
-
         const naiveRecording = JSON.parse(request.data);
-        uncompressNaiveRecording(naiveRecording);
-        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.RequestConversionResult, null));
+
+        onRequestNaiveRecordingConversion(naiveRecording);
+        break;
+    }
+    case Messaging.MessageType.RequestLoadFrameChunks:
+    {
+        const request = arg.data as Messaging.ILoadFrameChunksRequest;
+
+        loadChunks(request);
+        break;
     }
   }
 })

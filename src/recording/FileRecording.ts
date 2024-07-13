@@ -1,8 +1,5 @@
 import * as RECORDING from './RecordingDefinitions';
-import * as RecOps from './RecordingOperations'
-import * as fs from 'fs';
 import * as path from 'path';
-import * as StreamZip from 'node-stream-zip';
 
 export interface IResource {
     path: string;
@@ -56,10 +53,22 @@ export namespace Ops
         };
     }
 
-    
+    export function getFramePath(rootPath: string, frame: number)
+    {
+        const remainder = frame % FileRecording.frameCutOff;
+        const frameNumber = frame - remainder;
+        return path.join(rootPath, PathsConstant.frames, `./${frameNumber}.ffd`);
+    }
 }
 
-export class FileRecording
+export interface IFileRecording {
+	root: string;
+    paths: FileRecPaths;
+    globalData: GlobalData;
+    frameData: RECORDING.IFrameData[];
+}
+
+export class FileRecording implements IFileRecording
 {
     static readonly frameCutOff = 100;
     
@@ -70,12 +79,64 @@ export class FileRecording
 
     globalData: GlobalData;
 
-    // Array of frame data, but can have gats. ie: frameData[0] exists and frameData[500] exists, but not frameData[100]
+    // Sparse array of frame data, it can have gaps. ie: frameData[0] exists and frameData[500] exists, but not frameData[100]
     frameData: RECORDING.IFrameData[];
 
-    constructor(path: string)
+    constructor()
     {
-        this.root = path;
-        this.paths = Ops.makePaths(path);
+        this.globalData = {
+            layers: [],
+            scenes: [],
+            clientIds: {},
+            resources: {},
+            storageVersion: 4,
+            totalFrames: 0,
+        };
     }
+
+    loadFromData(data: IFileRecording)
+    {
+        this.root = data.root;
+        this.paths = Ops.makePaths(this.root);
+        this.globalData = data.globalData;
+        this.frameData = data.frameData;
+    }
+
+    clear()
+    {
+        // TODO
+    }
+
+    findResource(path: string) : IResource
+    {
+        // TODO
+        return null;
+    }
+
+    pushFrame(frame: RECORDING.IFrameData)
+    {
+
+    }
+
+    getSize()
+    {
+        return this.globalData.totalFrames;
+    }
+
+    removeFramestAtStart(framesToRemove: number)
+    {
+        // TODO
+    }
+
+    buildFrameDataHeader(frame: number) : RECORDING.IFrameData
+    {
+        // TODO
+        return null;
+	}
+
+	buildFrameData(frame : number) : RECORDING.IFrameData
+    {
+        // TODO
+        return null;
+	}
 }

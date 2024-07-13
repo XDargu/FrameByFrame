@@ -1,5 +1,7 @@
 import { app, BrowserWindow } from "electron";
 import * as FileRec from "../recording/FileRecording";
+import * as FrameLoader from "../recording/FrameLoader";
+import * as RECDATA from "../recording/RecordingData";
 import * as RECORDING from "../recording/RecordingDefinitions";
 import { LogChannel, LogLevel, ILogAction } from "../frontend/ConsoleController";
 import * as Messaging from "../messaging/MessageDefinitions";
@@ -7,6 +9,21 @@ import * as Messaging from "../messaging/MessageDefinitions";
 import * as fs from 'fs';
 import * as path from 'path';
 import * as StreamZip from 'node-stream-zip';
+
+// TODO: Move to a better location
+function rimraf(dir_path: string) {
+    if (fs.existsSync(dir_path)) {
+        fs.readdirSync(dir_path).forEach(function(entry) {
+            var entry_path = path.join(dir_path, entry);
+            if (fs.lstatSync(entry_path).isDirectory()) {
+                rimraf(entry_path);
+            } else {
+                fs.unlinkSync(entry_path);
+            }
+        });
+        fs.rmdirSync(dir_path);
+    }
+}
 
 export interface ILoadRecordingResult
 {
@@ -38,14 +55,52 @@ export class FileRecordingHandler
     {
         this.mainWindow.webContents.send('asynchronous-reply', this.createLogMessage(level, channel, ...message));
     };
-    
 
+    async uncompressNaiveRecording(data: RECDATA.INaiveRecordedData)
+    {
+        // Remove everything on the temp path
+        const rootPath = FileRecordingHandler.getRootPath();
+        rimraf(rootPath);
+
+        const globalData: FileRec.GlobalData = {
+            layers: data.layers,
+            scenes: data.scenes,
+            clientIds: data.clientIds as unknown as FileRec.IClientData,
+            resources: data.resources,
+            storageVersion: data.storageVersion,
+            totalFrames: data.frameData.length,
+        }
+
+        this.logToConsole(LogLevel.Information, LogChannel.Default, `Exporting global data`);
+
+        await this.writeGlobalData(globalData);
+
+        const totalFrames = data.frameData.length;
+        const totalChunks = Math.ceil(totalFrames / FileRec.FileRecording.frameCutOff);
+
+        this.logToConsole(LogLevel.Information, LogChannel.Default, `Chunks: ${totalChunks}`);
+
+        for (let i=0; i<totalChunks; ++i)
+        {
+            const offset = FileRec.FileRecording.frameCutOff * i;
+            const frameChunk = data.frameData.slice(offset, offset + FileRec.FileRecording.frameCutOff);
+
+            this.logToConsole(LogLevel.Information, LogChannel.Default, `Exporting chunk ${i} with offset ${offset}`);
+
+            await this.writeFrameData(frameChunk, offset);
+        }
+    }
+    
     private async uncompressedFileRecording(pathName: string, targetPath: string)
     {
         // Create cache
 
-        // TODO: Delete directory recursively
+        // TODO: Make different chace for different instances of FbF
 
+        // Remove everything on the temp path
+        const rootPath = FileRecordingHandler.getRootPath();
+        rimraf(rootPath);
+        
         if (!fs.existsSync(targetPath))
         {
             fs.mkdirSync(targetPath, { recursive: true });
@@ -137,19 +192,27 @@ export class FileRecordingHandler
     {
         const targetPath = FileRecordingHandler.getRootPath();
         await this.uncompressedFileRecording(pathName, targetPath);
+        return this.loadFromUncompressedData();
+    }
 
-        // Create file recording
-        let fileRec = new FileRec.FileRecording(targetPath);
+    async loadFromUncompressedData()
+    {
+        const targetPath = FileRecordingHandler.getRootPath();
+
+        const paths = FileRec.Ops.makePaths(targetPath);
 
         // Load global data
-        const globalData = fs.readFileSync(fileRec.paths.globaldata);
+        const globalDataRaw = fs.readFileSync(paths.globaldata);
 
-        this.logToConsole(LogLevel.Information, LogChannel.Default, `Global data raw ${globalData}`);
+        const globalData = JSON.parse(globalDataRaw.toString());
 
-        fileRec.globalData = JSON.parse(globalData.toString());
-
-        // Load frame data. Do it on demand later
-        this.logToConsole(LogLevel.Information, LogChannel.Default, `Global data ${fileRec.globalData.clientIds}: ${fileRec.globalData.layers}`);
+        // Create file recording
+        const fileRec : FileRec.IFileRecording = {
+            root: targetPath,
+            paths: paths,
+            globalData: globalData,
+            frameData: []
+        };
 
         return fileRec;
     }
@@ -220,5 +283,32 @@ export class FileRecordingHandler
             fs.mkdirSync(paths.frames, { recursive: true });
 
         await fs.promises.writeFile(frameFilePath, data);
+    }
+
+    async loadChunks(paths: string[])
+    {
+        let chunks : FrameLoader.FrameChunk[] = [];
+        for (let chunkPath of paths)
+        {
+            this.logToConsole(LogLevel.Information, LogChannel.Default, "Loading: " + chunkPath);
+            if (fs.existsSync(chunkPath))
+            {
+                const chunkRaw = await fs.promises.readFile(chunkPath);
+                const frameData = JSON.parse(chunkRaw.toString()) as RECORDING.IFrameData[];
+                const init = parseInt(path.parse(chunkPath).name);
+                const end = init + frameData.length;
+
+                const chunk : FrameLoader.FrameChunk = {
+                    path: chunkPath,
+                    init: init,
+                    end: end,
+                    frameData: frameData,
+                }
+
+                chunks.push(chunk);
+            }
+        }
+
+        return chunks;
     }
 }

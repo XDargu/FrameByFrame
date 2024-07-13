@@ -12,6 +12,7 @@ import * as RECDATA from './recording/RecordingData';
 import * as RECORDING from './recording/RecordingDefinitions';
 import * as RecOps from './recording/RecordingOperations'
 import * as FileRec from "./recording/FileRecording";
+import * as FrameLoader from "./recording/FrameLoader";
 import SceneController from './render/sceneController';
 import { PlaybackController } from "./timeline/PlaybackController";
 import Timeline from './timeline/timeline';
@@ -62,7 +63,9 @@ export interface FrameRequest
 
 export default class Renderer {
     private sceneController: SceneController;
-    private recordedData: RECDATA.NaiveRecordedData;
+    //private recordedData: RECDATA.NaiveRecordedData;
+    private fileRecording: FileRec.FileRecording;
+    private frameLoader: FrameLoader.FrameLoader;
     private timeline: Timeline;
     private currentPropertyId: number;
 
@@ -129,7 +132,7 @@ export default class Renderer {
             canvas,
             (entityId: number) => { this.onEntitySelectedOnScene(entityId, true) },
             (pos: RECORDING.IVec3, up: RECORDING.IVec3, forward: RECORDING.IVec3) => { this.onCameraMoved(pos, up, forward) },
-            (path: string) => { return this.recordedData.findResource(path); },
+            (path: string) => { return this.fileRecording.findResource(path); },
             defaultSettings.selectionColor,
             defaultSettings.hoverColor,
             defaultSettings.shapeHoverColor,
@@ -176,9 +179,10 @@ export default class Renderer {
 
         this.playbackController = new PlaybackController(this, this.timeline);
 
-        this.recordedData = new RECDATA.NaiveRecordedData();
+        //this.recordedData = new RECDATA.NaiveRecordedData();
+        this.fileRecording = new FileRec.FileRecording();
 
-        this.timeline.setLength(this.recordedData.getSize());
+        this.timeline.setLength(0);
 
         //Shortcuts.registerShortcuts(this.playbackController, this.connectionsList);
         Shortcuts.initShortcuts();
@@ -199,6 +203,8 @@ export default class Renderer {
         window.requestAnimationFrame(this.render.bind(this));
 
         this.requestApplyFrame({ frame: 0});
+
+        this.frameLoader = new FrameLoader.FrameLoader();
     }
 
     render()
@@ -603,8 +609,9 @@ export default class Renderer {
         ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.RequestConvertNaiveRecording, { data: dataAsString }));
     }
 
-    loadJsonData(data: string) : boolean
+    loadNaiveRecording(data: string) : RECDATA.NaiveRecordedData
     {
+        let naiveRecording : RECDATA.NaiveRecordedData = new RECDATA.NaiveRecordedData();
         this.clear();
         const dataJson = JSON.parse(data) as RECDATA.IRecordedData;
 
@@ -619,12 +626,12 @@ export default class Renderer {
                     this.addFrameData(frame);
                 }
 
-                this.recordedData.patch(rawData.version);
+                naiveRecording.patch(rawData.version);
             }
             break;
             case RECORDING.RecordingFileType.NaiveRecording:
             {
-                this.recordedData.loadFromData(dataJson as RECDATA.INaiveRecordedData);                
+                naiveRecording.loadFromData(dataJson as RECDATA.INaiveRecordedData);                
             }
             break;
             default:
@@ -632,7 +639,7 @@ export default class Renderer {
                 // Used for legacy load, remove once not needed
                 const recordingData = dataJson as RECDATA.INaiveRecordedData;
                 if (recordingData.frameData) {
-                    this.recordedData.loadFromData(recordingData);
+                    naiveRecording.loadFromData(recordingData);
                 }
                 else {
                     throw new Error('Unable to detect type of recording');
@@ -640,9 +647,14 @@ export default class Renderer {
             }
         }
 
-        ResourcePreview.Instance().setResourceData(this.recordedData.resources);
+        return naiveRecording;
+    }
 
-        this.timeline.setLength(this.recordedData.getSize());
+    initNaiveRecording(naiveRecording : RECDATA.NaiveRecordedData) : boolean
+    {
+        ResourcePreview.Instance().setResourceData(naiveRecording.resources);
+
+        this.timeline.setLength(naiveRecording.getSize());
         this.pendingEvents.markAllPending();
         this.pendingMarkers.markAllPending();
         this.unprocessedFiltersPending = true;
@@ -671,6 +683,21 @@ export default class Renderer {
         return true;
     }
 
+    async loadFileRecording(fileRec: FileRec.IFileRecording)
+    {
+        console.log("Loading file recording");
+        this.fileRecording = new FileRec.FileRecording();
+        this.fileRecording.loadFromData(fileRec);
+
+        this.frameLoader.initialize(fileRec.root);
+
+        console.log("Requesting first chunk");
+        // Request first chunk
+        // Here, we need to request a frame from disk
+        this.frameLoader.requestFrame(0);
+        
+    }
+
     loadMod(mod: string)
     {
         console.log("Running mod: " + mod);
@@ -681,9 +708,10 @@ export default class Renderer {
     {
         if (result.isZip)
         {
-            const fileRecording = result.data as FileRec.FileRecording;
+            const fileRecording = result.data as FileRec.IFileRecording;
             // DO nothing for now
             console.log(fileRecording)
+            await this.loadFileRecording(fileRecording);
 
             this.closeModal();
         }
@@ -721,29 +749,31 @@ export default class Renderer {
 
             this.openModal("Parsing file");
             await Utils.nextTick();
-            this.loadJsonData(buffer.toString('utf8'));
+            const naiveRecoring = this.loadNaiveRecording(buffer.toString('utf8'));
 
             this.openModal("Converting to new format");
             await Utils.nextTick();
-            this.convertNaiveToFileRecording(this.recordedData);
+            this.convertNaiveToFileRecording(naiveRecoring);
 
-            this.closeModal();
+            // Now we wait for the new recording to be converted
         }
         catch (error)
         {
             this.openModal("Parsing file");
             await Utils.nextTick();
-            if (!this.loadJsonData(data))
+            const naiveRecoring = this.loadNaiveRecording(data);
+            if (!naiveRecoring)
             {
                 Console.log(LogLevel.Error, LogChannel.Files, "Error uncompressing file: " + error.message);
+                this.closeModal();
             }
             else
             {
                 await Utils.nextTick();
-                this.convertNaiveToFileRecording(this.recordedData);
-            }
+                this.convertNaiveToFileRecording(naiveRecoring);
 
-            this.closeModal();
+                // Now we wait for the new recording to be converted
+            }
         }
     }
 
@@ -752,17 +782,17 @@ export default class Renderer {
         this.pendingMarkers.clear();
         this.pendingEvents.clear();
         this.unprocessedFiltersPending = true;
-        this.recordedData.clear();
+        this.fileRecording.clear();
         this.sceneController.clear();
         this.timeline.clear();
-        this.timeline.setLength(this.recordedData.getSize());
+        this.timeline.setLength(0);
         this.timeline.clearEvents();
         // Avoid clearing recording options, since in all cases when we clear it's better to keep them
         //this.recordingOptions.setOptions([]);
         this.layerController.setLayers([]);
         this.applyFrame(0);
         this.updateMetadata();
-        ResourcePreview.Instance().setResourceData(this.recordedData.resources);
+        ResourcePreview.Instance().setResourceData(this.fileRecording.globalData.resources);
 
         // Trigger Garbace Collection
         global.gc();
@@ -849,11 +879,11 @@ export default class Renderer {
             frameToBuild.entities[entityData.id] = entityData;
         }
 
-        this.recordedData.pushFrame(frameToBuild);
+        this.fileRecording.pushFrame(frameToBuild);
 
-        this.timeline.setLength(this.recordedData.getSize());
-        this.pendingEvents.pushPending(this.recordedData.getSize() - 1);
-        this.pendingMarkers.pushPending(this.recordedData.getSize() - 1);
+        this.timeline.setLength(this.fileRecording.getSize());
+        this.pendingEvents.pushPending(this.fileRecording.getSize() - 1);
+        this.pendingMarkers.pushPending(this.fileRecording.getSize() - 1);
         this.unprocessedFiltersPending = true;
     }
 
@@ -861,13 +891,14 @@ export default class Renderer {
     {
         if (this.settings.removeOldFrames)
         {
-            const totalFrames = this.recordedData.getSize() + 1;
+            const totalFrames = this.fileRecording.getSize() + 1;
             if (totalFrames > this.settings.removeOldFramesAmount)
             {
                 const framesToRemove = totalFrames - this.settings.removeOldFramesAmount;
-                this.recordedData.frameData.splice(0, framesToRemove);
+                this.fileRecording.removeFramestAtStart(framesToRemove);
+                //this.recordedData.frameData.splice(0, framesToRemove);
 
-                this.timeline.setLength(this.recordedData.getSize());
+                this.timeline.setLength(this.fileRecording.getSize());
                 
                 this.pendingEvents.markAllPending();
                 this.pendingMarkers.markAllPending();
@@ -892,11 +923,14 @@ export default class Renderer {
     }
 
     applyFrame(frame : number) {
+
+        // TODO
+        /*
         this.frameData = this.recordedData.buildFrameData(frame);
 
         this.timeline.setCurrentFrame(frame);
 
-        this.layerController.setLayers(this.recordedData.layers);
+        this.layerController.setLayers(this.fileRecording.globalData.layers);
 
         // Update frame counter
         const frameText = (this.getFrameCount() > 0) ? (`Frame: ${frame + 1} / ${this.getFrameCount()} (Frame ID: ${this.frameData.frameId}, Tag: ${this.frameData.tag})`) : "No frames";
@@ -940,6 +974,8 @@ export default class Renderer {
 
         // Update connections
         this.updateVisibleShapesSyncing();
+
+        */
     }
 
     moveCameraToSelection()
@@ -1035,6 +1071,8 @@ export default class Renderer {
 
     updateTimelineEvents()
     {
+        // TODO
+        /*
         const filters = this.filterList.getFilters();
         if (filters.size > 0)
         {
@@ -1073,11 +1111,13 @@ export default class Renderer {
             this.pendingEvents.clear();
         }
 
-        this.playbackController.updateUI();
+        this.playbackController.updateUI();*/
     }
 
     updateFrameDataMarkers(frameData: RECORDING.IFrameData, frameIdx: number)
     {
+        // TODO
+        /*
         if (frameIdx > 0)
         {
             const prevFrameData = this.recordedData.buildFrameDataHeader(frameIdx - 1);
@@ -1088,11 +1128,13 @@ export default class Renderer {
                     this.timeline.addMarker("Interruption", frameIdx, "#ffa500");
                 }
             }
-        }
+        }*/
     }
     
     updateTimelineMarkers()
     {
+        // TODO
+        /*
         if (this.pendingMarkers.areAllFramesPending())
         {
             this.timeline.clearMarkers();
@@ -1100,6 +1142,7 @@ export default class Renderer {
         
         this.pendingMarkers.forEachPendingFrame(this.recordedData, this.updateFrameDataMarkers.bind(this));
         this.pendingMarkers.clear();
+        */
     }
 
     updateVisibleShapesSyncing()
@@ -1186,6 +1229,8 @@ export default class Renderer {
 
     getElapsedTimeOfFrame(frame: number)
     {
+        // TODO
+        /*
         if (frame == this.getCurrentFrame())
         {
             return this.frameData.elapsedTime;
@@ -1193,11 +1238,15 @@ export default class Renderer {
         else
         {
             return this.recordedData.buildFrameDataHeader(frame).elapsedTime;
-        }
+        }*/
+
+        return 0;
     }
 
     getServerTimeOfFrame(frame: number)
     {
+        // TODO
+        /*
         if (frame == this.getCurrentFrame())
         {
             return this.frameData.serverTime;
@@ -1205,11 +1254,15 @@ export default class Renderer {
         else
         {
             return this.recordedData.buildFrameDataHeader(frame).serverTime;
-        }
+        }*/
+
+        return 0;
     }
 
     getClientIdOfFrame(frame: number)
     {
+        // TODO
+        /*
         if (frame == this.getCurrentFrame())
         {
             return this.frameData.clientId;
@@ -1217,7 +1270,8 @@ export default class Renderer {
         else
         {
             return this.recordedData.buildFrameDataHeader(frame).clientId;
-        }
+        }*/
+       return -1;
     }
 
     updateRecentFiles(paths: string[])
@@ -1279,10 +1333,11 @@ export default class Renderer {
 
     onTimelineEventClicked(entityId: string, frame: number)
     {
-        const clientId = this.recordedData.buildFrameDataHeader(frame).clientId;
+        // TODO
+        /*const clientId = this.recordedData.buildFrameDataHeader(frame).clientId;
         const uniqueId = Utils.toUniqueID(clientId, Number.parseInt(entityId));
         this.logEntity(LogLevel.Verbose, LogChannel.Timeline, "Event selected in timeline. ", frame, uniqueId);
-        this.requestApplyFrame({ frame: frame, entityIdSel: Number.parseInt(entityId) });
+        this.requestApplyFrame({ frame: frame, entityIdSel: Number.parseInt(entityId) });*/
     }
 
     onTimelineUpdated(elapsedSeconds: number)
@@ -1308,7 +1363,8 @@ export default class Renderer {
 
     async saveToPath(path: string, saveOnlySelection: boolean)
     {
-        const { promisify } = require('util');
+        // TODO
+        /*const { promisify } = require('util');
         const do_zip = promisify(zlib.gzip);
         
         try {
@@ -1369,7 +1425,7 @@ export default class Renderer {
         {
             Console.log(LogLevel.Error, LogChannel.Files, "Error compressing file");
             this.closeModal();
-        }
+        }*/
     }
 
     onClearFile()
@@ -1489,6 +1545,9 @@ export default class Renderer {
     // Logging wrappers
     findFrameById(frameId: number) : number
     {
+        // TODO
+        return -1;
+        /*
         // TODO: Make an index?
         // TODO: Important: with multiple connections, frameId is no longer unique. FrameID + ClientID is unique. We need to update that.
         for (let i=0; i< this.recordedData.frameData.length; ++i)
@@ -1498,7 +1557,7 @@ export default class Renderer {
                 return i;
             }
         }
-        return -1;
+        return -1;*/
     }
 
     logErrorToConsole(message: string)
@@ -1590,7 +1649,8 @@ export default class Renderer {
     // Metadata
     updateMetadata()
     {
-        this.recordingInfoList.buildInfoList(this.recordedData);
+        // TODO
+        //this.recordingInfoList.buildInfoList(this.recordedData);
     }
 
     // Utils
@@ -1613,6 +1673,8 @@ export default class Renderer {
 
     findEntityNameOnFrame(uniqueId: number, frameIdx: number) : string
     {
+        // TODO
+        /*
         const frameInfo = this.recordedData.frameData[frameIdx];
         if (frameInfo)
         {
@@ -1622,7 +1684,7 @@ export default class Renderer {
             {
                 return RecOps.getEntityName(entity);
             }
-        }
+        }*/
         return "";
     }
 
@@ -1652,6 +1714,11 @@ export default class Renderer {
             document.body.classList.add("welcome-active");
             this.controlTabs.closeAllTabs();
         }
+    }
+
+    onFrameChunkResult(result: Messaging.ILoadFrameChunksResult)
+    {
+        this.frameLoader.onFrameChunkResult(result);
     }
 }
 
