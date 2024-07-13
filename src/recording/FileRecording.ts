@@ -1,5 +1,7 @@
 import * as RECORDING from './RecordingDefinitions';
 import * as path from 'path';
+import * as Utils from '../utils/utils'
+import * as RecOps from './RecordingOperations'
 
 export interface IResource {
     path: string;
@@ -92,6 +94,10 @@ export class FileRecording implements IFileRecording
             storageVersion: 4,
             totalFrames: 0,
         };
+
+        this.root = "";
+        this.paths = Ops.makePaths("");
+        this.frameData = [];
     }
 
     loadFromData(data: IFileRecording)
@@ -109,8 +115,7 @@ export class FileRecording implements IFileRecording
 
     findResource(path: string) : IResource
     {
-        // TODO
-        return null;
+        return this.globalData.resources[path];
     }
 
     pushFrame(frame: RECORDING.IFrameData)
@@ -136,7 +141,71 @@ export class FileRecording implements IFileRecording
 
 	buildFrameData(frame : number) : RECORDING.IFrameData
     {
-        // TODO
-        return null;
+        let frameData = this.frameData[frame];
+
+		if (!frameData) {
+			return RECORDING.emptyFrameData;
+		}
+
+		let dataPerClientID = new Map<number, RECORDING.IFrameData>();
+		dataPerClientID.set(frameData.clientId, frameData);
+		const maxPrevFrames = 10;
+		for (let i=0; i<maxPrevFrames; ++i)
+		{
+			const prevFrameData = this.frameData[frame - i - 1];
+			if (prevFrameData) {
+				const prevFrameClientId = prevFrameData.clientId;
+				if (!dataPerClientID.has(prevFrameClientId)) {
+					dataPerClientID.set(prevFrameClientId, prevFrameData);
+				}
+			}
+		}
+
+		let mergedFrameData : RECORDING.IFrameData = {
+			entities: {},
+			serverTime: frameData.serverTime,
+			clientId: frameData.clientId,
+			frameId: frameData.frameId,
+			elapsedTime: frameData.elapsedTime,
+			tag: frameData.tag,
+			scene: frameData.scene,
+			coordSystem: frameData.coordSystem
+		};
+
+		// Merge all entities
+		for (let [clientID, frameData] of dataPerClientID)
+		{
+			for (let entityID in frameData.entities)
+			{
+				const entity = frameData.entities[entityID];
+				const uniqueID = Utils.toUniqueID(frameData.clientId, entity.id);
+				const parentUniqueID = entity.parentId == 0 ? 0 : Utils.toUniqueID(frameData.clientId, entity.parentId);
+				mergedFrameData.entities[uniqueID] = {
+					id: uniqueID,
+					parentId: parentUniqueID,
+					properties: entity.properties,
+					events: entity.events
+				};
+			}
+		}
+
+		let eventId = 1;
+		let propId = 1;
+		
+		for (let id in mergedFrameData.entities)
+		{
+			RecOps.visitProperties(mergedFrameData.entities[id].properties, (property: RECORDING.IProperty) => {
+				property.id = propId++;
+			});
+			RecOps.visitEvents(mergedFrameData.entities[id].events, (event: RECORDING.IEvent) => {
+				event.id = eventId++;
+
+				RecOps.visitProperties([event.properties], (property: RECORDING.IProperty) => {
+					property.id = propId++;
+				});
+			});
+		}
+		
+		return mergedFrameData;
 	}
 }

@@ -37,6 +37,25 @@ export class FrameLoader
         this.activeRequests = new Map<number, ActiveRequest>();
     }
 
+    updateFrames(fileRecording: FileRec.FileRecording)
+    {
+        // Temporary test function
+        for (let i=0; i<this.chunks.length; ++i)
+        {
+            const chunk = this.chunks[i];
+            const globalIdx = this.toGlobalIndex(chunk.init, chunk);
+
+            if (!fileRecording.frameData[globalIdx])
+            {
+                for (let j=0; j<chunk.frameData.length; ++j)
+                {
+                    const globalFrame = this.toGlobalIndex(j, chunk);
+                    fileRecording.frameData[globalFrame] = chunk.frameData[j];
+                }
+            }
+        }
+    }
+
     initialize(path: string)
     {
         this.root = path;
@@ -98,6 +117,11 @@ export class FrameLoader
     private toChunkIndex(frame: number, chunk: FrameChunk)
     {
         return frame - chunk.init;
+    }
+
+    private toGlobalIndex(chunkFrame: number, chunk: FrameChunk)
+    {
+        return chunk.init + chunkFrame;
     }
 
     private findChunkByFrame(frame: number)

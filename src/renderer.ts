@@ -650,39 +650,6 @@ export default class Renderer {
         return naiveRecording;
     }
 
-    initNaiveRecording(naiveRecording : RECDATA.NaiveRecordedData) : boolean
-    {
-        ResourcePreview.Instance().setResourceData(naiveRecording.resources);
-
-        this.timeline.setLength(naiveRecording.getSize());
-        this.pendingEvents.markAllPending();
-        this.pendingMarkers.markAllPending();
-        this.unprocessedFiltersPending = true;
-
-        this.applyFrame(0);
-        this.controlTabs.openTabByIndex(TabIndices.EntityList);
-        if (this.settings.showAllLayersOnStart)
-        {
-            this.layerController.setAllLayersState(LayerState.All);
-        }
-
-        // Show only selected names as default when opening a file
-        this.layerController.setLayerState(CoreLayers.EntityNames, LayerState.Selected);
-
-        this.updateMetadata();
-        
-        // Select any first entity
-        Utils.runAsync(() => {
-            for (let entity in this.frameData.entities)
-            {
-                this.selectEntity(this.frameData.entities[entity].id);
-                break;
-            }
-        });
-
-        return true;
-    }
-
     async loadFileRecording(fileRec: FileRec.IFileRecording)
     {
         console.log("Loading file recording");
@@ -694,7 +661,42 @@ export default class Renderer {
         console.log("Requesting first chunk");
         // Request first chunk
         // Here, we need to request a frame from disk
-        this.frameLoader.requestFrame(0);
+        await this.frameLoader.requestFrame(0);
+
+        // TEST: Send chunks to file recording
+        this.frameLoader.updateFrames(this.fileRecording);
+
+
+        // InitFileRecording
+        {
+            ResourcePreview.Instance().setResourceData(this.fileRecording.globalData.resources);
+
+            this.timeline.setLength(this.fileRecording.getSize());
+            this.pendingEvents.markAllPending();
+            this.pendingMarkers.markAllPending();
+            this.unprocessedFiltersPending = true;
+
+            this.applyFrame(0);
+            this.controlTabs.openTabByIndex(TabIndices.EntityList);
+            if (this.settings.showAllLayersOnStart)
+            {
+                this.layerController.setAllLayersState(LayerState.All);
+            }
+
+            // Show only selected names as default when opening a file
+            this.layerController.setLayerState(CoreLayers.EntityNames, LayerState.Selected);
+
+            this.updateMetadata();
+            
+            // Select any first entity
+            Utils.runAsync(() => {
+                for (let entity in this.frameData.entities)
+                {
+                    this.selectEntity(this.frameData.entities[entity].id);
+                    break;
+                }
+            });
+        }
         
     }
 
@@ -925,8 +927,8 @@ export default class Renderer {
     applyFrame(frame : number) {
 
         // TODO
-        /*
-        this.frameData = this.recordedData.buildFrameData(frame);
+        
+        this.frameData = this.fileRecording.buildFrameData(frame);
 
         this.timeline.setCurrentFrame(frame);
 
@@ -937,6 +939,7 @@ export default class Renderer {
         document.getElementById("timeline-frame-counter").textContent = frameText;
 
         // Update entity list
+        // TODO
         this.entityTree.setEntities(this.frameData.entities, this.recordedData);
 
         // Update renderer
@@ -974,8 +977,6 @@ export default class Renderer {
 
         // Update connections
         this.updateVisibleShapesSyncing();
-
-        */
     }
 
     moveCameraToSelection()
