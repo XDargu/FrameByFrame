@@ -175,9 +175,23 @@ async function uncompressNaiveRecording(data: RECDATA.INaiveRecordedData)
 
 async function saveRecordingFile(filePath: string)
 {
-    const rootPath = FileRecordingHandler.getRootPath();
+    try {
+        const rootPath = FileRecordingHandler.getRootPath();
 
-    recordingHandler.compressRecording(rootPath, filePath);
+        await recordingHandler.compressRecording(rootPath, filePath);
+        this.addPathToHistory(filePath);
+    }
+    catch(err) {
+        const options = {
+            type: 'error',
+            buttons: ['OK'],
+            title: 'Error saving recording',
+            message: 'An error ocurred saving the recording',
+            detail: err.message,
+            checkboxChecked: false,
+        };
+        dialog.showMessageBox(null, options);
+    }
 }
 
 async function loadRecordingFile(filePath: string)
@@ -360,7 +374,6 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
     case Messaging.MessageType.SaveToFile:
     {
         const fileSaveData = arg.data as Messaging.ISaveFileData;
-        //fileManager.saveRecordingToFile(fileSaveData.path, fileSaveData.content)
         saveRecordingFile(fileSaveData.path);
         break;
     }
