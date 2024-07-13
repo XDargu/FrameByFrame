@@ -64,6 +64,11 @@ export function initMessageHandling(renderer: Renderer)
                 renderer.saveToPath(resultPath.path, resultPath.saveOnlySelection);
                 break;
             }
+            case Messaging.MessageType.SaveToFileResult:
+            {
+                renderer.closeModal();
+                break;
+            }
             case Messaging.MessageType.UpdateRecentFiles:
             {
                 const recentFiles = (arg.data as string).split(",");

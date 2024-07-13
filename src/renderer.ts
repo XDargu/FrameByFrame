@@ -1362,7 +1362,7 @@ export default class Renderer {
     async saveToPath(path: string, saveOnlySelection: boolean)
     {
         try {
-            this.openModal("Gathering data");
+            this.openModal("Saving recording");
             await Utils.delay(10);
 
             if (saveOnlySelection)
@@ -1375,9 +1375,7 @@ export default class Renderer {
                 path: path
             };
 
-            ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.SaveToFile, saveRequest));
-
-            this.closeModal();
+            ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.SaveToFileRequest, saveRequest));
         }
         catch (error)
         {

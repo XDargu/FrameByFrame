@@ -7,7 +7,8 @@ export enum MessageType { // TODO: Maybe rename these to make clear the directio
     RequestSave,
     RequestSavePath,
     SavePathResult,
-    SaveToFile, // ISaveFileData
+    SaveToFileRequest, // ISaveFileData
+    SaveToFileResult, // empty
     Load, // Load specific file
     Open, // Open file prompt
     OpenResult, // IOpenFileResult

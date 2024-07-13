@@ -130,6 +130,8 @@ async function saveRecordingFile(filePath: string)
 
         await recordingHandler.compressRecording(rootPath, filePath);
         fileManager.addPathToHistory(filePath);
+
+        mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.SaveToFileResult, null));
     }
     catch(err) {
         const options = {
@@ -141,6 +143,7 @@ async function saveRecordingFile(filePath: string)
             checkboxChecked: false,
         };
         dialog.showMessageBox(null, options);
+        mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.SaveToFileResult, null));
     }
 }
 
@@ -353,7 +356,7 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
       
       break;
     }
-    case Messaging.MessageType.SaveToFile:
+    case Messaging.MessageType.SaveToFileRequest:
     {
         const fileSaveData = arg.data as Messaging.ISaveFileData;
         saveRecordingFile(fileSaveData.path);
