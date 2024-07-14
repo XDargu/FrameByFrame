@@ -235,7 +235,7 @@ export default class Renderer {
     {
         if (this.currentFrameRequest)
         {
-            const hasData = this.fileRecording.frameData[this.currentFrameRequest.frame] != undefined;
+            const hasData = this.fileRecording.getFrameData(this.currentFrameRequest.frame) != undefined;
             const requestAlreadyActive = this.frameLoader.isFrameLoading(this.currentFrameRequest.frame);
 
             if (this.currentFrameRequest.frame < this.fileRecording.getSize()
@@ -849,7 +849,6 @@ export default class Renderer {
     {        
         const message: NET_TYPES.IMessage = JSON.parse(data) as NET_TYPES.IMessage;
 
-        // TODO: Make message types: frame data, command, etc. In an enum.
         // Also, move to a helper class
         if (message.type !== undefined)
         {
@@ -1593,19 +1592,15 @@ export default class Renderer {
     // Logging wrappers
     findFrameById(frameId: number) : number
     {
-        // TODO
-        return -1;
-        /*
         // TODO: Make an index?
         // TODO: Important: with multiple connections, frameId is no longer unique. FrameID + ClientID is unique. We need to update that.
-        for (let i=0; i< this.recordedData.frameData.length; ++i)
-        {
-            if (this.recordedData.frameData[i].frameId === frameId)
+        this.fileRecording.forEachFrameData((frameData, index) => {
+            if (frameData.frameId === frameId)
             {
-                return i;
+                return index;
             }
-        }
-        return -1;*/
+        });
+        return -1;
     }
 
     logErrorToConsole(message: string)
@@ -1720,9 +1715,7 @@ export default class Renderer {
 
     findEntityNameOnFrame(uniqueId: number, frameIdx: number) : string
     {
-        // TODO
-        /*
-        const frameInfo = this.recordedData.frameData[frameIdx];
+        const frameInfo = this.fileRecording.getFrameData(frameIdx);
         if (frameInfo)
         {
             const entityId = Utils.getEntityIdUniqueId(uniqueId);
@@ -1731,7 +1724,7 @@ export default class Renderer {
             {
                 return RecOps.getEntityName(entity);
             }
-        }*/
+        }
         return "";
     }
 

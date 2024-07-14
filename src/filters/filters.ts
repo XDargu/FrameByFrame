@@ -655,7 +655,7 @@ export class EventFilter extends Filter {
             });
         }
 
-        recordedData.frameData.forEach((frameData, idx) => {
+        recordedData.forEachFrameData((frameData, idx) => {
             for (let entityID in frameData.entities)
             {
                 const entity = frameData.entities[entityID];
@@ -715,7 +715,7 @@ export class PropertyFilter extends Filter {
             });
         }
 
-        recordedData.frameData.forEach((frameData, idx) => {
+        recordedData.forEachFrameData((frameData, idx) => {
             for (let entityID in frameData.entities)
             {
                 const entity = frameData.entities[entityID];

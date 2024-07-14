@@ -16,7 +16,7 @@ export default class PendingFrames
     {
         if (this.areAllPending)
         {
-            recordedData.frameData.forEach((val, idx) => {
+            recordedData.forEachFrameData((val, idx) => {
                 callback(val, idx);
             });
         }
@@ -25,7 +25,7 @@ export default class PendingFrames
             for (let i=0; i<this.pendingFrames.length; ++i)
             {
                 const frameIdx = this.pendingFrames[i];
-                const frameData = recordedData.frameData[frameIdx];
+                const frameData = recordedData.getFrameData(frameIdx);
                 if (frameData)
                     callback(frameData, frameIdx);
             }

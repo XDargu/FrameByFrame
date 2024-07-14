@@ -98,7 +98,7 @@ export class RecordingInfoList
         {
             let group = InfoBuiler.createGroup("Recording");
             InfoBuiler.addElement(group, `Version: ${recording.globalData.storageVersion}`, "Version of the recorded data format");
-            InfoBuiler.addElement(group, `Length (frames): ${recording.frameData.length}`, "Length of the recording in frames");
+            InfoBuiler.addElement(group, `Length (frames): ${recording.getSize()}`, "Length of the recording in frames");
             // TODO
             //InfoBuiler.addElement(group, `Type: ${RECORDING.RecordingFileTypeToString(recording.type)}`, "Type of recording");
             this.infoList.appendChild(group.fragment);

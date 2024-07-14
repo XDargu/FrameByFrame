@@ -161,6 +161,16 @@ export class FileRecording implements IFileRecording
         return frameData;
 	}
 
+    getFrameData(frame: number) : RECORDING.IFrameData
+    {
+        return this.frameData[frame];
+    }
+
+    forEachFrameData(callback : (value: RECORDING.IFrameData, index: number, array: RECORDING.IFrameData[]) => void)
+    {
+        this.frameData.forEach(callback);
+    }
+
 	buildFrameData(frame : number) : RECORDING.IFrameData
     {
         let frameData = this.frameData[frame];
