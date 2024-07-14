@@ -3,6 +3,7 @@ import * as Messaging from "../messaging/MessageDefinitions";
 import * as FileRec from './FileRecording';
 import { ipcRenderer } from "electron";
 import * as JSONAsync from './asyncJSONService';
+import * as Utils from "../utils/utils";
 
 export interface FrameChunk
 {
@@ -12,9 +13,14 @@ export interface FrameChunk
     frameData: RECORDING.IFrameData[],
 }
 
-interface ChunkRequestCallback
+export function toChunkIndex(frame: number, chunk: FrameChunk)
 {
-    (result: Messaging.ILoadFrameChunksResult) : void;
+    return frame - chunk.init;
+}
+
+export function toGlobalIndex(chunkFrame: number, chunk: FrameChunk)
+{
+    return chunk.init + chunkFrame;
 }
 
 interface ActiveRequest
@@ -41,30 +47,6 @@ export class FrameLoader
         this.idGenerator = 0;
         this.activeRequests = new Map<number, ActiveRequest>();
         this.chunks = [];
-    }
-
-    updateFrames(fileRecording: FileRec.FileRecording)
-    {
-        // Temporary test function
-        let changes = false;
-
-        for (let i=0; i<this.chunks.length; ++i)
-        {
-            const chunk = this.chunks[i];
-
-            if (!fileRecording.frameData[chunk.init])
-            {
-                for (let j=0; j<chunk.frameData.length; ++j)
-                {
-                    const globalFrame = this.toGlobalIndex(j, chunk);
-                    fileRecording.frameData[globalFrame] = chunk.frameData[j];
-                }
-
-                changes = true;
-            }
-        }
-
-        return changes;
     }
 
     initialize(path: string)
@@ -113,7 +95,7 @@ export class FrameLoader
         const chunk = this.findChunkByFrame(frame);
         if (chunk)
         {
-            const chunkIdx = this.toChunkIndex(frame, chunk);
+            const chunkIdx = toChunkIndex(frame, chunk);
             return chunk.frameData[chunkIdx];
         }
         
@@ -142,7 +124,7 @@ export class FrameLoader
         const newChunk = this.findChunkByFrame(frame);
         if (newChunk)
         {
-            const chunkIdx = this.toChunkIndex(frame, newChunk);
+            const chunkIdx = toChunkIndex(frame, newChunk);
             return newChunk.frameData[chunkIdx];
         }
 
@@ -178,17 +160,7 @@ export class FrameLoader
         });
     }
 
-    private toChunkIndex(frame: number, chunk: FrameChunk)
-    {
-        return frame - chunk.init;
-    }
-
-    private toGlobalIndex(chunkFrame: number, chunk: FrameChunk)
-    {
-        return chunk.init + chunkFrame;
-    }
-
-    private findChunkByFrame(frame: number)
+    findChunkByFrame(frame: number)
     {
         for (let i=0; i<this.chunks.length; ++i)
         {

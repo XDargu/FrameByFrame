@@ -1,4 +1,5 @@
 import { filterText } from "../utils/utils";
+import * as FileRec from "../recording/FileRecording";
 import * as RECDATA from "../recording/RecordingData";
 import * as RECORDING from "../recording/RecordingDefinitions";
 import * as RecOps from '../recording/RecordingOperations'
@@ -598,7 +599,7 @@ export class Filter {
         this.type = type;
     }
 
-    public filter(recordedData: RECDATA.NaiveRecordedData): FilteredResult[] {
+    public filter(recordedData: FileRec.FileRecording): FilteredResult[] {
         return [];
     }
 
@@ -636,7 +637,7 @@ export class EventFilter extends Filter {
         this.members = data.members;
     }
 
-    public filter(recordedData: RECDATA.NaiveRecordedData): FilteredResult[] {
+    public filter(recordedData: FileRec.FileRecording): FilteredResult[] {
         let results: FilteredResult[] = [];
 
         // Actual filters, so we don't override the existing ones.
@@ -654,18 +655,18 @@ export class EventFilter extends Filter {
             });
         }
 
-        for (let i = 0; i < recordedData.frameData.length; ++i) {
-            const frameData = recordedData.frameData[i];
-            for (let entityID in frameData.entities) {
+        recordedData.frameData.forEach((frameData, idx) => {
+            for (let entityID in frameData.entities)
+            {
                 const entity = frameData.entities[entityID];
 
                 RecOps.visitEvents(entity.events, (event: RECORDING.IEvent) => {
                     if (Common.filterEvent(event, nameFilter, tagFilter, membersFilter)) {
-                        results.push({ frameIdx: i, entityId: entity.id, name: event.name });
+                        results.push({ frameIdx: idx, entityId: entity.id, name: event.name });
                     }
                 });
             }
-        }
+        });
 
         return results;
     }
@@ -697,7 +698,7 @@ export class PropertyFilter extends Filter {
         this.members = data.members;
     }
 
-    public filter(recordedData: RECDATA.NaiveRecordedData): FilteredResult[] {
+    public filter(recordedData: FileRec.FileRecording): FilteredResult[] {
         let results: FilteredResult[] = [];
 
         // Actual filters, so we don't override the existing ones.
@@ -714,9 +715,9 @@ export class PropertyFilter extends Filter {
             });
         }
 
-        for (let i = 0; i < recordedData.frameData.length; ++i) {
-            const frameData = recordedData.frameData[i];
-            for (let entityID in frameData.entities) {
+        recordedData.frameData.forEach((frameData, idx) => {
+            for (let entityID in frameData.entities)
+            {
                 const entity = frameData.entities[entityID];
 
                 let resultMember = null;
@@ -734,11 +735,11 @@ export class PropertyFilter extends Filter {
                     if (allGood) {
                         const refProp = resultMember ? resultMember : resultNoMembers;
                         const name = refProp.isCategory ? refProp.category : `${refProp.property.name} (${refProp.category})`;
-                        results.push({ frameIdx: i, entityId: entity.id, name: name });
+                        results.push({ frameIdx: idx, entityId: entity.id, name: name });
                     }
                 }
             }
-        }
+        });
 
         return results;
     }

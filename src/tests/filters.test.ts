@@ -1,12 +1,13 @@
 import { expect } from 'chai';
 import * as Filters from "../filters/filters"
 import * as Recording from "../recording/RecordingData"
+import * as FileRec from "../recording/FileRecording"
 
 describe('Filters', () => {
 
     const entities = 12;
     const frames = 50;
-    var data: Recording.NaiveRecordedData;
+    var data: FileRec.FileRecording;
 
     let areResultsEqual = function(result1: Filters.FilteredResult, result2: Filters.FilteredResult) {
         return result1.entityId == result2.entityId &&
@@ -28,7 +29,7 @@ describe('Filters', () => {
     };
 
     beforeEach(function() {
-        data = new Recording.NaiveRecordedData();
+        data = new FileRec.FileRecording();
         // Test data creates 1 event per entity per frame
         // Half will be named OnTestEvent with tag FirstTest
         // Te other half will be named OnOtherTestEvent with tag OtherTest

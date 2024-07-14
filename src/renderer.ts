@@ -207,16 +207,32 @@ export default class Renderer {
         this.frameLoader = new FrameLoader.FrameLoader();
     }
 
+    async requestFrameChunk()
+    {
+        //this.openModal("Loading chunk");
+        await this.frameLoader.requestFrame(this.currentFrameRequest.frame);
+        const chunk = this.frameLoader.findChunkByFrame(this.currentFrameRequest.frame);
+        if (chunk)
+        {
+            const hasChanged = this.fileRecording.addFrameChunk(chunk);
+            if (hasChanged)
+            {
+                // TODO: Revisit where to put this logic
+                for (let j=0; j<chunk.frameData.length; ++j)
+                {
+                    const globalFrame = FrameLoader.toGlobalIndex(j, chunk);
+
+                    this.pendingEvents.pushPending(globalFrame);
+                }
+
+                this.closeModal();
+                console.log("Updated frames");
+            }
+        }
+    }
+
     render()
     {
-        // TODO: Move somewhere else!
-        const hasChanged = this.frameLoader.updateFrames(this.fileRecording);
-        if (hasChanged)
-        {
-            this.closeModal();
-            console.log("Updated frames");
-        }
-
         if (this.currentFrameRequest)
         {
             const hasData = this.fileRecording.frameData[this.currentFrameRequest.frame] != undefined;
@@ -226,8 +242,7 @@ export default class Renderer {
                 && !hasData 
                 && !requestAlreadyActive)
             {
-                this.frameLoader.requestFrame(this.currentFrameRequest.frame);
-                //this.openModal("Loading chunk");
+                this.requestFrameChunk();
             }
 
             if (hasData)
@@ -693,7 +708,9 @@ export default class Renderer {
         await this.frameLoader.requestFrame(0);
 
         // Apply chunk request
-        this.frameLoader.updateFrames(this.fileRecording);
+        const chunk = this.frameLoader.findChunkByFrame(0);
+        if (chunk)
+            this.fileRecording.addFrameChunk(chunk);
 
         // InitFileRecording
         {
@@ -1086,7 +1103,8 @@ export default class Renderer {
 
     updateFrameDataEvents(frameData: RECORDING.IFrameData, frameIdx: number)
     {
-        for (let entityID in frameData.entities) {
+        for (let entityID in frameData.entities)
+        {
             const entity = frameData.entities[entityID];
             const uniqueEntityID = Utils.toUniqueID(frameData.clientId, entity.id);
             RecOps.visitEvents(entity.events, (event: RECORDING.IEvent) => {
@@ -1097,8 +1115,6 @@ export default class Renderer {
 
     updateTimelineEvents()
     {
-        // TODO
-        /*
         const filters = this.filterList.getFilters();
         if (filters.size > 0)
         {
@@ -1110,13 +1126,13 @@ export default class Renderer {
                     if (filterData.visible)
                     {
                         const filterColor = Utils.colorFromHash(filterId);
-                        const result = filterData.filter.filter(this.recordedData);
+                        const result = filterData.filter.filter(this.fileRecording);
                         this.filterList.setFilterResultsCount(filterId, result.length);
 
                         for (let i=0; i<result.length; ++i)
                         {
                             const entry = result[i];
-                            const clientId = this.recordedData.buildFrameDataHeader(entry.frameIdx).clientId;
+                            const clientId = this.fileRecording.buildFrameDataHeader(entry.frameIdx).clientId;
                             const uniqueEntityID = Utils.toUniqueID(clientId, entry.entityId);
                             this.timeline.addEvent(i, uniqueEntityID.toString(), entry.frameIdx, filterColor, entry.name, 0);
                         }
@@ -1133,20 +1149,18 @@ export default class Renderer {
                 this.timeline.clearEvents();
             }
 
-            this.pendingEvents.forEachPendingFrame(this.recordedData, this.updateFrameDataEvents.bind(this));
+            this.pendingEvents.forEachPendingFrame(this.fileRecording, this.updateFrameDataEvents.bind(this));
             this.pendingEvents.clear();
         }
 
-        this.playbackController.updateUI();*/
+        this.playbackController.updateUI();
     }
 
     updateFrameDataMarkers(frameData: RECORDING.IFrameData, frameIdx: number)
     {
-        // TODO
-        /*
         if (frameIdx > 0)
         {
-            const prevFrameData = this.recordedData.buildFrameDataHeader(frameIdx - 1);
+            const prevFrameData = this.fileRecording.buildFrameDataHeader(frameIdx - 1);
             if (prevFrameData.clientId == frameData.clientId)
             {
                 if (frameData.frameId - prevFrameData.frameId > 1)
@@ -1154,21 +1168,18 @@ export default class Renderer {
                     this.timeline.addMarker("Interruption", frameIdx, "#ffa500");
                 }
             }
-        }*/
+        }
     }
     
     updateTimelineMarkers()
     {
-        // TODO
-        /*
         if (this.pendingMarkers.areAllFramesPending())
         {
             this.timeline.clearMarkers();
         }
         
-        this.pendingMarkers.forEachPendingFrame(this.recordedData, this.updateFrameDataMarkers.bind(this));
+        this.pendingMarkers.forEachPendingFrame(this.fileRecording, this.updateFrameDataMarkers.bind(this));
         this.pendingMarkers.clear();
-        */
     }
 
     updateVisibleShapesSyncing()
@@ -1255,49 +1266,38 @@ export default class Renderer {
 
     getElapsedTimeOfFrame(frame: number)
     {
-        // TODO
-        /*
         if (frame == this.getCurrentFrame())
         {
             return this.frameData.elapsedTime;
         }
         else
         {
-            return this.recordedData.buildFrameDataHeader(frame).elapsedTime;
-        }*/
-
-        return 0;
+            return this.fileRecording.buildFrameDataHeader(frame).elapsedTime;
+        }
     }
 
     getServerTimeOfFrame(frame: number)
     {
-        // TODO
-        /*
         if (frame == this.getCurrentFrame())
         {
             return this.frameData.serverTime;
         }
         else
         {
-            return this.recordedData.buildFrameDataHeader(frame).serverTime;
-        }*/
-
-        return 0;
+            return this.fileRecording.buildFrameDataHeader(frame).serverTime;
+        }
     }
 
     getClientIdOfFrame(frame: number)
     {
-        // TODO
-        /*
         if (frame == this.getCurrentFrame())
         {
             return this.frameData.clientId;
         }
         else
         {
-            return this.recordedData.buildFrameDataHeader(frame).clientId;
-        }*/
-       return -1;
+            return this.fileRecording.buildFrameDataHeader(frame).clientId;
+        }
     }
 
     updateRecentFiles(paths: string[])
@@ -1359,11 +1359,11 @@ export default class Renderer {
 
     onTimelineEventClicked(entityId: string, frame: number)
     {
-        // TODO
-        /*const clientId = this.recordedData.buildFrameDataHeader(frame).clientId;
+        // TODO: What happens if there is no data
+        const clientId = this.fileRecording.buildFrameDataHeader(frame).clientId;
         const uniqueId = Utils.toUniqueID(clientId, Number.parseInt(entityId));
         this.logEntity(LogLevel.Verbose, LogChannel.Timeline, "Event selected in timeline. ", frame, uniqueId);
-        this.requestApplyFrame({ frame: frame, entityIdSel: Number.parseInt(entityId) });*/
+        this.requestApplyFrame({ frame: frame, entityIdSel: Number.parseInt(entityId) });
     }
 
     onTimelineUpdated(elapsedSeconds: number)
@@ -1697,8 +1697,7 @@ export default class Renderer {
     // Metadata
     updateMetadata()
     {
-        // TODO
-        //this.recordingInfoList.buildInfoList(this.recordedData);
+        this.recordingInfoList.buildInfoList(this.fileRecording);
     }
 
     // Utils

@@ -1,4 +1,4 @@
-import * as RECDATA from '../recording/RecordingData';
+import * as FileRec from "../recording/FileRecording";
 import * as RECORDING from '../recording/RecordingDefinitions';
 import * as Utils from "../utils/utils";
 
@@ -12,20 +12,22 @@ export default class PendingFrames
     private pendingFrames: number[] = [];
     private areAllPending: boolean = false;
 
-    forEachPendingFrame(recordedData: RECDATA.INaiveRecordedData, callback: PendingFramesCallback)
+    forEachPendingFrame(recordedData: FileRec.FileRecording, callback: PendingFramesCallback)
     {
         if (this.areAllPending)
         {
-            for (let i=0; i<recordedData.frameData.length; ++i)
-            {
-                callback(recordedData.frameData[i], i);
-            }
+            recordedData.frameData.forEach((val, idx) => {
+                callback(val, idx);
+            });
         }
         else
         {
             for (let i=0; i<this.pendingFrames.length; ++i)
             {
-                callback(recordedData.frameData[i], i);
+                const frameIdx = this.pendingFrames[i];
+                const frameData = recordedData.frameData[frameIdx];
+                if (frameData)
+                    callback(frameData, frameIdx);
             }
         }
     }

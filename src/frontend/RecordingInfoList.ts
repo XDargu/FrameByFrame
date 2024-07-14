@@ -1,5 +1,4 @@
-import * as RECDATA from "../recording/RecordingData";
-import * as RECORDING from "../recording/RecordingDefinitions";
+import * as FileRec from "../recording/FileRecording";
 import { ResourcePreview } from './ResourcePreview';
 
 interface InfoBuilderGroup
@@ -91,21 +90,23 @@ export class RecordingInfoList
         this.infoList = infoList;
     }
 
-    buildInfoList(recording: RECDATA.INaiveRecordedData)
+    buildInfoList(recording: FileRec.FileRecording)
     {
+        console.log(recording);
         this.infoList.innerHTML = "";
 
         {
             let group = InfoBuiler.createGroup("Recording");
-            InfoBuiler.addElement(group, `Version: ${recording.storageVersion}`, "Version of the recorded data format");
+            InfoBuiler.addElement(group, `Version: ${recording.globalData.storageVersion}`, "Version of the recorded data format");
             InfoBuiler.addElement(group, `Length (frames): ${recording.frameData.length}`, "Length of the recording in frames");
-            InfoBuiler.addElement(group, `Type: ${RECORDING.RecordingFileTypeToString(recording.type)}`, "Type of recording");
+            // TODO
+            //InfoBuiler.addElement(group, `Type: ${RECORDING.RecordingFileTypeToString(recording.type)}`, "Type of recording");
             this.infoList.appendChild(group.fragment);
         }
 
         {
             let group = InfoBuiler.createGroup("Client IDs");
-            for (let [id, clientData] of recording.clientIds)
+            for (let [id, clientData] of recording.globalData.clientIds)
             {
                 InfoBuiler.addElement(group, `${clientData.tag} (ID: ${id})`, "");
             }
@@ -114,7 +115,7 @@ export class RecordingInfoList
 
         {
             let group = InfoBuiler.createGroup("Scenes/Levels");
-            for (let scene of recording.scenes)
+            for (let scene of recording.globalData.scenes)
             {
                 InfoBuiler.addElement(group, scene, "");
             }
@@ -123,7 +124,7 @@ export class RecordingInfoList
 
         {
             let group = InfoBuiler.createGroup("Resources");
-            for (let path in recording.resources)
+            for (let path in recording.globalData.resources)
             {
                 const element = InfoBuiler.addElement(group, path, "");
                 element.onmouseenter = (ev) => {
