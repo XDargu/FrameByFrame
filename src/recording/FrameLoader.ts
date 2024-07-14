@@ -11,6 +11,7 @@ export interface FrameChunk
     init: number, // Inclusive
     end: number, // Inclusive
     frameData: RECORDING.IFrameData[],
+    lastAccess: number
 }
 
 export function toChunkIndex(frame: number, chunk: FrameChunk)
@@ -42,11 +43,14 @@ export class FrameLoader
     private root: string;
     private chunks: FrameChunk[];
 
+    private maxFrames: number;
+
     constructor()
     {
         this.idGenerator = 0;
         this.activeRequests = new Map<number, ActiveRequest>();
         this.chunks = [];
+        this.maxFrames = 4;
     }
 
     initialize(path: string)
@@ -64,6 +68,22 @@ export class FrameLoader
             request[1].reject(new Error("Cleared"));
         }
         this.activeRequests.clear();
+    }
+
+    notifyFrameAccess(frame: number)
+    {
+        const chunk = this.findChunkByFrame(frame);
+        if (chunk)
+        {
+            chunk.lastAccess = Date.now();
+        }
+    }
+
+    removeOldChunks()
+    {
+        this.chunks.sort((a, b) => b.lastAccess - a.lastAccess);
+        const removedChunks = this.chunks.splice(this.maxFrames);
+        return removedChunks;
     }
 
     getFramesLoading()
@@ -115,6 +135,7 @@ export class FrameLoader
                 init: initFrame,
                 end: end,
                 frameData: frameData,
+                lastAccess: Date.now()
             }
             this.addChunk(chunk);
         }

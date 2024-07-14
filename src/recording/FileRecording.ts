@@ -355,6 +355,18 @@ export class FileRecording implements IFileRecording
         return hasChanged;
     }
 
+    removeFrameChunks(chunks : FrameLoader.FrameChunk[])
+    {
+        for (let chunk of chunks)
+        {
+            for (let j=0; j<chunk.frameData.length; ++j)
+            {
+                const globalFrame = FrameLoader.toGlobalIndex(j, chunk);
+                delete this.frameData[globalFrame];
+            }
+        }
+    }
+
     private updateClientIDSOfFrame(frameData: RECORDING.IFrameData)
     {
         if (frameData.clientId != undefined && !this.globalData.clientIds.has(frameData.clientId))

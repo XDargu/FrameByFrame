@@ -229,6 +229,22 @@ export default class Renderer {
                         this.pendingEvents.pushPending(globalFrame);
                     }
 
+                    // Remove
+                    const removedChunks = this.frameLoader.removeOldChunks();
+                    this.fileRecording.removeFrameChunks(removedChunks);
+
+                    for (let chunk of removedChunks)
+                    {
+                        for (let j=0; j<chunk.frameData.length; ++j)
+                        {
+                            const globalFrame = FrameLoader.toGlobalIndex(j, chunk);
+                            this.pendingEvents.pushPending(globalFrame);
+                        }
+                    }
+
+                    this.pendingEvents.markAllPending();
+
+
                     this.updateTimelineEvents();
 
                     this.closeModal();
@@ -974,6 +990,8 @@ export default class Renderer {
     applyFrame(frame : number) {
 
         this.frameData = this.fileRecording.buildFrameData(frame);
+
+        this.frameLoader.notifyFrameAccess(frame);
 
         this.timeline.setCurrentFrame(frame);
 
