@@ -237,7 +237,7 @@ export const emptyFrameData: IFrameData = {
 	entities: [],
 	frameId: 0,
 	serverTime: 0,
-	elapsedTime: 0,
+	elapsedTime: 1 / 60,
 	clientId: 0,
 	tag: "",
 	scene: "",

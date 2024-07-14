@@ -92,7 +92,6 @@ export class RecordingInfoList
 
     buildInfoList(recording: FileRec.FileRecording)
     {
-        console.log(recording);
         this.infoList.innerHTML = "";
 
         {

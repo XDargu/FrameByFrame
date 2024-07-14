@@ -138,8 +138,6 @@ export class FrameLoader
             // Calculate the paths to request
             const chunkFilename = FileRec.Ops.getFramePath(this.root, frame);
 
-            // TODO: Also get adjacent chunks, if possible
-            console.log("Requesting frame async");
             const id = ++this.idGenerator;
             const request : Messaging.ILoadFrameChunksRequest = {
                 id: id,

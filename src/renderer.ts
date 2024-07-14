@@ -207,26 +207,33 @@ export default class Renderer {
         this.frameLoader = new FrameLoader.FrameLoader();
     }
 
-    async requestFrameChunk()
+    async requestFrameChunk(frame: number)
     {
-        //this.openModal("Loading chunk");
-        await this.frameLoader.requestFrame(this.currentFrameRequest.frame);
-        const chunk = this.frameLoader.findChunkByFrame(this.currentFrameRequest.frame);
-        if (chunk)
+        if (frame >= 0 && frame < this.fileRecording.getSize()
+            && !this.fileRecording.getFrameData(frame) != undefined 
+            && !this.frameLoader.isFrameLoading(frame))
         {
-            const hasChanged = this.fileRecording.addFrameChunk(chunk);
-            if (hasChanged)
+            //this.openModal("Loading chunk");
+            await this.frameLoader.requestFrame(frame);
+            const chunk = this.frameLoader.findChunkByFrame(frame);
+            if (chunk)
             {
-                // TODO: Revisit where to put this logic
-                for (let j=0; j<chunk.frameData.length; ++j)
+                const hasChanged = this.fileRecording.addFrameChunk(chunk);
+                if (hasChanged)
                 {
-                    const globalFrame = FrameLoader.toGlobalIndex(j, chunk);
+                    // TODO: Revisit where to put this logic
+                    for (let j=0; j<chunk.frameData.length; ++j)
+                    {
+                        const globalFrame = FrameLoader.toGlobalIndex(j, chunk);
 
-                    this.pendingEvents.pushPending(globalFrame);
+                        this.pendingEvents.pushPending(globalFrame);
+                    }
+
+                    this.updateTimelineEvents();
+
+                    this.closeModal();
+                    console.log("Updated frames");
                 }
-
-                this.closeModal();
-                console.log("Updated frames");
             }
         }
     }
@@ -235,16 +242,12 @@ export default class Renderer {
     {
         if (this.currentFrameRequest)
         {
+            this.requestFrameChunk(this.currentFrameRequest.frame);
+            // Request the next one and prev one too
+            this.requestFrameChunk(this.currentFrameRequest.frame + FileRec.FileRecording.frameCutOff);
+            this.requestFrameChunk(this.currentFrameRequest.frame - FileRec.FileRecording.frameCutOff);
+
             const hasData = this.fileRecording.getFrameData(this.currentFrameRequest.frame) != undefined;
-            const requestAlreadyActive = this.frameLoader.isFrameLoading(this.currentFrameRequest.frame);
-
-            if (this.currentFrameRequest.frame < this.fileRecording.getSize()
-                && !hasData 
-                && !requestAlreadyActive)
-            {
-                this.requestFrameChunk();
-            }
-
             if (hasData)
             {
                 this.applyFrame(this.currentFrameRequest.frame);
