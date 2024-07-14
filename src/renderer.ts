@@ -227,16 +227,23 @@ export default class Renderer {
                 && !requestAlreadyActive)
             {
                 this.frameLoader.requestFrame(this.currentFrameRequest.frame);
-                this.openModal("Loading chunk");
+                //this.openModal("Loading chunk");
             }
 
-            this.applyFrame(this.currentFrameRequest.frame);
-            if (this.currentFrameRequest.entityIdSel)
+            if (hasData)
             {
-                this.selectEntity(this.currentFrameRequest.entityIdSel);
-            }
+                this.applyFrame(this.currentFrameRequest.frame);
+                if (this.currentFrameRequest.entityIdSel)
+                {
+                    this.selectEntity(this.currentFrameRequest.entityIdSel);
+                }
 
-            this.currentFrameRequest = null;
+                this.currentFrameRequest = null;
+            }
+            else
+            {
+                this.applyFrame(this.currentFrameRequest.frame);
+            }
         }
         window.requestAnimationFrame(this.render.bind(this));
     }
@@ -671,6 +678,8 @@ export default class Renderer {
 
     async loadFileRecording(fileRec: FileRec.IFileRecording)
     {
+        this.clear();
+
         console.log("Loading file recording");
         this.fileRecording = new FileRec.FileRecording();
         this.fileRecording.loadFromData(fileRec);
@@ -731,7 +740,6 @@ export default class Renderer {
         {
             const fileRecording = result.data as FileRec.IFileRecording;
             // DO nothing for now
-            console.log(fileRecording)
             await this.loadFileRecording(fileRecording);
 
             this.closeModal();
@@ -808,6 +816,7 @@ export default class Renderer {
         this.timeline.clear();
         this.timeline.setLength(0);
         this.timeline.clearEvents();
+        this.frameLoader.clear();
         // Avoid clearing recording options, since in all cases when we clear it's better to keep them
         //this.recordingOptions.setOptions([]);
         this.layerController.setLayers([]);

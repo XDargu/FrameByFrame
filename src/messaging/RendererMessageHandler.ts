@@ -11,7 +11,6 @@ const { shell } = require('electron');
 export function initMessageHandling(renderer: Renderer)
 {
     ipcRenderer.on('asynchronous-reply', (event: any, arg: Messaging.Message) => {
-        console.log(arg);
         switch(arg.type)
         {
             case Messaging.MessageType.OpenResult:

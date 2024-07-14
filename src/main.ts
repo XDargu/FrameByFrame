@@ -275,7 +275,7 @@ function logToConsole(level: LogLevel, channel: LogChannel, ...message: (string 
 
 
 // Increase available memory
-app.commandLine.appendSwitch('js-flags', '--max-old-space-size=1024');
+app.commandLine.appendSwitch('js-flags', '--max-old-space-size=8192');
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.

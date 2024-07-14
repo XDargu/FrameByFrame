@@ -32,7 +32,7 @@ export enum MessageType { // TODO: Maybe rename these to make clear the directio
 export interface ILoadFrameChunksResult
 {
     id: number,
-    chunks: Buffer[];
+    chunks: Buffer[]; // Buffers of RECORDING.IFrameData
 }
 
 export interface ILoadFrameChunksRequest

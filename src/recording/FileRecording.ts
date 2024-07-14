@@ -111,7 +111,18 @@ export class FileRecording implements IFileRecording
 
     clear()
     {
-        // TODO
+        this.root = "";
+        this.paths = Ops.makePaths("");
+        this.frameData = [];
+        this.globalData = {
+            layers: [],
+            scenes: [],
+            clientIds: new Map<number, RECORDING.ClientData>(),
+            resources: {},
+            storageVersion: 4,
+            totalFrames: 0,
+        };
+
     }
 
     getTagByClientId(clientId: number) : string

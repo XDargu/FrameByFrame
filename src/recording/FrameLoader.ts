@@ -2,6 +2,7 @@ import * as RECORDING from './RecordingDefinitions';
 import * as Messaging from "../messaging/MessageDefinitions";
 import * as FileRec from './FileRecording';
 import { ipcRenderer } from "electron";
+import * as JSONAsync from './asyncJSONService';
 
 export interface FrameChunk
 {
@@ -20,7 +21,9 @@ interface ActiveRequest
 {
     init: number, // Inclusive
     end: number, // Inclusive
-    callback: ChunkRequestCallback
+    resolve: (value: Messaging.ILoadFrameChunksResult | PromiseLike<Messaging.ILoadFrameChunksResult>) => void,
+    reject: (reason?: any) => void,
+    received: boolean
 }
 
 export class FrameLoader
@@ -70,6 +73,17 @@ export class FrameLoader
         this.chunks = [];
     }
 
+    clear()
+    {
+        this.root = '';
+        this.chunks = [];
+        for (let request of this.activeRequests)
+        {
+            request[1].reject(new Error("Cleared"));
+        }
+        this.activeRequests.clear();
+    }
+
     getFramesLoading()
     {
         let result = "";
@@ -108,7 +122,7 @@ export class FrameLoader
         // Add chunks to existing ones
         for (let chunkRaw of resultChunk.chunks)
         {
-            const frameData = JSON.parse(chunkRaw.toString()) as RECORDING.IFrameData[];
+            const frameData = await JSONAsync.JsonParse(chunkRaw) as RECORDING.IFrameData[];
 
             const initFrame = FileRec.Ops.getChunkInit(frame);
             const chunkFilename = FileRec.Ops.getFramePath(this.root, frame);
@@ -122,6 +136,8 @@ export class FrameLoader
             }
             this.addChunk(chunk);
         }
+
+        this.activeRequests.delete(resultChunk.id);
 
         const newChunk = this.findChunkByFrame(frame);
         if (newChunk)
@@ -153,9 +169,9 @@ export class FrameLoader
             this.activeRequests.set(id, {
                 init: initFrame,
                 end: initFrame + FileRec.FileRecording.frameCutOff - 1,
-                callback: (result) => {
-                    resolve(result);
-                }
+                received: false,
+                resolve: resolve,
+                reject: reject
             });
 
             ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.RequestLoadFrameChunks, request));
@@ -202,12 +218,12 @@ export class FrameLoader
 
     onFrameChunkResult(result: Messaging.ILoadFrameChunksResult)
     {
-        console.log("Chunk result");
+        console.log("Chunk result: " + result.id);
         const request = this.activeRequests.get(result.id);
         if (request)
         {
-            request.callback(result);
-            this.activeRequests.delete(result.id);
+            request.resolve(result);
+            this.activeRequests.get(result.id).received = true;
         }
     }
 }
