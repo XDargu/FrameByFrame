@@ -123,13 +123,24 @@ function onSettingsChanged(settings: ISettings)
   mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.SettingsChanged, settings));
 }
 
-async function saveRecordingFile(filePath: string)
+async function saveRecordingFile(request: Messaging.ISaveFileData)
 {
     try {
         const rootPath = FileRecordingHandler.getRootPath();
 
-        await recordingHandler.compressRecording(rootPath, filePath);
-        fileManager.addPathToHistory(filePath);
+        if (request.lastChunk)
+        {
+            await recordingHandler.writeFrameDataRaw(request.lastChunk, request.lastChunkOffset);
+
+            // Patch global data to add the last chunk
+            const relPath = FileRec.Ops.getFramePathFromOffset('./', request.lastChunkOffset);
+            request.globalData.chunks.push(relPath);
+        }
+        
+        await recordingHandler.writeGlobalData(request.globalData);
+
+        await recordingHandler.compressRecording(rootPath, request.path);
+        fileManager.addPathToHistory(request.path);
 
         mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.SaveToFileResult, null));
     }
@@ -150,7 +161,7 @@ async function saveRecordingFile(filePath: string)
 async function loadChunks(request: Messaging.ILoadFrameChunksRequest)
 {
     logToConsole(LogLevel.Information, LogChannel.Default, 'Loading chunks');
-    const chunks = await recordingHandler.loadChunks(request.paths);
+    const chunks = await recordingHandler.loadChunks(request.relativePaths);
 
     logToConsole(LogLevel.Information, LogChannel.Default, 'Loaded chunks');
 
@@ -160,6 +171,16 @@ async function loadChunks(request: Messaging.ILoadFrameChunksRequest)
     };
 
     mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LoadFrameChunksResult, result));
+}
+
+async function exportChunk(request: Messaging.IChunkExportRequest)
+{
+    await recordingHandler.writeFrameDataRaw(request.chunk, request.offset);
+}
+
+async function exportGlobalData(request: Messaging.IGlobalDataExportRequest)
+{
+    await recordingHandler.writeGlobalData(request.globalData);
 }
 
 async function onRequestNaiveRecordingConversion(naiveRecording: RECDATA.INaiveRecordedData)
@@ -359,7 +380,7 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
     case Messaging.MessageType.SaveToFileRequest:
     {
         const fileSaveData = arg.data as Messaging.ISaveFileData;
-        saveRecordingFile(fileSaveData.path);
+        saveRecordingFile(fileSaveData);
         break;
     }
     case Messaging.MessageType.Load:
@@ -463,6 +484,20 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
         const request = arg.data as Messaging.ILoadFrameChunksRequest;
 
         loadChunks(request);
+        break;
+    }
+    case Messaging.MessageType.RequestExportChunk:
+    {
+        const request = arg.data as Messaging.IChunkExportRequest;
+
+        exportChunk(request);
+        break;
+    }
+    case Messaging.MessageType.RequestExportGlobalData:
+    {
+        const request = arg.data as Messaging.IGlobalDataExportRequest;
+
+        exportGlobalData(request);
         break;
     }
   }

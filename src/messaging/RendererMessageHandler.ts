@@ -120,6 +120,7 @@ export function initMessageHandling(renderer: Renderer)
                 {
                     renderer.onFrameChunkResult(result);
                 }
+                break;
             }
         }
     });

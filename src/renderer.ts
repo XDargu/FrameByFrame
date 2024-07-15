@@ -209,7 +209,12 @@ export default class Renderer {
 
     async requestFrameChunk(frame: number)
     {
-        if (frame >= 0 && frame < this.fileRecording.getSize()
+        // This first part prevents requesting chunks that are not yet in disk while recording
+        const chunks = this.fileRecording.globalData.chunks.length;
+        const framesPerChunk = this.fileRecording.globalData.framesPerChunk;
+        const lastChunkFrame = chunks * framesPerChunk - 1;
+
+        if (frame >= 0 && frame < this.fileRecording.getSize() && frame < lastChunkFrame
             && !this.fileRecording.getFrameData(frame) != undefined 
             && !this.frameLoader.isFrameLoading(frame))
         {
@@ -951,8 +956,44 @@ export default class Renderer {
         this.pendingMarkers.pushPending(this.fileRecording.getSize() - 1);
         this.unprocessedFiltersPending = true;
 
-        // Store chunk if needed
 
+        // TODO: Move this logic somewhere else, this is a test
+
+        // Store chunk if needed
+        const framesPerChunk = this.fileRecording.globalData.framesPerChunk;
+        const storedChunks = this.fileRecording.globalData.chunks.length;
+        const totalStoredFrames = storedChunks * framesPerChunk;
+        const totalFrames = this.fileRecording.getSize();
+        const remainingFramesToStore = totalFrames - totalStoredFrames;
+
+        if (remainingFramesToStore >= framesPerChunk)
+        {
+            // We need to export a new chunk!
+            const firstFrameIdx = FileRec.Ops.getChunkInit(totalFrames - 1, framesPerChunk);
+            const lastFrameIdx = firstFrameIdx + framesPerChunk - 1;
+
+            const frames: RECORDING.IFrameData[] = this.fileRecording.frameData.slice(firstFrameIdx, lastFrameIdx);
+
+            // TODO: Make the stringly async
+            const request : Messaging.IChunkExportRequest = {
+                chunk: Buffer.from(JSON.stringify(frames), 'utf8'),
+                offset: firstFrameIdx
+            };
+            ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.RequestExportChunk, request));
+
+            const chunkPath = FileRec.Ops.getFramePathFromOffset(this.fileRecording.root, firstFrameIdx);
+            this.fileRecording.globalData.chunks.push(chunkPath);
+
+            // Notify FrameLoader
+            const newChunk : FrameLoader.FrameChunk = {
+                path: chunkPath,
+                init: firstFrameIdx,
+                end: lastFrameIdx,
+                frameData: frames,
+                lastAccess: Date.now()
+            };
+            this.frameLoader.addChunk(newChunk);
+        }
     }
 
     removeOldFrames()
@@ -1421,8 +1462,32 @@ export default class Renderer {
                 // TODO: Save selection
             }
 
+            // Check if we are missing chunks
+            const framesPerChunk = this.fileRecording.globalData.framesPerChunk;
+            const storedChunks = this.fileRecording.globalData.chunks.length;
+            const totalStoredFrames = storedChunks * framesPerChunk;
+            const totalFrames = this.fileRecording.getSize();
+            const remainingFramesToStore = totalFrames - totalStoredFrames;
+
+            let lastChunk = null;
+            let lastChunkOffset = null;
+
+            if (remainingFramesToStore > 0)
+            {
+                console.log("Exporting extra " + remainingFramesToStore + " frames");
+                const firstFrameIdx = FileRec.Ops.getChunkInit(totalFrames - 1, framesPerChunk);
+                const lastFrameIdx = totalFrames - 1;
+
+                const frames: RECORDING.IFrameData[] = this.fileRecording.frameData.slice(firstFrameIdx, lastFrameIdx);
+
+                lastChunk = Buffer.from(JSON.stringify(frames), 'utf8');
+                lastChunkOffset = firstFrameIdx;
+            }
+
             const saveRequest : Messaging.ISaveFileData= {
-                content: '',
+                globalData: this.fileRecording.globalData,
+                lastChunk: lastChunk,
+                lastChunkOffset: lastChunkOffset,
                 path: path
             };
 

@@ -39,8 +39,6 @@ export class FrameLoader
     private idGenerator: number;
     private activeRequests: Map<number, ActiveRequest>;
 
-    // Absolute path pointing towards the root folder of uncompressed data
-    private root: string;
     private chunks: FrameChunk[];
 
     private maxFrames: number;
@@ -55,13 +53,11 @@ export class FrameLoader
 
     initialize(path: string)
     {
-        this.root = path;
         this.chunks = [];
     }
 
     clear()
     {
-        this.root = '';
         this.chunks = [];
         for (let request of this.activeRequests)
         {
@@ -127,11 +123,11 @@ export class FrameLoader
             const frameData = await JSONAsync.JsonParse(chunkRaw) as RECORDING.IFrameData[];
 
             const initFrame = FileRec.Ops.getChunkInit(frame, globalData.framesPerChunk);
-            const chunkFilename = FileRec.Ops.getFramePath(this.root, frame, globalData.framesPerChunk);
+            const relChunkFilename = FileRec.Ops.getFramePath('./', frame, globalData.framesPerChunk);
             const end = initFrame + frameData.length;
 
             const chunk : FrameChunk = {
-                path: chunkFilename,
+                path: relChunkFilename,
                 init: initFrame,
                 end: end,
                 frameData: frameData,
@@ -157,12 +153,12 @@ export class FrameLoader
         return new Promise<Messaging.ILoadFrameChunksResult>((resolve, reject) =>
         {
             // Calculate the paths to request
-            const chunkFilename = FileRec.Ops.getFramePath(this.root, frame, globalData.framesPerChunk);
+            const relChunkFilename = FileRec.Ops.getFramePath('./', frame, globalData.framesPerChunk);
 
             const id = ++this.idGenerator;
             const request : Messaging.ILoadFrameChunksRequest = {
                 id: id,
-                paths: [chunkFilename]
+                relativePaths: [relChunkFilename]
             };
 
             const initFrame = FileRec.Ops.getChunkInit(frame, globalData.framesPerChunk);
@@ -193,7 +189,7 @@ export class FrameLoader
         return null;
     }
 
-    private addChunk(chunkToAdd: FrameChunk)
+    addChunk(chunkToAdd: FrameChunk)
     {
         for (let i=0; i<this.chunks.length; ++i)
         {

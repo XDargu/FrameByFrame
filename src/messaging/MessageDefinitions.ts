@@ -27,18 +27,31 @@ export enum MessageType { // TODO: Maybe rename these to make clear the directio
     RequestConvertNaiveRecording, // IRequestConvertRecording
     RequestLoadFrameChunks, // ILoadFrameChunksRequest
     LoadFrameChunksResult, // ILoadFrameChunksResult
+    RequestExportChunk, // IChunkExportRequest
+    RequestExportGlobalData, // IGlobalDataExportRequest
+}
+
+export interface IGlobalDataExportRequest
+{
+    globalData: FileRec.GlobalData
+}
+
+export interface IChunkExportRequest
+{
+    offset: number,
+    chunk: Buffer // Buffer of RECORDING.IFrameData[]
 }
 
 export interface ILoadFrameChunksResult
 {
     id: number,
-    chunks: Buffer[]; // Buffers of RECORDING.IFrameData
+    chunks: Buffer[] // Buffers of RECORDING.IFrameData[]
 }
 
 export interface ILoadFrameChunksRequest
 {
     id: number,
-    paths: string[]
+    relativePaths: string[]
 }
 
 export interface IRequestConvertRecording
@@ -73,7 +86,9 @@ export interface IResultSavePathData
 
 export interface ISaveFileData
 {
-    content: string;
+    globalData: FileRec.GlobalData;
+    lastChunk: Buffer | null;  // Buffer of RECORDING.IFrameData[]
+    lastChunkOffset: number | null;
     path: string;
 }
 
@@ -84,7 +99,7 @@ export interface IOpenFileResult
     path: string;
 }
 
-type MessageData = string | IClearResultData | ILogData | ISettings | ISaveFileData | IRequestSavePathData | IResultSavePathData | IOpenFileResult | IRequestConvertRecording | ILoadFrameChunksRequest | ILoadFrameChunksResult;
+type MessageData = string | IClearResultData | ILogData | ISettings | ISaveFileData | IRequestSavePathData | IResultSavePathData | IOpenFileResult | IRequestConvertRecording | ILoadFrameChunksRequest | ILoadFrameChunksResult | IChunkExportRequest | IGlobalDataExportRequest;
 export class Message
 {
     public type: MessageType;

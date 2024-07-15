@@ -4,6 +4,7 @@ import * as Utils from '../utils/utils'
 import * as RecOps from './RecordingOperations'
 import { CorePropertyTypes } from '../types/typeRegistry';
 import * as FrameLoader from './FrameLoader';
+import { FileRecordingHandler } from '../io/recordingOperations';
 
 export interface IResource {
     path: string;
@@ -64,7 +65,12 @@ export namespace Ops
     export function getFramePath(rootPath: string, frame: number, framesPerChunk: number)
     {
         const frameNumber = getChunkInit(frame, framesPerChunk);
-        return path.join(rootPath, PathsConstant.frames, `./${frameNumber}.ffd`);
+        return getFramePathFromOffset(rootPath, frameNumber);
+    }
+
+    export function getFramePathFromOffset(rootPath: string, offset: number)
+    {
+        return path.join(rootPath, PathsConstant.frames, `./${offset}.ffd`);
     }
 }
 
@@ -79,9 +85,10 @@ export class FileRecording implements IFileRecording
 {
     static readonly defaultFrameCutOff = 100;
     
-    // Absolute path pointing towards the root folder of uncompressed data
+    // Relative path pointing towards the root folder of uncompressed data
     root: string;
-    // Absolute paths pointing to different key folders
+
+    // Relative paths pointing to different key folders
     paths: FileRecPaths;
 
     globalData: GlobalData;
@@ -102,8 +109,8 @@ export class FileRecording implements IFileRecording
             totalFrames: 0,
         };
 
-        this.root = "";
-        this.paths = Ops.makePaths("");
+        this.root = './';
+        this.paths = Ops.makePaths(this.root);
         this.frameData = [];
     }
 
@@ -119,8 +126,8 @@ export class FileRecording implements IFileRecording
 
     clear()
     {
-        this.root = "";
-        this.paths = Ops.makePaths("");
+        this.root = './';
+        this.paths = Ops.makePaths(this.root);
         this.frameData = [];
         this.globalData = {
             layers: [],

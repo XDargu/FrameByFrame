@@ -56,9 +56,9 @@ export class FileRecordingHandler
         this.mainWindow.webContents.send('asynchronous-reply', this.createLogMessage(level, channel, ...message));
     };
 
-    private getFrameChunkPath(paths: FileRec.FileRecPaths, offset: number)
+    private getFrameChunkPath(rootPath: string, offset: number)
     {
-        return path.join(paths.frames, `./${offset}.ffd`);
+        return FileRec.Ops.getFramePathFromOffset(rootPath, offset);
     }
 
     async uncompressNaiveRecording(data: RECDATA.INaiveRecordedData)
@@ -81,8 +81,10 @@ export class FileRecordingHandler
 
             this.logToConsole(LogLevel.Information, LogChannel.Default, `Exporting chunk ${i} with offset ${offset}`);
 
-            const frameFilePath = await this.writeFrameData(frameChunk, offset);
-            chunks.push(frameFilePath);
+            await this.writeFrameData(frameChunk, offset);
+            
+            const relativeFramePath = this.getFrameChunkPath('./', offset);
+            chunks.push(relativeFramePath);
         }
 
         const globalData: FileRec.GlobalData = {
@@ -286,7 +288,7 @@ export class FileRecordingHandler
         const targetPath = FileRecordingHandler.getRootPath();
 
         const paths = FileRec.Ops.makePaths(targetPath);
-        const frameFilePath = this.getFrameChunkPath(paths, offset);
+        const frameFilePath = this.getFrameChunkPath(targetPath, offset);
         const data = JSON.stringify(frames);
 
         this.logToConsole(LogLevel.Information, LogChannel.Default, `Target ${targetPath}. Frame path: ${paths.frames}. Final path: ${frameFilePath}`);
@@ -300,26 +302,37 @@ export class FileRecordingHandler
         return frameFilePath;
     }
 
-    async loadChunks(paths: string[])
+    async writeFrameDataRaw(buffer: Buffer /* Buffer of RECORDING.IFrameData[]  */, offset: number)
     {
+        const targetPath = FileRecordingHandler.getRootPath();
+
+        const paths = FileRec.Ops.makePaths(targetPath);
+        const frameFilePath = this.getFrameChunkPath(targetPath, offset);
+        const data = buffer.toString();
+
+        this.logToConsole(LogLevel.Information, LogChannel.Default, `Target ${targetPath}. Frame path: ${paths.frames}. Final path: ${frameFilePath}`);
+        this.logToConsole(LogLevel.Information, LogChannel.Default, `Exporting raw chunk to ${frameFilePath}`);
+
+        if (!fs.existsSync(paths.frames))
+            fs.mkdirSync(paths.frames, { recursive: true });
+
+        await fs.promises.writeFile(frameFilePath, data);
+
+        return frameFilePath;
+    }
+
+    async loadChunks(relativePaths: string[])
+    {
+        const targetPath = FileRecordingHandler.getRootPath();
+
         let chunks : Buffer[] = [];
-        for (let chunkPath of paths)
+        for (let relChunkPath of relativePaths)
         {
-            this.logToConsole(LogLevel.Information, LogChannel.Default, "Loading: " + chunkPath);
-            if (fs.existsSync(chunkPath))
+            const absChunkPath = path.join(targetPath, relChunkPath);
+            this.logToConsole(LogLevel.Information, LogChannel.Default, "Loading: " + absChunkPath);
+            if (fs.existsSync(absChunkPath))
             {
-                const chunkRaw = await fs.promises.readFile(chunkPath);
-                /*const frameData = JSON.parse(chunkRaw.toString()) as RECORDING.IFrameData[];
-                const init = parseInt(path.parse(chunkPath).name);
-                const end = init + frameData.length;
-
-                const chunk : FrameLoader.FrameChunk = {
-                    path: chunkPath,
-                    init: init,
-                    end: end,
-                    frameData: frameData,
-                }*/
-
+                const chunkRaw = await fs.promises.readFile(absChunkPath);
                 chunks.push(chunkRaw);
             }
         }
