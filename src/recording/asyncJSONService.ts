@@ -32,6 +32,6 @@ export function JsonStringify(value : any) {
     return callAsyncJson('stringify', value);
 }
 
-export function JsonParse(buffer: Buffer) {
-    return callAsyncJson('parse', buffer.toString());
+export function JsonParse(value: string) {
+    return callAsyncJson('parse', value);
 }

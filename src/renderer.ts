@@ -218,8 +218,10 @@ export default class Renderer {
             && !this.fileRecording.getFrameData(frame) != undefined 
             && !this.frameLoader.isFrameLoading(frame))
         {
-            await this.frameLoader.requestFrame(this.fileRecording.globalData, frame);
-            this.openModal("Loading chunk");
+            await this.frameLoader.requestFrame(this.fileRecording.globalData, frame, () => {
+                this.openModal("Loading chunk");
+            });
+            
             const chunk = this.frameLoader.findChunkByFrame(frame);
             if (chunk)
             {
@@ -980,7 +982,7 @@ export default class Renderer {
             const firstFrameIdx = FileRec.Ops.getChunkInit(totalFrames - 1, framesPerChunk);
             const lastFrameIdx = firstFrameIdx + framesPerChunk - 1;
 
-            const frames: RECORDING.IFrameData[] = this.fileRecording.frameData.slice(firstFrameIdx, lastFrameIdx);
+            const frames: RECORDING.IFrameData[] = this.fileRecording.frameData.slice(firstFrameIdx, lastFrameIdx + 1);
 
             // TODO: Make the stringly async
             const request : Messaging.IChunkExportRequest = {

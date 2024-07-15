@@ -111,7 +111,7 @@ export class FrameLoader
         return false;
     }
 
-    async requestFrame(globalData: FileRec.GlobalData, frame: number)
+    async requestFrame(globalData: FileRec.GlobalData, frame: number, callback?: () => void)
     {
         const chunk = this.findChunkByFrame(frame);
         if (chunk)
@@ -123,9 +123,27 @@ export class FrameLoader
         const resultChunk = await this.requestFrameChunk(globalData, frame);
 
         // Add chunks to existing ones
+        
         for (let chunkRaw of resultChunk.chunks)
         {
-            const frameData = await JSONAsync.JsonParse(chunkRaw) as RECORDING.IFrameData[];
+            const frames = 60;
+            const bytesPerFrame = chunkRaw.length / frames;
+            let bufferValue = '';
+            let curBuf = 0;
+
+            while (curBuf < chunkRaw.length)
+            {
+                //console.log(`Doing ${curBuf}/${chunkRaw.length}`);
+                const next = Math.min(curBuf + bytesPerFrame, chunkRaw.length);
+                bufferValue += chunkRaw.toString('utf8', curBuf, next);
+                curBuf = next;
+                await Utils.nextTick();
+            }
+            
+            if (callback)
+                callback();
+            //const frameData = await JSONAsync.JsonParse(bufferValue) as RECORDING.IFrameData[];
+            const frameData = await JSON.parse(bufferValue) as RECORDING.IFrameData[];
 
             const initFrame = FileRec.Ops.getChunkInit(frame, globalData.framesPerChunk);
             const relChunkFilename = FileRec.Ops.getFramePath('./', frame, globalData.framesPerChunk);
