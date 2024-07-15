@@ -56,17 +56,42 @@ export class FileRecordingHandler
         this.mainWindow.webContents.send('asynchronous-reply', this.createLogMessage(level, channel, ...message));
     };
 
+    private getFrameChunkPath(paths: FileRec.FileRecPaths, offset: number)
+    {
+        return path.join(paths.frames, `./${offset}.ffd`);
+    }
+
     async uncompressNaiveRecording(data: RECDATA.INaiveRecordedData)
     {
         // Remove everything on the temp path
         const rootPath = FileRecordingHandler.getRootPath();
         rimraf(rootPath);
 
+        const totalFrames = data.frameData.length;
+        const totalChunks = Math.ceil(totalFrames / FileRec.FileRecording.defaultFrameCutOff);
+
+        this.logToConsole(LogLevel.Information, LogChannel.Default, `Chunks: ${totalChunks}`);
+
+        let chunks = [];
+
+        for (let i=0; i<totalChunks; ++i)
+        {
+            const offset = FileRec.FileRecording.defaultFrameCutOff * i;
+            const frameChunk = data.frameData.slice(offset, offset + FileRec.FileRecording.defaultFrameCutOff);
+
+            this.logToConsole(LogLevel.Information, LogChannel.Default, `Exporting chunk ${i} with offset ${offset}`);
+
+            const frameFilePath = await this.writeFrameData(frameChunk, offset);
+            chunks.push(frameFilePath);
+        }
+
         const globalData: FileRec.GlobalData = {
             layers: data.layers,
             scenes: data.scenes,
             clientIds: data.clientIds,
             resources: data.resources,
+            chunks: chunks,
+            framesPerChunk: FileRec.FileRecording.defaultFrameCutOff,
             storageVersion: data.storageVersion,
             totalFrames: data.frameData.length,
         }
@@ -74,21 +99,6 @@ export class FileRecordingHandler
         this.logToConsole(LogLevel.Information, LogChannel.Default, `Exporting global data`);
 
         await this.writeGlobalData(globalData);
-
-        const totalFrames = data.frameData.length;
-        const totalChunks = Math.ceil(totalFrames / FileRec.FileRecording.frameCutOff);
-
-        this.logToConsole(LogLevel.Information, LogChannel.Default, `Chunks: ${totalChunks}`);
-
-        for (let i=0; i<totalChunks; ++i)
-        {
-            const offset = FileRec.FileRecording.frameCutOff * i;
-            const frameChunk = data.frameData.slice(offset, offset + FileRec.FileRecording.frameCutOff);
-
-            this.logToConsole(LogLevel.Information, LogChannel.Default, `Exporting chunk ${i} with offset ${offset}`);
-
-            await this.writeFrameData(frameChunk, offset);
-        }
     }
     
     private async uncompressedFileRecording(pathName: string, targetPath: string)
@@ -276,7 +286,7 @@ export class FileRecordingHandler
         const targetPath = FileRecordingHandler.getRootPath();
 
         const paths = FileRec.Ops.makePaths(targetPath);
-        const frameFilePath = path.join(paths.frames, `./${offset}.ffd`);
+        const frameFilePath = this.getFrameChunkPath(paths, offset);
         const data = JSON.stringify(frames);
 
         this.logToConsole(LogLevel.Information, LogChannel.Default, `Target ${targetPath}. Frame path: ${paths.frames}. Final path: ${frameFilePath}`);
@@ -286,6 +296,8 @@ export class FileRecordingHandler
             fs.mkdirSync(paths.frames, { recursive: true });
 
         await fs.promises.writeFile(frameFilePath, data);
+
+        return frameFilePath;
     }
 
     async loadChunks(paths: string[])

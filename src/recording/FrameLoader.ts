@@ -110,7 +110,7 @@ export class FrameLoader
         return false;
     }
 
-    async requestFrame(frame: number)
+    async requestFrame(globalData: FileRec.GlobalData, frame: number)
     {
         const chunk = this.findChunkByFrame(frame);
         if (chunk)
@@ -119,15 +119,15 @@ export class FrameLoader
             return chunk.frameData[chunkIdx];
         }
         
-        const resultChunk = await this.requestFrameChunk(frame);
+        const resultChunk = await this.requestFrameChunk(globalData, frame);
 
         // Add chunks to existing ones
         for (let chunkRaw of resultChunk.chunks)
         {
             const frameData = await JSONAsync.JsonParse(chunkRaw) as RECORDING.IFrameData[];
 
-            const initFrame = FileRec.Ops.getChunkInit(frame);
-            const chunkFilename = FileRec.Ops.getFramePath(this.root, frame);
+            const initFrame = FileRec.Ops.getChunkInit(frame, globalData.framesPerChunk);
+            const chunkFilename = FileRec.Ops.getFramePath(this.root, frame, globalData.framesPerChunk);
             const end = initFrame + frameData.length;
 
             const chunk : FrameChunk = {
@@ -152,12 +152,12 @@ export class FrameLoader
         return null;
     }
 
-    private async requestFrameChunk(frame: number)
+    private async requestFrameChunk(globalData: FileRec.GlobalData, frame: number)
     {
         return new Promise<Messaging.ILoadFrameChunksResult>((resolve, reject) =>
         {
             // Calculate the paths to request
-            const chunkFilename = FileRec.Ops.getFramePath(this.root, frame);
+            const chunkFilename = FileRec.Ops.getFramePath(this.root, frame, globalData.framesPerChunk);
 
             const id = ++this.idGenerator;
             const request : Messaging.ILoadFrameChunksRequest = {
@@ -165,11 +165,11 @@ export class FrameLoader
                 paths: [chunkFilename]
             };
 
-            const initFrame = FileRec.Ops.getChunkInit(frame);
+            const initFrame = FileRec.Ops.getChunkInit(frame, globalData.framesPerChunk);
 
             this.activeRequests.set(id, {
                 init: initFrame,
-                end: initFrame + FileRec.FileRecording.frameCutOff - 1,
+                end: initFrame + globalData.framesPerChunk - 1,
                 received: false,
                 resolve: resolve,
                 reject: reject

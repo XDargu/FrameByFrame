@@ -21,12 +21,14 @@ export interface GlobalData
 	layers: string[];
 	scenes: string[];
 	clientIds: Map<number, RECORDING.ClientData>;
+    framesPerChunk: number;
+    chunks: string[];
 	resources: IResourcesData;
 	storageVersion: number;
     totalFrames: number;
 }
 
-interface FileRecPaths
+export interface FileRecPaths
 {
     globaldata: string,
     frames: string,
@@ -53,15 +55,15 @@ export namespace Ops
         };
     }
 
-    export function getChunkInit(frame: number)
+    export function getChunkInit(frame: number, framesPerChunk: number)
     {
-        const remainder = frame % FileRecording.frameCutOff;
+        const remainder = frame % framesPerChunk;
         return frame - remainder;
     }
 
-    export function getFramePath(rootPath: string, frame: number)
+    export function getFramePath(rootPath: string, frame: number, framesPerChunk: number)
     {
-        const frameNumber = getChunkInit(frame);
+        const frameNumber = getChunkInit(frame, framesPerChunk);
         return path.join(rootPath, PathsConstant.frames, `./${frameNumber}.ffd`);
     }
 }
@@ -75,7 +77,7 @@ export interface IFileRecording {
 
 export class FileRecording implements IFileRecording
 {
-    static readonly frameCutOff = 100;
+    static readonly defaultFrameCutOff = 100;
     
     // Absolute path pointing towards the root folder of uncompressed data
     root: string;
@@ -93,6 +95,8 @@ export class FileRecording implements IFileRecording
             layers: [],
             scenes: [],
             clientIds: new Map<number, RECORDING.ClientData>(),
+            framesPerChunk: FileRecording.defaultFrameCutOff,
+            chunks: [],
             resources: {},
             storageVersion: 4,
             totalFrames: 0,
@@ -122,6 +126,8 @@ export class FileRecording implements IFileRecording
             layers: [],
             scenes: [],
             clientIds: new Map<number, RECORDING.ClientData>(),
+            framesPerChunk: FileRecording.defaultFrameCutOff,
+            chunks: [],
             resources: {},
             storageVersion: 4,
             totalFrames: 0,

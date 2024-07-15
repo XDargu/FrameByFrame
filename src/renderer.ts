@@ -214,7 +214,7 @@ export default class Renderer {
             && !this.frameLoader.isFrameLoading(frame))
         {
             //this.openModal("Loading chunk");
-            await this.frameLoader.requestFrame(frame);
+            await this.frameLoader.requestFrame(this.fileRecording.globalData, frame);
             const chunk = this.frameLoader.findChunkByFrame(frame);
             if (chunk)
             {
@@ -260,8 +260,8 @@ export default class Renderer {
         {
             this.requestFrameChunk(this.currentFrameRequest.frame);
             // Request the next one and prev one too
-            this.requestFrameChunk(this.currentFrameRequest.frame + FileRec.FileRecording.frameCutOff);
-            this.requestFrameChunk(this.currentFrameRequest.frame - FileRec.FileRecording.frameCutOff);
+            this.requestFrameChunk(this.currentFrameRequest.frame + this.fileRecording.globalData.framesPerChunk);
+            this.requestFrameChunk(this.currentFrameRequest.frame - this.fileRecording.globalData.framesPerChunk);
 
             const hasData = this.fileRecording.getFrameData(this.currentFrameRequest.frame) != undefined;
             if (hasData)
@@ -724,7 +724,7 @@ export default class Renderer {
         console.log("Requesting first chunk");
         // Request first chunk
         // Here, we need to request a frame from disk
-        await this.frameLoader.requestFrame(0);
+        await this.frameLoader.requestFrame(this.fileRecording.globalData, 0);
 
         // Apply chunk request
         const chunk = this.frameLoader.findChunkByFrame(0);
@@ -950,6 +950,9 @@ export default class Renderer {
         this.pendingEvents.pushPending(this.fileRecording.getSize() - 1);
         this.pendingMarkers.pushPending(this.fileRecording.getSize() - 1);
         this.unprocessedFiltersPending = true;
+
+        // Store chunk if needed
+
     }
 
     removeOldFrames()
