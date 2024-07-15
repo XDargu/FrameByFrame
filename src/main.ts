@@ -108,6 +108,8 @@ function onRendererReady()
   }
 
   loadMods();
+
+  recordingHandler.clearCache();
 }
 
 // File callbacks
@@ -419,6 +421,8 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
     case Messaging.MessageType.Clear:
     {
       if (!sessionOptions.showClearDataDialog) {
+
+        recordingHandler.clearCache();
         event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.ClearResult, {clear: true, remember: true}));
         break;
       }
@@ -441,6 +445,7 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
           sessionOptions.showClearDataDialog = false;
         }
 
+        recordingHandler.clearCache();
         event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.ClearResult, {clear: shouldClear, remember: checkboxChecked}));
       });
       break;

@@ -63,9 +63,7 @@ export class FileRecordingHandler
 
     async uncompressNaiveRecording(data: RECDATA.INaiveRecordedData)
     {
-        // Remove everything on the temp path
-        const rootPath = FileRecordingHandler.getRootPath();
-        rimraf(rootPath);
+        this.clearCache();
 
         const totalFrames = data.frameData.length;
         const totalChunks = Math.ceil(totalFrames / FileRec.FileRecording.defaultFrameCutOff);
@@ -107,11 +105,10 @@ export class FileRecordingHandler
     {
         // Create cache
 
-        // TODO: Make different chace for different instances of FbF
+        // TODO: Make different cache for different instances of FbF
 
         // Remove everything on the temp path
-        const rootPath = FileRecordingHandler.getRootPath();
-        rimraf(rootPath);
+        this.clearCache();
         
         if (!fs.existsSync(targetPath))
         {
@@ -338,5 +335,11 @@ export class FileRecordingHandler
         }
 
         return chunks;
+    }
+
+    clearCache()
+    {
+        const rootPath = FileRecordingHandler.getRootPath();
+        rimraf(rootPath);
     }
 }
