@@ -77,9 +77,14 @@ export class FrameLoader
 
     removeOldChunks()
     {
-        this.chunks.sort((a, b) => b.lastAccess - a.lastAccess);
-        const removedChunks = this.chunks.splice(this.maxFrames);
-        return removedChunks;
+        if (this.chunks.length > this.maxFrames)
+        {
+            this.chunks.sort((a, b) => b.lastAccess - a.lastAccess);
+            const removedChunks = this.chunks.splice(this.maxFrames);
+            return removedChunks;
+        }
+
+        return [];
     }
 
     getFramesLoading()
@@ -173,6 +178,11 @@ export class FrameLoader
 
             ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.RequestLoadFrameChunks, request));
         });
+    }
+
+    getChunksAmount()
+    {
+        return this.chunks.length;
     }
 
     findChunkByFrame(frame: number)

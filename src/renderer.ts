@@ -218,13 +218,14 @@ export default class Renderer {
             && !this.fileRecording.getFrameData(frame) != undefined 
             && !this.frameLoader.isFrameLoading(frame))
         {
-            //this.openModal("Loading chunk");
             await this.frameLoader.requestFrame(this.fileRecording.globalData, frame);
+            this.openModal("Loading chunk");
             const chunk = this.frameLoader.findChunkByFrame(frame);
             if (chunk)
             {
-                const hasChanged = this.fileRecording.addFrameChunk(chunk);
-                if (hasChanged)
+                let chunksChanged = false;
+                const hasAddedChunks = this.fileRecording.addFrameChunk(chunk);
+                if (hasAddedChunks)
                 {
                     // TODO: Revisit where to put this logic
                     for (let j=0; j<chunk.frameData.length; ++j)
@@ -234,10 +235,15 @@ export default class Renderer {
                         this.pendingEvents.pushPending(globalFrame);
                     }
 
-                    // Remove
-                    const removedChunks = this.frameLoader.removeOldChunks();
-                    this.fileRecording.removeFrameChunks(removedChunks);
+                    console.log("Updated frames");
 
+                    chunksChanged = true;
+                }
+
+                const removedChunks = this.frameLoader.removeOldChunks();
+                if (removedChunks.length > 0)
+                {
+                    this.fileRecording.removeFrameChunks(removedChunks);
                     for (let chunk of removedChunks)
                     {
                         for (let j=0; j<chunk.frameData.length; ++j)
@@ -247,15 +253,17 @@ export default class Renderer {
                         }
                     }
 
+                    chunksChanged = true;
+                }
+
+                if (chunksChanged)
+                {
                     this.pendingEvents.markAllPending();
-
-
                     this.updateTimelineEvents();
-
-                    this.closeModal();
-                    console.log("Updated frames");
                 }
             }
+
+            this.closeModal();
         }
     }
 
