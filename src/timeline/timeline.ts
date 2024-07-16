@@ -603,6 +603,8 @@ class TimelineRenderer {
         this.hoveredLeftRange = false;
         this.hoveredRightRange = false;
 
+        this.chunks = [];
+
         this.zoom = 1;
         this.translation = 0;
 

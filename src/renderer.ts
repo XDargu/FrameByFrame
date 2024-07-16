@@ -251,7 +251,7 @@ export default class Renderer {
                     chunksChanged = true;
                 }
 
-                const removedChunks = this.frameLoader.removeOldChunks();
+                const removedChunks = this.frameLoader.removeOldChunks(frame, framesPerChunk);
                 if (removedChunks.length > 0)
                 {
                     this.fileRecording.removeFrameChunks(removedChunks);

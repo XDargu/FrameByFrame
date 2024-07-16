@@ -48,7 +48,7 @@ export class FrameLoader
         this.idGenerator = 0;
         this.activeRequests = new Map<number, ActiveRequest>();
         this.chunks = [];
-        this.maxFrames = 4;
+        this.maxFrames = 10;
     }
 
     initialize(path: string)
@@ -75,11 +75,29 @@ export class FrameLoader
         }
     }
 
-    removeOldChunks()
+    removeOldChunks(currentFrame: number, framesPerChunk: number)
     {
+        const currentChunk = FileRec.Ops.getChunkInit(currentFrame, framesPerChunk);
+        const prevChunk = currentChunk - framesPerChunk;
+        const nextChunk = currentChunk + framesPerChunk;
+
         if (this.chunks.length > this.maxFrames)
         {
-            this.chunks.sort((a, b) => b.lastAccess - a.lastAccess);
+            this.chunks.sort((a, b) => {
+
+                // Don't remove our current frame or the adjacent ones
+                const isAAdjacent = a.init == currentChunk || a.init == prevChunk || a.init == nextChunk;
+                const isBAdjacent = b.init == currentChunk || b.init == prevChunk || b.init == nextChunk;
+
+                if (isAAdjacent && isBAdjacent)
+                    return b.lastAccess - a.lastAccess;
+                if (isAAdjacent)
+                    return -1;
+                if (isBAdjacent)
+                    return 1;
+
+                return b.lastAccess - a.lastAccess
+            });
             const removedChunks = this.chunks.splice(this.maxFrames);
             return removedChunks;
         }

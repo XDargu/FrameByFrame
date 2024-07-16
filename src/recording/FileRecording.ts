@@ -83,7 +83,7 @@ export interface IFileRecording {
 
 export class FileRecording implements IFileRecording
 {
-    static readonly defaultFrameCutOff = 1000;
+    static readonly defaultFrameCutOff = 500;
     
     // Relative path pointing towards the root folder of uncompressed data
     root: string;
