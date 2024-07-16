@@ -253,6 +253,11 @@ export class FileRecordingHandler
                 reject(err.message);
             });
 
+            archive.on('progress', (progress: any) => {
+                const percentage = progress.entries.processed / progress.entries.total * 100;
+                this.mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LongOperationOngoing, `Compressing Recording: ${percentage.toFixed(0)}%`));
+            });
+
             // pipe archive data to the file
             archive.pipe(output);
 
