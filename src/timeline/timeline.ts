@@ -40,6 +40,12 @@ export interface ITimelineMarker {
     color: string;
 }
 
+interface ITimelineChunk {
+    start: number,
+    end: number,
+    color: string
+}
+
 type TEventsPerFrame = Map<number, ITimelineEvent[]>;
 
 enum InputOperation
@@ -568,6 +574,9 @@ class TimelineRenderer {
     hoveredLeftRange: boolean;
     hoveredRightRange: boolean;
 
+    // Chunks
+    private chunks: ITimelineChunk[];
+
     // Time control
     private timeStampLastUpdate: number;
 
@@ -622,6 +631,9 @@ class TimelineRenderer {
         this.ctx.fillStyle = "#473D4F";
         this.ctx.fillRect(0,0,this.width,this.height);
 
+        if (this.data.length != 0)
+            this.renderChunks();
+
         this.renderHeader();
 
         if (this.data.length != 0)
@@ -636,6 +648,26 @@ class TimelineRenderer {
         }
 
         window.requestAnimationFrame(this.render.bind(this));
+    }
+
+    private renderChunks()
+    {
+        const firstFrame : number = Math.floor(this.getMinFrameOnCanvas());
+        const lastFrame : number = Math.ceil(this.getMaxFrameOnCanvas());
+
+        for (let i=0; i<this.chunks.length; ++i)
+        {
+            const chunk = this.chunks[i];
+
+            const isOutOfTimeline = chunk.end < firstFrame || chunk.start > lastFrame;
+            if (!isOutOfTimeline)
+            {
+                const initX = this.frame2canvas(chunk.start);
+                const endX = this.frame2canvas(chunk.end);
+                this.ctx.fillStyle = "#" + chunk.color;
+                this.ctx.fillRect(initX, 0, endX - initX, this.height);
+            }
+        }
     }
 
     private renderHeader()
@@ -1148,6 +1180,31 @@ class TimelineRenderer {
     {
         this.zoom = 1;
         this.translation = 0;
+        this.chunks = [];
+    }
+
+    removeChunk(start: number, end: number)
+    {
+        const index = this.chunks.findIndex((chunk) => { return chunk.start == start && chunk.end == end; })
+        if (index != -1)
+            this.chunks.splice(index, 1);
+    }
+
+    setChunk(start: number, end: number, color: string)
+    {
+        const existing = this.chunks.find((chunk) => { return chunk.start == start && chunk.end == end; })
+        if (existing)
+        {
+            existing.color = color;
+        }
+        else
+        {
+            this.chunks.push({
+                start: start,
+                end: end,
+                color: color
+            })
+        }
     }
 }
 
@@ -1282,5 +1339,15 @@ export default class Timeline {
     getSelectionEnd()
     {
         return this.data.range.endFrame;
+    }
+
+    removeChunk(start: number, end: number)
+    {
+        this.renderer.removeChunk(start, end);
+    }
+
+    setChunk(start: number, end: number, color: string)
+    {
+        this.renderer.setChunk(start, end, color);
     }
 }

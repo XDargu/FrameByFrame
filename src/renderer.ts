@@ -218,6 +218,13 @@ export default class Renderer {
             && !this.fileRecording.getFrameData(frame) != undefined 
             && !this.frameLoader.isFrameLoading(frame))
         {
+
+            const init = FileRec.Ops.getChunkInit(frame, framesPerChunk);
+            const end = Math.min(init + framesPerChunk, this.fileRecording.getSize());
+
+            if (!this.fileRecording.getFrameData(frame))
+                this.timeline.setChunk(init, end, "9aa633");
+
             await this.frameLoader.requestFrame(this.fileRecording.globalData, frame, () => {
                 this.openModal("Loading chunk");
             });
@@ -229,6 +236,8 @@ export default class Renderer {
                 const hasAddedChunks = this.fileRecording.addFrameChunk(chunk);
                 if (hasAddedChunks)
                 {
+                    this.timeline.setChunk(chunk.init, chunk.end, "c795c1");
+                    
                     // TODO: Revisit where to put this logic
                     for (let j=0; j<chunk.frameData.length; ++j)
                     {
@@ -248,6 +257,8 @@ export default class Renderer {
                     this.fileRecording.removeFrameChunks(removedChunks);
                     for (let chunk of removedChunks)
                     {
+                        this.timeline.removeChunk(chunk.init, chunk.end);
+
                         for (let j=0; j<chunk.frameData.length; ++j)
                         {
                             const globalFrame = FrameLoader.toGlobalIndex(j, chunk);
@@ -739,7 +750,7 @@ export default class Renderer {
         console.log("Requesting first chunk");
         // Request first chunk
         // Here, we need to request a frame from disk
-        await this.frameLoader.requestFrame(this.fileRecording.globalData, 0);
+        await this.requestFrameChunk(0);
 
         // Apply chunk request
         const chunk = this.frameLoader.findChunkByFrame(0);
