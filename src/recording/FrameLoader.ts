@@ -142,44 +142,41 @@ export class FrameLoader
 
         // Add chunks to existing ones
         
-        for (let chunkRaw of resultChunk.chunks)
+        let chunkRaw = resultChunk.chunk;
+        const frames = 60;
+        const bytesPerFrame = chunkRaw.length / frames;
+        let bufferValue = '';
+        let curBuf = 0;
+
+        while (curBuf < chunkRaw.length)
         {
-            const frames = 60;
-            const bytesPerFrame = chunkRaw.length / frames;
-            let bufferValue = '';
-            let curBuf = 0;
-
-            while (curBuf < chunkRaw.length)
-            {
-                //console.log(`Doing ${curBuf}/${chunkRaw.length}`);
-                const next = Math.min(curBuf + bytesPerFrame, chunkRaw.length);
-                bufferValue += chunkRaw.toString('utf8', curBuf, next);
-                curBuf = next;
-                await Utils.nextTick();
-            }
-            
-            if (callback)
-                callback();
-            //const frameData = await JSONAsync.JsonParse(bufferValue) as RECORDING.IFrameData[];
-            const frameData = await JSON.parse(bufferValue) as RECORDING.IFrameData[];
-
-            const initFrame = FileRec.Ops.getChunkInit(frame, globalData.framesPerChunk);
-            const relChunkFilename = FileRec.Ops.getFramePath('./', frame, globalData.framesPerChunk);
-            const end = initFrame + frameData.length;
-
-            const chunk : FrameChunk = {
-                path: relChunkFilename,
-                init: initFrame,
-                end: end,
-                frameData: frameData,
-                lastAccess: Date.now()
-            }
-            this.addChunk(chunk);
+            //console.log(`Doing ${curBuf}/${chunkRaw.length}`);
+            const next = Math.min(curBuf + bytesPerFrame, chunkRaw.length);
+            bufferValue += chunkRaw.toString('utf8', curBuf, next);
+            curBuf = next;
+            await Utils.nextTick();
         }
+        
+        if (callback)
+            callback();
 
+        //const frameData = await JSONAsync.JsonParse(bufferValue) as RECORDING.IFrameData[];
+        const frameData = await JSON.parse(bufferValue) as RECORDING.IFrameData[];
+
+        const initFrame = FileRec.Ops.getChunkInit(frame, globalData.framesPerChunk);
+        const relChunkFilename = FileRec.Ops.getFramePath('./', frame, globalData.framesPerChunk);
+        const end = initFrame + frameData.length;
+
+        const newChunk : FrameChunk = {
+            path: relChunkFilename,
+            init: initFrame,
+            end: end,
+            frameData: frameData,
+            lastAccess: Date.now()
+        }
+        this.addChunk(newChunk);
         this.activeRequests.delete(resultChunk.id);
 
-        const newChunk = this.findChunkByFrame(frame);
         if (newChunk)
         {
             const chunkIdx = toChunkIndex(frame, newChunk);
@@ -199,7 +196,7 @@ export class FrameLoader
             const id = ++this.idGenerator;
             const request : Messaging.ILoadFrameChunksRequest = {
                 id: id,
-                relativePaths: [relChunkFilename]
+                relativePath: relChunkFilename
             };
 
             const initFrame = FileRec.Ops.getChunkInit(frame, globalData.framesPerChunk);

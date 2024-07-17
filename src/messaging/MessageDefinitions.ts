@@ -45,13 +45,13 @@ export interface IChunkExportRequest
 export interface ILoadFrameChunksResult
 {
     id: number,
-    chunks: Buffer[] // Buffers of RECORDING.IFrameData[]
+    chunk: Buffer // Buffer of RECORDING.IFrameData[]
 }
 
 export interface ILoadFrameChunksRequest
 {
     id: number,
-    relativePaths: string[]
+    relativePath: string
 }
 
 export interface IRequestConvertRecording

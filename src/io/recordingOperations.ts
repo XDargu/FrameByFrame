@@ -323,23 +323,19 @@ export class FileRecordingHandler
         return frameFilePath;
     }
 
-    async loadChunks(relativePaths: string[])
+    async loadChunk(relativePath: string)
     {
         const targetPath = FileRecordingHandler.getRootPath();
 
-        let chunks : Buffer[] = [];
-        for (let relChunkPath of relativePaths)
+        const absChunkPath = path.join(targetPath, relativePath);
+        this.logToConsole(LogLevel.Information, LogChannel.Default, "Loading: " + absChunkPath);
+        if (fs.existsSync(absChunkPath))
         {
-            const absChunkPath = path.join(targetPath, relChunkPath);
-            this.logToConsole(LogLevel.Information, LogChannel.Default, "Loading: " + absChunkPath);
-            if (fs.existsSync(absChunkPath))
-            {
-                const chunkRaw = await fs.promises.readFile(absChunkPath);
-                chunks.push(chunkRaw);
-            }
+            const chunkRaw = await fs.promises.readFile(absChunkPath);
+            return chunkRaw;
         }
 
-        return chunks;
+        return null;
     }
 
     clearCache()

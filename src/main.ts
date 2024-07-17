@@ -163,13 +163,13 @@ async function saveRecordingFile(request: Messaging.ISaveFileData)
 async function loadChunks(request: Messaging.ILoadFrameChunksRequest)
 {
     logToConsole(LogLevel.Information, LogChannel.Default, 'Loading chunks');
-    const chunks = await recordingHandler.loadChunks(request.relativePaths);
+    const chunk = await recordingHandler.loadChunk(request.relativePath);
 
     logToConsole(LogLevel.Information, LogChannel.Default, 'Loaded chunks');
 
     const result : Messaging.ILoadFrameChunksResult = {
         id: request.id,
-        chunks: chunks
+        chunk: chunk
     };
 
     mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LoadFrameChunksResult, result));
