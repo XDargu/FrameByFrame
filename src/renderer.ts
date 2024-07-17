@@ -207,6 +207,29 @@ export default class Renderer {
         this.frameLoader = new FrameLoader.FrameLoader();
     }
 
+    removeOldChunks(currentFrame: number)
+    {
+        const framesPerChunk = this.fileRecording.globalData.framesPerChunk;
+
+        const removedChunks = this.frameLoader.removeOldChunks(currentFrame, framesPerChunk);
+        if (removedChunks.length > 0)
+        {
+            this.fileRecording.removeFrameChunks(removedChunks);
+            for (let chunk of removedChunks)
+            {
+                this.timeline.removeChunk(chunk.init, chunk.end);
+
+                for (let j=0; j<chunk.frameData.length; ++j)
+                {
+                    const globalFrame = FrameLoader.toGlobalIndex(j, chunk);
+                    this.pendingEvents.pushPending(globalFrame);
+                }
+            }
+
+            this.unprocessedFiltersPending = true;
+        }
+    }
+
     async requestFrameChunk(frame: number)
     {
         // This first part prevents requesting chunks that are not yet in disk while recording
@@ -232,7 +255,6 @@ export default class Renderer {
             const chunk = this.frameLoader.findChunkByFrame(frame);
             if (chunk)
             {
-                let chunksChanged = false;
                 const hasAddedChunks = this.fileRecording.addFrameChunk(chunk);
                 if (hasAddedChunks)
                 {
@@ -246,34 +268,10 @@ export default class Renderer {
                         this.pendingEvents.pushPending(globalFrame);
                     }
 
-                    console.log("Updated frames");
-
-                    chunksChanged = true;
+                    this.unprocessedFiltersPending = true;
                 }
 
-                const removedChunks = this.frameLoader.removeOldChunks(frame, framesPerChunk);
-                if (removedChunks.length > 0)
-                {
-                    this.fileRecording.removeFrameChunks(removedChunks);
-                    for (let chunk of removedChunks)
-                    {
-                        this.timeline.removeChunk(chunk.init, chunk.end);
-
-                        for (let j=0; j<chunk.frameData.length; ++j)
-                        {
-                            const globalFrame = FrameLoader.toGlobalIndex(j, chunk);
-                            this.pendingEvents.pushPending(globalFrame);
-                        }
-                    }
-
-                    chunksChanged = true;
-                }
-
-                if (chunksChanged)
-                {
-                    this.pendingEvents.markAllPending();
-                    this.updateTimelineEvents();
-                }
+                this.removeOldChunks(frame);
             }
 
             this.closeModal();
@@ -1009,11 +1007,14 @@ export default class Renderer {
             const newChunk : FrameLoader.FrameChunk = {
                 path: chunkPath,
                 init: firstFrameIdx,
-                end: lastFrameIdx,
+                end: lastFrameIdx + 1,
                 frameData: frames,
                 lastAccess: Date.now()
             };
             this.frameLoader.addChunk(newChunk);
+            this.timeline.setChunk(newChunk.init, newChunk.end, "c795c1");
+
+            this.removeOldChunks(this.getCurrentFrame());
         }
     }
 
