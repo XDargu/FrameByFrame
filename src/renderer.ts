@@ -1007,7 +1007,7 @@ export default class Renderer {
             const newChunk : FrameLoader.FrameChunk = {
                 path: chunkPath,
                 init: firstFrameIdx,
-                end: lastFrameIdx + 1,
+                end: lastFrameIdx,
                 frameData: frames,
                 lastAccess: Date.now()
             };

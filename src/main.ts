@@ -160,19 +160,113 @@ async function saveRecordingFile(request: Messaging.ISaveFileData)
     }
 }
 
-async function loadChunks(request: Messaging.ILoadFrameChunksRequest)
+// Test: move somwhere better later
+interface ChunkLoaderRequest
+{
+    request: Messaging.ILoadFrameChunksRequest;
+    processing: boolean;
+}
+
+class ChunkLoader
+{
+    private queue: ChunkLoaderRequest[];
+
+    constructor()
+    {
+        this.queue = [];
+    }
+
+    loadChunk(request: Messaging.ILoadFrameChunksRequest)
+    {
+        this.queue.push({ request: request, processing: false });
+
+        logToConsole(LogLevel.Information, LogChannel.Default, 'Queued chunk to process: ' + request.relativePath);
+        logToConsole(LogLevel.Information, LogChannel.Default, this.queue.reduce((prev, curr) => { return prev + ", " + curr.request.id; }, ""));
+    }
+
+    private findPending()
+    {
+        for (let i=this.queue.length -1; i>=0; --i)
+        {
+            if (!this.queue[i].processing)
+                return this.queue[i];
+        }
+    }
+
+    async processQueue()
+    {
+        if (this.queue.length == 0) { return; }
+
+        // Cancel previous requests
+        // TODO: Get from settings
+        while (this.queue.length > 4)
+        {
+            logToConsole(LogLevel.Information, LogChannel.Default, 'Removing old queue value');
+            this.queue.shift();
+        }
+
+        // Start with the most recent
+        const highestPrio = this.findPending();
+        if (!highestPrio)  { return; }
+
+        logToConsole(LogLevel.Information, LogChannel.Default, this.queue.reduce((prev, curr) => { return prev + ", " + curr.request.id; }, ""));
+        
+        const relPath = highestPrio.request.relativePath;
+        const id = highestPrio.request.id;
+
+        logToConsole(LogLevel.Information, LogChannel.Default, 'Loading chunk: ' + relPath + ' (' + id + ')');
+        
+        highestPrio.processing = true;
+        const chunk = await recordingHandler.loadChunk(relPath, () => 
+            { return this.queue.findIndex((req) => { return req.request.id == id }) == -1; });
+
+        // Don't even send the result if we don't need it anymore
+        const index = this.queue.findIndex((req) => { return req.request.id == id });
+        if (index == -1)
+        {
+            logToConsole(LogLevel.Information, LogChannel.Default, 'Discarding chunk: ' + relPath + ' (' + id + ')');
+            return;
+        }
+
+        this.queue.splice(index, 1);
+
+        logToConsole(LogLevel.Information, LogChannel.Default, 'Loaded chunks');
+
+        const result : Messaging.ILoadFrameChunksResult = {
+            id: id,
+            chunk: chunk
+        };
+    
+        mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LoadFrameChunksResult, result));
+    }
+
+    clear()
+    {
+        this.queue = [];
+    }
+}
+
+let chunkLoader = new ChunkLoader();
+
+setInterval(() => {
+    chunkLoader.processQueue();
+}, 30);
+
+function loadChunks(request: Messaging.ILoadFrameChunksRequest)
 {
     logToConsole(LogLevel.Information, LogChannel.Default, 'Loading chunks');
-    const chunk = await recordingHandler.loadChunk(request.relativePath);
+    //const chunk = await recordingHandler.loadChunk(request.relativePath);
 
-    logToConsole(LogLevel.Information, LogChannel.Default, 'Loaded chunks');
+    chunkLoader.loadChunk(request);
 
-    const result : Messaging.ILoadFrameChunksResult = {
+    //logToConsole(LogLevel.Information, LogChannel.Default, 'Loaded chunks');
+
+    /*const result : Messaging.ILoadFrameChunksResult = {
         id: request.id,
         chunk: chunk
     };
 
-    mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LoadFrameChunksResult, result));
+    mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LoadFrameChunksResult, result));*/
 }
 
 async function exportChunk(request: Messaging.IChunkExportRequest)
@@ -445,6 +539,7 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
           sessionOptions.showClearDataDialog = false;
         }
 
+        chunkLoader.clear();
         recordingHandler.clearCache();
         event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.ClearResult, {clear: shouldClear, remember: checkboxChecked}));
       });

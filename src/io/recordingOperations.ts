@@ -323,19 +323,37 @@ export class FileRecordingHandler
         return frameFilePath;
     }
 
-    async loadChunk(relativePath: string)
+    loadChunk(relativePath: string, isCancelled: () => boolean)
     {
-        const targetPath = FileRecordingHandler.getRootPath();
+        return new Promise<Buffer>((resolve, reject)=>{
+            const targetPath = FileRecordingHandler.getRootPath();
 
-        const absChunkPath = path.join(targetPath, relativePath);
-        this.logToConsole(LogLevel.Information, LogChannel.Default, "Loading: " + absChunkPath);
-        if (fs.existsSync(absChunkPath))
-        {
-            const chunkRaw = await fs.promises.readFile(absChunkPath);
-            return chunkRaw;
-        }
+            const absChunkPath = path.join(targetPath, relativePath);
+            this.logToConsole(LogLevel.Information, LogChannel.Default, "Loading: " + absChunkPath);
+            if (fs.existsSync(absChunkPath))
+            {
+                let chunks: Buffer[] = [];
 
-        return null;
+                let readStream = fs.createReadStream(absChunkPath);
+                readStream.on("data", (data: Buffer) => {
+                    if (isCancelled())
+                    {
+                        this.logToConsole(LogLevel.Information, LogChannel.Default, "Cancelling readfile" );
+                        readStream.close();
+                        resolve(null);
+                    }
+                    chunks.push(data);
+                });
+                readStream.on("error", (err) => {
+                    reject(err);
+                });
+                readStream.on("close", () => {
+                    resolve(Buffer.concat(chunks));
+                });
+            }
+            else
+                resolve(null);
+        });
     }
 
     clearCache()

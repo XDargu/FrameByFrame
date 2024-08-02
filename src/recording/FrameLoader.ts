@@ -86,7 +86,7 @@ export class FrameLoader
             this.chunks.sort((a, b) => {
 
                 // Don't remove our current frame or the adjacent ones
-                const isAAdjacent = a.init == currentChunk || a.init == prevChunk || a.init == nextChunk;
+                /*const isAAdjacent = a.init == currentChunk || a.init == prevChunk || a.init == nextChunk;
                 const isBAdjacent = b.init == currentChunk || b.init == prevChunk || b.init == nextChunk;
 
                 if (isAAdjacent && isBAdjacent)
@@ -94,7 +94,7 @@ export class FrameLoader
                 if (isAAdjacent)
                     return -1;
                 if (isBAdjacent)
-                    return 1;
+                    return 1;*/
 
                 return b.lastAccess - a.lastAccess
             });
@@ -133,11 +133,11 @@ export class FrameLoader
     {
         const chunk = this.findChunkByFrame(frame);
         if (chunk)
-        {
-            const chunkIdx = toChunkIndex(frame, chunk);
-            return chunk.frameData[chunkIdx];
-        }
-        
+            return;
+
+        if (this.isFrameLoading(frame))
+            return;
+
         const resultChunk = await this.requestFrameChunk(globalData, frame);
 
         // Add chunks to existing ones
@@ -176,14 +176,6 @@ export class FrameLoader
         }
         this.addChunk(newChunk);
         this.activeRequests.delete(resultChunk.id);
-
-        if (newChunk)
-        {
-            const chunkIdx = toChunkIndex(frame, newChunk);
-            return newChunk.frameData[chunkIdx];
-        }
-
-        return null;
     }
 
     private async requestFrameChunk(globalData: FileRec.GlobalData, frame: number)
@@ -200,6 +192,8 @@ export class FrameLoader
             };
 
             const initFrame = FileRec.Ops.getChunkInit(frame, globalData.framesPerChunk);
+
+            console.log("Requesting Frame: " + initFrame + " - " + relChunkFilename);
 
             this.activeRequests.set(id, {
                 init: initFrame,
