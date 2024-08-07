@@ -170,7 +170,14 @@ export class PropertyTreeController {
 
     addTable(parent: HTMLElement, name: string, value: RECORDING.IPropertyTable, propertyId: number = null)
     {
-        let gridContainer = document.createElement("table");
+        let gridContainerWrapper = document.createElement("div");
+        gridContainerWrapper.className = "property-table-wrapper";
+
+        let gridTitle = document.createElement("div");
+        gridTitle.className = "property-table-title";
+        gridTitle.innerText = name;
+
+        let gridContainer = document.createElement("div");
         gridContainer.className = "property-table";
 
         gridContainer.style.gridTemplateColumns = "auto ".repeat(value.header.length);
@@ -191,7 +198,9 @@ export class PropertyTreeController {
             }
         }
 
-        this.addTabletoPropertyTree(parent, name, gridContainer, propertyId);
+        gridContainerWrapper.append(gridTitle, gridContainer);
+
+        this.addTabletoPropertyTree(parent, name, gridContainerWrapper, propertyId);
     }
 
     addVec3(parent: HTMLElement, name: string, value: RECORDING.IVec3, propertyId: number = null)

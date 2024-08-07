@@ -83,11 +83,15 @@ body {
     overflow: hidden;
 }
 
+.property-table-wrapper {
+    width: 100%;
+    margin-right: 2px;
+}
+
 .property-table {
     width: 100%;
     display: grid;
     grid-gap: 5px 0px;
-    margin: 0 2px;
 }
 
 .property-table .basico-tag.property-primitive.property-table-row {
@@ -98,9 +102,16 @@ body {
 }
 
 .property-table .basico-tag.property-primitive.property-table-row.property-table-header {
-    background-color: #53475a;
+    background-color: #4f435a;
     font-weight: bold;
     border-radius: 0px;
+}
+
+.property-table-wrapper .property-table-title {
+    background-color: #4f435a;
+    font-weight: bold;
+    text-align: center;
+    padding: 3px;
 }
 
 #central-content {
