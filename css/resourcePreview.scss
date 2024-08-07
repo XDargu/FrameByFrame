@@ -1,0 +1,27 @@
+@import "colorStyles.scss";
+
+.resource-preview { 
+    position: absolute;
+    z-index: 2000;
+
+    display: flex;
+    flex-direction: column;
+    background-color: $dark-background;
+    border-radius: 2px;
+    text-align: left;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.38);
+    padding: 8px 0;
+    font-size: 13px;
+    list-style: none;
+    margin: 0;
+    overflow-y: auto;
+    max-height: 300px;
+}
+
+.resource-preview.hidden:not(:hover) {
+    display: none;
+}
+
+.resource-preview img {
+    max-width: 200px;
+}

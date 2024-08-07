@@ -3,11 +3,20 @@ import * as RECORDING from '../recording/RecordingData';
 import * as RenderUtils from '../render/renderUtils';
 import RenderPools from './renderPools';
 
-export function setShapeCommonData(mesh: BABYLON.Mesh, propertyId: number, position: RECORDING.IVec3, color: RECORDING.IColor, pools: RenderPools)
+function setShapeMaterial(mesh: BABYLON.Mesh, color: RECORDING.IColor, texture: string, pools: RenderPools)
+{
+    if (texture == undefined || texture == "")
+        mesh.material = pools.materialPool.getMaterialByColor(color);
+    else
+        mesh.material = pools.materialPool.getMaterialByTexture(texture, color);
+}
+
+function setShapeCommonData(mesh: BABYLON.Mesh, propertyId: number, position: RECORDING.IVec3, color: RECORDING.IColor, texture: string, pools: RenderPools)
 {
     mesh.id = propertyId.toString();
-    mesh.material = pools.materialPool.getMaterialByColor(color);
     mesh.position.set(position.x, position.y, position.z);
+    
+    setShapeMaterial(mesh, color, texture, pools);
 }
 
 export function buildSphereShape(shape: RECORDING.IProperyShape, pools: RenderPools, pivotPos: BABYLON.Vector3, system: RECORDING.ECoordinateSystem) : BABYLON.Mesh
@@ -15,7 +24,7 @@ export function buildSphereShape(shape: RECORDING.IProperyShape, pools: RenderPo
     const sphereProperty = shape as RECORDING.IPropertySphere;
 
     let sphere = pools.spherePool.getSphere(sphereProperty.radius);
-    setShapeCommonData(sphere, sphereProperty.id, RenderUtils.createVec3(sphereProperty.position, system), sphereProperty.color, pools);
+    setShapeCommonData(sphere, sphereProperty.id, RenderUtils.createVec3(sphereProperty.position, system), sphereProperty.color, sphereProperty.texture, pools);
 
     return sphere;
 }
@@ -25,7 +34,7 @@ export function buildCapsuleShape(shape: RECORDING.IProperyShape, pools: RenderP
     const capsuleProperty = shape as RECORDING.IPropertyCapsule;
 
     let capsule = pools.capsulePool.getCapsule(capsuleProperty.height, capsuleProperty.radius);
-    setShapeCommonData(capsule, capsuleProperty.id, RenderUtils.createVec3(capsuleProperty.position, system), capsuleProperty.color, pools);
+    setShapeCommonData(capsule, capsuleProperty.id, RenderUtils.createVec3(capsuleProperty.position, system), capsuleProperty.color, capsuleProperty.texture, pools);
     RenderUtils.setShapeOrientationFromDirection(capsule, RenderUtils.createVec3(capsuleProperty.direction, system), system);
 
     return capsule;
@@ -36,7 +45,7 @@ export function buildAABBShape(shape: RECORDING.IProperyShape, pools: RenderPool
     const aabbProperty = shape as RECORDING.IPropertyAABB;
 
     let aabb = pools.boxPool.getBox(RenderUtils.createVec3(aabbProperty.size, system));
-    setShapeCommonData(aabb, aabbProperty.id, RenderUtils.createVec3(aabbProperty.position, system), aabbProperty.color, pools);
+    setShapeCommonData(aabb, aabbProperty.id, RenderUtils.createVec3(aabbProperty.position, system), aabbProperty.color, aabbProperty.texture, pools);
 
     return aabb;
 }
@@ -46,7 +55,7 @@ export function buildOOBBShape(shape: RECORDING.IProperyShape, pools: RenderPool
     const oobbProperty = shape as RECORDING.IPropertyOOBB;
 
     let oobb = pools.boxPool.getBox(RenderUtils.createVec3(oobbProperty.size, system));
-    setShapeCommonData(oobb, oobbProperty.id, RenderUtils.createVec3(oobbProperty.position, system), oobbProperty.color, pools);
+    setShapeCommonData(oobb, oobbProperty.id, RenderUtils.createVec3(oobbProperty.position, system), oobbProperty.color, oobbProperty.texture, pools);
     RenderUtils.setShapeOrientationFromUpAndFwd(oobb, RenderUtils.createVec3(oobbProperty.up, system), RenderUtils.createVec3(oobbProperty.forward, system), system);
 
     return oobb;
@@ -57,7 +66,7 @@ export function buildPlaneShape(shape: RECORDING.IProperyShape, pools: RenderPoo
     const planeProperty = shape as RECORDING.IPropertyPlane;
         
     let plane = pools.planePool.getPlane(RenderUtils.createVec3(planeProperty.normal, system), planeProperty.length, planeProperty.width);
-    setShapeCommonData(plane, planeProperty.id, RenderUtils.createVec3(planeProperty.position, system), planeProperty.color, pools);
+    setShapeCommonData(plane, planeProperty.id, RenderUtils.createVec3(planeProperty.position, system), planeProperty.color, planeProperty.texture, pools);
     RenderUtils.setShapeOrientationFromUpAndFwd(plane, RenderUtils.createVec3(planeProperty.up, system), RenderUtils.createVec3(planeProperty.normal, system), system);
 
     return plane;
@@ -147,7 +156,7 @@ export function buildMeshShape(shape: RECORDING.IProperyShape, pools: RenderPool
 
     vertexData.applyToMesh(customMesh);
 
-    customMesh.material = pools.materialPool.getMaterialByColor(meshProperty.color);
+    setShapeMaterial(customMesh, meshProperty.color, meshProperty.texture, pools);
 
     if (meshProperty.wireframe == true)
     {
@@ -210,7 +219,7 @@ export function buildTriangleShape(shape: RECORDING.IProperyShape, pools: Render
 
     vertexData.applyToMesh(customMesh);
 
-    customMesh.material = pools.materialPool.getMaterialByColor(triangleProperty.color);
+    setShapeMaterial(customMesh, triangleProperty.color, triangleProperty.texture, pools);
 
     return customMesh;
 }

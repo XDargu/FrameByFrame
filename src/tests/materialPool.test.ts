@@ -10,7 +10,7 @@ describe('MaterialPool', () => {
 
     beforeEach(function() {
         scene = new BABYLON.Scene(engine);
-        pool = new MaterialPool(scene);
+        pool = new MaterialPool(scene, () => { return null; });
     });
 
     it('creates only one material when inputs are the same', () => {

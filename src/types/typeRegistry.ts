@@ -15,6 +15,7 @@ export enum CorePropertyTypes {
 	Vec2 = "vec2",
 	Vec3 = "vec3",
     EntityRef = "eref",
+    Table = "table",
     Quat = "quat",
 	/* Shapes */
 	Sphere = "sphere",

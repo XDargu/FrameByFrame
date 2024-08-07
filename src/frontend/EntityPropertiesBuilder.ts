@@ -626,7 +626,9 @@ export default class EntityPropertiesBuilder
 
         const treeElement = item.closest("li[data-tree-value]");
         
-        const groups = treeElement.querySelectorAll(".property-group");
+        let groups = treeElement.querySelectorAll(".property-group");
+        if (groups.length == 0)
+            groups = treeElement.querySelectorAll(".property-table");
 
         let text = "";
         groups.forEach((group) => {

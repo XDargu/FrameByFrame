@@ -16,6 +16,7 @@ import SceneEntitySelection, { IEntitySelectedCallback } from './sceneEntitySele
 import ScenePropertySelection from './scenePropertySelection';
 import { CorePropertyTypes } from '../types/typeRegistry';
 import TextLabels from './textLabel';
+import { IGetResourceFunction } from './materialPool';
 
 export interface IOnDebugDataUpdated
 {
@@ -95,6 +96,7 @@ export default class SceneController
         canvas: HTMLCanvasElement,
         onEntitySelected: IEntitySelectedCallback,
         onCameraChangedCallback: ICameraChangedCallback,
+        getResourceFunc: IGetResourceFunction,
         selectionColor: string,
         hoverColor: string,
         shapeHoverColor: string,
@@ -108,7 +110,7 @@ export default class SceneController
         const shapeHoverColor01 = Utils.RgbToRgb01(Utils.hexToRgb(shapeHoverColor));
 
         const engine = new BABYLON.Engine(canvas, false, { stencil: true });
-        this.createScene(canvas, engine, onCameraChangedCallback);
+        this.createScene(canvas, engine, onCameraChangedCallback, getResourceFunc);
         this.loseContext = engine._gl.getExtension('WEBGL_lose_context');
 
         this.outline = new SceneOutline(this._scene, this.cameraControl.getCamera(), selectionColor01, hoverColor01, outlineWidth);
@@ -134,7 +136,7 @@ export default class SceneController
         this.setCoordinateSystem(RECORDING.ECoordinateSystem.LeftHand);
     }
 
-    private createScene(canvas: HTMLCanvasElement, engine: BABYLON.Engine, onCameraChangedCallback: ICameraChangedCallback) {
+    private createScene(canvas: HTMLCanvasElement, engine: BABYLON.Engine, onCameraChangedCallback: ICameraChangedCallback, getResourceFunc: IGetResourceFunction) {
         this._canvas = canvas;
 
         this._engine = engine;
@@ -143,7 +145,7 @@ export default class SceneController
         const scene = new BABYLON.Scene(engine);
         this._scene = scene;
 
-        this.pools = new RenderPools(scene);
+        this.pools = new RenderPools(scene, getResourceFunc); // Here
         this.layerManager = new LayerManager();
 
         // Gizmos

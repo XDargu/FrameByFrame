@@ -1,5 +1,5 @@
 import * as BABYLON from 'babylonjs';
-import { MaterialPool } from './materialPool';
+import { IGetResourceFunction, MaterialPool } from './materialPool';
 import { ArrowPool, BoxPool, CapsulePool, LinePool, MeshPool, PathPool, PlanePool, SpherePool } from './meshPools';
 
 export default class RenderPools
@@ -19,10 +19,10 @@ export default class RenderPools
 
     scene: BABYLON.Scene;
     
-    constructor(scene: BABYLON.Scene)
+    constructor(scene: BABYLON.Scene, getResourceFunc: IGetResourceFunction)
     {
         this.scene = scene;
-        this.materialPool = new MaterialPool(scene);
+        this.materialPool = new MaterialPool(scene, getResourceFunc);
         this.capsulePool = new CapsulePool(scene);
         this.spherePool = new SpherePool(scene);
         this.boxPool = new BoxPool(scene);

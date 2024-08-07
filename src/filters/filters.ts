@@ -68,7 +68,7 @@ export function getDefaultValuePerMemberType(type: MemberFilterType): string | b
     }
 }
 
-function createMemberFilterOfType(type: CorePropertyTypes, name: string, value: string | number | boolean | RECORDING.IVec2 | RECORDING.IVec3 | RECORDING.IEntityRef ) : MemberFilter[]
+function createMemberFilterOfType(type: CorePropertyTypes, name: string, value: string | number | boolean | RECORDING.IVec2 | RECORDING.IVec3 | RECORDING.IEntityRef | RECORDING.IPropertyTable ) : MemberFilter[]
 {
     switch (type) {
         case CorePropertyTypes.Bool: return [{ name: name, type: MemberFilterType.Boolean, value: value as boolean, mode: FilterMode.Equals }];
@@ -93,6 +93,27 @@ function createMemberFilterOfType(type: CorePropertyTypes, name: string, value: 
             { name: name + ".z", type: MemberFilterType.Number, value: (value as RECORDING.IQuat).z, mode: FilterMode.Similar },
             { name: name + ".w", type: MemberFilterType.Number, value: (value as RECORDING.IQuat).z, mode: FilterMode.Similar }
         ]
+        case CorePropertyTypes.Table:
+        {
+            let filters : MemberFilter[] = [];
+
+            const table = value as RECORDING.IPropertyTable;
+            for (let colIdx = 0; colIdx < table.header.length; ++colIdx)
+            {
+                const colName = table.header[colIdx];
+
+                for (let row of table.rows)
+                {
+                    const rowValue = row[colIdx];
+                    filters.push({ name: `${name}.${colName}`, type: MemberFilterType.String, value: rowValue, mode: FilterMode.Equals });
+
+                    // Only filter one of each column, as an example, not everything
+                    break;
+                }
+            }
+
+            return filters;
+        }
     }
 
     return [];
@@ -108,6 +129,7 @@ export function createMemberFilterFromProperty(property: RECORDING.IProperty): M
         case CorePropertyTypes.Vec2: return createMemberFilterOfType(property.type, property.name, property.value as RECORDING.IVec2);
         case CorePropertyTypes.Vec3: return createMemberFilterOfType(property.type, property.name, property.value as RECORDING.IVec3);
         case CorePropertyTypes.EntityRef: return createMemberFilterOfType(property.type, property.name, property.value as RECORDING.IEntityRef);
+        case CorePropertyTypes.Table: return createMemberFilterOfType(property.type, property.name, property.value as RECORDING.IPropertyTable);
         case CorePropertyTypes.Quat: return createMemberFilterOfType(property.type, property.name, property.value as RECORDING.IQuat);
 
         // Shapes
@@ -336,6 +358,36 @@ export namespace Common {
         return false;
     }
 
+    export function filterTableProperty(property: RECORDING.IProperty, filters: MemberFilter[]): boolean {
+        const name = property.name.toLowerCase();
+        const value = property.value as RECORDING.IPropertyTable;
+
+        return filterTable(name, value, filters);
+    }
+
+    export function filterTable(name: string, table: RECORDING.IPropertyTable, filters: MemberFilter[]) : boolean {
+        
+        for (let i = 0; i < filters.length; ++i) {
+
+            // Filter every column individually
+            for (let colIdx = 0; colIdx < table.header.length; ++colIdx)
+            {
+                const colName = table.header[colIdx].toLowerCase();
+
+                for (let row of table.rows)
+                {
+                    const rowValue = row[colIdx].toLowerCase();
+
+                    if (applyFilterString(`${name}.${colName}`, rowValue, filters[i])) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
     export function filterQuat(name: string, value: RECORDING.IQuat, filters: MemberFilter[]): boolean {
         const nameX = name + ".x";
         const nameY = name + ".y";
@@ -465,6 +517,7 @@ export namespace Common {
             case Type.Number: return filterPropertyNumber(property, filters) ? property : null;
             case Type.Bool: return filterPropertyBoolean(property, filters) ? property : null;
             case Type.EntityRef: return filterPropertyEntityRef(property, filters) ? property : null;
+            case Type.Table: return filterTableProperty(property, filters) ? property : null;
             case Type.Quat: return filterPropertyQuat(property, filters) ? property : null;
             case Type.Group: return filterPropertyGroup(property as RECORDING.IPropertyGroup, filters);
             case Type.Sphere: return filterPropertySphere(property as RECORDING.IPropertySphere, filters) ? property : null;

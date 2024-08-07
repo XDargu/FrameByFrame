@@ -2,6 +2,7 @@ import * as RECORDING from '../recording/RecordingData';
 import * as TREE from '../ui/tree';
 import * as TypeSystem from "../types/typeRegistry";
 import { Console, LogChannel, LogLevel } from './ConsoleController';
+import { ResourcePreview } from './ResourcePreview';
 
 export interface IGoToEntityCallback {
     (entityId: number) : void;
@@ -127,6 +128,21 @@ export class PropertyTreeController {
         });
     }
 
+    addTabletoPropertyTree(parent: HTMLElement, name: string, table: HTMLElement, propertyId: number = null)
+    {
+        const elements = [table];
+        const listItem = this.propertyTree.addItem(parent, elements, {
+            value:  propertyId == null ? null : propertyId.toString(),
+            selectable: false,
+            callbacks: {
+                onItemSelected: null,
+                onItemDoubleClicked: null,
+                onItemMouseOver: this.onPropertyMouseEnter.bind(this),
+                onItemMouseOut: this.onPropertyMouseLeave.bind(this),
+            }
+        });
+    }
+
     addCustomTypeToPropertyTree(parent: HTMLElement, property: RECORDING.IProperty, type: TypeSystem.IType) {
         // Complex value type
         let content = [];
@@ -150,6 +166,41 @@ export class PropertyTreeController {
         ];
 
         this.addValueToPropertyTree(parent, name, content, propertyId);
+    }
+
+    addTable(parent: HTMLElement, name: string, value: RECORDING.IPropertyTable, propertyId: number = null)
+    {
+        let gridContainerWrapper = document.createElement("div");
+        gridContainerWrapper.className = "property-table-wrapper";
+
+        let gridTitle = document.createElement("div");
+        gridTitle.className = "property-table-title";
+        gridTitle.innerText = name;
+
+        let gridContainer = document.createElement("div");
+        gridContainer.className = "property-table";
+
+        gridContainer.style.gridTemplateColumns = "auto ".repeat(value.header.length);
+
+        for (let item of value.header)
+        {
+            let content = UI.getLayoutOfPrimitiveType(item, TypeSystem.EPrimitiveType.String);
+            content.classList.add("property-table-row", "property-table-header");
+            gridContainer.append(content);
+        }
+        for (let row of value.rows)
+        {
+            for (let item of row)
+            {
+                let content = UI.getLayoutOfPrimitiveType(item, TypeSystem.EPrimitiveType.String);
+                content.classList.add("property-table-row");
+                gridContainer.append(content);
+            }
+        }
+
+        gridContainerWrapper.append(gridTitle, gridContainer);
+
+        this.addTabletoPropertyTree(parent, name, gridContainerWrapper, propertyId);
     }
 
     addVec3(parent: HTMLElement, name: string, value: RECORDING.IVec3, propertyId: number = null)
@@ -179,6 +230,24 @@ export class PropertyTreeController {
     {
         const content = UI.getLayoutOfPrimitiveType(value, TypeSystem.EPrimitiveType.Number)
         this.addValueToPropertyTree(parent, name, [content], propertyId);
+    }
+
+    addOptionalResource(parent: HTMLElement, name: string, value: string, propertyId: number = null)
+    {
+        if (value && value != "")
+        {
+            const content = UI.getLayoutOfPrimitiveType(value, TypeSystem.EPrimitiveType.String)
+            this.addValueToPropertyTree(parent, name, [content], propertyId);
+            content.onmouseenter = (ev) => {
+                ResourcePreview.Instance().showAtPosition(ev.pageX, ev.pageY, value);
+            };
+            content.onmousemove = (ev) => {
+                ResourcePreview.Instance().setPosition(ev.pageX, ev.pageY);
+            };
+            content.onmouseout = () => {
+                ResourcePreview.Instance().hide();
+            }
+        }
     }
 
     addToPropertyTree(parent: HTMLElement, property: RECORDING.IProperty)
@@ -230,6 +299,10 @@ export class PropertyTreeController {
             {
                 this.addEntityRef(parent, property.name, property.value as RECORDING.IEntityRef, property.id);
             }
+            else if (property.type == TypeSystem.CorePropertyTypes.Table)
+            {
+                this.addTable(parent, property.name, property.value as RECORDING.IPropertyTable, property.id);
+            }
             else if (RECORDING.isPropertyShape(property))
             {
                 if (property.name.length > 0)
@@ -243,6 +316,7 @@ export class PropertyTreeController {
                             let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
                             this.addVec3(addedItem, "Position", sphere.position, property.id);
                             this.addNumber(addedItem, "Radius", sphere.radius, property.id);
+                            this.addOptionalResource(addedItem, "Texture", sphere.texture, property.id);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Capsule:
@@ -254,6 +328,7 @@ export class PropertyTreeController {
                             this.addVec3(addedItem, "Direction", capsule.direction, property.id);
                             this.addNumber(addedItem, "Radius", capsule.radius, property.id);
                             this.addNumber(addedItem, "Height", capsule.height, property.id);
+                            this.addOptionalResource(addedItem, "Texture", capsule.texture, property.id);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.AABB:
@@ -263,6 +338,7 @@ export class PropertyTreeController {
                             let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
                             this.addVec3(addedItem, "Position", aabb.position, property.id);
                             this.addVec3(addedItem, "Size", aabb.size, property.id);
+                            this.addOptionalResource(addedItem, "Texture", aabb.texture, property.id);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.OOBB:
@@ -274,6 +350,7 @@ export class PropertyTreeController {
                             this.addVec3(addedItem, "Size", oobb.size, property.id);
                             this.addVec3(addedItem, "Forward", oobb.forward, property.id);
                             this.addVec3(addedItem, "Up", oobb.up, property.id);
+                            this.addOptionalResource(addedItem, "Texture", oobb.texture, property.id);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Plane:
@@ -286,6 +363,7 @@ export class PropertyTreeController {
                             this.addVec3(addedItem, "Up", plane.up, property.id);
                             this.addNumber(addedItem, "Width", plane.width, property.id);
                             this.addNumber(addedItem, "Length", plane.length, property.id);
+                            this.addOptionalResource(addedItem, "Texture", plane.texture, property.id);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Line:
@@ -316,8 +394,11 @@ export class PropertyTreeController {
                         }
                         case TypeSystem.CorePropertyTypes.Mesh:
                         {
+                            const mesh = property as RECORDING.IPropertyMesh;
+
                             let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
                             // Ignore vertices/indices
+                            this.addOptionalResource(addedItem, "Texture", mesh.texture, property.id);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Path:
@@ -340,6 +421,7 @@ export class PropertyTreeController {
                             this.addVec3(addedItem, "p1", triangle.p1, property.id);
                             this.addVec3(addedItem, "p2", triangle.p2, property.id);
                             this.addVec3(addedItem, "p3", triangle.p3, property.id);
+                            this.addOptionalResource(addedItem, "Texture", triangle.texture, property.id);
                             break;
                         }
                     }

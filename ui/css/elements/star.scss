@@ -2,9 +2,12 @@
 
 .basico-star {
     float: right;
-    margin-right: 8px;
+    margin-right: 4px;
     cursor: pointer;
     opacity: 0.2;
+    margin-top: -4px;
+    margin-bottom: -4px;
+    padding: 4px;
 }
 
 .basico-star:hover {

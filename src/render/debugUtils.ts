@@ -1,5 +1,8 @@
 import * as BABYLON from 'babylonjs';
 import RenderPools from './renderPools';
+import * as Utils from '../utils/utils'
+
+const electron = require('electron') 
 
 export function createDebugData(scene: BABYLON.Scene, engine: BABYLON.Engine, pools: RenderPools) {
     let materialClasses = new Map<string, number>();
@@ -16,6 +19,8 @@ export function createDebugData(scene: BABYLON.Scene, engine: BABYLON.Engine, po
     materialClasses.forEach((count, name) => {
         detailsMaterials += `${name}: ${count}\n\n`;
     });
+
+    const heapStats = process.getHeapStatistics();
     
     return `
         FPS: ${engine.getFps().toFixed(2)}\n
@@ -29,5 +34,9 @@ export function createDebugData(scene: BABYLON.Scene, engine: BABYLON.Engine, po
         Plane Pool size: ${pools.planePool.getTotalMeshes()}\n
         Total pooled meshes: ${pools.getTotalPooledMeshes()}\n
         Total meshes: ${scene.meshes.length}\n
+        Malloced memory: ${Utils.memoryToString(heapStats.mallocedMemory * 1000)}\n
+        Heap size limit: ${Utils.memoryToString(heapStats.heapSizeLimit * 1000)}\n
+        Heap total size: ${Utils.memoryToString(heapStats.totalHeapSize * 1000)}\n
+        Used heap size: ${Utils.memoryToString(heapStats.usedHeapSize * 1000)}\n
     `;
 }
