@@ -34,6 +34,7 @@ These are all the possible property types:
 | Vec3              | `"vec3"`     |
 | Quaternion        | `"quat"`     |
 | Entity Reference  | `"eref"`     |
+| Table             | `"table"`    |
 | Sphere            | `"sphere"`   |
 | Capsule           | `"capsule"`  |
 | AABB              | `"aabb"`     |
@@ -152,7 +153,8 @@ Example:
         z: number
     },
     "radius": number,
-    "flags": number
+    "flags": number,
+    "texture"?: string
 }
 ```
 ### Capsule
@@ -179,7 +181,8 @@ Example:
     },
     "radius": number,
     "height": number,
-    "flags": number
+    "flags": number,
+    "texture"?: string
 }
 ```
 ### AABB
@@ -204,7 +207,8 @@ Example:
         y: number,
         z: number
     },
-    "flags": number
+    "flags": number,
+    "texture"?: string
 }
 ```
 ### OOBB
@@ -239,7 +243,8 @@ Example:
         y: number,
         z: number
     },
-    "flags": number
+    "flags": number,
+    "texture"?: string
 }
 ```
 ### Plane
@@ -271,7 +276,8 @@ Example:
     },
     "width": number,
     "length": number,
-    "flags": number
+    "flags": number,
+    "texture"?: string
 }
 ```
 ### Line
@@ -359,7 +365,8 @@ Example:
     "vertices": number[],
     "indices"?: number[],
     "wireframe"?: boolean,
-    "flags": number
+    "flags": number,
+    "texture"?: string
 }
 ```
 ### Path
@@ -405,7 +412,8 @@ Example:
         a: number
     },
     "points": Vec3[],
-    "flags": number
+    "flags": number,
+    "texture"?: string
 }
 ```
 
@@ -427,6 +435,18 @@ Example:
     "value": {
         "name": string,
         "id": number
+    },
+    "flags": number
+}
+```
+### Table
+```js
+{
+    "name": string,
+    "type": "table",
+    "value": {
+        "header": string[],
+        "rows": string[][]
     },
     "flags": number
 }
