@@ -85,6 +85,13 @@ export interface IEntityRef {
 	id: number;
 }
 
+export type TableRow = string[]
+export interface IPropertyTable
+{
+    header: string[];
+    rows: TableRow[];
+}
+
 export enum EPropertyFlags
 {
 	None = 0,
@@ -95,7 +102,7 @@ export enum EPropertyFlags
 export interface IProperty {
 	type: string;
 	name?: string;
-	value: string | number | boolean | IVec2 | IVec3 | IPropertyCustomType | IEntityRef | IProperty[];
+	value: string | number | boolean | IVec2 | IVec3 | IPropertyCustomType | IEntityRef | IPropertyTable | IProperty[];
 	id?: number;
 	flags?: EPropertyFlags;
 }

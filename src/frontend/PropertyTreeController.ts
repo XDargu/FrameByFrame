@@ -128,6 +128,21 @@ export class PropertyTreeController {
         });
     }
 
+    addTabletoPropertyTree(parent: HTMLElement, name: string, table: HTMLElement, propertyId: number = null)
+    {
+        const elements = [table];
+        const listItem = this.propertyTree.addItem(parent, elements, {
+            value:  propertyId == null ? null : propertyId.toString(),
+            selectable: false,
+            callbacks: {
+                onItemSelected: null,
+                onItemDoubleClicked: null,
+                onItemMouseOver: this.onPropertyMouseEnter.bind(this),
+                onItemMouseOut: this.onPropertyMouseLeave.bind(this),
+            }
+        });
+    }
+
     addCustomTypeToPropertyTree(parent: HTMLElement, property: RECORDING.IProperty, type: TypeSystem.IType) {
         // Complex value type
         let content = [];
@@ -151,6 +166,32 @@ export class PropertyTreeController {
         ];
 
         this.addValueToPropertyTree(parent, name, content, propertyId);
+    }
+
+    addTable(parent: HTMLElement, name: string, value: RECORDING.IPropertyTable, propertyId: number = null)
+    {
+        let gridContainer = document.createElement("table");
+        gridContainer.className = "property-table";
+
+        gridContainer.style.gridTemplateColumns = "auto ".repeat(value.header.length);
+
+        for (let item of value.header)
+        {
+            let content = UI.getLayoutOfPrimitiveType(item, TypeSystem.EPrimitiveType.String);
+            content.classList.add("property-table-row", "property-table-header");
+            gridContainer.append(content);
+        }
+        for (let row of value.rows)
+        {
+            for (let item of row)
+            {
+                let content = UI.getLayoutOfPrimitiveType(item, TypeSystem.EPrimitiveType.String);
+                content.classList.add("property-table-row");
+                gridContainer.append(content);
+            }
+        }
+
+        this.addTabletoPropertyTree(parent, name, gridContainer, propertyId);
     }
 
     addVec3(parent: HTMLElement, name: string, value: RECORDING.IVec3, propertyId: number = null)
@@ -248,6 +289,10 @@ export class PropertyTreeController {
             else if (property.type == TypeSystem.CorePropertyTypes.EntityRef)
             {
                 this.addEntityRef(parent, property.name, property.value as RECORDING.IEntityRef, property.id);
+            }
+            else if (property.type == TypeSystem.CorePropertyTypes.Table)
+            {
+                this.addTable(parent, property.name, property.value as RECORDING.IPropertyTable, property.id);
             }
             else if (RECORDING.isPropertyShape(property))
             {

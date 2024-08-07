@@ -332,9 +332,12 @@
 
 .basico-star {
   float: right;
-  margin-right: 8px;
+  margin-right: 4px;
   cursor: pointer;
-  opacity: 0.2; }
+  opacity: 0.2;
+  margin-top: -4px;
+  margin-bottom: -4px;
+  padding: 4px; }
 
 .basico-star:hover {
   opacity: 0.6; }
@@ -1153,6 +1156,23 @@ body {
   flex: 1 1 0;
   width: 0;
   overflow: hidden; }
+
+.property-table {
+  width: 100%;
+  display: grid;
+  grid-gap: 5px 0px;
+  margin: 0 2px; }
+
+.property-table .basico-tag.property-primitive.property-table-row {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: none; }
+
+.property-table .basico-tag.property-primitive.property-table-row.property-table-header {
+  background-color: #53475a;
+  font-weight: bold;
+  border-radius: 0px; }
 
 #central-content {
   flex: 1 1 auto;
