@@ -23,7 +23,7 @@ description: "Learn how to quickly start using Frame by Frame"
 
 1. Download the latest release of Frame by Frame and install it.
 
-    [Get Frame by Frame 0.6.0](https://github.com/XDargu/FrameByFrame/releases/tag/v0.6.0){: .btn .btn-primary .fs-3 .mb-4 .mb-md-0 .mr-2 }
+    [Get Frame by Frame 0.6.2](https://github.com/XDargu/FrameByFrame/releases/tag/v0.6.2){: .btn .btn-primary .fs-3 .mb-4 .mb-md-0 .mr-2 }
 
 2. You can use the portable version or use the installer. *Note:* If you install it, the file extension .fbf will automatically be associated to Frame by Frame.
 
