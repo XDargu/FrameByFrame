@@ -29,6 +29,7 @@ export function loadImageResource(resource: RECORDING.IResource)
                 const response = await fetch(parsed.blob);
                 const blob = await response.blob();
                 resource.data = blob;
+                resource.url = URL.createObjectURL(resource.data);
                 resolve(resource);
             }
             else
@@ -38,6 +39,7 @@ export function loadImageResource(resource: RECORDING.IResource)
                 const blob = await response.blob();
 
                 resource.data = blob;
+                resource.url = URL.createObjectURL(resource.data);
 
                 // Generate the needed data
                 const reader = new FileReader();

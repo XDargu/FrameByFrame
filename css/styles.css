@@ -1173,12 +1173,12 @@ body {
   background: none; }
 
 .property-table .basico-tag.property-primitive.property-table-row.property-table-header {
-  background-color: #5f516a;
+  background-color: #4f435a;
   font-weight: bold;
   border-radius: 0px; }
 
 .property-table-wrapper .property-table-title {
-  background-color: #5f516a;
+  background-color: #4f435a;
   font-weight: bold;
   text-align: center;
   padding: 3px; }
@@ -3599,5 +3599,26 @@ body {
 
 .resource-preview img {
   max-width: 200px; }
+
+#pinned-texture {
+  display: none;
+  margin: 0;
+  border: 1px solid #473d4f;
+  border-bottom: none;
+  border-right: none;
+  z-index: 10;
+  width: 300px;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  padding: 0; }
+
+#pinned-texture.active {
+  display: flex; }
+
+#pinned-texture img {
+  width: 100%;
+  height: 100%;
+  margin: 0px; }
 
 /*# sourceMappingURL=styles.css.map */

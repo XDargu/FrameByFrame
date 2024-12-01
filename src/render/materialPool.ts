@@ -59,8 +59,7 @@ export class MaterialPool
         if (resource)
         {
             loadImageResource(resource).then((result)=>{
-                const url = URL.createObjectURL(result.data);
-                material.diffuseTexture = new BABYLON.Texture(url, this.scene);
+                material.diffuseTexture = new BABYLON.Texture(result.url, this.scene);
                 material.diffuseTexture.hasAlpha = true;
             }).catch((e) => {
                 // Apply invalid texture

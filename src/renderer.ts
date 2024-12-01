@@ -32,6 +32,7 @@ import PendingFrames from "./utils/pendingFrames";
 import { LIB_VERSION } from "./version";
 import ShapeLineController from "./frontend/ShapeLineController";
 import { loadImageResource } from "./render/resources/images";
+import * as TypeSystem from "./types/typeRegistry";
 import { ResourcePreview } from "./frontend/ResourcePreview";
 
 const zlib = require('zlib');
@@ -117,6 +118,10 @@ export default class Renderer {
     // Info
     private recordingInfoList: RecordingInfoList;
 
+    // Pin test
+    private pinnedEntityId: number;
+    private pinnedPropertyPath: string[];
+
     initialize(canvas: HTMLCanvasElement) {
 
         const defaultSettings = createDefaultSettings();
@@ -153,6 +158,14 @@ export default class Renderer {
                 // As an alternative, we could re-create the entityrefs when building the frame data
                 onGoToEntity: (id) => { this.selectEntity(Utils.toUniqueID(this.frameData.clientId, id)); },
                 onGoToShapePos: (id) => { this.moveCameraToShape(id); },
+                onPinTexture: (propId) => { 
+                    this.pinnedEntityId = this.selectedEntityId;
+
+                    const entity = this.frameData.entities[this.selectedEntityId];
+                    this.pinnedPropertyPath = NaiveRecordedData.getEntityPropertyPath(entity, propId);
+
+                    this.applyPinnedTexture();
+                 },
                 isEntityInFrame: (id) => { return this.frameData?.entities[Utils.toUniqueID(this.frameData.clientId, id)] != undefined; },
                 isPropertyVisible: (propId) => { return this.sceneController.isPropertyVisible(propId); }
             }
@@ -162,6 +175,7 @@ export default class Renderer {
         this.connectionsList = new ConnectionsList(connectionsListElement, this.onMessageArrived.bind(this));
         this.connectionsList.initialize();
 
+        this.initializePinnedTexturePanel();
         this.initializeTimeline();
         this.initializeUI();
 
@@ -528,6 +542,22 @@ export default class Renderer {
         ResourcePreview.Init(document.getElementById("resourcePreview"));
     }
 
+    initializePinnedTexturePanel()
+    {
+        // Initialize pinned texture canvas
+        let pinnedWrapper = document.getElementById(`pinned-texture`);
+        let pinnedCanvas: HTMLCanvasElement = <HTMLCanvasElement>document.getElementById('pinned-texture-canvas');
+        pinnedCanvas.width = 300;
+        pinnedCanvas.height = 300;
+        /*let resizeObserver = new ResizeObserver(entries => {
+            pinnedCanvas.width = entries[0].contentRect.width * window.devicePixelRatio;
+            pinnedCanvas.height = entries[0].contentRect.height * window.devicePixelRatio;
+
+            this.applyPinnedTexture();
+        });
+        resizeObserver.observe(pinnedWrapper);*/
+    }
+
     onSettingsChanged()
     {
         if (this.settings)
@@ -728,6 +758,9 @@ export default class Renderer {
         this.updateMetadata();
         ResourcePreview.Instance().setResourceData(this.recordedData.resources);
 
+        this.pinnedEntityId = null;
+        this.pinnedPropertyPath = null;
+
         // Trigger Garbace Collection
         global.gc();
     }
@@ -904,6 +937,39 @@ export default class Renderer {
 
         // Update connections
         this.updateVisibleShapesSyncing();
+
+        // Update pinned info
+        this.applyPinnedTexture();
+    }
+
+    applyPinnedTexture()
+    {
+        const pinnedElement = document.getElementById("pinned-texture");
+        Utils.setClass(pinnedElement, "active", false);
+
+        const pinnedEntity = this.frameData.entities[this.pinnedEntityId];
+        if (pinnedEntity)
+        {
+            const pinnedProperty = NaiveRecordedData.findPropertyPathInEntity(pinnedEntity, this.pinnedPropertyPath);
+            if (pinnedProperty)
+            {
+                Utils.setClass(pinnedElement, "active", true);
+                const pinnedCanvas: HTMLCanvasElement = <HTMLCanvasElement>document.getElementById('pinned-texture-canvas');
+                const ctx = pinnedCanvas.getContext('2d', { alpha: false });
+
+                if (pinnedProperty.type == TypeSystem.CorePropertyTypes.Plane)
+                {
+                    const plane = pinnedProperty as RECORDING.IPropertyPlane;
+
+                    const resource = this.recordedData.findResource(plane.texture);
+                    loadImageResource(resource).then((result) => {
+                        createImageBitmap(result.data).then((bitmap)=>{
+                            ctx.drawImage(bitmap, 0, 0, pinnedCanvas.width, pinnedCanvas.height);
+                        });
+                    });
+                }
+            }
+        }
     }
 
     moveCameraToSelection()

@@ -513,6 +513,7 @@ export interface IResource {
     data: Blob;
     textData: string;
     type: string;
+    url: string;
 }
 
 export interface IResourcesData {
@@ -762,6 +763,73 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		return null;
 	}
 
+    static findPropertyPathInEntity(entity: IEntity, propertyPath: string[]) : IProperty
+    {
+        const resultProps = NaiveRecordedData.findPropertyPathInProperties(entity.properties, propertyPath);
+		if (resultProps)
+		{
+			return resultProps;
+		}
+
+        return null;
+    }
+
+    static findPropertyPathInProperties(properties: IProperty[], propertyPath: string[]) : IProperty
+    {
+        const propertyCount = properties.length;
+		for (let i=0; i<propertyCount; ++i)
+		{
+            const sameName = properties[i].name == propertyPath[0];
+
+            if (propertyPath.length == 1 && sameName)
+            {
+                return properties[i];
+            }
+
+			if (properties[i].type == 'group')
+			{
+                if (propertyPath.length > 1 && sameName)
+                {
+                    const prop = NaiveRecordedData.findPropertyPathInProperties((properties[i] as IPropertyGroup).value, propertyPath.slice(1));
+                    if (prop != null)
+                    {
+                        return prop;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    static getEntityPropertyPath(entity: IEntity, propertyId: number) : string[]
+    {
+        return NaiveRecordedData.getPropertyPath(entity.properties, propertyId);
+    }
+
+    static getPropertyPath(properties: IProperty[], propertyId: number) : string[]
+    {
+        const propertyCount = properties.length;
+		for (let i=0; i<propertyCount; ++i)
+		{
+            if (properties[i].id == propertyId)
+            {
+                return [properties[i].name];
+            }
+
+			if (properties[i].type == 'group')
+			{
+                const result = NaiveRecordedData.getPropertyPath((properties[i] as IPropertyGroup).value, propertyId);
+                if (result != null)
+                {
+                    return [properties[i].name].concat(result);
+                }
+			}
+		}
+
+        return null;
+    }
+
 	static visitEntityProperties(entity: IEntity, callback: IPropertyVisitorCallback)
 	{
 		NaiveRecordedData.visitProperties(entity.properties, callback);
@@ -998,6 +1066,7 @@ export class NaiveRecordedData implements INaiveRecordedData {
                                 data: null,
                                 textData: null,
                                 type: null,
+                                url: null,
                             };
                         }
                     }

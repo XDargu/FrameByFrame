@@ -46,8 +46,7 @@ export class ResourcePreview
         this.popup.appendChild(img);
 
         loadImageResource(resource).then((result) => {
-            const url = URL.createObjectURL(result.data);
-            img.src = url;
+            img.src = result.url;
         });
 
         this.setPosition(x, y);

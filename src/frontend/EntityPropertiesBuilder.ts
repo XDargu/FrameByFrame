@@ -327,6 +327,10 @@ export interface IIsPropertyVisible
     (propertyId: number) : boolean
 }
 
+export interface IPinTexture {
+    (propertyId: number) : void;
+}
+
 export interface EntityPropertiesBuilderCallbacks
 {
     onPropertyHover: IPropertyHoverCallback;
@@ -336,6 +340,7 @@ export interface EntityPropertiesBuilderCallbacks
     onGroupStarred: IGroupStarredCallback;
     onGoToEntity: IGoToEntityCallback;
     onGoToShapePos: IGoToShapeCallback;
+    onPinTexture: IPinTexture;
     isEntityInFrame: IIsEntityInFrame;
     isPropertyVisible: IIsPropertyVisible;
 }
@@ -352,6 +357,7 @@ export default class EntityPropertiesBuilder
         { text: "Copy value", icon: "fa-copy", callback: this.onCopyValue.bind(this) },
         { text: "Create filter from property", icon: "fa-plus-square", callback: this.onAddFilter.bind(this) },
         { text: "Go to Shape", icon: "fa-arrow-circle-right", callback: this.onGoToShape.bind(this), condition: this.isPropertyVisible.bind(this) },
+        { text: "Pin Texture", icon: "fa-thumbstack", callback: this.onPinTexture.bind(this), condition: this.isPropertyTexture.bind(this) },
     ];
 
     constructor(callbacks: EntityPropertiesBuilderCallbacks)
@@ -605,6 +611,19 @@ export default class EntityPropertiesBuilder
         }
     }
 
+    private onPinTexture(item: HTMLElement)
+    {
+        const treeElement = item.closest("li[data-tree-value]");
+        if (treeElement)
+        {
+            const propertyId = treeElement.getAttribute('data-tree-value');
+            if (propertyId != null)
+            {
+                this.callbacks.onPinTexture(Number.parseInt(propertyId));
+            }
+        }
+    }
+
     private isPropertyVisible(item: HTMLElement)
     {
         const treeElement = item.closest("li[data-tree-value]");
@@ -614,6 +633,23 @@ export default class EntityPropertiesBuilder
             if (propertyId != null)
             {
                 return this.callbacks.isPropertyVisible(Number.parseInt(propertyId));
+            }
+        }
+
+        return false;
+    }
+
+    private isPropertyTexture(item: HTMLElement)
+    {
+        // Mega hack, fix!
+        const treeElement = item.closest("li[data-tree-value]");
+        if (treeElement)
+        {
+            console.log(treeElement);
+            const propName = treeElement.querySelector(".property-name");
+            if (propName)
+            {
+                return propName.innerHTML == "Texture";
             }
         }
 
