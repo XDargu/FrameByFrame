@@ -74,7 +74,13 @@ export class PinnedTexture
         // Control of panning & zooming on texture
         let zoom = (e: WheelEvent) => {
             const sensitivity = 0.001;
+
+            const oldZoom = 0.2 * Math.exp(0.0161 * this.zoom * 100);
+
             this.zoom = Utils.clamp(this.zoom - e.deltaY * sensitivity, 1, 5);
+
+            const newZoom = 0.2 * Math.exp(0.0161 * this.zoom * 100);
+
             
             this.applyPinnedTexture();
         }
@@ -93,7 +99,7 @@ export class PinnedTexture
         pinnedWrapper.addEventListener('wheel', zoom);
 
         pinnedWrapper.addEventListener('mousedown', (e) => {
-            if (e.target != resizer)
+            if (e.target != resizer && !resizer.contains(e.target as HTMLElement))
             {
                 e.preventDefault();
                 document.addEventListener('mousemove', pan);
@@ -183,10 +189,11 @@ export class PinnedTexture
                             // Render image
                             const imgRatio = bitmap.height/bitmap.width;
 
-                            const zoom = 0.2 * Math.exp(0.0161 * this.zoom * 100)
+                            const zoom = 0.2 * Math.exp(0.0161 * this.zoom * 100);
 
                             const imgWidth = pinnedCanvas.width * zoom;
                             const imgHeight = imgWidth * imgRatio;
+
                             const startingX = this.offsetX + pinnedCanvas.width - imgWidth;
                             const startingY = this.offsetY + pinnedCanvas.height - imgHeight;
 

@@ -3617,16 +3617,29 @@ body {
   position: absolute;
   width: 20px;
   height: 20px;
-  background: red;
-  cursor: nwse-resize; }
+  background: #c4c4c4;
+  color: #362e3b;
+  cursor: nwse-resize;
+  top: -5px;
+  left: -5px;
+  font-size: 15px;
+  text-align: center;
+  line-height: 20px;
+  border-radius: 2px; }
 
 #close-pinned-texture {
   position: absolute;
   width: 20px;
   height: 20px;
   right: 0px;
-  background: red;
-  cursor: pointer; }
+  cursor: pointer;
+  top: -5px;
+  background: #c4c4c4;
+  color: #362e3b;
+  font-size: 13px;
+  text-align: center;
+  line-height: 20px;
+  border-radius: 2px; }
 
 #pinned-texture.active {
   display: flex; }
