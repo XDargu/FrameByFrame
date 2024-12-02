@@ -3613,10 +3613,25 @@ body {
   right: 0;
   padding: 0; }
 
+#pinned-texture .resizer {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: red;
+  cursor: nwse-resize; }
+
+#close-pinned-texture {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  right: 0px;
+  background: red;
+  cursor: pointer; }
+
 #pinned-texture.active {
   display: flex; }
 
-#pinned-texture img {
+#pinned-texture-canvas {
   width: 100%;
   height: 100%;
   margin: 0px; }
