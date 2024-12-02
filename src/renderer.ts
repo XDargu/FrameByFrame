@@ -1319,6 +1319,33 @@ export default class Renderer {
                 for (let i=firstFrame; i<=lastFrame; ++i)
                 {
                     data.frameData.push(this.recordedData.frameData[i]);
+
+                    // Collect resources. Note: this is quite slow, since we need to visit every single property
+                    for (let entityId in this.recordedData.frameData[i].entities)
+                    {
+                        const entityData = this.recordedData.frameData[i].entities[entityId];
+
+                        let collectResources = (property: RECORDING.IProperty) =>
+                        {
+                            if (RECORDING.isPropertyShape(property))
+                            {
+                                if (property.type == TypeSystem.CorePropertyTypes.Plane)
+                                {
+                                    const resourcePath = (property as RECORDING.IPropertyPlane).texture;
+                                    data.resources[resourcePath] = dataToSave.resources[resourcePath];
+                                }
+                            }
+                        };
+                        
+                        NaiveRecordedData.visitProperties(entityData.properties, (property: RECORDING.IProperty) => {
+                            collectResources(property);
+                        });
+                        NaiveRecordedData.visitEvents(entityData.events, (event: RECORDING.IEvent) => {
+                            NaiveRecordedData.visitProperties([event.properties], (property: RECORDING.IProperty) => {
+                                collectResources(property);
+                            });
+                        });
+                    }
                 }
 
                 dataToSave = data;
