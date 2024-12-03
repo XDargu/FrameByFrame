@@ -3626,7 +3626,8 @@ body {
   font-size: 15px;
   text-align: center;
   line-height: 20px;
-  border-radius: 2px; }
+  border-radius: 2px;
+  z-index: 10; }
 
 #close-pinned-texture {
   position: absolute;
@@ -3640,7 +3641,8 @@ body {
   font-size: 13px;
   text-align: center;
   line-height: 20px;
-  border-radius: 2px; }
+  border-radius: 2px;
+  z-index: 10; }
 
 #pinned-texture.active {
   display: flex; }
@@ -3649,5 +3651,11 @@ body {
   width: 100%;
   height: 100%;
   margin: 0px; }
+
+#pinned-texture-img {
+  object-fit: contain; }
+
+#pinned-image-wrapper {
+  overflow: hidden; }
 
 /*# sourceMappingURL=styles.css.map */

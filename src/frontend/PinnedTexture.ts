@@ -49,12 +49,17 @@ class View
         this.m[5] = this.pos.y;
     }
 
-    restrictPos(imgWidth: number, imgHeight: number)
+    restrictPos(imgWidth: number, imgHeight: number, canvasWidth: number, canvasHeight: number)
     {
+        console.assert(!isNaN(this.pos.y))
+        console.assert(!isNaN(this.scale))
+        console.assert(!isNaN(canvasHeight))
+        console.assert(!isNaN(imgHeight))
         const realImgWidth = imgWidth * this.scale;
         const realImgHeight = imgHeight * this.scale;
-        this.pos.x = Utils.clamp(this.pos.x, this.ctx.canvas.width - realImgWidth, 0);
-        this.pos.y = Utils.clamp(this.pos.y, this.ctx.canvas.height - realImgHeight, 0);
+        this.pos.x = Utils.clamp(this.pos.x, canvasWidth - realImgWidth, 0);
+        this.pos.y = Utils.clamp(this.pos.y, canvasHeight - realImgHeight, 0);
+        console.assert(!isNaN(this.pos.y))
     }
 
     pan(amount: Point)
@@ -65,12 +70,14 @@ class View
 
     scaleAt(at: Point, amount: number) // at in canvas pixel coords 
     {
+        console.assert(!isNaN(this.pos.y))
         const prevScale = this.scale;
         this.scale = Utils.clamp(this.scale * amount, 1, 5);
         const realAmount = this.scale / prevScale;
 
         this.pos.x = at.x - (at.x - this.pos.x) * realAmount;
         this.pos.y = at.y - (at.y - this.pos.y) * realAmount;
+        console.assert(!isNaN(this.pos.y))
     }
 
     reset()
@@ -93,7 +100,8 @@ export class PinnedTexture
     private getEntityCallback: IGetEntityData;
     private getResourceCallback: IGetResource;
 
-    private pinnedCanvas: HTMLCanvasElement;
+    //private pinnedCanvas: HTMLCanvasElement;
+    private pinnedImage: HTMLImageElement;
     private pinnedWrapper: HTMLElement;
 
     private targetResource: RECORDING.IResource;
@@ -132,12 +140,12 @@ export class PinnedTexture
 
     clientToCanvasX(mouseX: number) : number
     {
-        return mouseX - this.pinnedCanvas.getBoundingClientRect().x;
+        return mouseX - this.pinnedWrapper.getBoundingClientRect().x;
     }
 
     clientToCanvasY(mouseY: number) : number
     {
-        return mouseY - this.pinnedCanvas.getBoundingClientRect().y;
+        return mouseY - this.pinnedWrapper.getBoundingClientRect().y;
     }
 
     changeSize(sizeX: number, sizeY: number)
@@ -159,14 +167,14 @@ export class PinnedTexture
         this.getResourceCallback = getResourceCallback;
         
         this.pinnedWrapper = document.getElementById(`pinned-texture`) as HTMLElement;
-        this.pinnedCanvas = <HTMLCanvasElement><unknown>document.getElementById('pinned-texture-canvas');
-        this.view.setContext(this.pinnedCanvas.getContext('2d'));
+        this.pinnedImage = <HTMLImageElement><unknown>document.getElementById('pinned-texture-img');
+        //this.view.setContext(this.pinnedCanvas.getContext('2d'));
 
         // Initialize pinned texture canvas
         let closePinnedBtn = document.getElementById(`close-pinned-texture`) as HTMLElement;
         let resizer = this.pinnedWrapper.querySelector('.resizer') as HTMLElement;
-        this.pinnedCanvas.width = 300;
-        this.pinnedCanvas.height = 300;
+        this.pinnedImage.style.width = 300 + "px";
+        this.pinnedImage.style.height = 300 + "px";
 
         // Control of panning & zooming on texture
         let zoom = (e: WheelEvent) => {
@@ -250,26 +258,26 @@ export class PinnedTexture
 
             // Workaround to prevent flickering
             //Create temp canvas and context
-            let tempCanvas = document.createElement('canvas');
-            tempCanvas.width = this.pinnedCanvas.width;
-            tempCanvas.height = this.pinnedCanvas.height;
-            let tempContext = tempCanvas.getContext("2d");
+            //let tempCanvas = document.createElement('canvas');
+            //tempCanvas.width = this.pinnedCanvas.width;
+            //tempCanvas.height = this.pinnedCanvas.height;
+            //let tempContext = tempCanvas.getContext("2d");
 
             //Draw current canvas to temp canvas
-            tempContext.drawImage(this.pinnedCanvas, 0, 0);
+            //tempContext.drawImage(this.pinnedCanvas, 0, 0);
 
-            const prevW = this.pinnedCanvas.width;
+            //const prevW = this.pinnedCanvas.width;
 
-            this.pinnedCanvas.width = entries[0].contentRect.width;
-            this.pinnedCanvas.height = entries[0].contentRect.height;
+            this.pinnedImage.style.width = entries[0].contentRect.width + "px";
+            this.pinnedImage.style.height = entries[0].contentRect.height + "px";
 
             //Draw temp canvas back to the current canvas
-            this.pinnedCanvas.getContext("2d").drawImage(tempContext.canvas, 0, 0);
+            //this.pinnedCanvas.getContext("2d").drawImage(tempContext.canvas, 0, 0);
 
             // Update zoom
-            const change = prevW / this.pinnedCanvas.width;
-            const changePan = prevW - this.pinnedCanvas.width;
-            this.view.scaleAt({ x: this.pinnedCanvas.width * 0.5, y: this.pinnedCanvas.height * 0.5 }, change);
+            //const change = prevW / this.pinnedCanvas.width;
+            //onst changePan = prevW - this.pinnedCanvas.width;
+            //this.view.scaleAt({ x: this.pinnedCanvas.width * 0.5, y: this.pinnedCanvas.height * 0.5 }, change);
 
             this.dirty = true;
         });
@@ -297,9 +305,35 @@ export class PinnedTexture
 
     render()
     {
-        if (this.pinnedEntityId != null && this.dirty)
+        if (this.pinnedEntityId && this.pinnedImage.naturalWidth > 0 && this.dirty)
         {
-            const ctx = this.pinnedCanvas.getContext('2d', { alpha: false });
+            const rectangle = this.pinnedWrapper.getBoundingClientRect();
+
+            // Render image
+            const imgRatio = this.pinnedImage.naturalHeight/this.pinnedImage.naturalWidth;
+
+            const imgWidth = rectangle.width;
+            const imgHeight = imgWidth * imgRatio;
+
+            this.view.restrictPos(imgWidth, imgHeight, rectangle.width, rectangle.height);
+            //this.view.apply(); // set the 2D context transform to the view
+            const scale = this.view.getScale();
+            //const imgWidth2 = imgWidth * scale;
+            //const imgHeight2 = imgHeight * scale;
+
+            const x = this.view.getPosition().x;
+            const y = this.view.getPosition().y;
+
+            //ctx.drawImage(this.targetBitmap, x, y, imgWidth2, imgHeight2);
+
+            //this.pinnedImage.style.transform = `matrix(${scale}, 0, 0, ${scale}, ${x}, ${y})`;
+            //this.pinnedImage.style.transform = `scale(${scale}, ${scale})`;
+            this.pinnedImage.style.width = `${imgWidth * scale}px`;
+            this.pinnedImage.style.height = `${imgHeight * scale}px`;
+
+            this.pinnedImage.style.marginLeft = `${x}px`;
+            this.pinnedImage.style.marginTop = `${y}px`;
+            /*const ctx = this.pinnedCanvas.getContext('2d', { alpha: false });
 
             if (this.targetBitmap)
             {
@@ -315,9 +349,15 @@ export class PinnedTexture
                 const imgHeight = imgWidth * imgRatio;
 
                 this.view.restrictPos(imgWidth, imgHeight);
-                this.view.apply(); // set the 2D context transform to the view
+                //this.view.apply(); // set the 2D context transform to the view
+                const scale = this.view.getScale();
+                const imgWidth2 = imgWidth * scale;
+                const imgHeight2 = imgHeight * scale;
 
-                ctx.drawImage(this.targetBitmap, 0, 0, imgWidth, imgHeight);
+                const x = this.view.getPosition().x;
+                const y = this.view.getPosition().y;
+
+                ctx.drawImage(this.targetBitmap, x, y, imgWidth2, imgHeight2);
             }
             else
             {
@@ -326,7 +366,7 @@ export class PinnedTexture
                 ctx.fillStyle = "black";
                 ctx.fillRect(0, 0, this.pinnedCanvas.width, this.pinnedCanvas.height);
 
-            }
+            }*/
         }
 
         this.dirty = false;
@@ -359,7 +399,8 @@ export class PinnedTexture
                     try
                     {
                         this.targetResource = await loadImageResource(resource);
-                        this.targetBitmap = await createImageBitmap(this.targetResource.data);
+                        this.pinnedImage.src = this.targetResource.url;
+                        //this.targetBitmap = await createImageBitmap(this.targetResource.data);
                     }
                     catch(e)
                     {
