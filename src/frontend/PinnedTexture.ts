@@ -93,6 +93,7 @@ export class PinnedTexture
     private getResourceCallback: IGetResource;
 
     private pinnedCanvas: HTMLCanvasElement;
+    private pinnedWrapper: HTMLElement;
 
     constructor()
     {
@@ -108,9 +109,8 @@ export class PinnedTexture
         this.view.reset();
 
         // Reset size
-        let pinnedWrapper = document.getElementById(`pinned-texture`) as HTMLElement;
-        pinnedWrapper.style.width = 300 + "px";
-        pinnedWrapper.style.height = 300 + "px";
+        this.pinnedWrapper.style.width = 300 + "px";
+        this.pinnedWrapper.style.height = 300 + "px";
     }
 
     clear()
@@ -130,18 +130,29 @@ export class PinnedTexture
         return mouseY - this.pinnedCanvas.getBoundingClientRect().y;
     }
 
+    changeSize(sizeX: number, sizeY: number)
+    {
+        const rectangleParent = this.pinnedWrapper.parentElement.getBoundingClientRect();
+
+        const wrapperW = Utils.clamp(sizeX, 40, rectangleParent.width - 20);
+        const wrapperH = Utils.clamp(sizeY, 30, rectangleParent.height - 20);
+
+        this.pinnedWrapper.style.width = wrapperW + "px";
+        this.pinnedWrapper.style.height = wrapperH + "px";
+    }
+
     initialize(getEntityCallback: IGetEntityData, getResourceCallback: IGetResource)
     {
         this.getEntityCallback = getEntityCallback;
         this.getResourceCallback = getResourceCallback;
-
+        
+        this.pinnedWrapper = document.getElementById(`pinned-texture`) as HTMLElement;
         this.pinnedCanvas = <HTMLCanvasElement><unknown>document.getElementById('pinned-texture-canvas');
         this.view.setContext(this.pinnedCanvas.getContext('2d'));
 
         // Initialize pinned texture canvas
-        let pinnedWrapper = document.getElementById(`pinned-texture`) as HTMLElement;
         let closePinnedBtn = document.getElementById(`close-pinned-texture`) as HTMLElement;
-        let resizer = pinnedWrapper.querySelector('.resizer') as HTMLElement;
+        let resizer = this.pinnedWrapper.querySelector('.resizer') as HTMLElement;
         this.pinnedCanvas.width = 300;
         this.pinnedCanvas.height = 300;
 
@@ -182,22 +193,15 @@ export class PinnedTexture
             document.removeEventListener('mousemove', pan)
         }
 
-        pinnedWrapper.addEventListener('wheel', zoom);
+        this.pinnedWrapper.addEventListener('wheel', zoom);
 
-        pinnedWrapper.addEventListener('mousedown', (e) => {
+        this.pinnedWrapper.addEventListener('mousedown', (e) => {
             if (e.target != resizer && !resizer.contains(e.target as HTMLElement))
             {
                 this.mouse.oldX = this.mouse.x;
                 this.mouse.oldY = this.mouse.y;
                 this.mouse.x = this.clientToCanvasX(e.clientX);
                 this.mouse.y = this.clientToCanvasY(e.clientY);
-
-                console.log(this.mouse.x);
-                console.log(this.mouse.y);
-
-                console.log("x: " + this.view.getPosition().x);
-                console.log("y: " + this.view.getPosition().y);
-                console.log("s: " + this.view.getScale());
 
                 e.preventDefault();
                 document.addEventListener('mousemove', pan);
@@ -211,10 +215,10 @@ export class PinnedTexture
 
         // Control of resizer
         let resize = (e: MouseEvent) => {
-            const rectangle = pinnedWrapper.getBoundingClientRect();
 
-            pinnedWrapper.style.width = (rectangle.right - e.pageX) + "px";
-            pinnedWrapper.style.height = (rectangle.bottom - e.pageY) + "px";
+            const rectangle = this.pinnedWrapper.getBoundingClientRect();
+
+            this.changeSize(rectangle.right-e.pageX, rectangle.bottom-e.pageY);
         }
             
         let stopResize = () => {
@@ -229,7 +233,7 @@ export class PinnedTexture
 
         let resizeObserver = new ResizeObserver(entries => {
 
-            if (!pinnedWrapper.classList.contains("active"))
+            if (!this.pinnedWrapper.classList.contains("active"))
                 return;
 
             // Workaround to prevent flickering
@@ -242,15 +246,34 @@ export class PinnedTexture
             //Draw current canvas to temp canvas
             tempContext.drawImage(this.pinnedCanvas, 0, 0);
 
+            const prevW = this.pinnedCanvas.width;
+
             this.pinnedCanvas.width = entries[0].contentRect.width * window.devicePixelRatio;
             this.pinnedCanvas.height = entries[0].contentRect.height * window.devicePixelRatio;
 
             //Draw temp canvas back to the current canvas
             this.pinnedCanvas.getContext("2d").drawImage(tempContext.canvas, 0, 0);
 
+            // Update zoom
+            const change = prevW / this.pinnedCanvas.width;
+            const changePan = prevW - this.pinnedCanvas.width;
+            this.view.scaleAt(this.view.getPosition(), change);
+            //this.view.scaleAt({ x: this.pinnedCanvas.width * 0.5, y: this.pinnedCanvas.height * 0.5 }, change);
+            this.view.pan({ x: changePan / this.view.getScale(), y: 0 });
+
             this.applyPinnedTexture();
         });
-        resizeObserver.observe(pinnedWrapper);
+        resizeObserver.observe(this.pinnedWrapper);
+
+        let parentResizeObserver = new ResizeObserver(entries => {
+
+            if (!this.pinnedWrapper.classList.contains("active"))
+                return;
+
+            const rectangle = this.pinnedWrapper.getBoundingClientRect();
+            this.changeSize(rectangle.width - 1, rectangle.height - 1);
+        });
+        parentResizeObserver.observe(this.pinnedWrapper.parentElement);
     }
 
     closePinnedTexture()
