@@ -740,6 +740,7 @@ export default class Renderer {
         this.timeline.clear();
         this.timeline.setLength(this.recordedData.getSize());
         this.timeline.clearEvents();
+        this.pinnedTexture.clear();
         // Avoid clearing recording options, since in all cases when we clear it's better to keep them
         //this.recordingOptions.setOptions([]);
         this.layerController.setLayers([]);
