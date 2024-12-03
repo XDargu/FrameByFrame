@@ -249,8 +249,8 @@ export class PinnedTexture
 
             const prevW = this.pinnedCanvas.width;
 
-            this.pinnedCanvas.width = entries[0].contentRect.width * window.devicePixelRatio;
-            this.pinnedCanvas.height = entries[0].contentRect.height * window.devicePixelRatio;
+            this.pinnedCanvas.width = entries[0].contentRect.width;
+            this.pinnedCanvas.height = entries[0].contentRect.height;
 
             //Draw temp canvas back to the current canvas
             this.pinnedCanvas.getContext("2d").drawImage(tempContext.canvas, 0, 0);
@@ -258,9 +258,7 @@ export class PinnedTexture
             // Update zoom
             const change = prevW / this.pinnedCanvas.width;
             const changePan = prevW - this.pinnedCanvas.width;
-            this.view.scaleAt(this.view.getPosition(), change);
-            //this.view.scaleAt({ x: this.pinnedCanvas.width * 0.5, y: this.pinnedCanvas.height * 0.5 }, change);
-            this.view.pan({ x: changePan / this.view.getScale(), y: 0 });
+            this.view.scaleAt({ x: this.pinnedCanvas.width * 0.5, y: this.pinnedCanvas.height * 0.5 }, change);
 
             this.applyPinnedTexture();
         });
