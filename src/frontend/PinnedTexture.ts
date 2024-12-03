@@ -96,11 +96,17 @@ export class PinnedTexture
     private pinnedCanvas: HTMLCanvasElement;
     private pinnedWrapper: HTMLElement;
 
+    private targetResource: RECORDING.IResource;
+    private targetBitmap: ImageBitmap;
+    private dirty = false;
+
     constructor()
     {
         this.pinnedEntityId = null;
         this.pinnedPropertyPath = null;
         this.view = new View();
+        this.targetResource = null;
+        this.targetBitmap = null;
     }
 
     setPinnedEntityId(pinnedEntityId: number, pinnedPropertyPath: string[])
@@ -118,6 +124,9 @@ export class PinnedTexture
     {
         this.pinnedEntityId = null;
         this.pinnedPropertyPath = null;
+        this.targetResource = null;
+        this.targetBitmap = null;
+        this.dirty = true;
         this.view.reset();
     }
 
@@ -140,6 +149,8 @@ export class PinnedTexture
 
         this.pinnedWrapper.style.width = wrapperW + "px";
         this.pinnedWrapper.style.height = wrapperH + "px";
+
+        this.dirty = true;
     }
 
     initialize(getEntityCallback: IGetEntityData, getResourceCallback: IGetResource)
@@ -176,7 +187,7 @@ export class PinnedTexture
             }
             e.preventDefault();
 
-            this.applyPinnedTexture();
+            this.dirty = true;
         }
 
         let pan = (e: MouseEvent) => {
@@ -187,7 +198,7 @@ export class PinnedTexture
             this.mouse.y = this.clientToCanvasY(e.clientY);
             this.view.pan({x: this.mouse.x - this.mouse.oldX, y: this.mouse.y - this.mouse.oldY});
 
-            this.applyPinnedTexture();
+            this.dirty = true;
         }
             
         let stopPan = () => {
@@ -260,7 +271,7 @@ export class PinnedTexture
             const changePan = prevW - this.pinnedCanvas.width;
             this.view.scaleAt({ x: this.pinnedCanvas.width * 0.5, y: this.pinnedCanvas.height * 0.5 }, change);
 
-            this.applyPinnedTexture();
+            this.dirty = true;
         });
         resizeObserver.observe(this.pinnedWrapper);
 
@@ -273,6 +284,9 @@ export class PinnedTexture
             this.changeSize(rectangle.width - 1, rectangle.height - 1);
         });
         parentResizeObserver.observe(this.pinnedWrapper.parentElement);
+
+        // Start rendering
+        requestAnimationFrame(this.render.bind(this));
     }
 
     closePinnedTexture()
@@ -281,7 +295,46 @@ export class PinnedTexture
         Utils.setClass(pinnedElement, "active", false);
     }
 
-    applyPinnedTexture()
+    render()
+    {
+        if (this.pinnedEntityId != null && this.dirty)
+        {
+            const ctx = this.pinnedCanvas.getContext('2d', { alpha: false });
+
+            if (this.targetBitmap)
+            {
+                ctx.setTransform(1, 0, 0, 1, 0, 0); 
+                ctx.clearRect(0, 0, this.pinnedCanvas.width, this.pinnedCanvas.height);
+                ctx.fillStyle = "#473D4F";
+                ctx.fillRect(0, 0, this.pinnedCanvas.width, this.pinnedCanvas.height);
+
+                // Render image
+                const imgRatio = this.targetBitmap.height/this.targetBitmap.width;
+
+                const imgWidth = this.pinnedCanvas.width;
+                const imgHeight = imgWidth * imgRatio;
+
+                this.view.restrictPos(imgWidth, imgHeight);
+                this.view.apply(); // set the 2D context transform to the view
+
+                ctx.drawImage(this.targetBitmap, 0, 0, imgWidth, imgHeight);
+            }
+            else
+            {
+                ctx.setTransform(1, 0, 0, 1, 0, 0); 
+                ctx.clearRect(0, 0, this.pinnedCanvas.width, this.pinnedCanvas.height);
+                ctx.fillStyle = "black";
+                ctx.fillRect(0, 0, this.pinnedCanvas.width, this.pinnedCanvas.height);
+
+            }
+        }
+
+        this.dirty = false;
+
+        requestAnimationFrame(this.render.bind(this));
+    }
+
+    async applyPinnedTexture()
     {
         const pinnedElement = document.getElementById("pinned-texture");
         Utils.setClass(pinnedElement, "active", false);
@@ -293,45 +346,29 @@ export class PinnedTexture
             if (pinnedProperty)
             {
                 Utils.setClass(pinnedElement, "active", true);
-                const ctx = this.pinnedCanvas.getContext('2d', { alpha: false });
 
                 if (pinnedProperty.type == TypeSystem.CorePropertyTypes.Plane)
                 {
                     const plane = pinnedProperty as RECORDING.IPropertyPlane;
-
                     const resource = this.getResourceCallback(plane.texture);
-                    loadImageResource(resource).then((result) => {
-                        createImageBitmap(result.data).then((bitmap)=>{
 
-                            ctx.setTransform(1, 0, 0, 1, 0, 0); 
-                            ctx.clearRect(0, 0, this.pinnedCanvas.width, this.pinnedCanvas.height);
-                            ctx.fillStyle = "#473D4F";
-                            ctx.fillRect(0, 0, this.pinnedCanvas.width, this.pinnedCanvas.height);
+                    if (this.targetBitmap && this.targetResource?.path == resource.path)
+                        return;
 
-                            // Render image
-                            const imgRatio = bitmap.height/bitmap.width;
-
-                            //const zoom = 0.2 * Math.exp(0.0161 * this.zoom * 100);
-
-                            const imgWidth = this.pinnedCanvas.width;
-                            const imgHeight = imgWidth * imgRatio;
-
-                            this.view.restrictPos(imgWidth, imgHeight);
-                            this.view.apply(); // set the 2D context transform to the view
-
-                            // (this.pinnedCanvas.height - imgHeight) * 0.5
-                            ctx.drawImage(bitmap, 0, 0, imgWidth, imgHeight);
-                            //ctx.drawImage(bitmap, 0, 0);
-                        });
-                    }).catch(() =>
+                    // We need to load the resource
+                    try
                     {
-                        ctx.setTransform(1, 0, 0, 1, 0, 0); 
-                        ctx.clearRect(0, 0, this.pinnedCanvas.width, this.pinnedCanvas.height);
-                        ctx.fillStyle = "black";
-                        ctx.fillRect(0, 0, this.pinnedCanvas.width, this.pinnedCanvas.height);
-
+                        this.targetResource = await loadImageResource(resource);
+                        this.targetBitmap = await createImageBitmap(this.targetResource.data);
+                    }
+                    catch(e)
+                    {
+                        this.targetBitmap = null;
+                        this.targetResource = null;
                         Logger.Error("Error loading texture: " + resource?.path);
-                    });
+                    };
+
+                    this.dirty = true;
                 }
             }
         }
