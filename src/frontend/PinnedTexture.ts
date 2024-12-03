@@ -4,6 +4,7 @@ import { ResizeObserver } from 'resize-observer';
 import * as Utils from "../utils/utils";
 import * as TypeSystem from "../types/typeRegistry";
 import * as RECORDING from '../recording/RecordingData';
+import { Logger } from "babylonjs";
 
 export interface IGetEntityData
 {
@@ -324,6 +325,14 @@ export class PinnedTexture
                             ctx.drawImage(bitmap, 0, 0, imgWidth, imgHeight);
                             //ctx.drawImage(bitmap, 0, 0);
                         });
+                    }).catch(() =>
+                    {
+                        ctx.setTransform(1, 0, 0, 1, 0, 0); 
+                        ctx.clearRect(0, 0, this.pinnedCanvas.width, this.pinnedCanvas.height);
+                        ctx.fillStyle = "black";
+                        ctx.fillRect(0, 0, this.pinnedCanvas.width, this.pinnedCanvas.height);
+
+                        Logger.Error("Error loading texture: " + resource?.path);
                     });
                 }
             }
