@@ -3621,13 +3621,14 @@ body {
   background: #c4c4c4;
   color: #362e3b;
   cursor: nwse-resize;
-  top: -5px;
-  left: -5px;
   font-size: 15px;
   text-align: center;
   line-height: 20px;
   border-radius: 2px;
-  z-index: 10; }
+  z-index: 50; }
+
+#pinned-texture .resizer:hover {
+  background: white; }
 
 #close-pinned-texture {
   position: absolute;
@@ -3635,17 +3636,20 @@ body {
   height: 20px;
   right: 0px;
   cursor: pointer;
-  top: -5px;
   background: #c4c4c4;
   color: #362e3b;
   font-size: 13px;
   text-align: center;
   line-height: 20px;
   border-radius: 2px;
-  z-index: 10; }
+  z-index: 50; }
+
+#close-pinned-texture:hover {
+  background: white; }
 
 #pinned-texture.active {
-  display: flex; }
+  display: flex;
+  flex-direction: column; }
 
 #pinned-texture-canvas {
   width: 100%;
@@ -3656,6 +3660,11 @@ body {
   object-fit: contain; }
 
 #pinned-image-wrapper {
-  overflow: hidden; }
+  overflow: hidden;
+  margin: auto;
+  max-height: -webkit-fill-available; }
+
+#pinned-texture-title {
+  font-size: 12px; }
 
 /*# sourceMappingURL=styles.css.map */

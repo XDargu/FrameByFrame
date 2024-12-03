@@ -126,6 +126,11 @@ export class PinnedTexture
         // Reset size
         this.pinnedWrapper.style.width = 300 + "px";
         this.pinnedWrapper.style.height = 300 + "px";
+
+        // Title
+        const title = document.getElementById(`pinned-texture-title`) as HTMLElement;
+        const entity = this.getEntityCallback(pinnedEntityId);
+        title.innerText = entity ? NaiveRecordedData.getEntityName(entity) : "";
     }
 
     clear()
