@@ -3611,7 +3611,8 @@ body {
   position: absolute;
   bottom: 0;
   right: 0;
-  padding: 0; }
+  padding: 0;
+  background: #473D4F; }
 
 #pinned-texture .resizer {
   position: absolute;

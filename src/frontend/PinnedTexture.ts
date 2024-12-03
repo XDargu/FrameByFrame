@@ -305,7 +305,7 @@ export class PinnedTexture
 
                             ctx.setTransform(1, 0, 0, 1, 0, 0); 
                             ctx.clearRect(0, 0, this.pinnedCanvas.width, this.pinnedCanvas.height);
-                            ctx.fillStyle = "black";
+                            ctx.fillStyle = "#473D4F";
                             ctx.fillRect(0, 0, this.pinnedCanvas.width, this.pinnedCanvas.height);
 
                             // Render image
