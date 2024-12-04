@@ -40,6 +40,7 @@ class View
     getScale() { return this.scale }
 
     getPosition() { return this.pos }
+    setPosition(pos: Point) { this.pos = pos; }
 
     update()
     {
@@ -155,10 +156,21 @@ export class PinnedTexture
     changeSize(sizeX: number, sizeY: number)
     {
         const rectangleParent = this.pinnedWrapper.parentElement.getBoundingClientRect();
+        const rectangle = this.pinnedWrapper.getBoundingClientRect();
 
         const wrapperW = Utils.clamp(sizeX, 40, rectangleParent.width - 20);
         const wrapperH = Utils.clamp(sizeY, 30, rectangleParent.height - 20);
 
+        const changeScale = rectangle.width / wrapperW;
+
+        // Update the zoom to keep scaling consistent when resizing
+        const centerX = this.clientToCanvasX(rectangle.x + rectangle.width * 0.5);
+        const centerY = this.clientToCanvasY(rectangle.y + rectangle.height * 0.5);
+
+        if (changeScale < 1)
+            this.view.scaleAt({x: centerX, y: centerY}, changeScale);
+
+        // Apply changes
         this.pinnedWrapper.style.width = wrapperW + "px";
         this.pinnedWrapper.style.height = wrapperH + "px";
 
@@ -251,12 +263,6 @@ export class PinnedTexture
 
         let resizeObserver = new ResizeObserver(entries =>
         {
-            if (!this.pinnedWrapper.classList.contains("active"))
-                return;
-
-            this.pinnedImage.style.width = entries[0].contentRect.width + "px";
-            this.pinnedImage.style.height = entries[0].contentRect.height + "px";
-
             this.dirty = true;
         });
         resizeObserver.observe(this.pinnedWrapper);
