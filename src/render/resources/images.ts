@@ -10,6 +10,14 @@ export interface IResourceErrorCallback
     (resource: RECORDING.IResource) : void;
 }
 
+function decodeHex(string: string)
+{
+    const uint8array = new Uint8ClampedArray(Math.ceil(string.length / 2));
+    for (let i = 0; i < string.length;)
+        uint8array[i / 2] = Number.parseInt(string.slice(i, i += 2), 16);
+    return uint8array;
+}
+
 export function loadImageResource(resource: RECORDING.IResource)
 {
     return new Promise<RECORDING.IResource>(async function(resolve, reject)
@@ -23,14 +31,34 @@ export function loadImageResource(resource: RECORDING.IResource)
             }
             else if (resource.textData && resource.type)
             {
-                // Load resource from data, if it's there
-                const parsed = JSON.parse(resource.textData);
+                if (resource.type == "image/raw")
+                {
+                    // The data contains raw pixels
+                    const parsed = JSON.parse(resource.textData);
 
-                const response = await fetch(parsed.blob);
-                const blob = await response.blob();
-                resource.data = blob;
-                resource.url = URL.createObjectURL(resource.data);
-                resolve(resource);
+                    let canvas = document.createElement('canvas');
+                    let imageData = canvas.getContext('2d').createImageData(parsed.width, parsed.height);
+                    imageData.data.set(decodeHex(parsed.data));
+
+                    resource.data = await new Promise((resolve) => {
+                        canvas.toBlob(resolve); // implied image/png format
+                    });
+
+                    resource.url = URL.createObjectURL(resource.data);
+                    resolve(resource);
+                }
+                else
+                {
+                    // The data contains serialized blob with an image
+                    // Load resource from data, if it's there
+                    const parsed = JSON.parse(resource.textData);
+
+                    const response = await fetch(parsed.blob);
+                    const blob = await response.blob();
+                    resource.data = blob;
+                    resource.url = URL.createObjectURL(resource.data);
+                    resolve(resource);
+                }
             }
             else
             {
