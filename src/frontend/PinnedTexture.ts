@@ -330,28 +330,31 @@ export class PinnedTexture
             {
                 Utils.setClass(pinnedElement, "active", true);
 
-                if (pinnedProperty.type == TypeSystem.CorePropertyTypes.Plane)
+                if (RECORDING.isPropertyTextured(pinnedProperty))
                 {
-                    const plane = pinnedProperty as RECORDING.IPropertyPlane;
-                    const resource = this.getResourceCallback(plane.texture);
-
-                    if (this.targetBitmap && this.targetResource?.path == resource.path)
-                        return;
-
-                    // We need to load the resource
-                    try
+                    const resourcePath = (pinnedProperty as RECORDING.IPropertyTextured).texture;
+                    if (resourcePath)
                     {
-                        this.targetResource = await loadImageResource(resource);
-                        this.pinnedImage.src = this.targetResource.url;
+                        const resource = this.getResourceCallback(resourcePath);
+
+                        if (this.targetBitmap && this.targetResource?.path == resource.path)
+                            return;
+
+                        // We need to load the resource
+                        try
+                        {
+                            this.targetResource = await loadImageResource(resource);
+                            this.pinnedImage.src = this.targetResource.url;
+                        }
+                        catch(e)
+                        {
+                            this.targetBitmap = null;
+                            this.targetResource = null;
+                            Logger.Error("Error loading texture: " + resource?.path);
+                        };
+
+                        this.dirty = true;
                     }
-                    catch(e)
-                    {
-                        this.targetBitmap = null;
-                        this.targetResource = null;
-                        Logger.Error("Error loading texture: " + resource?.path);
-                    };
-
-                    this.dirty = true;
                 }
             }
         }

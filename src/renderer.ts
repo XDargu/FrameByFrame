@@ -677,10 +677,11 @@ export default class Renderer {
                 {
                     // Try to find the resource
                     NaiveRecordedData.visitEntityProperties(entity, (property: RECORDING.IProperty) => {
-                        if (property.type == TypeSystem.CorePropertyTypes.Plane)
+
+                        if (RECORDING.isPropertyTextured(property))
                         {
-                            const plane = property as RECORDING.IPropertyPlane;
-                            if (plane.texture)
+                            const resourcePath = (property as RECORDING.IPropertyTextured).texture;
+                            if (resourcePath)
                             {
                                 const pinnedPropertyPath = NaiveRecordedData.getEntityPropertyPath(entity, property.id);
                                 this.pinnedTexture.setPinnedEntityId(entity.id, pinnedPropertyPath);
@@ -1353,13 +1354,11 @@ export default class Renderer {
 
                         let collectResources = (property: RECORDING.IProperty) =>
                         {
-                            if (RECORDING.isPropertyShape(property))
+                            if (RECORDING.isPropertyTextured(property))
                             {
-                                if (property.type == TypeSystem.CorePropertyTypes.Plane)
-                                {
-                                    const resourcePath = (property as RECORDING.IPropertyPlane).texture;
+                                const resourcePath = (property as RECORDING.IPropertyTextured).texture;
+                                if (resourcePath)
                                     data.resources[resourcePath] = dataToSave.resources[resourcePath];
-                                }
                             }
                         };
                         
