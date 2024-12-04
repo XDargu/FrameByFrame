@@ -861,6 +861,15 @@ export default class Renderer {
             frameToBuild.entities[entityData.id] = entityData;
         }
 
+        // Resources
+        if (frame.resources)
+        {
+            for (let resource of frame.resources)
+            {
+                this.recordedData.resources[resource.path] = resource;
+            }
+        }
+
         this.recordedData.pushFrame(frameToBuild);
 
         this.timeline.setLength(this.recordedData.getSize());
