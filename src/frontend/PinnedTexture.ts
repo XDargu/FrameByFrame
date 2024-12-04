@@ -285,6 +285,7 @@ export class PinnedTexture
     {
         const pinnedElement = document.getElementById("pinned-texture");
         Utils.setClass(pinnedElement, "active", false);
+        this.pinnedEntityId = null;
     }
 
     render()
