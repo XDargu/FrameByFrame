@@ -16,6 +16,8 @@ export interface ISettings
     hoverColor: string,
     shapeHoverColor: string,
     selectionOutlineWidth: number,
+    /* Pinning */
+    autoPinScreenshotEntity: boolean,
     /* Syncing */
     syncVisibleShapes: boolean,
     syncCameraPosition: boolean,
@@ -57,6 +59,8 @@ export function createDefaultSettings() : ISettings
         hoverColor: "#8442B9",
         shapeHoverColor: "#FFFF00",
         selectionOutlineWidth: 1,
+        /* Pinning */
+        autoPinScreenshotEntity: true,
         /* Syncing */
         syncVisibleShapes: false,
         syncCameraPosition: false,

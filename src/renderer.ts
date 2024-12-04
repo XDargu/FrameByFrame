@@ -667,6 +667,31 @@ export default class Renderer {
         // Show only selected names as default when opening a file
         this.layerController.setLayerState(CoreLayers.EntityNames, LayerState.Selected);
 
+        // Try to find the screenshot entity if needed
+        if (this.settings.autoPinScreenshotEntity)
+        {
+            for (let entityId in this.frameData.entities)
+            {
+                const entity = this.frameData.entities[entityId];
+                if (NaiveRecordedData.getEntityName(entity) == "Screenshot")
+                {
+                    // Try to find the resource
+                    NaiveRecordedData.visitEntityProperties(entity, (property: RECORDING.IProperty) => {
+                        if (property.type == TypeSystem.CorePropertyTypes.Plane)
+                        {
+                            const plane = property as RECORDING.IPropertyPlane;
+                            if (plane.texture)
+                            {
+                                const pinnedPropertyPath = NaiveRecordedData.getEntityPropertyPath(entity, property.id);
+                                this.pinnedTexture.setPinnedEntityId(entity.id, pinnedPropertyPath);
+                                this.pinnedTexture.applyPinnedTexture();
+                            }
+                        }
+                    });
+                }
+            }
+        }
+
         this.updateMetadata();
         
         // Select any first entity

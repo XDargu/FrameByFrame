@@ -353,6 +353,13 @@ export class SettingsList
         }
 
         {
+            let group = SettingsBuilder.createGroup("Texture Pinning");
+            SettingsBuilder.addBooleanSetting(group, "Auto-pin Screenshot Entity", settings.autoPinScreenshotEntity, (value) => {settings.autoPinScreenshotEntity = value; this.onSettingsChanged(); })
+
+            this.settingsList.appendChild(group.fragment);
+        }
+
+        {
             let group = SettingsBuilder.createGroup("Syncing");
             SettingsBuilder.addBooleanSetting(group, "Sync Visible Shapes", settings.syncVisibleShapes, (value) => {settings.syncVisibleShapes = value; this.onSettingsChanged(); })
             SettingsBuilder.addBooleanSetting(group, "Sync Camera Position", settings.syncCameraPosition, (value) => {settings.syncCameraPosition = value; this.onSettingsChanged(); })
