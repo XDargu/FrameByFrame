@@ -35,6 +35,7 @@ import { loadImageResource } from "./render/resources/images";
 import * as TypeSystem from "./types/typeRegistry";
 import { ResourcePreview } from "./frontend/ResourcePreview";
 import { PinnedTexture } from "./frontend/PinnedTexture";
+import Comments from "./frontend/Comments";
 
 const zlib = require('zlib');
 
@@ -122,6 +123,9 @@ export default class Renderer {
     // Pin test
     private pinnedTexture: PinnedTexture;
 
+    // Comments
+    private comments: Comments;
+
     initialize(canvas: HTMLCanvasElement) {
 
         const defaultSettings = createDefaultSettings();
@@ -166,7 +170,12 @@ export default class Renderer {
                     this.pinnedTexture.setPinnedEntityId(this.selectedEntityId, pinnedPropertyPath);
 
                     this.pinnedTexture.applyPinnedTexture();
-                 },
+                },
+                onAddComment: (propId) => {
+                    // You can only add comments to the currently selected entity
+                    const entity = this.frameData.entities[this.selectedEntityId];
+                    this.comments.addPropertyComment(this.recordedData, this.getCurrentFrame(), entity.id, propId);
+                },
                 isEntityInFrame: (id) => { return this.frameData?.entities[Utils.toUniqueID(this.frameData.clientId, id)] != undefined; },
                 isPropertyVisible: (propId) => { return this.sceneController.isPropertyVisible(propId); }
             }
@@ -213,6 +222,11 @@ export default class Renderer {
 
         this.currentFrameRequest = null;
         window.requestAnimationFrame(this.render.bind(this));
+
+        this.comments = new Comments(
+            (propertyId) => { return this.entityPropsBuilder.findItemWithValue(propertyId + "") as HTMLElement; },
+            (frame) => { this.requestApplyFrame({ frame: frame }); }
+        );
 
         this.requestApplyFrame({ frame: 0});
     }
@@ -964,9 +978,10 @@ export default class Renderer {
 
         // Update pinned info
         this.pinnedTexture.applyPinnedTexture();
-    }
 
-    
+        // Update comments
+        this.comments.selectionChanged(frame, this.selectedEntityId);
+    }
 
     moveCameraToSelection()
     {
@@ -1029,6 +1044,8 @@ export default class Renderer {
         this.sceneController.markEntityAsSelected(entityId);
         this.timeline.setSelectedEntity(entityId);
         this.renderProperties();
+
+        this.comments.selectionChanged(this.getCurrentFrame(), this.selectedEntityId);
     }
 
     selectEntity(entityId: number)

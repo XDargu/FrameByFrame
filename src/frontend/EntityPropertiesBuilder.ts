@@ -331,6 +331,10 @@ export interface IPinTexture {
     (propertyId: number) : void;
 }
 
+export interface IAddComment {
+    (propertyId: number) : void;
+}
+
 export interface EntityPropertiesBuilderCallbacks
 {
     onPropertyHover: IPropertyHoverCallback;
@@ -341,6 +345,7 @@ export interface EntityPropertiesBuilderCallbacks
     onGoToEntity: IGoToEntityCallback;
     onGoToShapePos: IGoToShapeCallback;
     onPinTexture: IPinTexture;
+    onAddComment: IAddComment;
     isEntityInFrame: IIsEntityInFrame;
     isPropertyVisible: IIsPropertyVisible;
 }
@@ -358,6 +363,7 @@ export default class EntityPropertiesBuilder
         { text: "Create filter from property", icon: "fa-plus-square", callback: this.onAddFilter.bind(this) },
         { text: "Go to Shape", icon: "fa-arrow-circle-right", callback: this.onGoToShape.bind(this), condition: this.isPropertyVisible.bind(this) },
         { text: "Pin Texture", icon: "fa-thumbstack", callback: this.onPinTexture.bind(this), condition: this.isPropertyTexture.bind(this) },
+        { text: "Add Comment", icon: "fa-comment", callback: this.onAddComment.bind(this) },
     ];
 
     constructor(callbacks: EntityPropertiesBuilderCallbacks)
@@ -620,6 +626,19 @@ export default class EntityPropertiesBuilder
             if (propertyId != null)
             {
                 this.callbacks.onPinTexture(Number.parseInt(propertyId));
+            }
+        }
+    }
+
+    private onAddComment(item: HTMLElement)
+    {
+        const treeElement = item.closest("li[data-tree-value]");
+        if (treeElement)
+        {
+            const propertyId = treeElement.getAttribute('data-tree-value');
+            if (propertyId != null)
+            {
+                this.callbacks.onAddComment(Number.parseInt(propertyId));
             }
         }
     }
