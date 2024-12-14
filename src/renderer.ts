@@ -708,6 +708,8 @@ export default class Renderer {
         }
 
         this.updateMetadata();
+
+        this.comments.loadComments(this.recordedData.comments);
         
         // Select any first entity
         Utils.runAsync(() => {
@@ -760,13 +762,21 @@ export default class Renderer {
         }
         catch (error)
         {
-            this.openModal("Parsing file");
-            await Utils.nextTick();
-            if (!this.loadJsonData(data))
+            if (error instanceof SyntaxError)
             {
-                Console.log(LogLevel.Error, LogChannel.Files, "Error uncompressing file: " + error.message);
+                this.openModal("Parsing file");
+                await Utils.nextTick();
+                if (!this.loadJsonData(data))
+                {
+                    Console.log(LogLevel.Error, LogChannel.Files, "Error uncompressing file: " + error.message);
+                }
+                this.closeModal();
             }
-            this.closeModal();
+            else
+            {
+                Console.log(LogLevel.Error, LogChannel.Files, "Error opening file: " + error.message);
+                this.closeModal();
+            }
         }
     }
 
@@ -789,6 +799,7 @@ export default class Renderer {
         ResourcePreview.Instance().setResourceData(this.recordedData.resources);
 
         this.pinnedTexture.clear();
+        this.comments.clear();
 
         // Trigger Garbace Collection
         global.gc();

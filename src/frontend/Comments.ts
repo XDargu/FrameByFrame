@@ -189,7 +189,7 @@ export default class Comments
         page.append(this.commentWrapper);
     }
 
-    public selectionChanged(frame: number, entityId: number)
+    selectionChanged(frame: number, entityId: number)
     {
         this.currentFrame = frame;
         this.currentEntityId = entityId;
@@ -197,7 +197,7 @@ export default class Comments
         this.updateComments();
     }
 
-    updateComments()
+    private updateComments()
     {
         for (let comment of this.comments)
         {
@@ -213,7 +213,7 @@ export default class Comments
         
     }
 
-    isCommentVisible(comment: Comment) : boolean
+    private isCommentVisible(comment: Comment) : boolean
     {
         if (comment.comment.type == RECORDING.ECommentType.Property)
         {
@@ -229,7 +229,7 @@ export default class Comments
         return false;
     }
 
-    update()
+    private update()
     {
         // Update lines
         for (let comment of this.comments)
@@ -240,61 +240,67 @@ export default class Comments
         window.requestAnimationFrame(this.update.bind(this));
     }
 
-    nextCommentId() : number
+    private nextCommentId() : number
     {
         return this.commentId++;
     }
 
-    addPropertyComment(recording: RECORDING.NaiveRecordedData, frameId: number, entityId: number, propertyId: number)
+    clear()
     {
-        //recording.
-        // Just create a new one for now
+        for (let comment of this.comments)
+        {
+            comment[1].element.remove();
+        }
+
+        this.comments.clear();
+        this.commentId = 1;
+    }
+
+    loadComments(comments: RECORDING.IComments)
+    {
+        for (let id in comments)
+        {
+            const comment = comments[id];
+            this.commentId = Math.max(this.commentId, comment.id + 1);
+            switch(comment.type)
+            {
+                case RECORDING.ECommentType.Property:
+                    {
+                        this.makePropertyComment(comment as RECORDING.IPropertyComment);
+                    }
+                    break;
+                case RECORDING.ECommentType.Timeline:
+                    break;
+            }
+        }
+    }
+
+    private makePropertyComment(recComment: RECORDING.IPropertyComment)
+    {
         const wrapper = document.createElement("div");
         wrapper.classList.add("comment");
 
         const text = document.createElement("div");
         text.classList.add("comment-text");
-        text.textContent = "Example comment";
+
+        CommentContent.buildTextElement(text, recComment.text, this.frameCallback)
 
         wrapper.append(text);
 
         let page = document.querySelector(".full-page.page-wrapper");
         page.append(wrapper);
 
-        // Add to recording
-        const id = this.nextCommentId();
-
-        // Calc initial pos
-        const propertyElement = this.getPropertyItem(propertyId);
-        const detailPane = document.getElementById("detail-pane");
-
-        const detailPaneRect = detailPane.getBoundingClientRect();
-        const propertyElementRect = propertyElement.getBoundingClientRect();
-
-        const x = -150;
-        const y = propertyElementRect.y - detailPaneRect.y;
-
-        recording.comments[id] = {
-            id: id,
-            type: RECORDING.ECommentType.Property,
-            text: "Example comment",
-            pos: { x: x, y: y },
-            frameId: frameId,
-            entityId: entityId,
-            propertyId: propertyId,
-        };
-
-        this.comments.set(id, {
-            comment: recording.comments[id],
+        this.comments.set(recComment.id, {
+            comment: recComment,
             element: wrapper,
             isEditing: false,
-            lineController: new CommentLineController(this.getPropertyItem, wrapper, propertyId)
+            lineController: new CommentLineController(this.getPropertyItem, wrapper, recComment.propertyId)
         });
 
         // Dragging the comment around
         let pan = (e: MouseEvent) =>
         {
-            let comment = this.comments.get(id);
+            let comment = this.comments.get(recComment.id);
             comment.comment.pos.x += e.movementX / window.devicePixelRatio;
             comment.comment.pos.y += e.movementY / window.devicePixelRatio;
 
@@ -308,7 +314,7 @@ export default class Comments
 
         wrapper.addEventListener('mousedown', (e) =>
         {
-            let comment = this.comments.get(id);
+            let comment = this.comments.get(recComment.id);
             if (!comment.isEditing)
             {
                 e.preventDefault();
@@ -320,7 +326,7 @@ export default class Comments
         // Editing
         wrapper.ondblclick = () =>
         {
-            let comment = this.comments.get(id);
+            let comment = this.comments.get(recComment.id);
             if (comment.isEditing)
                 return;
 
@@ -335,7 +341,7 @@ export default class Comments
             let resizeArea = () => {
 
                 // Use dummy comment to measure text
-                CommentContent.buildTextElement(this.commentText, textarea.value, this.frameCallback)
+                CommentContent.buildTextElement(this.commentText, textarea.value, this.frameCallback);
 
                 const textRect = this.commentText.getBoundingClientRect();
 
@@ -368,10 +374,39 @@ export default class Comments
             resizeArea();
         };
 
-        this.setPropertyCommentPosition(this.comments.get(id));
+        this.setPropertyCommentPosition(this.comments.get(recComment.id));
     }
 
-    setPropertyCommentPosition(comment: Comment)
+    addPropertyComment(recording: RECORDING.NaiveRecordedData, frameId: number, entityId: number, propertyId: number)
+    {
+        // Add to recording
+        const id = this.nextCommentId();
+
+        // Calc initial pos
+        const propertyElement = this.getPropertyItem(propertyId);
+        const detailPane = document.getElementById("detail-pane");
+
+        const detailPaneRect = detailPane.getBoundingClientRect();
+        const propertyElementRect = propertyElement.getBoundingClientRect();
+
+        const x = -150;
+        const y = propertyElementRect.y - detailPaneRect.y;
+
+        let propertyComment : RECORDING.IPropertyComment = {
+            id: id,
+            type: RECORDING.ECommentType.Property,
+            text: "Example comment",
+            pos: { x: x, y: y },
+            frameId: frameId,
+            entityId: entityId,
+            propertyId: propertyId,
+        };
+        recording.comments[id] = propertyComment;
+
+        this.makePropertyComment(propertyComment);
+    }
+
+    private setPropertyCommentPosition(comment: Comment)
     {
         const detailPane = document.getElementById("detail-pane");
 
@@ -381,7 +416,7 @@ export default class Comments
         comment.element.style.top = detailPaneRect.y + comment.comment.pos.y + "px";
     }
 
-    updatePropertyCommentsPos()
+    private updatePropertyCommentsPos()
     {
         for (let comment of this.comments)
         {
