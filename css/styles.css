@@ -3840,6 +3840,26 @@ body {
 *:focus-visible {
   border: 1px solid #6DE080; }
 
+/* Elevation of elements */
+:root {
+  --primary-color-rgb: 187, 134, 252;
+  --primary-color: rgb(var(--primary-color-rgb));
+  --primary-color-hover: rgba(var(--primary-color-rgb), 0.6);
+  --primary-color-variant: #3700B3;
+  --secondary-color: #03DAC6;
+  --secondary-color-variant: #03DAC6;
+  --background-color: #1c191f;
+  --surface-color: #2f2d31;
+  --error-color: #CF6679;
+  --on-primary-color: #000000;
+  --on-secondary-color: #000000;
+  --on-background-color: #FFFFFF;
+  --on-surface-color: #FFFFFF;
+  --on-error-color: #000000;
+  --text-high-emphasis-opacity: 0.87;
+  --text-medium-emphasis-opacity: 0.6;
+  --text-disabled-emphasis-opacity: 0.38; }
+
 .comment {
   background: #D9D9D9;
   z-index: 50;
@@ -3866,6 +3886,9 @@ body {
 
 .comment-text .comment-link {
   color: #8442B9; }
+
+.comment-text .comment-link:hover {
+  color: #cca4fd; }
 
 .comment-text span {
   white-space: pre; }

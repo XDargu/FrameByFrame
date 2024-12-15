@@ -1,4 +1,5 @@
 @import "colorStyles.scss";
+@import "../ui/css/variables.scss";
 
 .comment
 {
@@ -35,6 +36,11 @@
 .comment-text .comment-link
 {
     color: $strong-primary;
+}
+
+.comment-text .comment-link:hover
+{
+    color: $soft-primary;
 }
 
 .comment-text span

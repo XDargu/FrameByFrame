@@ -111,7 +111,10 @@ namespace CommentContent
                 a.classList.add("comment-link");
                 a.innerText = urlSection;
                 a.href = urlSection;
-                a.target = "_blank";
+                a.onclick = (e) => {
+                    e.preventDefault();
+                    require("electron").shell.openExternal(urlSection);
+                }
                 target.append(a);
             }
             else
