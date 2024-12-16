@@ -1283,4 +1283,11 @@ export default class Timeline {
     {
         return this.data.range.endFrame;
     }
+
+    getFramePosition(frame: number) : number
+    {
+        const propRect = this.renderer.canvas.getBoundingClientRect();
+        const canvasPos = this.renderer.frame2canvas(frame);
+        return propRect.x + canvasPos;
+    }
 }

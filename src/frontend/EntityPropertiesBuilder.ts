@@ -353,6 +353,7 @@ export interface EntityPropertiesBuilderCallbacks
 export default class EntityPropertiesBuilder
 {
     private propertyGroups: PropertyTreeGroup[];
+    private activePropertyGroups: PropertyTreeGroup[];
     private callbacks: EntityPropertiesBuilderCallbacks;
     collapsedGroups: CollapsedGroupIDsTracker;
     starredGroups: string[];
@@ -369,6 +370,7 @@ export default class EntityPropertiesBuilder
     constructor(callbacks: EntityPropertiesBuilderCallbacks)
     {
         this.propertyGroups = [];
+        this.activePropertyGroups = [];
         this.callbacks = callbacks;
         this.collapsedGroups = new CollapsedGroupIDsTracker();
         this.starredGroups = [];
@@ -474,6 +476,8 @@ export default class EntityPropertiesBuilder
             {
                 treeParent.append(storedGroup.title, storedGroup.propertyTree.root);
             }
+
+            this.activePropertyGroups.push(storedGroup);
         }
     }
 
@@ -571,6 +575,8 @@ export default class EntityPropertiesBuilder
         propertyTree.innerHTML = "";
         eventTree.innerHTML = "";
 
+        this.activePropertyGroups = [];
+
         if (entity)
         {
             this.buildPropertiesPropertyTrees(propertyTree, entity.properties);
@@ -582,9 +588,9 @@ export default class EntityPropertiesBuilder
 
     findItemWithValue(value: string)
     {
-        for (let i=0; i<this.propertyGroups.length; ++i)
+        for (let i=0; i<this.activePropertyGroups.length; ++i)
         {
-            const item = this.propertyGroups[i].propertyTree.getItemWithValue(value);
+            const item = this.activePropertyGroups[i].propertyTree.getItemWithValue(value);
             if (item)
             {
                 return item;

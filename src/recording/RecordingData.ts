@@ -523,7 +523,8 @@ export interface IResourcesData {
 export enum ECommentType
 {
     Timeline = 0,
-    Property
+    Property,
+    EventProperty
 }
 
 export interface IComment {

@@ -6,8 +6,22 @@ export interface IGetPropertyItemCallback {
     (propertyId: number) : HTMLElement;
 }
 
-interface ICommentFrameClickedCallback {
+export interface IGetCommentLineSource {
+    () : RECORDING.IVec2
+}
+
+export interface ICommentFrameClickedCallback {
 	(frame: number) : void;
+}
+
+export interface IGetTimelineFramePos {
+	(frame: number) : number;
+}
+
+export interface CommentCallbacks {
+    getPropertyItem: IGetPropertyItemCallback;
+    frameCallback: ICommentFrameClickedCallback;
+    getTimelineFramePos: IGetTimelineFramePos;
 }
 
 class Comment
@@ -18,27 +32,36 @@ class Comment
     lineController: CommentLineController;
 }
 
+enum CommentLineOrigin
+{
+    Right,
+    Top
+}
+
 class CommentLineController
 {
-    private propertyId: number = 0;
-    private getPropertyItem: IGetPropertyItemCallback;
+    private getSource: IGetCommentLineSource;
     private originElement: HTMLElement;
-    private targetElement: HTMLElement;
     private lineElement: HTMLElement;
+    private origin: CommentLineOrigin;
     
-    constructor(getPropertyItem: IGetPropertyItemCallback, originElement: HTMLElement, propertyId: number)
+    constructor(getSource: IGetCommentLineSource, originElement: HTMLElement, origin: CommentLineOrigin)
     {
-        this.getPropertyItem = getPropertyItem;
+        this.getSource = getSource;
 
         this.originElement = originElement;
-        this.targetElement = null;
-        this.propertyId = propertyId;
+        this.origin = origin;
 
         this.lineElement = document.createElement("div");
         this.lineElement.classList.add("comment-line");
         this.lineElement.style.backgroundColor = `#ccc`;
 
         document.body.append(this.lineElement);
+    }
+
+    public clear()
+    {
+        this.lineElement.remove();
     }
 
     public setVisible(isVisible: boolean)
@@ -48,21 +71,25 @@ class CommentLineController
 
     updateShapeLine()
     {
-        this.targetElement = this.getPropertyItem(this.propertyId);
+        const sourcePos = this.getSource();
 
         // Disable if needed
-        if (this.targetElement != null)
+        if (sourcePos)
         {
             const originRect = this.originElement.getBoundingClientRect()
-            const targetRect = this.targetElement.getBoundingClientRect()
 
-            const commentOffsetX = originRect.width;
-            const commentOffsetY = originRect.height / 2;
-            const propertyOffsetY = 6;
+            let commentOffsetX = originRect.width;
+            let commentOffsetY = originRect.height / 2;
+
+            if (this.origin == CommentLineOrigin.Top)
+            {
+                commentOffsetX = originRect.width / 2;
+                commentOffsetY = 0;
+            }
 
             // Find the points based off the elements left and top
             let p1 = { x: originRect.x + commentOffsetX, y: originRect.y + commentOffsetY };
-            let p2 = { x: targetRect.x, y: targetRect.y + propertyOffsetY };
+            let p2 = { x: sourcePos.x, y: sourcePos.y };
 
             // Get distance between the points for length of line
             const a = p1.x - p2.x;
@@ -151,20 +178,19 @@ export default class Comments
     private currentFrame: number;
     private currentEntityId: number;
 
-    private getPropertyItem: IGetPropertyItemCallback;
-    private frameCallback: ICommentFrameClickedCallback;
+    private callbacks: CommentCallbacks;
 
     // Dummy comment to measure sizes
     private commentWrapper: HTMLElement;
     private commentText: HTMLElement;
 
-    constructor(getPropertyItem: IGetPropertyItemCallback, frameCallback: ICommentFrameClickedCallback)
+    constructor(callbacks: CommentCallbacks)
     {
         this.comments = new Map<number, Comment>();
         this.commentId = 1;
 
-        this.getPropertyItem = getPropertyItem;
-        this.frameCallback = frameCallback;
+        this.callbacks = callbacks;
+        console.log(callbacks);
 
         var resizeObserver = new ResizeObserver(entries => {
             this.updatePropertyCommentsPos();
@@ -173,7 +199,6 @@ export default class Comments
         resizeObserver.observe(detailPane);
 
         window.requestAnimationFrame(this.update.bind(this));
-
         
         this.commentWrapper = document.createElement("div");
         this.commentWrapper.classList.add("comment");
@@ -218,7 +243,7 @@ export default class Comments
 
     private isCommentVisible(comment: Comment) : boolean
     {
-        if (comment.comment.type == RECORDING.ECommentType.Property)
+        if (comment.comment.type == RECORDING.ECommentType.Property || comment.comment.type == RECORDING.ECommentType.EventProperty)
         {
             const propComment = comment.comment as RECORDING.IPropertyComment;
             return propComment.entityId == this.currentEntityId && propComment.frameId == this.currentFrame;
@@ -253,10 +278,84 @@ export default class Comments
         for (let comment of this.comments)
         {
             comment[1].element.remove();
+            comment[1].lineController.clear();
         }
 
         this.comments.clear();
         this.commentId = 1;
+    }
+
+    getPropertySource(comment: RECORDING.IComment) : IGetCommentLineSource
+    {
+        switch(comment.type)
+        {
+            case RECORDING.ECommentType.Property:
+                {
+                    const propComment = comment as RECORDING.IPropertyComment;
+                    return () =>
+                    {
+                        const propElement = this.callbacks.getPropertyItem(propComment.propertyId);
+                        const firstVisibleParent = Utils.FindFirstVisibleTree(propElement);
+                        if (firstVisibleParent)
+                        {
+                            const propRect = firstVisibleParent.getBoundingClientRect();
+
+                            const propsContainer = document.getElementById("properties-container");
+                            const parentRect = propsContainer.getBoundingClientRect();
+
+                            const propOffset = 12;
+                            const y = Utils.clamp(propRect.y + propOffset, parentRect.y, parentRect.y + parentRect.height)
+
+                            return { x: propRect.x, y: y }
+                        }
+
+                        return { x: 0, y: 0 }
+                    };
+                }
+                break;
+            case RECORDING.ECommentType.EventProperty:
+            {
+                const propComment = comment as RECORDING.IPropertyComment;
+                return () =>
+                {
+                    const propElement = this.callbacks.getPropertyItem(propComment.propertyId);
+                    const firstVisibleParent = Utils.FindFirstVisibleTree(propElement);
+                    if (firstVisibleParent)
+                    {
+                        const propRect = firstVisibleParent.getBoundingClientRect();
+
+                        const propsContainer = document.getElementById("events-container");
+                        const parentRect = propsContainer.getBoundingClientRect();
+
+                        const propOffset = 12;
+                        const y = Utils.clamp(propRect.y + propOffset, parentRect.y, parentRect.y + parentRect.height)
+
+                        return { x: propRect.x, y: y }
+                    }
+
+                    return { x: 0, y: 0 }
+                };
+            }
+            break;
+            case RECORDING.ECommentType.Timeline:
+                {
+                    const timelineComment = comment as RECORDING.ITimelineComment;
+
+                    return () => {
+
+                        const timelinePane = document.getElementById("timeline");
+                        const timelinePaneRect = timelinePane.getBoundingClientRect();
+            
+                        const x = Utils.clamp(this.callbacks.getTimelineFramePos(timelineComment.frameId), timelinePaneRect.x, timelinePaneRect.x + timelinePaneRect.width);
+                        const y = timelinePaneRect.y + timelinePaneRect.height;
+
+                        return { x: x, y: y}
+                    };
+                }
+                break;
+        }
+
+        return () => { return { x: 0, y: 0} };
     }
 
     loadComments(comments: RECORDING.IComments)
@@ -265,20 +364,11 @@ export default class Comments
         {
             const comment = comments[id];
             this.commentId = Math.max(this.commentId, comment.id + 1);
-            switch(comment.type)
-            {
-                case RECORDING.ECommentType.Property:
-                    {
-                        this.makePropertyComment(comment as RECORDING.IPropertyComment);
-                    }
-                    break;
-                case RECORDING.ECommentType.Timeline:
-                    break;
-            }
+            this.makeComment(comment);
         }
     }
 
-    private makePropertyComment(recComment: RECORDING.IPropertyComment)
+    private makeComment(recComment: RECORDING.IComment)
     {
         const wrapper = document.createElement("div");
         wrapper.classList.add("comment");
@@ -286,37 +376,47 @@ export default class Comments
         const text = document.createElement("div");
         text.classList.add("comment-text");
 
-        CommentContent.buildTextElement(text, recComment.text, this.frameCallback)
+        CommentContent.buildTextElement(text, recComment.text, this.callbacks.frameCallback)
 
         wrapper.append(text);
 
         let page = document.querySelector(".full-page.page-wrapper");
         page.append(wrapper);
 
+        const origin = recComment.type == RECORDING.ECommentType.Timeline ? CommentLineOrigin.Top : CommentLineOrigin.Right;
+
         this.comments.set(recComment.id, {
             comment: recComment,
             element: wrapper,
             isEditing: false,
-            lineController: new CommentLineController(this.getPropertyItem, wrapper, recComment.propertyId)
+            lineController: new CommentLineController(this.getPropertySource(recComment), wrapper, origin)
         });
 
         // Dragging the comment around
-        let pan = (e: MouseEvent) =>
-        {
-            let comment = this.comments.get(recComment.id);
-            comment.comment.pos.x += e.movementX / window.devicePixelRatio;
-            comment.comment.pos.y += e.movementY / window.devicePixelRatio;
-
-            this.setPropertyCommentPosition(comment);
-        }
-            
-        let stopPan = () =>
-        {
-            document.removeEventListener('mousemove', pan)
-        }
-
         wrapper.addEventListener('mousedown', (e) =>
         {
+            let initX = e.x;
+            let initY = e.y;
+
+            let pan = (e: MouseEvent) =>
+            {
+                let comment = this.comments.get(recComment.id);
+                const deltaX = e.x - initX;
+                const deltaY = e.y - initY;
+                comment.comment.pos.x += deltaX;
+                comment.comment.pos.y += deltaY;
+
+                initX = e.x;
+                initY = e.y;
+    
+                this.setPropertyCommentPosition(comment);
+            }
+                
+            let stopPan = () =>
+            {
+                document.removeEventListener('mousemove', pan)
+            }
+
             let comment = this.comments.get(recComment.id);
             if (!comment.isEditing)
             {
@@ -344,7 +444,7 @@ export default class Comments
             let resizeArea = () => {
 
                 // Use dummy comment to measure text
-                CommentContent.buildTextElement(this.commentText, textarea.value, this.frameCallback);
+                CommentContent.buildTextElement(this.commentText, textarea.value, this.callbacks.frameCallback);
 
                 const textRect = this.commentText.getBoundingClientRect();
 
@@ -359,7 +459,7 @@ export default class Comments
                 const val = textarea.value;
 
                 comment.comment.text = val;
-                CommentContent.buildTextElement(text, val, this.frameCallback);
+                CommentContent.buildTextElement(text, val, this.callbacks.frameCallback);
 
                 comment.element.removeChild(textarea);
                 comment.isEditing = false;
@@ -386,7 +486,7 @@ export default class Comments
         const id = this.nextCommentId();
 
         // Calc initial pos
-        const propertyElement = this.getPropertyItem(propertyId);
+        const propertyElement = this.callbacks.getPropertyItem(propertyId);
         const detailPane = document.getElementById("detail-pane");
 
         const detailPaneRect = detailPane.getBoundingClientRect();
@@ -406,17 +506,92 @@ export default class Comments
         };
         recording.comments[id] = propertyComment;
 
-        this.makePropertyComment(propertyComment);
+        this.makeComment(propertyComment);
+    }
+
+    addEventPropertyComment(recording: RECORDING.NaiveRecordedData, frameId: number, entityId: number, propertyId: number)
+    {
+        // Add to recording
+        const id = this.nextCommentId();
+
+        // Calc initial pos
+        const propertyElement = this.callbacks.getPropertyItem(propertyId);
+        const detailPane = document.getElementById("detail-pane");
+
+        const detailPaneRect = detailPane.getBoundingClientRect();
+        const propertyElementRect = propertyElement.getBoundingClientRect();
+
+        const x = -150;
+        const y = propertyElementRect.y - (detailPaneRect.y + detailPaneRect.height);
+
+        let propertyComment : RECORDING.IPropertyComment = {
+            id: id,
+            type: RECORDING.ECommentType.EventProperty,
+            text: "Example comment",
+            pos: { x: x, y: y },
+            frameId: frameId,
+            entityId: entityId,
+            propertyId: propertyId,
+        };
+        recording.comments[id] = propertyComment;
+
+        this.makeComment(propertyComment);
+    }
+
+    addTimelineComment(recording: RECORDING.NaiveRecordedData, frameId: number)
+    {
+        // Add to recording
+        const id = this.nextCommentId();
+
+        // Calc initial pos
+        const timelinePane = document.getElementById("timeline");
+
+        const timelinePaneRect = timelinePane.getBoundingClientRect();
+
+        const defaultCommentWidth = 50;
+        const x = Utils.clamp(this.callbacks.getTimelineFramePos(frameId) - defaultCommentWidth, defaultCommentWidth, window.innerWidth - defaultCommentWidth * 2);
+        const y = timelinePaneRect.y + 10;
+
+        let timelineComment : RECORDING.ITimelineComment = {
+            id: id,
+            type: RECORDING.ECommentType.Timeline,
+            text: "Example comment",
+            pos: { x: x, y: y },
+            frameId: frameId,
+        };
+        recording.comments[id] = timelineComment;
+
+        this.makeComment(timelineComment);
     }
 
     private setPropertyCommentPosition(comment: Comment)
     {
-        const detailPane = document.getElementById("detail-pane");
+        if (comment.comment.type == RECORDING.ECommentType.Property)
+        {
+            const detailPane = document.getElementById("detail-pane");
 
-        const detailPaneRect = detailPane.getBoundingClientRect();
+            const detailPaneRect = detailPane.getBoundingClientRect();
 
-        comment.element.style.left = detailPaneRect.x + comment.comment.pos.x + "px";
-        comment.element.style.top = detailPaneRect.y + comment.comment.pos.y + "px";
+            comment.element.style.left = detailPaneRect.x + comment.comment.pos.x + "px";
+            comment.element.style.top = detailPaneRect.y + comment.comment.pos.y + "px";
+        }
+        else if (comment.comment.type == RECORDING.ECommentType.EventProperty)
+        {
+            const detailPane = document.getElementById("detail-pane");
+
+            const detailPaneRect = detailPane.getBoundingClientRect();
+
+            comment.element.style.left = detailPaneRect.x + comment.comment.pos.x + "px";
+            comment.element.style.top = detailPaneRect.y + detailPaneRect.height + comment.comment.pos.y + "px";
+        }
+        else if (comment.comment.type == RECORDING.ECommentType.Timeline)
+        {
+            const timelinePane = document.getElementById("timeline");
+            const timelinePaneRect = timelinePane.getBoundingClientRect();
+
+            comment.element.style.left = timelinePaneRect.x + comment.comment.pos.x + "px";
+            comment.element.style.top = timelinePaneRect.y + comment.comment.pos.y + "px";
+        }
     }
 
     private updatePropertyCommentsPos()

@@ -287,3 +287,43 @@ export function LiangBarsky(edgeLeft: number, edgeRight: number, edgeBottom: num
 
     return { x0: x0clip, y0: y0clip, x1: x1clip, y1: y1clip };        // (clipped) line is drawn
 }
+
+export function isHidden(el: HTMLElement)
+{
+    return (el.offsetParent === null);
+}
+
+export function findFirstVisibleParent(el: HTMLElement)
+{
+    while (el != null)
+    {
+        if (!isHidden(el))
+            return el;
+
+        el = el.parentElement;
+    }
+
+    return null;
+}
+
+export function FindFirstVisibleTree(el: HTMLElement)
+{
+    while (el != null)
+        {
+            if (!isHidden(el))
+                return el;
+
+            if (el.classList.contains("basico-tree"))
+            {
+                const title = el.previousElementSibling as HTMLElement;
+                if (title && title.classList.contains("basico-title") && !isHidden(title))
+                {
+                    return title;
+                }
+            }
+    
+            el = el.parentElement;
+        }
+    
+        return null;
+}

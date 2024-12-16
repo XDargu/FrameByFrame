@@ -36,6 +36,7 @@ import * as TypeSystem from "./types/typeRegistry";
 import { ResourcePreview } from "./frontend/ResourcePreview";
 import { PinnedTexture } from "./frontend/PinnedTexture";
 import Comments from "./frontend/Comments";
+import { addContextMenu } from "./frontend/ContextMenu";
 
 const zlib = require('zlib');
 
@@ -174,7 +175,11 @@ export default class Renderer {
                 onAddComment: (propId) => {
                     // You can only add comments to the currently selected entity
                     const entity = this.frameData.entities[this.selectedEntityId];
-                    this.comments.addPropertyComment(this.recordedData, this.getCurrentFrame(), entity.id, propId);
+                    const isFromEvent = NaiveRecordedData.findPropertyIdInEntityEvents(entity, propId) != null;
+                    if (isFromEvent)
+                        this.comments.addEventPropertyComment(this.recordedData, this.getCurrentFrame(), entity.id, propId);
+                    else
+                        this.comments.addPropertyComment(this.recordedData, this.getCurrentFrame(), entity.id, propId);
                 },
                 isEntityInFrame: (id) => { return this.frameData?.entities[Utils.toUniqueID(this.frameData.clientId, id)] != undefined; },
                 isPropertyVisible: (propId) => { return this.sceneController.isPropertyVisible(propId); }
@@ -224,8 +229,11 @@ export default class Renderer {
         window.requestAnimationFrame(this.render.bind(this));
 
         this.comments = new Comments(
-            (propertyId) => { return this.entityPropsBuilder.findItemWithValue(propertyId + "") as HTMLElement; },
-            (frame) => { this.requestApplyFrame({ frame: frame }); }
+            {
+                getPropertyItem: (propertyId) => { return this.entityPropsBuilder.findItemWithValue(propertyId + "") as HTMLElement; },
+                frameCallback: (frame) => { this.requestApplyFrame({ frame: frame }); },
+                getTimelineFramePos: (frame) => { return this.timeline.getFramePosition(frame); }
+            }
         );
 
         this.requestApplyFrame({ frame: 0});
@@ -1226,6 +1234,15 @@ export default class Renderer {
         this.timeline.setTimelineUpdatedCallback(this.onTimelineUpdated.bind(this));
         this.timeline.setRangeChangedCallback((initFrame, endFrame) => { this.playbackController.updateUI(); });
         this.timeline.setGetEntityNameCallback((entity, frameIdx) => { return this.findEntityNameOnFrame(Number.parseInt(entity), frameIdx); });
+
+        // Context menu
+        const config = [
+            { text: "Add comment in current frame", icon: "fa-comment", callback: () => { 
+                const currentFrame = this.getCurrentFrame();
+                this.comments.addTimelineComment(this.recordedData, currentFrame);
+            } },
+        ];
+        addContextMenu(timelineWrapper, config);
     }
 
     getCurrentFrame()
