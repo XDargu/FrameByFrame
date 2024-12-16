@@ -18,10 +18,15 @@ export interface IGetTimelineFramePos {
 	(frame: number) : number;
 }
 
+export interface IOnCommentAddedCallback {
+	(frame: number, commentId: number) : void;
+}
+
 export interface CommentCallbacks {
     getPropertyItem: IGetPropertyItemCallback;
     frameCallback: ICommentFrameClickedCallback;
     getTimelineFramePos: IGetTimelineFramePos;
+    onCommentAdded :IOnCommentAddedCallback;
 }
 
 class Comment
@@ -478,6 +483,17 @@ export default class Comments
         };
 
         this.setPropertyCommentPosition(this.comments.get(recComment.id));
+
+        switch(recComment.type)
+        {
+            case RECORDING.ECommentType.Property:
+            case RECORDING.ECommentType.EventProperty:
+                this.callbacks.onCommentAdded((recComment as RECORDING.IPropertyComment).frameId, recComment.id);
+                break;
+            case RECORDING.ECommentType.Timeline:
+                this.callbacks.onCommentAdded((recComment as RECORDING.ITimelineComment).frameId, recComment.id);
+                break;
+        }
     }
 
     addPropertyComment(recording: RECORDING.NaiveRecordedData, frameId: number, entityId: number, propertyId: number)

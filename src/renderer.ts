@@ -232,7 +232,8 @@ export default class Renderer {
             {
                 getPropertyItem: (propertyId) => { return this.entityPropsBuilder.findItemWithValue(propertyId + "") as HTMLElement; },
                 frameCallback: (frame) => { this.requestApplyFrame({ frame: frame }); },
-                getTimelineFramePos: (frame) => { return this.timeline.getFramePosition(frame); }
+                getTimelineFramePos: (frame) => { return this.timeline.getFramePosition(frame); },
+                onCommentAdded: (frame, commentId) => { this.timeline.addComment(frame, commentId); },
             }
         );
 
@@ -719,13 +720,6 @@ export default class Renderer {
 
         this.comments.loadComments(this.recordedData.comments);
 
-        // Update timeline comments
-        for (let commentId in this.recordedData.comments)
-        {
-            const comment = this.recordedData.comments[commentId];
-            this.timeline.addComment(comment.frameId, comment.id);
-        }
-        
         // Select any first entity
         Utils.runAsync(() => {
             for (let entity in this.frameData.entities)
