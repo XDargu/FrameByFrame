@@ -16,6 +16,10 @@ interface IEventClickedCallback {
 	(entityId: string, frame: number) : void;
 }
 
+interface ICommentClickedCallback {
+	(frame: number, commentId: number) : void;
+}
+
 interface IRangeChangedCallback {
 	(initRange: number, endRange: number) : void;
 }
@@ -173,10 +177,12 @@ export class TimelineData {
 
     events: TimelineEvents;
     markers: TimelineMarkers;
+    comments: TimelineComments;
 
     constructor() {
         this.events = new TimelineEvents();
         this.markers = new TimelineMarkers();
+        this.comments = new TimelineComments();
         this.range = { initFrame: 0, endFrame: 0 };
 
         this.selectedEntityId = -1;
@@ -191,6 +197,7 @@ export class TimelineData {
         this.range = { initFrame: 0, endFrame: 0 };
         this.events.clear();
         this.markers.clear();
+        this.comments.clear();
     }
 }
 
@@ -285,6 +292,46 @@ class TimelineMarkers {
     }
 }
 
+export interface ITimelineComment {
+    frame: number,
+    commentId: number,
+}
+
+class TimelineComments {
+
+    constructor() {
+        this.comments = [];
+    }
+
+    // Comments
+    private comments: ITimelineComment[];
+
+    addComment(frame: number, commentId: number)
+    {
+        this.comments.push({ frame: frame, commentId: commentId });
+    }
+
+    clear()
+    {
+        this.comments.length = 0;
+    }
+
+    getCommentAmount() : number
+    {
+        return this.comments.length;
+    }
+
+    getCommentByIndex(index: number) : ITimelineComment
+    {
+        return this.comments[index];
+    }
+
+    getCommentsInFrame(frame: number) : ITimelineComment[]
+    {
+        return this.comments.filter((comment) => { return comment.frame == frame; });
+    }
+}
+
 class TimelineInputHandler {
 
     // Canvas
@@ -304,6 +351,7 @@ class TimelineInputHandler {
     // Callbacks
     onframeClicked : ITimelineFrameClickedCallback;
     onEventClicked: IEventClickedCallback;
+    onCommentClicked: ICommentClickedCallback;
     onRangeChanged: IRangeChangedCallback;
 
     constructor(canvas: HTMLCanvasElement, renderer: TimelineRenderer, data: TimelineData, popup: EventPopup) {
@@ -352,6 +400,7 @@ class TimelineInputHandler {
 
         if (this.data.length == 0) { return; }
         this.renderer.hoveredEvent = this.renderer.findEventAtPosition(canvasPos.x, canvasPos.y);
+        this.renderer.hoveredComment = this.renderer.findCommentAtPosition(event.offsetX, event.offsetY);
         this.renderer.hoveredLeftRange = this.renderer.isInRange(canvasPos.x, canvasPos.y, true);
         this.renderer.hoveredRightRange = this.renderer.isInRange(canvasPos.x, canvasPos.y, false);
 
@@ -407,7 +456,7 @@ class TimelineInputHandler {
             }
         }
 
-        const shouldDisplayPointer = this.renderer.hoveredEvent || this.renderer.hoveredLeftRange || this.renderer.hoveredRightRange;
+        const shouldDisplayPointer = this.renderer.hoveredEvent || this.renderer.hoveredComment || this.renderer.hoveredLeftRange || this.renderer.hoveredRightRange;
         this.canvas.style.cursor = shouldDisplayPointer ? "pointer" : "auto";
 
         const shouldDisplayPopup = this.renderer.hoveredEvent && this.inputOperation != InputOperation.MovingTimeline;
@@ -444,6 +493,7 @@ class TimelineInputHandler {
         if (this.data.length == 0) { return; }
 
         this.renderer.hoveredEvent = this.renderer.findEventAtPosition(event.offsetX, event.offsetY);
+        this.renderer.hoveredComment = this.renderer.findCommentAtPosition(event.offsetX, event.offsetY);
         this.renderer.hoveredLeftRange = this.renderer.isInRange(event.offsetX, event.offsetY, true);
         this.renderer.hoveredRightRange = this.renderer.isInRange(event.offsetX, event.offsetY, false);
         const canvasPosition : number = event.offsetX;
@@ -478,6 +528,10 @@ class TimelineInputHandler {
                 if (this.renderer.hoveredEvent && this.onEventClicked)
                 {
                     this.onEventClicked(this.renderer.hoveredEvent.entityId, this.renderer.hoveredEvent.frame);
+                }
+                else if (this.renderer.hoveredComment && this.onCommentClicked)
+                {
+                    this.onCommentClicked(this.renderer.hoveredComment.frame, this.renderer.hoveredComment.commentId);
                 }
                 else if (this.onframeClicked)
                 {
@@ -544,6 +598,11 @@ class TimelineRenderer {
     static readonly frameGroupMinSize : number = 200;
     static readonly eventHeight : number = 33;
     static readonly eventRadius : number = 4;
+
+    static readonly commentOffsetX : number = -4;
+    static readonly commentY : number = 18;
+    static readonly commentWidth : number = 10;
+    static readonly commentHeight : number = 9;
     
     static readonly headerColor: Utils.RGBColor = Utils.hexToRgb("#574D5F");
     static readonly bodyColor: Utils.RGBColor = Utils.hexToRgb("#473D4F");
@@ -567,6 +626,9 @@ class TimelineRenderer {
     hoveredEvent: ITimelineEvent;
     hoveredLeftRange: boolean;
     hoveredRightRange: boolean;
+
+    // Comment
+    hoveredComment: ITimelineComment;
 
     // Time control
     private timeStampLastUpdate: number;
@@ -627,6 +689,7 @@ class TimelineRenderer {
         if (this.data.length != 0)
         {
             this.renderCustomMarkers();
+            this.renderComments();
             this.renderEvents(false, 0.3);
             this.renderEvents(true, 1);
             this.renderRangeMarker(this.data.range.initFrame, true);
@@ -936,6 +999,60 @@ class TimelineRenderer {
         this.ctx.closePath();
     }
 
+    drawComment(x: number, y: number, width: number, height: number, borderRadius: number, tailHeight: number = 3)
+    {
+        this.ctx.beginPath();
+        this.ctx.moveTo(x + borderRadius, y); // Start at top-left corner (adjusted for border radius)
+
+        // Top edge
+        this.ctx.lineTo(x + width - borderRadius, y);
+        this.ctx.quadraticCurveTo(x + width, y, x + width, y + borderRadius);
+
+        // Right edge
+        this.ctx.lineTo(x + width, y + height - borderRadius - tailHeight);
+        this.ctx.quadraticCurveTo(x + width, y + height - tailHeight, x + width - borderRadius, y + height - tailHeight);
+
+        // Bottom edge
+        const tailWidth = 4;
+        const tailOffset = 4;
+        this.ctx.lineTo(x + tailOffset + tailWidth / 2, y + height - tailHeight);
+        this.ctx.lineTo(x + tailOffset, y + height); // Point for the tail
+        this.ctx.lineTo(x + tailOffset - tailWidth / 2, y + height - tailHeight);
+        this.ctx.lineTo(x + borderRadius, y + height - tailHeight);
+
+        this.ctx.quadraticCurveTo(x, y + height - tailHeight, x, y + height - tailHeight - borderRadius);
+
+        // Left edge
+        this.ctx.lineTo(x, y + borderRadius);
+        this.ctx.quadraticCurveTo(x, y, x + borderRadius, y);
+        this.ctx.closePath();
+
+        // Fill and stroke
+        this.ctx.fillStyle = "#ccc";
+        this.ctx.fill();
+    }
+
+    private renderComments()
+    {
+        for (let i=0; i<this.data.comments.getCommentAmount(); ++i)
+        {
+            const comment = this.data.comments.getCommentByIndex(i);
+            const position : number = this.frame2canvas(comment.frame);
+
+            this.drawComment(position + TimelineRenderer.commentOffsetX, TimelineRenderer.commentY, TimelineRenderer.commentWidth, TimelineRenderer.commentHeight, 2, 3);
+        }
+
+        if (this.hoveredComment)
+        {
+            const position : number = this.frame2canvas(this.hoveredComment.frame);
+
+            this.drawComment(position + TimelineRenderer.commentOffsetX, TimelineRenderer.commentY, TimelineRenderer.commentWidth, TimelineRenderer.commentHeight, 2, 3);
+            // Draw outline
+            this.ctx.strokeStyle = "#6DE080";
+            this.ctx.stroke();
+        }
+    }
+
     private renderCustomMarkers()
     {
         this.ctx.textAlign = "center";
@@ -1037,6 +1154,61 @@ class TimelineRenderer {
         return null;
     }
 
+    private isMouseHoveringComment(comment: ITimelineComment, mouseX: number, mouseY: number)
+    {
+        const x = this.frame2canvas(comment.frame) + TimelineRenderer.commentOffsetX;
+
+        return  mouseX > x &&
+                mouseX < x + TimelineRenderer.commentWidth &&
+                mouseY > TimelineRenderer.commentY &&
+                mouseY < TimelineRenderer.commentY + TimelineRenderer.commentHeight;
+    }
+
+    private findHoveredCommentInFrame(frame: number, mouseX: number, mouseY: number) : ITimelineComment
+    {
+        const commentList = this.data.comments.getCommentsInFrame(frame);
+        if (commentList)
+        {
+            const firstComment = commentList[0];
+            if (firstComment)
+            {
+                if (this.isMouseHoveringComment(firstComment, mouseX, mouseY))
+                {
+                    return firstComment;
+                }
+            }
+        }
+
+        return null;
+    };
+
+    private findHoveredCommentAroundFrame(mouseX: number, mouseY: number) : ITimelineComment
+    {
+        const frame = Math.round(this.canvas2frame(mouseX));
+
+        const firstFrame = Math.round(this.canvas2frame(mouseX - TimelineRenderer.eventRadius));
+        const lastFrame = Math.round(this.canvas2frame(mouseX + TimelineRenderer.eventRadius));
+
+        // Check the current frame first
+        const frameComment = this.findHoveredCommentInFrame(frame, mouseX, mouseY);
+        if (frameComment)
+        {
+            return frameComment;
+        }
+
+        // Check frames around the comment
+        for (let i=firstFrame; i<lastFrame; ++i)
+        {
+            const frameComment = this.findHoveredCommentInFrame(i, mouseX, mouseY);
+            if (frameComment)
+            {
+                return frameComment;
+            }
+        }
+
+        return null;
+    }
+
     findEventAtPosition(mouseX: number, mouseY: number) : ITimelineEvent
     {
         // Give priority to currently selected entity
@@ -1047,6 +1219,11 @@ class TimelineRenderer {
         }
 
         return  this.findHoveredEventAroundFrame(mouseX, mouseY);
+    }
+
+    findCommentAtPosition(mouseX: number, mouseY: number) : ITimelineComment
+    {
+        return  this.findHoveredCommentAroundFrame(mouseX, mouseY);
     }
 
     isPointInsideTriangle(
@@ -1185,6 +1362,11 @@ export default class Timeline {
         return this.data.selectedEntityId;
     }
 
+    addComment(frame: number, commentId: number)
+    {
+        this.data.comments.addComment(frame, commentId);
+    }
+
     addMarker(name: string, frame: number, color: string)
     {
         this.data.markers.addMarker(name, frame, color);
@@ -1228,6 +1410,11 @@ export default class Timeline {
     setEventClickedCallback(callback : IEventClickedCallback)
     {
         this.inputHandler.onEventClicked = callback;
+    }
+
+    setCommentClickedCallback(callback : ICommentClickedCallback)
+    {
+        this.inputHandler.onCommentClicked = callback;
     }
 
     setRangeChangedCallback(callback: IRangeChangedCallback)

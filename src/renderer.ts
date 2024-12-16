@@ -718,6 +718,13 @@ export default class Renderer {
         this.updateMetadata();
 
         this.comments.loadComments(this.recordedData.comments);
+
+        // Update timeline comments
+        for (let commentId in this.recordedData.comments)
+        {
+            const comment = this.recordedData.comments[commentId];
+            this.timeline.addComment(comment.frameId, comment.id);
+        }
         
         // Select any first entity
         Utils.runAsync(() => {
@@ -1231,6 +1238,7 @@ export default class Renderer {
         this.timeline = new Timeline(timelineElement, timelineWrapper);
         this.timeline.setFrameClickedCallback(this.onTimelineClicked.bind(this));
         this.timeline.setEventClickedCallback(this.onTimelineEventClicked.bind(this));
+        this.timeline.setCommentClickedCallback(this.onTimelineCommentClicked.bind(this));
         this.timeline.setTimelineUpdatedCallback(this.onTimelineUpdated.bind(this));
         this.timeline.setRangeChangedCallback((initFrame, endFrame) => { this.playbackController.updateUI(); });
         this.timeline.setGetEntityNameCallback((entity, frameIdx) => { return this.findEntityNameOnFrame(Number.parseInt(entity), frameIdx); });
@@ -1354,6 +1362,35 @@ export default class Renderer {
         const uniqueId = Utils.toUniqueID(clientId, Number.parseInt(entityId));
         this.logEntity(LogLevel.Verbose, LogChannel.Timeline, "Event selected in timeline. ", frame, uniqueId);
         this.requestApplyFrame({ frame: frame, entityIdSel: Number.parseInt(entityId) });
+    }
+
+    onTimelineCommentClicked(frame: number, commentId: number)
+    {
+        // Find the right comment
+        for (let comId in this.recordedData.comments)
+        {
+            if (parseInt(comId) == commentId)
+            {
+                const comment = this.recordedData.comments[comId];
+                switch (comment.type)
+                {
+                    case RECORDING.ECommentType.Timeline:
+                    {
+                        this.logFrame(LogLevel.Verbose, LogChannel.Timeline, "Timeline comment selected in timeline. ", frame);
+                        this.requestApplyFrame({ frame: frame });
+                    }
+                    break;
+                    case RECORDING.ECommentType.Property:
+                    case RECORDING.ECommentType.EventProperty:
+                    {
+                        const propComment = comment as RECORDING.IPropertyComment;
+                        this.logEntity(LogLevel.Verbose, LogChannel.Timeline, "Property comment selected in timeline. ", frame, propComment.entityId);
+                        this.requestApplyFrame({ frame: frame, entityIdSel: propComment.entityId });
+                    }
+                    break;
+                }
+            }
+        }
     }
 
     onTimelineUpdated(elapsedSeconds: number)
