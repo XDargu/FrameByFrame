@@ -498,7 +498,7 @@ export default class Comments
         let propertyComment : RECORDING.IPropertyComment = {
             id: id,
             type: RECORDING.ECommentType.Property,
-            text: "Example comment",
+            text: "",
             pos: { x: x, y: y },
             frameId: frameId,
             entityId: entityId,
@@ -507,6 +507,8 @@ export default class Comments
         recording.comments[id] = propertyComment;
 
         this.makeComment(propertyComment);
+
+        this.editComment(id);
     }
 
     addEventPropertyComment(recording: RECORDING.NaiveRecordedData, frameId: number, entityId: number, propertyId: number)
@@ -527,7 +529,7 @@ export default class Comments
         let propertyComment : RECORDING.IPropertyComment = {
             id: id,
             type: RECORDING.ECommentType.EventProperty,
-            text: "Example comment",
+            text: "",
             pos: { x: x, y: y },
             frameId: frameId,
             entityId: entityId,
@@ -536,6 +538,8 @@ export default class Comments
         recording.comments[id] = propertyComment;
 
         this.makeComment(propertyComment);
+
+        this.editComment(id);
     }
 
     addTimelineComment(recording: RECORDING.NaiveRecordedData, frameId: number)
@@ -555,13 +559,15 @@ export default class Comments
         let timelineComment : RECORDING.ITimelineComment = {
             id: id,
             type: RECORDING.ECommentType.Timeline,
-            text: "Example comment",
+            text: "",
             pos: { x: x, y: y },
             frameId: frameId,
         };
         recording.comments[id] = timelineComment;
 
         this.makeComment(timelineComment);
+
+        this.editComment(id);
     }
 
     private setPropertyCommentPosition(comment: Comment)
@@ -600,6 +606,20 @@ export default class Comments
         {
             if (this.isCommentVisible(comment[1]))
                 this.setPropertyCommentPosition(comment[1]);
+        }
+    }
+
+    private editComment(id: number)
+    {
+        const comment = this.comments.get(id);
+        if (comment)
+        {
+            const event = new MouseEvent('dblclick', {
+                'view': window,
+                'bubbles': true,
+                'cancelable': true
+            });
+            comment.element.dispatchEvent(event);
         }
     }
 }
