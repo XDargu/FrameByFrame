@@ -22,11 +22,16 @@ export interface IOnCommentAddedCallback {
 	(frame: number, commentId: number) : void;
 }
 
+export interface IOnCommentDeletedCallback {
+	(frame: number, commentId: number) : void;
+}
+
 export interface CommentCallbacks {
     getPropertyItem: IGetPropertyItemCallback;
     frameCallback: ICommentFrameClickedCallback;
     getTimelineFramePos: IGetTimelineFramePos;
     onCommentAdded :IOnCommentAddedCallback;
+    onCommentDeleted :IOnCommentDeletedCallback;
 }
 
 class Comment
@@ -189,7 +194,10 @@ export default class Comments
     private commentWrapper: HTMLElement;
     private commentText: HTMLElement;
 
-    constructor(callbacks: CommentCallbacks)
+    // Source of data. This class owns creation and destrution of comments
+    private commentsData: RECORDING.IComments;
+
+    constructor(callbacks: CommentCallbacks, commentsData: RECORDING.IComments)
     {
         this.comments = new Map<number, Comment>();
         this.commentId = 1;
@@ -220,6 +228,13 @@ export default class Comments
 
         let page = document.querySelector(".full-page.page-wrapper");
         page.append(this.commentWrapper);
+
+        this.setCommentsData(commentsData);
+    }
+
+    setCommentsData(commentsData: RECORDING.IComments)
+    {
+        this.commentsData = commentsData;
     }
 
     selectionChanged(frame: number, entityId: number)
@@ -243,7 +258,6 @@ export default class Comments
                 this.setPropertyCommentPosition(comment[1]);
             }
         }
-        
     }
 
     private isCommentVisible(comment: Comment) : boolean
@@ -373,6 +387,20 @@ export default class Comments
         }
     }
 
+    private removeComment(recComment: RECORDING.IComment)
+    {
+        delete this.commentsData[recComment.id];
+
+        let comment = this.comments.get(recComment.id);
+        if (comment)
+        {
+            comment.lineController.clear();
+            comment.element.remove();
+        }
+
+        this.comments.delete(recComment.id);
+    }
+
     private makeComment(recComment: RECORDING.IComment)
     {
         const wrapper = document.createElement("div");
@@ -381,9 +409,16 @@ export default class Comments
         const text = document.createElement("div");
         text.classList.add("comment-text");
 
+        const closeBtn = document.createElement("div");
+        closeBtn.classList.add("comment-close");
+
+        const icon = document.createElement("i");
+        icon.classList.add("fas", "fa-times-circle");
+        closeBtn.append(icon);
+
         CommentContent.buildTextElement(text, recComment.text, this.callbacks.frameCallback)
 
-        wrapper.append(text);
+        wrapper.append(closeBtn, text);
 
         let page = document.querySelector(".full-page.page-wrapper");
         page.append(wrapper);
@@ -396,6 +431,23 @@ export default class Comments
             isEditing: false,
             lineController: new CommentLineController(this.getPropertySource(recComment), wrapper, origin)
         });
+
+        // Removing the comment
+        closeBtn.onclick = () =>
+        {
+            this.removeComment(recComment);
+
+            switch(recComment.type)
+            {
+                case RECORDING.ECommentType.Property:
+                case RECORDING.ECommentType.EventProperty:
+                    this.callbacks.onCommentDeleted((recComment as RECORDING.IPropertyComment).frameId, recComment.id);
+                    break;
+                case RECORDING.ECommentType.Timeline:
+                    this.callbacks.onCommentDeleted((recComment as RECORDING.ITimelineComment).frameId, recComment.id);
+                    break;
+            }
+        };
 
         // Dragging the comment around
         wrapper.addEventListener('mousedown', (e) =>
@@ -496,7 +548,7 @@ export default class Comments
         }
     }
 
-    addPropertyComment(recording: RECORDING.NaiveRecordedData, frameId: number, entityId: number, propertyId: number)
+    addPropertyComment(frameId: number, entityId: number, propertyId: number)
     {
         // Add to recording
         const id = this.nextCommentId();
@@ -520,14 +572,14 @@ export default class Comments
             entityId: entityId,
             propertyId: propertyId,
         };
-        recording.comments[id] = propertyComment;
+        this.commentsData[id] = propertyComment;
 
         this.makeComment(propertyComment);
 
         this.editComment(id);
     }
 
-    addEventPropertyComment(recording: RECORDING.NaiveRecordedData, frameId: number, entityId: number, propertyId: number)
+    addEventPropertyComment(frameId: number, entityId: number, propertyId: number)
     {
         // Add to recording
         const id = this.nextCommentId();
@@ -551,14 +603,14 @@ export default class Comments
             entityId: entityId,
             propertyId: propertyId,
         };
-        recording.comments[id] = propertyComment;
+        this.commentsData[id] = propertyComment;
 
         this.makeComment(propertyComment);
 
         this.editComment(id);
     }
 
-    addTimelineComment(recording: RECORDING.NaiveRecordedData, frameId: number)
+    addTimelineComment(frameId: number)
     {
         // Add to recording
         const id = this.nextCommentId();
@@ -579,7 +631,7 @@ export default class Comments
             pos: { x: x, y: y },
             frameId: frameId,
         };
-        recording.comments[id] = timelineComment;
+        this.commentsData[id] = timelineComment;
 
         this.makeComment(timelineComment);
 

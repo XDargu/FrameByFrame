@@ -26,6 +26,22 @@
     border: 2px solid $strong-primary;
 }
 
+.comment-close
+{
+    width: 13.6px;
+    height: 13.6px;
+    background: #767676;
+    color: #e6e6e6;
+    border-radius: 14px;
+    margin: -6px;
+    float: right;
+    display: none;
+}
+
+.comment:hover .comment-close {
+    display: unset;
+}
+
 .comment-text
 {
     margin: 5px;

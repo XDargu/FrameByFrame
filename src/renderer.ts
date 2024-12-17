@@ -177,9 +177,9 @@ export default class Renderer {
                     const entity = this.frameData.entities[this.selectedEntityId];
                     const isFromEvent = NaiveRecordedData.findPropertyIdInEntityEvents(entity, propId) != null;
                     if (isFromEvent)
-                        this.comments.addEventPropertyComment(this.recordedData, this.getCurrentFrame(), entity.id, propId);
+                        this.comments.addEventPropertyComment(this.getCurrentFrame(), entity.id, propId);
                     else
-                        this.comments.addPropertyComment(this.recordedData, this.getCurrentFrame(), entity.id, propId);
+                        this.comments.addPropertyComment(this.getCurrentFrame(), entity.id, propId);
                 },
                 isEntityInFrame: (id) => { return this.frameData?.entities[Utils.toUniqueID(this.frameData.clientId, id)] != undefined; },
                 isPropertyVisible: (propId) => { return this.sceneController.isPropertyVisible(propId); }
@@ -234,7 +234,9 @@ export default class Renderer {
                 frameCallback: (frame) => { this.requestApplyFrame({ frame: frame }); },
                 getTimelineFramePos: (frame) => { return this.timeline.getFramePosition(frame); },
                 onCommentAdded: (frame, commentId) => { this.timeline.addComment(frame, commentId); },
-            }
+                onCommentDeleted: (frame, commentId) => { this.timeline.removecomment(commentId); },
+            },
+            this.recordedData.comments
         );
 
         this.requestApplyFrame({ frame: 0});
@@ -718,6 +720,7 @@ export default class Renderer {
 
         this.updateMetadata();
 
+        this.comments.setCommentsData(this.recordedData.comments);
         this.comments.loadComments(this.recordedData.comments);
 
         // Select any first entity
@@ -1241,7 +1244,7 @@ export default class Renderer {
         const config = [
             { text: "Add comment in current frame", icon: "fa-comment", callback: () => { 
                 const currentFrame = this.getCurrentFrame();
-                this.comments.addTimelineComment(this.recordedData, currentFrame);
+                this.comments.addTimelineComment(currentFrame);
             } },
         ];
         addContextMenu(timelineWrapper, config);

@@ -311,6 +311,11 @@ class TimelineComments {
         this.comments.push({ frame: frame, commentId: commentId });
     }
 
+    removeComment(commentId: number)
+    {
+        this.comments = this.comments.filter(comment => comment.commentId != commentId);
+    }
+
     clear()
     {
         this.comments.length = 0;
@@ -1365,6 +1370,11 @@ export default class Timeline {
     addComment(frame: number, commentId: number)
     {
         this.data.comments.addComment(frame, commentId);
+    }
+
+    removecomment(commentId: number)
+    {
+        this.data.comments.removeComment(commentId);
     }
 
     addMarker(name: string, frame: number, color: string)
