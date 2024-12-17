@@ -300,8 +300,7 @@ export namespace Common {
 
     export function filterPropertyBoolean(property: RECORDING.IProperty, filters: MemberFilter[]): boolean {
         const name = property.name.toLowerCase();
-        const value = property.value == "true" ? true : false;
-
+        const value = property.value as boolean;
         for (let i = 0; i < filters.length; ++i) {
             if (applyFilterBoolean(name, value, filters[i])) {
                 return true;
