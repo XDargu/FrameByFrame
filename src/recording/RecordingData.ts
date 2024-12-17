@@ -1045,7 +1045,8 @@ export class NaiveRecordedData implements INaiveRecordedData {
 				{
 					let eventProperties = [
 						{ name: "Test string", type: CorePropertyTypes.String, value: "eventProp" + i },
-						{ name: "Test number", type: CorePropertyTypes.Number, value: j }
+						{ name: "Test number", type: CorePropertyTypes.Number, value: j },
+						{ name: "Test boolean", type: CorePropertyTypes.Bool, value: j % 2 == 0 },
 					];
 					let event = {
 						idx: 0,
