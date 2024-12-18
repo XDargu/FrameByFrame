@@ -1,6 +1,9 @@
-import * as Utils from '../utils/utils';
 import * as RECORDING from '../recording/RecordingData';
 import { ResourcePreview } from './ResourcePreview';
+
+export interface ICommentClickedCallback {
+	(frame: number, commentId: number) : void;
+}
 
 interface InfoBuilderGroup
 {
@@ -85,10 +88,12 @@ namespace InfoBuiler
 export class RecordingInfoList
 {
     private infoList: HTMLElement;
+    private onCommentClicked: ICommentClickedCallback;
 
-    constructor(infoList: HTMLElement)
+    constructor(infoList: HTMLElement, onCommentClicked: ICommentClickedCallback)
     {
         this.infoList = infoList;
+        this.onCommentClicked = onCommentClicked;
     }
 
     buildInfoList(recording: RECORDING.INaiveRecordedData)
@@ -117,6 +122,23 @@ export class RecordingInfoList
             for (let scene of recording.scenes)
             {
                 InfoBuiler.addElement(group, scene, "");
+            }
+            this.infoList.appendChild(group.fragment);
+        }
+
+        {
+            let group = InfoBuiler.createGroup("Comments");
+
+            for (let commentId in recording.comments)
+            {
+                const comment = recording.comments[commentId];
+
+                const element = InfoBuiler.addElement(group, comment.text, comment.text);
+                element.classList.remove("basico-no-hover");
+                
+                element.onclick = (ev) => {
+                    this.onCommentClicked(comment.frameId, comment.id);
+                };
             }
             this.infoList.appendChild(group.fragment);
         }

@@ -29,12 +29,17 @@ export interface IOnCommentDeletedCallback {
 	(frame: number, commentId: number) : void;
 }
 
+export interface IOnCommentChangedCallback {
+	(frame: number, commentId: number) : void;
+}
+
 export interface CommentCallbacks {
     getPropertyItem: IGetPropertyItemCallback;
     frameCallback: ICommentFrameClickedCallback;
     getTimelineFramePos: IGetTimelineFramePos;
     onCommentAdded :IOnCommentAddedCallback;
     onCommentDeleted :IOnCommentDeletedCallback;
+    onCommentChanged :IOnCommentChangedCallback;
 }
 
 namespace CommentColors
@@ -687,6 +692,17 @@ export default class Comments
                 comment.element.removeChild(textarea);
                 comment.isEditing = false;
                 DOMUtils.setClass(comment.element, "editing", false);
+
+                switch(comment.comment.type)
+                {
+                    case RECORDING.ECommentType.Property:
+                    case RECORDING.ECommentType.EventProperty:
+                        this.callbacks.onCommentChanged((comment.comment as RECORDING.IPropertyComment).frameId, comment.comment.id);
+                        break;
+                    case RECORDING.ECommentType.Timeline:
+                        this.callbacks.onCommentChanged((comment.comment as RECORDING.ITimelineComment).frameId, comment.comment.id);
+                        break;
+                }
             }
 
             textarea.oninput = () =>

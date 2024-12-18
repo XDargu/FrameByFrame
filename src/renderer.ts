@@ -233,8 +233,9 @@ export default class Renderer {
                 getPropertyItem: (propertyId) => { return this.entityPropsBuilder.findItemWithValue(propertyId + "") as HTMLElement; },
                 frameCallback: (frame) => { this.requestApplyFrame({ frame: frame }); },
                 getTimelineFramePos: (frame) => { return this.timeline.getFramePosition(frame); },
-                onCommentAdded: (frame, commentId) => { this.timeline.addComment(frame, commentId); },
-                onCommentDeleted: (frame, commentId) => { this.timeline.removecomment(commentId); },
+                onCommentAdded: (frame, commentId) => { this.timeline.addComment(frame, commentId); this.updateMetadata(); },
+                onCommentDeleted: (frame, commentId) => { this.timeline.removecomment(commentId); this.updateMetadata(); },
+                onCommentChanged: (frame, commentId) => { this.updateMetadata(); },
             },
             this.recordedData.comments
         );
@@ -517,7 +518,9 @@ export default class Renderer {
         );
 
         // Create info
-        this.recordingInfoList = new RecordingInfoList(document.getElementById("recording-info"));
+        this.recordingInfoList = new RecordingInfoList(document.getElementById("recording-info"), (frame, commentId) => {
+            this.onTimelineCommentClicked(frame, commentId);
+        });
 
         // Connection buttons
         this.connectionButtons = new ConnectionButtons(document.getElementById(`connection-buttons`), (id: ConnectionId) => {
