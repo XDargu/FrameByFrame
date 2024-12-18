@@ -3870,10 +3870,11 @@ body {
   border-radius: 3px;
   font-size: 12px;
   max-width: 200px;
-  cursor: pointer; }
-
-.comment.disabled {
+  cursor: pointer;
   display: none; }
+
+.comment.visible {
+  display: unset; }
 
 .comment.editing {
   cursor: text;
@@ -3930,9 +3931,10 @@ body {
   transform-origin: left;
   background-color: yellow;
   width: 100%;
-  height: 2px; }
-
-.comment-line.disabled {
+  height: 2px;
   display: none; }
+
+.comment-line.visible {
+  display: unset; }
 
 /*# sourceMappingURL=styles.css.map */

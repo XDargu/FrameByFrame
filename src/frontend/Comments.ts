@@ -78,7 +78,7 @@ class CommentLineController
 
     public setVisible(isVisible: boolean)
     {
-        DOMUtils.setClass(this.lineElement, "disabled", !isVisible);
+        DOMUtils.setClass(this.lineElement, "visible", isVisible);
     }
 
     updateShapeLine()
@@ -325,7 +325,7 @@ export default class Comments
         window.requestAnimationFrame(this.update.bind(this));
         
         this.commentWrapper = document.createElement("div");
-        this.commentWrapper.classList.add("comment");
+        this.commentWrapper.classList.add("comment", "visible");
 
         this.commentText = document.createElement("div");
         this.commentText.classList.add("comment-text");
@@ -350,7 +350,7 @@ export default class Comments
         for (let id in recComments)
         {
             const comment = recComments[id];
-            this.makeComment(comment);
+            this.makeComment(comment, false);
         }
     }
 
@@ -362,13 +362,24 @@ export default class Comments
         this.updateComments();
     }
 
+    private setCommentVisible(comment: Comment, isVisible: boolean)
+    {
+        DOMUtils.setClass(comment.element, "visible", isVisible);
+        comment.lineController.setVisible(isVisible);
+    }
+
+    private clearComment(comment: Comment)
+    {
+        comment.element.remove();
+        comment.lineController.clear();
+    }
+
     private updateComments()
     {
         for (let comment of this.comments)
         {
             const isVisible = this.isCommentVisible(comment[1]);
-            DOMUtils.setClass(comment[1].element, "disabled", !isVisible);
-            comment[1].lineController.setVisible(isVisible);
+            this.setCommentVisible(comment[1], isVisible);
 
             if (isVisible)
             {
@@ -409,8 +420,7 @@ export default class Comments
     {
         for (let comment of this.comments)
         {
-            comment[1].element.remove();
-            comment[1].lineController.clear();
+            this.clearComment(comment[1]);
         }
 
         this.comments.clear();
@@ -492,14 +502,13 @@ export default class Comments
         let comment = this.comments.get(recComment.id);
         if (comment)
         {
-            comment.lineController.clear();
-            comment.element.remove();
+            this.clearComment(comment);
         }
 
         this.comments.delete(recComment.id);
     }
 
-    private makeComment(recComment: RECORDING.IComment)
+    private makeComment(recComment: RECORDING.IComment, makeVisible: boolean = true)
     {
         const wrapper = document.createElement("div");
         wrapper.classList.add("comment");
@@ -522,12 +531,13 @@ export default class Comments
 
         const origin = recComment.type == RECORDING.ECommentType.Timeline ? CommentLineOrigin.Top : CommentLineOrigin.Right;
 
-        this.comments.set(recComment.id, {
+        const comment = {
             comment: recComment,
             element: wrapper,
             isEditing: false,
             lineController: new CommentLineController(this.getPropertySource(recComment), wrapper, origin)
-        });
+        };
+        this.comments.set(recComment.id, comment);
 
         // Removing the comment
         closeBtn.onclick = () =>
@@ -643,6 +653,8 @@ export default class Comments
                 this.callbacks.onCommentAdded((recComment as RECORDING.ITimelineComment).frameId, recComment.id);
                 break;
         }
+
+        this.setCommentVisible(comment, makeVisible);
     }
 
     addPropertyComment(frameId: number, entityId: number, propertyId: number)

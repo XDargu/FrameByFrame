@@ -13,11 +13,12 @@
     font-size: 12px;
     max-width: 200px;
     cursor: pointer;
+    display: none;
 }
 
-.comment.disabled
+.comment.visible
 {
-    display: none;
+    display: unset;
 }
 
 .comment.editing
@@ -95,9 +96,11 @@
     background-color: yellow;
     width: 100%;
     height: 2px;
+    
+    display: none;
 }
 
-.comment-line.disabled
+.comment-line.visible
 {
-    display: none;
+    display: unset;
 }
