@@ -3878,7 +3878,7 @@ body {
 
 .comment.editing {
   cursor: text;
-  border: 2px solid #8442B9; }
+  box-shadow: 0 0 0 2px #8442B9; }
 
 .comment-close {
   width: 13.6px;

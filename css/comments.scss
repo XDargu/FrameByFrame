@@ -24,7 +24,7 @@
 .comment.editing
 {
     cursor: text;
-    border: 2px solid $strong-primary;
+    box-shadow: 0 0 0 2px $strong-primary;
 }
 
 .comment-close
