@@ -294,6 +294,13 @@ export default class Comments
     private commentWrapper: HTMLElement;
     private commentText: HTMLElement;
 
+    // DOM References
+    private detailsPane: HTMLElement;
+    private timelinePane: HTMLElement;
+    private propertiesPane: HTMLElement;
+    private eventsPane: HTMLElement;
+    private pagePane: HTMLElement;
+
     private commentsData: CommentsData;
 
     constructor(callbacks: CommentCallbacks, recComments: RECORDING.IComments)
@@ -306,8 +313,14 @@ export default class Comments
         var resizeObserver = new ResizeObserver(entries => {
             this.updatePropertyCommentsPos();
         });
-        const detailPane = document.getElementById("detail-pane");
-        resizeObserver.observe(detailPane);
+
+        this.detailsPane = document.getElementById("detail-pane");
+        this.timelinePane = document.getElementById("timeline");
+        this.propertiesPane = document.getElementById("properties-container");
+        this.eventsPane = document.getElementById("events-container");
+        this.pagePane = document.querySelector(".full-page.page-wrapper");
+
+        resizeObserver.observe(this.detailsPane);
 
         window.requestAnimationFrame(this.update.bind(this));
         
@@ -324,8 +337,7 @@ export default class Comments
         this.commentWrapper.style.top = -1000 + "px";
         this.commentWrapper.style.zIndex = "-10000";
 
-        let page = document.querySelector(".full-page.page-wrapper");
-        page.append(this.commentWrapper);
+        this.pagePane.append(this.commentWrapper);
 
         this.commentsData = new CommentsData();
         this.setCommentsData(recComments);
@@ -360,22 +372,23 @@ export default class Comments
 
             if (isVisible)
             {
-                this.setPropertyCommentPosition(comment[1]);
+                this.updateCommentPosition(comment[1]);
             }
         }
     }
 
     private isCommentVisible(comment: Comment) : boolean
     {
-        if (comment.comment.type == RECORDING.ECommentType.Property || comment.comment.type == RECORDING.ECommentType.EventProperty)
+        switch(comment.comment.type)
         {
-            const propComment = comment.comment as RECORDING.IPropertyComment;
-            return propComment.entityId == this.currentEntityId && propComment.frameId == this.currentFrame;
-        }
-
-        if (comment.comment.type == RECORDING.ECommentType.Timeline)
-        {
-            return true;
+            case RECORDING.ECommentType.Property:
+            case RECORDING.ECommentType.EventProperty:
+            {
+                const propComment = comment.comment as RECORDING.IPropertyComment;
+                return propComment.entityId == this.currentEntityId && propComment.frameId == this.currentFrame;
+            }
+            case RECORDING.ECommentType.Timeline:
+                return true;
         }
 
         return false;
@@ -418,9 +431,7 @@ export default class Comments
                         if (firstVisibleParent)
                         {
                             const propRect = firstVisibleParent.getBoundingClientRect();
-
-                            const propsContainer = document.getElementById("properties-container");
-                            const parentRect = propsContainer.getBoundingClientRect();
+                            const parentRect = this.propertiesPane.getBoundingClientRect();
 
                             const propOffset = 12;
                             const y = Utils.clamp(propRect.y + propOffset, parentRect.y, parentRect.y + parentRect.height)
@@ -442,9 +453,7 @@ export default class Comments
                     if (firstVisibleParent)
                     {
                         const propRect = firstVisibleParent.getBoundingClientRect();
-
-                        const propsContainer = document.getElementById("events-container");
-                        const parentRect = propsContainer.getBoundingClientRect();
+                        const parentRect = this.eventsPane.getBoundingClientRect();
 
                         const propOffset = 12;
                         const y = Utils.clamp(propRect.y + propOffset, parentRect.y, parentRect.y + parentRect.height)
@@ -462,8 +471,7 @@ export default class Comments
 
                     return () => {
 
-                        const timelinePane = document.getElementById("timeline");
-                        const timelinePaneRect = timelinePane.getBoundingClientRect();
+                        const timelinePaneRect = this.timelinePane.getBoundingClientRect();
             
                         const x = Utils.clamp(this.callbacks.getTimelineFramePos(timelineComment.frameId), timelinePaneRect.x, timelinePaneRect.x + timelinePaneRect.width);
                         const y = timelinePaneRect.y + timelinePaneRect.height;
@@ -510,8 +518,7 @@ export default class Comments
 
         wrapper.append(closeBtn, text);
 
-        let page = document.querySelector(".full-page.page-wrapper");
-        page.append(wrapper);
+        this.pagePane.append(wrapper);
 
         const origin = recComment.type == RECORDING.ECommentType.Timeline ? CommentLineOrigin.Top : CommentLineOrigin.Right;
 
@@ -556,7 +563,7 @@ export default class Comments
                 initX = e.x;
                 initY = e.y;
     
-                this.setPropertyCommentPosition(comment);
+                this.updateCommentPosition(comment);
             }
                 
             let stopPan = () =>
@@ -624,7 +631,7 @@ export default class Comments
             resizeArea();
         };
 
-        this.setPropertyCommentPosition(this.comments.get(recComment.id));
+        this.updateCommentPosition(this.comments.get(recComment.id));
 
         switch(recComment.type)
         {
@@ -642,9 +649,8 @@ export default class Comments
     {
         // Calc initial pos
         const propertyElement = this.callbacks.getPropertyItem(propertyId);
-        const detailPane = document.getElementById("detail-pane");
 
-        const detailPaneRect = detailPane.getBoundingClientRect();
+        const detailPaneRect = this.detailsPane.getBoundingClientRect();
         const propertyElementRect = propertyElement.getBoundingClientRect();
 
         const x = -150;
@@ -659,9 +665,8 @@ export default class Comments
     {
         // Calc initial pos
         const propertyElement = this.callbacks.getPropertyItem(propertyId);
-        const detailPane = document.getElementById("detail-pane");
 
-        const detailPaneRect = detailPane.getBoundingClientRect();
+        const detailPaneRect = this.detailsPane.getBoundingClientRect();
         const propertyElementRect = propertyElement.getBoundingClientRect();
 
         const x = -150;
@@ -675,9 +680,7 @@ export default class Comments
     addTimelineComment(frameId: number)
     {
         // Calc initial pos
-        const timelinePane = document.getElementById("timeline");
-
-        const timelinePaneRect = timelinePane.getBoundingClientRect();
+        const timelinePaneRect = this.timelinePane.getBoundingClientRect();
 
         const defaultCommentWidth = 50;
         const x = Utils.clamp(this.callbacks.getTimelineFramePos(frameId) - defaultCommentWidth, defaultCommentWidth, window.innerWidth - defaultCommentWidth * 2);
@@ -688,34 +691,34 @@ export default class Comments
         this.editComment(timelineComment.id);
     }
 
-    private setPropertyCommentPosition(comment: Comment)
+    private calcCommentPosition(comment: RECORDING.IComment) : RECORDING.IVec2
     {
-        if (comment.comment.type == RECORDING.ECommentType.Property)
+        switch(comment.type)
         {
-            const detailPane = document.getElementById("detail-pane");
-
-            const detailPaneRect = detailPane.getBoundingClientRect();
-
-            comment.element.style.left = detailPaneRect.x + comment.comment.pos.x + "px";
-            comment.element.style.top = detailPaneRect.y + comment.comment.pos.y + "px";
+            case RECORDING.ECommentType.Property:
+            {
+                const detailPaneRect = this.detailsPane.getBoundingClientRect();
+                return { x: detailPaneRect.x + comment.pos.x, y: detailPaneRect.y + comment.pos.y };
+            }
+            case RECORDING.ECommentType.EventProperty:
+            {
+                const detailPaneRect = this.detailsPane.getBoundingClientRect();
+                return { x: detailPaneRect.x + comment.pos.x, y: detailPaneRect.y + detailPaneRect.height + comment.pos.y };
+            }
+            case RECORDING.ECommentType.Timeline:
+            {
+                const timelinePaneRect = this.timelinePane.getBoundingClientRect();
+                return { x: timelinePaneRect.x + comment.pos.x, y: timelinePaneRect.y + comment.pos.y };
+            }
         }
-        else if (comment.comment.type == RECORDING.ECommentType.EventProperty)
-        {
-            const detailPane = document.getElementById("detail-pane");
+    }
 
-            const detailPaneRect = detailPane.getBoundingClientRect();
+    private updateCommentPosition(comment: Comment)
+    {
+        const pos = this.calcCommentPosition(comment.comment);
 
-            comment.element.style.left = detailPaneRect.x + comment.comment.pos.x + "px";
-            comment.element.style.top = detailPaneRect.y + detailPaneRect.height + comment.comment.pos.y + "px";
-        }
-        else if (comment.comment.type == RECORDING.ECommentType.Timeline)
-        {
-            const timelinePane = document.getElementById("timeline");
-            const timelinePaneRect = timelinePane.getBoundingClientRect();
-
-            comment.element.style.left = timelinePaneRect.x + comment.comment.pos.x + "px";
-            comment.element.style.top = timelinePaneRect.y + comment.comment.pos.y + "px";
-        }
+        comment.element.style.left = pos.x + "px";
+        comment.element.style.top = pos.y + "px";
     }
 
     private updatePropertyCommentsPos()
@@ -723,7 +726,7 @@ export default class Comments
         for (let comment of this.comments)
         {
             if (this.isCommentVisible(comment[1]))
-                this.setPropertyCommentPosition(comment[1]);
+                this.updateCommentPosition(comment[1]);
         }
     }
 
