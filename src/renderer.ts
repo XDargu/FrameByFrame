@@ -721,7 +721,6 @@ export default class Renderer {
         this.updateMetadata();
 
         this.comments.setCommentsData(this.recordedData.comments);
-        this.comments.loadComments(this.recordedData.comments);
 
         // Select any first entity
         Utils.runAsync(() => {
