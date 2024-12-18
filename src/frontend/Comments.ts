@@ -169,7 +169,7 @@ namespace CommentContent
                         let a = document.createElement("b");
                         a.classList.add("comment-link");
                         a.innerText = frameSection;
-                        a.onclick = () => { frameCallback(parseInt(frame)) };
+                        a.onclick = () => { frameCallback(parseInt(frame) - 1) };
                         target.append(a);
                     }
                     else
@@ -179,6 +179,21 @@ namespace CommentContent
                 }
             }
         }
+    }
+}
+
+export namespace CommentUtils
+{
+    export function shiftContentFrameRefs(text: string, difference: number) : string
+    {
+        const frameRegex = /(frame [0-9]+)/;
+        return text.replace(frameRegex, (frameRef: string) =>
+        {
+            const frame = frameRef.substring(6);
+            const frameId = parseInt(frame) + difference;
+
+            return "frame " + frameId;
+        });
     }
 }
 

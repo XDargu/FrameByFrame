@@ -30,6 +30,11 @@ export interface IGetEntityName
     (entityId: string, frameIdx: number) : string
 }
 
+export interface IGetCommentText
+{
+    (command: number) : string
+}
+
 export interface ITimelineEvent {
     entityId: string;
     typeId: TimelineEventTypeId;
@@ -148,6 +153,76 @@ class EventPopup {
     setGetEntityNameCallback(callback: IGetEntityName)
     {
         this.getEntityName = callback;
+    }
+
+    setActive(isActive: boolean)
+    {
+        this.isActive = isActive;
+        if (!isActive)
+        {
+            this.hide();
+        }
+    }
+}
+
+class CommentPopup {
+
+    private popup: HTMLElement;
+    private hideTimeout: NodeJS.Timeout;
+    private getCommentText: IGetCommentText;
+    private isActive: boolean;
+
+    constructor(popup: HTMLElement)
+    {
+        this.popup = popup;
+        this.hideTimeout = null;
+    }
+
+    showAtPosition(x: number, y: number, comments: ITimelineComment[], onCommentClicked: ICommentClickedCallback)
+    {
+        if (!this.isActive) { return; }
+
+        clearTimeout(this.hideTimeout);
+        this.hideTimeout = null;
+
+        DOMUtils.setClass(this.popup, "hidden", false);
+
+        this.popup.innerHTML = "";
+        for (let i=0; i<comments.length; ++i)
+        {
+            const comment = comments[i];
+            let p = document.createElement("p");
+            const text = this.getCommentText(comment.commentId);
+            let croppedText = text;
+            if (text.length > 30)
+                croppedText = text.trim().substring(0, 27).trimRight() + "...";
+
+            p.textContent = croppedText;
+            p.onclick = () => {
+                onCommentClicked(comment.frame, comment.commentId);
+            };
+            this.popup.appendChild(p);
+        }
+
+        const clampedPos = DOMUtils.clampElementToScreen(x, y, this.popup, -10, 10);
+
+        this.popup.style.left = (clampedPos.x) + "px";
+        this.popup.style.top = (clampedPos.y) + "px";
+    }
+
+    hide()
+    {
+        if (this.hideTimeout == null)
+        {
+            this.hideTimeout = setTimeout(() => {
+                DOMUtils.setClass(this.popup, "hidden", true);
+            }, 200);
+        }
+    }
+
+    setGetCommentTextCallback(callback: IGetCommentText)
+    {
+        this.getCommentText = callback;
     }
 
     setActive(isActive: boolean)
@@ -353,6 +428,7 @@ class TimelineInputHandler {
     // Rendering info
     renderer: TimelineRenderer;
     popup: EventPopup; // TODO: Move this out of this class
+    commentPopup: CommentPopup;
 
     // Callbacks
     onframeClicked : ITimelineFrameClickedCallback;
@@ -360,7 +436,7 @@ class TimelineInputHandler {
     onCommentClicked: ICommentClickedCallback;
     onRangeChanged: IRangeChangedCallback;
 
-    constructor(canvas: HTMLCanvasElement, renderer: TimelineRenderer, data: TimelineData, popup: EventPopup) {
+    constructor(canvas: HTMLCanvasElement, renderer: TimelineRenderer, data: TimelineData, popup: EventPopup, commentPopup: CommentPopup) {
 
         
         document.body.addEventListener("mousemove", this.onPageMouseMove.bind(this));
@@ -377,6 +453,7 @@ class TimelineInputHandler {
         this.data = data;
         this.renderer = renderer;
         this.popup = popup;
+        this.commentPopup = commentPopup;
 
         this.inputOperation = InputOperation.None;
     }
@@ -465,17 +542,32 @@ class TimelineInputHandler {
         const shouldDisplayPointer = this.renderer.hoveredEvent || this.renderer.hoveredComment || this.renderer.hoveredLeftRange || this.renderer.hoveredRightRange;
         this.canvas.style.cursor = shouldDisplayPointer ? "pointer" : "auto";
 
-        const shouldDisplayPopup = this.renderer.hoveredEvent && this.inputOperation != InputOperation.MovingTimeline;
+        const shouldDisplayPopup = (this.renderer.hoveredEvent || this.renderer.hoveredComment) && this.inputOperation != InputOperation.MovingTimeline;
+
         if (shouldDisplayPopup)
         {
-            const events = this.data.events.getEventsInFrame(this.renderer.hoveredEvent.frame);
+            if (this.renderer.hoveredEvent)
+            {
+                const events = this.data.events.getEventsInFrame(this.renderer.hoveredEvent.frame);
 
-            const pageY = this.canvas.offsetTop + TimelineRenderer.eventHeight;
-            this.popup.showAtPosition(event.pageX, pageY, events, this.onEventClicked);
+                const pageY = this.canvas.offsetTop + TimelineRenderer.eventHeight;
+                this.popup.showAtPosition(event.pageX, pageY, events, this.onEventClicked);
+                this.commentPopup.hide();
+            }
+            else if (this.renderer.hoveredComment)
+            {
+                const comments = this.data.comments.getCommentsInFrame(this.renderer.hoveredComment.frame);
+
+                const pageY = this.canvas.offsetTop + TimelineRenderer.eventHeight;
+                this.commentPopup.showAtPosition(event.pageX, pageY, comments, this.onCommentClicked);
+
+                this.popup.hide();
+            }
         }
         else
         {
             this.popup.hide();
+            this.commentPopup.hide();
         }
     }
 
@@ -492,6 +584,7 @@ class TimelineInputHandler {
     private onMouseLeave(event : MouseEvent)
     {
         this.popup.hide();
+        this.commentPopup.hide();
     }
 
     private onMouseDown(event : MouseEvent)
@@ -1342,13 +1435,15 @@ export default class Timeline {
     private inputHandler: TimelineInputHandler;
 
     private popup: EventPopup;
+    private commentPopup: CommentPopup;
 
     constructor(canvas : HTMLCanvasElement, wrapper: HTMLElement)
     {
         this.data = new TimelineData();
         this.renderer = new TimelineRenderer(this.data, canvas, wrapper);
         this.popup = new EventPopup(document.getElementById("eventPopup"));
-        this.inputHandler = new TimelineInputHandler(canvas, this.renderer, this.data, this.popup);
+        this.commentPopup = new CommentPopup(document.getElementById("commentPopup"));
+        this.inputHandler = new TimelineInputHandler(canvas, this.renderer, this.data, this.popup, this.commentPopup);
     }
 
     clear()
@@ -1438,9 +1533,15 @@ export default class Timeline {
         this.popup.setGetEntityNameCallback(callback);
     }
 
+    setGetCommentTextCallback(callback: IGetCommentText)
+    {
+        this.commentPopup.setGetCommentTextCallback(callback);
+    }
+
     setPopupActive(isActive: boolean)
     {
         this.popup.setActive(isActive);
+        this.commentPopup.setActive(isActive);
     }
 
     setCurrentFrame(frame: number)

@@ -35,7 +35,7 @@ import { loadImageResource } from "./render/resources/images";
 import * as TypeSystem from "./types/typeRegistry";
 import { ResourcePreview } from "./frontend/ResourcePreview";
 import { PinnedTexture } from "./frontend/PinnedTexture";
-import Comments from "./frontend/Comments";
+import Comments, { CommentUtils } from "./frontend/Comments";
 import { addContextMenu } from "./frontend/ContextMenu";
 
 const zlib = require('zlib');
@@ -1240,6 +1240,7 @@ export default class Renderer {
         this.timeline.setTimelineUpdatedCallback(this.onTimelineUpdated.bind(this));
         this.timeline.setRangeChangedCallback((initFrame, endFrame) => { this.playbackController.updateUI(); });
         this.timeline.setGetEntityNameCallback((entity, frameIdx) => { return this.findEntityNameOnFrame(Number.parseInt(entity), frameIdx); });
+        this.timeline.setGetCommentTextCallback((commentId) => { return this.recordedData.comments[commentId].text; });
 
         // Context menu
         const config = [
@@ -1471,7 +1472,13 @@ export default class Renderer {
                         // We need to correct the frame, which mens we need a deep copy, to avoid changing the original comment
                         const deepCopy = JSON.parse(JSON.stringify(comment));
                         data.comments[comment.id] = deepCopy;
-                        data.comments[comment.id].frameId -= firstFrame;
+                        
+                        // Adapt frameId and frameRefs in text
+                        const diff = -firstFrame;
+                        let copiedComment = data.comments[comment.id];
+                        copiedComment.frameId += diff;
+
+                        copiedComment.text = CommentUtils.shiftContentFrameRefs(copiedComment.text, diff);
                     }
                 }
 

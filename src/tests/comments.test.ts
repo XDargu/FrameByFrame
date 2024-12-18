@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import * as Recording from "../recording/RecordingData"
-import { CommentsData } from '../frontend/Comments';
+import { CommentsData, CommentUtils } from '../frontend/Comments';
 
 describe('Comments', () => {
 
@@ -51,5 +51,14 @@ describe('Comments', () => {
         commentsData.deleteComment(propCom1.id);
         const propCom2 = commentsData.addPropertyComment(2, 5, 7, { x: 100, y: 200 });
         expect(propCom2.id).to.equal(2);
+    });
+
+    it('Comment references are correctly shifted', () => {
+
+        const text = CommentUtils.shiftContentFrameRefs("Go to frame 65 to view more data", -32);
+        expect(text).to.equal("Go to frame 33 to view more data");
+
+        const text2 = CommentUtils.shiftContentFrameRefs("Go to frame 65 to view more data", 60);
+        expect(text2).to.equal("Go to frame 125 to view more data");
     });
 });
