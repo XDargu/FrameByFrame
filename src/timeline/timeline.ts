@@ -1538,9 +1538,13 @@ export default class Timeline {
         this.commentPopup.setGetCommentTextCallback(callback);
     }
 
-    setPopupActive(isActive: boolean)
+    setEventPopupActive(isActive: boolean)
     {
         this.popup.setActive(isActive);
+    }
+
+    setCommentPopupActive(isActive: boolean)
+    {
         this.commentPopup.setActive(isActive);
     }
 

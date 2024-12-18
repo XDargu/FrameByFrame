@@ -23,6 +23,7 @@ export interface ISettings
     syncCameraPosition: boolean,
     /* Timeline */
     showEventPopup: boolean,
+    showCommentPopup: boolean,
     /* Grid */
     gridHeight: number,
     gridSpacing: number,
@@ -68,6 +69,7 @@ export function createDefaultSettings() : ISettings
         syncCameraPosition: false,
         /* Timeline */
         showEventPopup: true,
+        showCommentPopup: true,
         /* Grid */
         gridHeight: 0,
         gridSpacing: 1,

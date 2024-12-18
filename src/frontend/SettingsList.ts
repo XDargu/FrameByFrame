@@ -370,6 +370,7 @@ export class SettingsList
         {
             let group = SettingsBuilder.createGroup("Timeline");
             SettingsBuilder.addBooleanSetting(group, "Show event popup", settings.showEventPopup, (value) => {settings.showEventPopup = value; this.onSettingsChanged(); })
+            SettingsBuilder.addBooleanSetting(group, "Show comment popup", settings.showCommentPopup, (value) => {settings.showCommentPopup = value; this.onSettingsChanged(); })
             this.settingsList.appendChild(group.fragment);
         }
 

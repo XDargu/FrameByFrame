@@ -619,7 +619,8 @@ export default class Renderer {
         this.shapeArrowController.setColor(settings.shapeHoverColor);
         this.shapeArrowController.setEnabled(settings.showShapeLineOnHover);
 
-        this.timeline.setPopupActive(settings.showEventPopup);
+        this.timeline.setEventPopupActive(settings.showEventPopup);
+        this.timeline.setCommentPopupActive(settings.showCommentPopup);
 
         this.comments.showComments(settings.showComments);
     }
