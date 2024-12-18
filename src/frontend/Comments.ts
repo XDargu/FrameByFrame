@@ -287,6 +287,7 @@ export default class Comments
 
     private currentFrame: number;
     private currentEntityId: number;
+    private displayComments: boolean;
 
     private callbacks: CommentCallbacks;
 
@@ -341,6 +342,15 @@ export default class Comments
 
         this.commentsData = new CommentsData();
         this.setCommentsData(recComments);
+
+        this.displayComments = false;
+    }
+
+    showComments(shouldDisplayComments: boolean)
+    {
+        this.displayComments = shouldDisplayComments;
+
+        this.updateComments();
     }
 
     setCommentsData(recComments: RECORDING.IComments)
@@ -352,6 +362,8 @@ export default class Comments
             const comment = recComments[id];
             this.makeComment(comment, false);
         }
+
+        this.updateComments();
     }
 
     selectionChanged(frame: number, entityId: number)
@@ -390,6 +402,8 @@ export default class Comments
 
     private isCommentVisible(comment: Comment) : boolean
     {
+        if (!this.displayComments) return false;
+
         switch(comment.comment.type)
         {
             case RECORDING.ECommentType.Property:

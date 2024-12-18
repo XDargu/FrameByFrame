@@ -32,6 +32,8 @@ export interface ISettings
     removeOldFrames: boolean,
     removeOldFramesAmount: number,
     removeOldFramesUpdate: boolean,
+    /* Comments */
+    showComments: boolean,
     /* Debug */
     showRenderDebug: boolean,
     /* Graphics */
@@ -75,6 +77,8 @@ export function createDefaultSettings() : ISettings
         removeOldFrames: false,
         removeOldFramesAmount: 500,
         removeOldFramesUpdate: true,
+        /* Comments */
+        showComments: true,
         /* Debug */
         showRenderDebug: false,
         /* Graphics */

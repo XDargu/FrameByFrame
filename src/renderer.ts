@@ -620,6 +620,8 @@ export default class Renderer {
         this.shapeArrowController.setEnabled(settings.showShapeLineOnHover);
 
         this.timeline.setPopupActive(settings.showEventPopup);
+
+        this.comments.showComments(settings.showComments);
     }
 
     updateSettings(settings: ISettings)
