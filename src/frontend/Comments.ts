@@ -3,6 +3,7 @@ import * as Utils from "../utils/utils";
 import * as DOMUtils from '../utils/DOMUtils';
 import * as RECORDING from '../recording/RecordingData';
 import { Console, LogChannel, LogLevel } from "../frontend/ConsoleController";
+import { addContextMenu } from './ContextMenu';
 
 export interface IGetPropertyItemCallback {
     (propertyId: number) : HTMLElement;
@@ -34,6 +35,15 @@ export interface CommentCallbacks {
     getTimelineFramePos: IGetTimelineFramePos;
     onCommentAdded :IOnCommentAddedCallback;
     onCommentDeleted :IOnCommentDeletedCallback;
+}
+
+namespace CommentColors
+{
+    export const Default = "#D9D9D9";
+    export const Red     = "#e59494";
+    export const Green   = "#A1D6CB";
+    export const Blue    = "#a1a8d6";
+    export const Yellow  = "#d6cfa1";
 }
 
 class Comment
@@ -79,6 +89,11 @@ class CommentLineController
     public setVisible(isVisible: boolean)
     {
         DOMUtils.setClass(this.lineElement, "visible", isVisible);
+    }
+
+    public setColor(color: string)
+    {
+        this.lineElement.style.background = color;
     }
 
     updateShapeLine()
@@ -327,7 +342,7 @@ export default class Comments
         console.log(callbacks);
 
         var resizeObserver = new ResizeObserver(entries => {
-            this.updatePropertyCommentsPos();
+            this.updateCommentsPos();
         });
 
         this.detailsPane = document.getElementById("detail-pane");
@@ -405,12 +420,17 @@ export default class Comments
     {
         for (let comment of this.comments)
         {
-            const isVisible = this.isCommentVisible(comment[1]);
-            this.setCommentVisible(comment[1], isVisible);
+            const recComment = comment[1];
+            const isVisible = this.isCommentVisible(recComment);
+            this.setCommentVisible(recComment, isVisible);
+
+            const color = recComment.comment.color ? recComment.comment.color : CommentColors.Default;
+            recComment.element.style.background = color;
+            recComment.lineController.setColor(color);
 
             if (isVisible)
             {
-                this.updateCommentPosition(comment[1]);
+                this.updateCommentPosition(recComment);
             }
         }
     }
@@ -557,6 +577,16 @@ export default class Comments
         wrapper.append(closeBtn, text);
 
         this.pagePane.append(wrapper);
+
+        // Context menu
+        const config = [
+            { text: "Default", callback: () => { recComment.color = "#D9D9D9"; this.updateComments(); } },
+            { text: "Red",     callback: () => { recComment.color = "#e59494"; this.updateComments(); } },
+            { text: "Green",   callback: () => { recComment.color = "#A1D6CB"; this.updateComments(); } },
+            { text: "Blue",    callback: () => { recComment.color = "#a1a8d6"; this.updateComments(); } },
+            { text: "Yellow",  callback: () => { recComment.color = "#d6cfa1"; this.updateComments(); } },
+        ];
+        addContextMenu(wrapper, config);
 
         const origin = recComment.type == RECORDING.ECommentType.Timeline ? CommentLineOrigin.Top : CommentLineOrigin.Right;
 
@@ -762,7 +792,7 @@ export default class Comments
         comment.element.style.top = pos.y + "px";
     }
 
-    private updatePropertyCommentsPos()
+    private updateCommentsPos()
     {
         for (let comment of this.comments)
         {

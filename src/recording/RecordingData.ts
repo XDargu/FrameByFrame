@@ -532,6 +532,7 @@ export interface IComment {
     type: ECommentType;
     text: string;
     pos: IVec2;
+    color?: string;
 }
 
 export interface IPropertyComment extends IComment {
