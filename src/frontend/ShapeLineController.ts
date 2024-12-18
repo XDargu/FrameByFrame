@@ -1,5 +1,6 @@
 import * as RECORDING from '../recording/RecordingData';
 import * as Utils from "../utils/utils";
+import * as DOMUtils from '../utils/DOMUtils';
 
 export interface IGetPropertyItemCallback {
     (propertyId: number) : HTMLElement;
@@ -66,9 +67,9 @@ export default class ShapeLineController
 
     deactivate()
     {
-        Utils.addUniqueClass(this.originElement, "disabled");
-        Utils.addUniqueClass(this.targetElement, "disabled");
-        Utils.addUniqueClass(this.lineElement, "disabled");
+        DOMUtils.addUniqueClass(this.originElement, "disabled");
+        DOMUtils.addUniqueClass(this.targetElement, "disabled");
+        DOMUtils.addUniqueClass(this.lineElement, "disabled");
         this.isActive = false;
     }
 

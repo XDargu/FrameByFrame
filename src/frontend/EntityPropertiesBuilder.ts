@@ -1,5 +1,6 @@
 import * as RECORDING from '../recording/RecordingData';
 import * as Utils from "../utils/utils";
+import * as DOMUtils from '../utils/DOMUtils';
 import { CorePropertyTypes } from "../types/typeRegistry";
 import { TreeControl } from "../ui/tree";
 import { ICreateFilterFromPropCallback, IGoToEntityCallback, IIsEntityInFrame, IPropertyHoverCallback, PropertyTreeController } from "../frontend/PropertyTreeController";
@@ -167,7 +168,7 @@ namespace UI
         const toggleCollapse = () => {
             treeElement.classList.toggle("hidden");
             titleElement.classList.toggle("collapsed");
-            Utils.toggleClasses(iconElement, "fa-angle-down", "fa-angle-right");
+            DOMUtils.toggleClasses(iconElement, "fa-angle-down", "fa-angle-right");
         };
 
         titleElement.onclick = () => {

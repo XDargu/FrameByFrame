@@ -1,5 +1,6 @@
 import { ResizeObserver } from 'resize-observer';
 import * as Utils from "../utils/utils";
+import * as DOMUtils from '../utils/DOMUtils';
 import * as RECORDING from '../recording/RecordingData';
 
 export interface IGetPropertyItemCallback {
@@ -76,7 +77,7 @@ class CommentLineController
 
     public setVisible(isVisible: boolean)
     {
-        Utils.setClass(this.lineElement, "disabled", !isVisible);
+        DOMUtils.setClass(this.lineElement, "disabled", !isVisible);
     }
 
     updateShapeLine()
@@ -250,7 +251,7 @@ export default class Comments
         for (let comment of this.comments)
         {
             const isVisible = this.isCommentVisible(comment[1]);
-            Utils.setClass(comment[1].element, "disabled", !isVisible);
+            DOMUtils.setClass(comment[1].element, "disabled", !isVisible);
             comment[1].lineController.setVisible(isVisible);
 
             if (isVisible)
@@ -314,7 +315,7 @@ export default class Comments
                     return () =>
                     {
                         const propElement = this.callbacks.getPropertyItem(propComment.propertyId);
-                        const firstVisibleParent = Utils.FindFirstVisibleTree(propElement);
+                        const firstVisibleParent = DOMUtils.FindFirstVisibleTree(propElement);
                         if (firstVisibleParent)
                         {
                             const propRect = firstVisibleParent.getBoundingClientRect();
@@ -338,7 +339,7 @@ export default class Comments
                 return () =>
                 {
                     const propElement = this.callbacks.getPropertyItem(propComment.propertyId);
-                    const firstVisibleParent = Utils.FindFirstVisibleTree(propElement);
+                    const firstVisibleParent = DOMUtils.FindFirstVisibleTree(propElement);
                     if (firstVisibleParent)
                     {
                         const propRect = firstVisibleParent.getBoundingClientRect();
@@ -492,7 +493,7 @@ export default class Comments
 
             comment.isEditing = true;
 
-            Utils.setClass(comment.element, "editing", true);
+            DOMUtils.setClass(comment.element, "editing", true);
 
             let content = comment.comment.text;
             let textarea = document.createElement("textarea");
@@ -520,7 +521,7 @@ export default class Comments
 
                 comment.element.removeChild(textarea);
                 comment.isEditing = false;
-                Utils.setClass(comment.element, "editing", false);
+                DOMUtils.setClass(comment.element, "editing", false);
             }
 
             textarea.oninput = () =>

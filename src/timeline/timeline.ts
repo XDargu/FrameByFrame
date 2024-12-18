@@ -1,5 +1,6 @@
 import { ResizeObserver } from 'resize-observer';
 import * as Utils from '../utils/utils';
+import * as DOMUtils from '../utils/DOMUtils';
 
 export type TimelineEventId = number;
 export type TimelineEventTypeId = number;
@@ -113,7 +114,7 @@ class EventPopup {
         clearTimeout(this.hideTimeout);
         this.hideTimeout = null;
 
-        Utils.setClass(this.popup, "hidden", false);
+        DOMUtils.setClass(this.popup, "hidden", false);
 
         this.popup.innerHTML = "";
         for (let i=0; i<events.length; ++i)
@@ -128,7 +129,7 @@ class EventPopup {
             this.popup.appendChild(p);
         }
 
-        const clampedPos = Utils.clampElementToScreen(x, y, this.popup, -10, 10);
+        const clampedPos = DOMUtils.clampElementToScreen(x, y, this.popup, -10, 10);
 
         this.popup.style.left = (clampedPos.x) + "px";
         this.popup.style.top = (clampedPos.y) + "px";
@@ -139,7 +140,7 @@ class EventPopup {
         if (this.hideTimeout == null)
         {
             this.hideTimeout = setTimeout(() => {
-                Utils.setClass(this.popup, "hidden", true);
+                DOMUtils.setClass(this.popup, "hidden", true);
             }, 200);
         }
     }
