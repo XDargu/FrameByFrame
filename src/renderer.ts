@@ -1462,6 +1462,19 @@ export default class Renderer {
                     }
                 }
 
+                // Collect comments
+                for (let commentId in this.recordedData.comments)
+                {
+                    const comment = this.recordedData.comments[commentId];
+                    if (comment.frameId >= firstFrame && comment.frameId <= lastFrame)
+                    {
+                        // We need to correct the frame, which mens we need a deep copy, to avoid changing the original comment
+                        const deepCopy = JSON.parse(JSON.stringify(comment));
+                        data.comments[comment.id] = deepCopy;
+                        data.comments[comment.id].frameId -= firstFrame;
+                    }
+                }
+
                 dataToSave = data;
             }
 
