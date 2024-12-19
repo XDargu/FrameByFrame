@@ -767,24 +767,23 @@ export default class Renderer {
         const { promisify } = require('util');
         const do_unzip = promisify(zlib.unzip);
 
-        this.openModal("Processing data");
-        
-        let dataToLoad = data;
-
-        // Try uncompressing
         try
         {
-            const inputBuffer = Buffer.from(data, 'base64');
-            const buffer = await do_unzip(inputBuffer);
-            dataToLoad = buffer.toString('utf8');
-        }
-        catch(error)
-        {
-            // Raw recording
-        }
+            this.openModal("Processing data");
 
-        try
-        {
+            const gzipMagicNumberBase64 = "H4s";
+
+            let dataToLoad = data;
+            const isCompressed = data.startsWith(gzipMagicNumberBase64);
+
+            // Try uncompressing
+            if (isCompressed)
+            {
+                const inputBuffer = Buffer.from(data, 'base64');
+                const buffer = await do_unzip(inputBuffer);
+                dataToLoad = buffer.toString('utf8');
+            }
+
             this.openModal("Parsing file");
             await Utils.nextTick();
             this.loadJsonData(dataToLoad);
