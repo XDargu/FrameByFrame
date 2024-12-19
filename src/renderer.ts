@@ -128,7 +128,6 @@ export default class Renderer {
     private comments: Comments;
 
     initialize(canvas: HTMLCanvasElement) {
-
         const defaultSettings = createDefaultSettings();
 
         this.sceneController = new SceneController();
@@ -770,6 +769,7 @@ export default class Renderer {
         try
         {
             this.openModal("Processing data");
+            await Utils.nextTick();
 
             const gzipMagicNumberBase64 = "H4s";
 
@@ -779,6 +779,9 @@ export default class Renderer {
             // Try uncompressing
             if (isCompressed)
             {
+                this.openModal("Uncompressing");
+                await Utils.nextTick();
+
                 const inputBuffer = Buffer.from(data, 'base64');
                 const buffer = await do_unzip(inputBuffer);
                 dataToLoad = buffer.toString('utf8');
