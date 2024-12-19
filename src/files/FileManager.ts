@@ -1,5 +1,6 @@
 import { app, remote, dialog } from "electron";
 import * as fs from 'fs';
+import { Readable } from 'stream';
 import { createDefaultSettings, ISettings } from "./Settings";
 
 export interface IFileAcceptedCallback
@@ -362,5 +363,31 @@ export default class FileManager
                 }
             });
         }
+    }
+
+    // TODO: Move this somewhere else
+    private resourceExtensionFromType(type: string) : string
+    {
+        const slash = type.indexOf("/");
+        return type.substring(slash + 1);
+    }
+
+    async downloadResource(name: string, content: string, type: string)
+    {
+        const extension = this.resourceExtensionFromType(type);
+        const nameWithExtension = name.endsWith(extension) ? name : `${name}.${extension}`;
+        const options = {
+            defaultPath: `${app.getPath('documents')}/${nameWithExtension}`,
+        }
+
+        dialog.showSaveDialog(null, options, (path: string) => {
+            if (path === undefined){
+                console.log("You didn't save the file");
+                return;
+            }
+
+            const binaryData = Buffer.from(content, 'base64');
+            fs.writeFileSync(path, binaryData);
+        });
     }
 }

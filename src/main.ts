@@ -6,6 +6,7 @@ import FileManager from './files/FileManager';
 import { ISettings } from "./files/Settings";
 import { LogChannel, LogLevel, ILogAction } from "./frontend/ConsoleController";
 import * as Messaging from "./messaging/MessageDefinitions";
+
 let mainWindow: Electron.BrowserWindow;
 
 const shell = require('electron').shell;
@@ -352,6 +353,12 @@ ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
         event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LongOperationOngoing, "Importing Filters"));
       });
       break;
+    }
+    case Messaging.MessageType.DownloadResource:
+    {
+        const message = arg.data as Messaging.IDownloadResource;
+        fileManager.downloadResource(message.name, message.content, message.type);
+        break;
     }
   }
 })

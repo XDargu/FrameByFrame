@@ -1,4 +1,6 @@
+import { downloadImageResource } from '../render/resources/images';
 import * as RECORDING from '../recording/RecordingData';
+import { addContextMenu } from './ContextMenu';
 import { ResourcePreview } from './ResourcePreview';
 
 export interface ICommentClickedCallback {
@@ -157,6 +159,14 @@ export class RecordingInfoList
                 element.onmouseout = () => {
                     ResourcePreview.Instance().hide();
                 }
+
+                // Context menu
+                const config = [
+                    { text: "Download resource", icon: "fa-download", callback: () => { 
+                        downloadImageResource(recording.resources[path]);
+                    } },
+                ];
+                addContextMenu(element, config);
             }
             this.infoList.appendChild(group.fragment);
         }
