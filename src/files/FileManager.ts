@@ -2,6 +2,7 @@ import { app, remote, dialog } from "electron";
 import * as fs from 'fs';
 import { Readable } from 'stream';
 import { createDefaultSettings, ISettings } from "./Settings";
+import { resourceExtensionFromType } from "../resources/resources";
 
 export interface IFileAcceptedCallback
 {
@@ -365,17 +366,11 @@ export default class FileManager
         }
     }
 
-    // TODO: Move this somewhere else
-    private resourceExtensionFromType(type: string) : string
-    {
-        const slash = type.indexOf("/");
-        return type.substring(slash + 1);
-    }
-
     async downloadResource(name: string, content: string, type: string)
     {
-        const extension = this.resourceExtensionFromType(type);
-        const nameWithExtension = name.endsWith(extension) ? name : `${name}.${extension}`;
+        const extension = resourceExtensionFromType(type);
+
+        const nameWithExtension = extension && !name.endsWith("." + extension) ? `${name}.${extension}` : name;
         const options = {
             defaultPath: `${app.getPath('documents')}/${nameWithExtension}`,
         }

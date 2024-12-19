@@ -1,5 +1,5 @@
 import { NaiveRecordedData } from "../recording/RecordingData";
-import { loadImageResource } from "../render/resources/images";
+import { loadResource } from "../resources/resources";
 import { ResizeObserver } from 'resize-observer';
 import * as Utils from "../utils/utils";
 import * as DOMUtils from '../utils/DOMUtils';
@@ -344,7 +344,7 @@ export class PinnedTexture
                         // We need to load the resource
                         try
                         {
-                            this.targetResource = await loadImageResource(resource);
+                            this.targetResource = await loadResource(resource);
                             this.pinnedImage.src = this.targetResource.url;
                         }
                         catch(e)

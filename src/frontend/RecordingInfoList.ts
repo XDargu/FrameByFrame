@@ -1,4 +1,4 @@
-import { downloadImageResource } from '../render/resources/images';
+import { downloadResource } from '../resources/resources';
 import * as RECORDING from '../recording/RecordingData';
 import { addContextMenu } from './ContextMenu';
 import { ResourcePreview } from './ResourcePreview';
@@ -163,7 +163,7 @@ export class RecordingInfoList
                 // Context menu
                 const config = [
                     { text: "Download resource", icon: "fa-download", callback: () => { 
-                        downloadImageResource(recording.resources[path]);
+                        downloadResource(recording.resources[path]);
                     } },
                 ];
                 addContextMenu(element, config);

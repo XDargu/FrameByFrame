@@ -31,7 +31,7 @@ import EntityPropertiesBuilder from "./frontend/EntityPropertiesBuilder";
 import PendingFrames from "./utils/pendingFrames";
 import { LIB_VERSION } from "./version";
 import ShapeLineController from "./frontend/ShapeLineController";
-import { loadImageResource } from "./render/resources/images";
+import { loadResource } from "./resources/resources";
 import * as TypeSystem from "./types/typeRegistry";
 import { ResourcePreview } from "./frontend/ResourcePreview";
 import { PinnedTexture } from "./frontend/PinnedTexture";
@@ -1498,7 +1498,7 @@ export default class Renderer {
             {
                 try {
                     const resource = dataToSave.resources[path];
-                    await loadImageResource(resource);
+                    await loadResource(resource);
                 }
                 catch(e) {
                     Console.log(LogLevel.Warning, LogChannel.Files, "Coudn't load resource, skipping: " + path);

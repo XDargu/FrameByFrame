@@ -1,6 +1,41 @@
 import { ipcRenderer } from 'electron';
-import * as RECORDING from '../../recording/RecordingData';
-import * as Messaging from "../../messaging/MessageDefinitions";
+import * as RECORDING from '../recording/RecordingData';
+import * as Messaging from "../messaging/MessageDefinitions";
+
+export function resourceExtensionFromType(type: string) : string
+{
+    const slash = type.indexOf("/");
+    if (slash != -1)
+    {
+        const specificType = type.substring(slash + 1);
+
+        // Special cases
+        if (specificType == "text")
+            return "txt";
+
+        return specificType;
+    }
+
+    return null;
+}
+
+export function isImageResource(resource: RECORDING.IResource)
+{
+    const type = resource.data.type;
+    return type.indexOf("image/") != -1;
+}
+
+export function getResourceContent(resource: RECORDING.IResource)
+{
+    // Hack to get the content without anything else
+    const blobJson = JSON.parse(resource.textData)
+
+    const separator = blobJson.blob.indexOf(",");
+    const content = blobJson.blob.substring(separator + 1);
+
+    return content;
+}
+
 
 export interface IResourcedLoadedCallback
 {
@@ -20,15 +55,10 @@ function decodeHex(string: string)
     return uint8array;
 }
 
-export async function downloadImageResource(resource: RECORDING.IResource)
+export async function downloadResource(resource: RECORDING.IResource)
 {
-    const result = await loadImageResource(resource);
-
-    // Hack to get the content without anything else
-    const blobJson = JSON.parse(result.textData)
-
-    const separator = blobJson.blob.indexOf(",");
-    const content = blobJson.blob.substring(separator);
+    const result = await loadResource(resource);
+    const content = getResourceContent(resource);
 
     const request : Messaging.IDownloadResource = 
     {
@@ -37,11 +67,13 @@ export async function downloadImageResource(resource: RECORDING.IResource)
         content: content,
     }
 
-    console.log(request);
+    console.log(resource)
+    console.log(request)
+
     ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.DownloadResource, request));
 }
 
-export function loadImageResource(resource: RECORDING.IResource)
+export function loadResource(resource: RECORDING.IResource)
 {
     return new Promise<RECORDING.IResource>(async function(resolve, reject)
     {
@@ -99,9 +131,9 @@ export function loadImageResource(resource: RECORDING.IResource)
                     const jsonString = JSON.stringify({blob: b64});
                     resource.textData = jsonString;
                     resource.type = blob.type;
+                    resolve(resource);
                 }
                 reader.readAsDataURL(blob);
-                resolve(resource);
             }
         } catch(e)
         {
