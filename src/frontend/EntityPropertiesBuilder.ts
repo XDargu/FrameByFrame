@@ -364,7 +364,7 @@ export default class EntityPropertiesBuilder
         { text: "Copy value", icon: "fa-copy", callback: this.onCopyValue.bind(this) },
         { text: "Create filter from property", icon: "fa-plus-square", callback: this.onAddFilter.bind(this) },
         { text: "Go to Shape", icon: "fa-arrow-circle-right", callback: this.onGoToShape.bind(this), condition: this.isPropertyVisible.bind(this) },
-        { text: "Pin Texture", icon: "fa-thumbstack", callback: this.onPinTexture.bind(this), condition: this.isPropertyTexture.bind(this) },
+        { text: "Pin Texture", icon: "fa-image", callback: this.onPinTexture.bind(this), condition: this.isPropertyTexture.bind(this) },
         { text: "Add Comment", icon: "fa-comment", callback: this.onAddComment.bind(this) },
     ];
 
