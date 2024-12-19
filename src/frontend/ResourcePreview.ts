@@ -1,4 +1,4 @@
-import * as Utils from '../utils/utils';
+import * as DOMUtils from '../utils/DOMUtils';
 import * as RECORDING from '../recording/RecordingData';
 import { loadImageResource } from '../render/resources/images';
 
@@ -39,7 +39,7 @@ export class ResourcePreview
         const resource = this.resourceData[resourcePath];
         if (!resource) { return; }
 
-        Utils.setClass(this.popup, "hidden", false);
+        DOMUtils.setClass(this.popup, "hidden", false);
 
         this.popup.innerHTML = "";
         let img = document.createElement("img");
@@ -57,7 +57,7 @@ export class ResourcePreview
         clearTimeout(this.hideTimeout);
         this.hideTimeout = null;
 
-        const clampedPos = Utils.clampElementToScreen(x, y, this.popup, 20, 20);
+        const clampedPos = DOMUtils.clampElementToScreen(x, y, this.popup, 20, 20);
 
         this.popup.style.left = (clampedPos.x) + "px";
         this.popup.style.top = (clampedPos.y) + "px";
@@ -68,7 +68,7 @@ export class ResourcePreview
         if (this.hideTimeout == null)
         {
             this.hideTimeout = setTimeout(() => {
-                Utils.setClass(this.popup, "hidden", true);
+                DOMUtils.setClass(this.popup, "hidden", true);
             }, 5);
         }
     }

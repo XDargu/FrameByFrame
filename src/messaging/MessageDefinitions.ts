@@ -22,6 +22,7 @@ export enum MessageType { // TODO: Maybe rename these to make clear the directio
     RequestImportFilters,
     ImportFiltersResult,
     ModFileOpened,
+    DownloadResource,
 }
 
 export interface IClearResultData
@@ -55,7 +56,14 @@ export interface ISaveFileData
     path: string;
 }
 
-type MessageData = string | IClearResultData | ILogData | ISettings | ISaveFileData | IRequestSavePathData | IResultSavePathData;
+export interface IDownloadResource
+{
+    content: string;
+    type: string;
+    name: string;
+}
+
+type MessageData = string | IClearResultData | ILogData | ISettings | ISaveFileData | IRequestSavePathData | IResultSavePathData | IDownloadResource;
 export class Message
 {
     public type: MessageType;

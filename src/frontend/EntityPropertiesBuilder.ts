@@ -1,5 +1,6 @@
 import * as RECORDING from '../recording/RecordingData';
 import * as Utils from "../utils/utils";
+import * as DOMUtils from '../utils/DOMUtils';
 import { CorePropertyTypes } from "../types/typeRegistry";
 import { TreeControl } from "../ui/tree";
 import { ICreateFilterFromPropCallback, IGoToEntityCallback, IIsEntityInFrame, IPropertyHoverCallback, PropertyTreeController } from "../frontend/PropertyTreeController";
@@ -167,7 +168,7 @@ namespace UI
         const toggleCollapse = () => {
             treeElement.classList.toggle("hidden");
             titleElement.classList.toggle("collapsed");
-            Utils.toggleClasses(iconElement, "fa-angle-down", "fa-angle-right");
+            DOMUtils.toggleClasses(iconElement, "fa-angle-down", "fa-angle-right");
         };
 
         titleElement.onclick = () => {
@@ -331,6 +332,10 @@ export interface IPinTexture {
     (propertyId: number) : void;
 }
 
+export interface IAddComment {
+    (propertyId: number) : void;
+}
+
 export interface EntityPropertiesBuilderCallbacks
 {
     onPropertyHover: IPropertyHoverCallback;
@@ -341,6 +346,7 @@ export interface EntityPropertiesBuilderCallbacks
     onGoToEntity: IGoToEntityCallback;
     onGoToShapePos: IGoToShapeCallback;
     onPinTexture: IPinTexture;
+    onAddComment: IAddComment;
     isEntityInFrame: IIsEntityInFrame;
     isPropertyVisible: IIsPropertyVisible;
 }
@@ -348,6 +354,7 @@ export interface EntityPropertiesBuilderCallbacks
 export default class EntityPropertiesBuilder
 {
     private propertyGroups: PropertyTreeGroup[];
+    private activePropertyGroups: PropertyTreeGroup[];
     private callbacks: EntityPropertiesBuilderCallbacks;
     collapsedGroups: CollapsedGroupIDsTracker;
     starredGroups: string[];
@@ -357,12 +364,14 @@ export default class EntityPropertiesBuilder
         { text: "Copy value", icon: "fa-copy", callback: this.onCopyValue.bind(this) },
         { text: "Create filter from property", icon: "fa-plus-square", callback: this.onAddFilter.bind(this) },
         { text: "Go to Shape", icon: "fa-arrow-circle-right", callback: this.onGoToShape.bind(this), condition: this.isPropertyVisible.bind(this) },
-        { text: "Pin Texture", icon: "fa-thumbstack", callback: this.onPinTexture.bind(this), condition: this.isPropertyTexture.bind(this) },
+        { text: "Pin Texture", icon: "fa-image", callback: this.onPinTexture.bind(this), condition: this.isPropertyTexture.bind(this) },
+        { text: "Add Comment", icon: "fa-comment", callback: this.onAddComment.bind(this) },
     ];
 
     constructor(callbacks: EntityPropertiesBuilderCallbacks)
     {
         this.propertyGroups = [];
+        this.activePropertyGroups = [];
         this.callbacks = callbacks;
         this.collapsedGroups = new CollapsedGroupIDsTracker();
         this.starredGroups = [];
@@ -468,6 +477,8 @@ export default class EntityPropertiesBuilder
             {
                 treeParent.append(storedGroup.title, storedGroup.propertyTree.root);
             }
+
+            this.activePropertyGroups.push(storedGroup);
         }
     }
 
@@ -565,6 +576,8 @@ export default class EntityPropertiesBuilder
         propertyTree.innerHTML = "";
         eventTree.innerHTML = "";
 
+        this.activePropertyGroups = [];
+
         if (entity)
         {
             this.buildPropertiesPropertyTrees(propertyTree, entity.properties);
@@ -576,9 +589,9 @@ export default class EntityPropertiesBuilder
 
     findItemWithValue(value: string)
     {
-        for (let i=0; i<this.propertyGroups.length; ++i)
+        for (let i=0; i<this.activePropertyGroups.length; ++i)
         {
-            const item = this.propertyGroups[i].propertyTree.getItemWithValue(value);
+            const item = this.activePropertyGroups[i].propertyTree.getItemWithValue(value);
             if (item)
             {
                 return item;
@@ -620,6 +633,19 @@ export default class EntityPropertiesBuilder
             if (propertyId != null)
             {
                 this.callbacks.onPinTexture(Number.parseInt(propertyId));
+            }
+        }
+    }
+
+    private onAddComment(item: HTMLElement)
+    {
+        const treeElement = item.closest("li[data-tree-value]");
+        if (treeElement)
+        {
+            const propertyId = treeElement.getAttribute('data-tree-value');
+            if (propertyId != null)
+            {
+                this.callbacks.onAddComment(Number.parseInt(propertyId));
             }
         }
     }

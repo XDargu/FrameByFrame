@@ -1,4 +1,6 @@
+import { ipcRenderer } from 'electron';
 import * as RECORDING from '../../recording/RecordingData';
+import * as Messaging from "../../messaging/MessageDefinitions";
 
 export interface IResourcedLoadedCallback
 {
@@ -16,6 +18,27 @@ function decodeHex(string: string)
     for (let i = 0; i < string.length;)
         uint8array[i / 2] = Number.parseInt(string.slice(i, i += 2), 16);
     return uint8array;
+}
+
+export async function downloadImageResource(resource: RECORDING.IResource)
+{
+    const result = await loadImageResource(resource);
+
+    // Hack to get the content without anything else
+    const blobJson = JSON.parse(result.textData)
+
+    const separator = blobJson.blob.indexOf(",");
+    const content = blobJson.blob.substring(separator);
+
+    const request : Messaging.IDownloadResource = 
+    {
+        name: resource.path,
+        type: result.data.type,
+        content: content,
+    }
+
+    console.log(request);
+    ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.DownloadResource, request));
 }
 
 export function loadImageResource(resource: RECORDING.IResource)

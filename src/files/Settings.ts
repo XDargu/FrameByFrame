@@ -23,6 +23,7 @@ export interface ISettings
     syncCameraPosition: boolean,
     /* Timeline */
     showEventPopup: boolean,
+    showCommentPopup: boolean,
     /* Grid */
     gridHeight: number,
     gridSpacing: number,
@@ -32,6 +33,8 @@ export interface ISettings
     removeOldFrames: boolean,
     removeOldFramesAmount: number,
     removeOldFramesUpdate: boolean,
+    /* Comments */
+    showComments: boolean,
     /* Debug */
     showRenderDebug: boolean,
     /* Graphics */
@@ -66,6 +69,7 @@ export function createDefaultSettings() : ISettings
         syncCameraPosition: false,
         /* Timeline */
         showEventPopup: true,
+        showCommentPopup: true,
         /* Grid */
         gridHeight: 0,
         gridSpacing: 1,
@@ -75,6 +79,8 @@ export function createDefaultSettings() : ISettings
         removeOldFrames: false,
         removeOldFramesAmount: 500,
         removeOldFramesUpdate: true,
+        /* Comments */
+        showComments: true,
         /* Debug */
         showRenderDebug: false,
         /* Graphics */

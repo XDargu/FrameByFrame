@@ -2,7 +2,7 @@ import { NaiveRecordedData } from "../recording/RecordingData";
 import { loadImageResource } from "../render/resources/images";
 import { ResizeObserver } from 'resize-observer';
 import * as Utils from "../utils/utils";
-import * as TypeSystem from "../types/typeRegistry";
+import * as DOMUtils from '../utils/DOMUtils';
 import * as RECORDING from '../recording/RecordingData';
 import { Logger } from "babylonjs";
 
@@ -284,7 +284,7 @@ export class PinnedTexture
     closePinnedTexture()
     {
         const pinnedElement = document.getElementById("pinned-texture");
-        Utils.setClass(pinnedElement, "active", false);
+        DOMUtils.setClass(pinnedElement, "active", false);
         this.pinnedEntityId = null;
     }
 
@@ -321,7 +321,7 @@ export class PinnedTexture
     async applyPinnedTexture()
     {
         const pinnedElement = document.getElementById("pinned-texture");
-        Utils.setClass(pinnedElement, "active", false);
+        DOMUtils.setClass(pinnedElement, "active", false);
 
         const pinnedEntity = this.getEntityCallback(this.pinnedEntityId);
         if (pinnedEntity)
@@ -329,7 +329,7 @@ export class PinnedTexture
             const pinnedProperty = NaiveRecordedData.findPropertyPathInEntity(pinnedEntity, this.pinnedPropertyPath);
             if (pinnedProperty)
             {
-                Utils.setClass(pinnedElement, "active", true);
+                DOMUtils.setClass(pinnedElement, "active", true);
 
                 if (RECORDING.isPropertyTextured(pinnedProperty))
                 {

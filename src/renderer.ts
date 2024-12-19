@@ -35,6 +35,8 @@ import { loadImageResource } from "./render/resources/images";
 import * as TypeSystem from "./types/typeRegistry";
 import { ResourcePreview } from "./frontend/ResourcePreview";
 import { PinnedTexture } from "./frontend/PinnedTexture";
+import Comments, { CommentUtils } from "./frontend/Comments";
+import { addContextMenu } from "./frontend/ContextMenu";
 
 const zlib = require('zlib');
 
@@ -122,6 +124,9 @@ export default class Renderer {
     // Pin test
     private pinnedTexture: PinnedTexture;
 
+    // Comments
+    private comments: Comments;
+
     initialize(canvas: HTMLCanvasElement) {
 
         const defaultSettings = createDefaultSettings();
@@ -166,7 +171,16 @@ export default class Renderer {
                     this.pinnedTexture.setPinnedEntityId(this.selectedEntityId, pinnedPropertyPath);
 
                     this.pinnedTexture.applyPinnedTexture();
-                 },
+                },
+                onAddComment: (propId) => {
+                    // You can only add comments to the currently selected entity
+                    const entity = this.frameData.entities[this.selectedEntityId];
+                    const isFromEvent = NaiveRecordedData.findPropertyIdInEntityEvents(entity, propId) != null;
+                    if (isFromEvent)
+                        this.comments.addEventPropertyComment(this.getCurrentFrame(), entity.id, propId);
+                    else
+                        this.comments.addPropertyComment(this.getCurrentFrame(), entity.id, propId);
+                },
                 isEntityInFrame: (id) => { return this.frameData?.entities[Utils.toUniqueID(this.frameData.clientId, id)] != undefined; },
                 isPropertyVisible: (propId) => { return this.sceneController.isPropertyVisible(propId); }
             }
@@ -213,6 +227,18 @@ export default class Renderer {
 
         this.currentFrameRequest = null;
         window.requestAnimationFrame(this.render.bind(this));
+
+        this.comments = new Comments(
+            {
+                getPropertyItem: (propertyId) => { return this.entityPropsBuilder.findItemWithValue(propertyId + "") as HTMLElement; },
+                frameCallback: (frame) => { this.requestApplyFrame({ frame: frame }); },
+                getTimelineFramePos: (frame) => { return this.timeline.getFramePosition(frame); },
+                onCommentAdded: (frame, commentId) => { this.timeline.addComment(frame, commentId); this.updateMetadata(); },
+                onCommentDeleted: (frame, commentId) => { this.timeline.removecomment(commentId); this.updateMetadata(); },
+                onCommentChanged: (frame, commentId) => { this.updateMetadata(); },
+            },
+            this.recordedData.comments
+        );
 
         this.requestApplyFrame({ frame: 0});
     }
@@ -492,7 +518,9 @@ export default class Renderer {
         );
 
         // Create info
-        this.recordingInfoList = new RecordingInfoList(document.getElementById("recording-info"));
+        this.recordingInfoList = new RecordingInfoList(document.getElementById("recording-info"), (frame, commentId) => {
+            this.onTimelineCommentClicked(frame, commentId);
+        });
 
         // Connection buttons
         this.connectionButtons = new ConnectionButtons(document.getElementById(`connection-buttons`), (id: ConnectionId) => {
@@ -594,7 +622,10 @@ export default class Renderer {
         this.shapeArrowController.setColor(settings.shapeHoverColor);
         this.shapeArrowController.setEnabled(settings.showShapeLineOnHover);
 
-        this.timeline.setPopupActive(settings.showEventPopup);
+        this.timeline.setEventPopupActive(settings.showEventPopup);
+        this.timeline.setCommentPopupActive(settings.showCommentPopup);
+
+        this.comments.showComments(settings.showComments);
     }
 
     updateSettings(settings: ISettings)
@@ -694,7 +725,9 @@ export default class Renderer {
         }
 
         this.updateMetadata();
-        
+
+        this.comments.setCommentsData(this.recordedData.comments);
+
         // Select any first entity
         Utils.runAsync(() => {
             for (let entity in this.frameData.entities)
@@ -735,23 +768,31 @@ export default class Renderer {
         const do_unzip = promisify(zlib.unzip);
 
         this.openModal("Processing data");
-        try {
+        
+        let dataToLoad = data;
+
+        // Try uncompressing
+        try
+        {
             const inputBuffer = Buffer.from(data, 'base64');
             const buffer = await do_unzip(inputBuffer);
+            dataToLoad = buffer.toString('utf8');
+        }
+        catch(error)
+        {
+            // Raw recording
+        }
 
+        try
+        {
             this.openModal("Parsing file");
             await Utils.nextTick();
-            this.loadJsonData(buffer.toString('utf8'));
+            this.loadJsonData(dataToLoad);
             this.closeModal();
         }
         catch (error)
         {
-            this.openModal("Parsing file");
-            await Utils.nextTick();
-            if (!this.loadJsonData(data))
-            {
-                Console.log(LogLevel.Error, LogChannel.Files, "Error uncompressing file: " + error.message);
-            }
+            Console.log(LogLevel.Error, LogChannel.Files, "Error opening file: " + error.message);
             this.closeModal();
         }
     }
@@ -775,6 +816,7 @@ export default class Renderer {
         ResourcePreview.Instance().setResourceData(this.recordedData.resources);
 
         this.pinnedTexture.clear();
+        this.comments.clear();
 
         // Trigger Garbace Collection
         global.gc();
@@ -964,9 +1006,10 @@ export default class Renderer {
 
         // Update pinned info
         this.pinnedTexture.applyPinnedTexture();
-    }
 
-    
+        // Update comments
+        this.comments.selectionChanged(frame, this.selectedEntityId);
+    }
 
     moveCameraToSelection()
     {
@@ -1029,6 +1072,8 @@ export default class Renderer {
         this.sceneController.markEntityAsSelected(entityId);
         this.timeline.setSelectedEntity(entityId);
         this.renderProperties();
+
+        this.comments.selectionChanged(this.getCurrentFrame(), this.selectedEntityId);
     }
 
     selectEntity(entityId: number)
@@ -1195,9 +1240,20 @@ export default class Renderer {
         this.timeline = new Timeline(timelineElement, timelineWrapper);
         this.timeline.setFrameClickedCallback(this.onTimelineClicked.bind(this));
         this.timeline.setEventClickedCallback(this.onTimelineEventClicked.bind(this));
+        this.timeline.setCommentClickedCallback(this.onTimelineCommentClicked.bind(this));
         this.timeline.setTimelineUpdatedCallback(this.onTimelineUpdated.bind(this));
         this.timeline.setRangeChangedCallback((initFrame, endFrame) => { this.playbackController.updateUI(); });
         this.timeline.setGetEntityNameCallback((entity, frameIdx) => { return this.findEntityNameOnFrame(Number.parseInt(entity), frameIdx); });
+        this.timeline.setGetCommentTextCallback((commentId) => { return this.recordedData.comments[commentId].text; });
+
+        // Context menu
+        const config = [
+            { text: "Add comment in current frame", icon: "fa-comment", callback: () => { 
+                const currentFrame = this.getCurrentFrame();
+                this.comments.addTimelineComment(currentFrame);
+            } },
+        ];
+        addContextMenu(timelineWrapper, config);
     }
 
     getCurrentFrame()
@@ -1311,6 +1367,35 @@ export default class Renderer {
         this.requestApplyFrame({ frame: frame, entityIdSel: Number.parseInt(entityId) });
     }
 
+    onTimelineCommentClicked(frame: number, commentId: number)
+    {
+        // Find the right comment
+        for (let comId in this.recordedData.comments)
+        {
+            if (parseInt(comId) == commentId)
+            {
+                const comment = this.recordedData.comments[comId];
+                switch (comment.type)
+                {
+                    case RECORDING.ECommentType.Timeline:
+                    {
+                        this.logFrame(LogLevel.Verbose, LogChannel.Timeline, "Timeline comment selected in timeline. ", frame);
+                        this.requestApplyFrame({ frame: frame });
+                    }
+                    break;
+                    case RECORDING.ECommentType.Property:
+                    case RECORDING.ECommentType.EventProperty:
+                    {
+                        const propComment = comment as RECORDING.IPropertyComment;
+                        this.logEntity(LogLevel.Verbose, LogChannel.Timeline, "Property comment selected in timeline. ", frame, propComment.entityId);
+                        this.requestApplyFrame({ frame: frame, entityIdSel: propComment.entityId });
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
     onTimelineUpdated(elapsedSeconds: number)
     {
         this.playbackController.update(elapsedSeconds);
@@ -1379,6 +1464,25 @@ export default class Renderer {
                                 collectResources(property);
                             });
                         });
+                    }
+                }
+
+                // Collect comments
+                for (let commentId in this.recordedData.comments)
+                {
+                    const comment = this.recordedData.comments[commentId];
+                    if (comment.frameId >= firstFrame && comment.frameId <= lastFrame)
+                    {
+                        // We need to correct the frame, which mens we need a deep copy, to avoid changing the original comment
+                        const deepCopy = JSON.parse(JSON.stringify(comment));
+                        data.comments[comment.id] = deepCopy;
+                        
+                        // Adapt frameId and frameRefs in text
+                        const diff = -firstFrame;
+                        let copiedComment = data.comments[comment.id];
+                        copiedComment.frameId += diff;
+
+                        copiedComment.text = CommentUtils.shiftContentFrameRefs(copiedComment.text, diff);
                     }
                 }
 

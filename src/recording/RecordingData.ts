@@ -520,6 +520,35 @@ export interface IResourcesData {
 	[key:string]: IResource;
 }
 
+export enum ECommentType
+{
+    Timeline = 0,
+    Property,
+    EventProperty
+}
+
+export interface IComment {
+    id: number;
+    type: ECommentType;
+    text: string;
+    pos: IVec2;
+    color?: string;
+}
+
+export interface IPropertyComment extends IComment {
+    frameId: number;
+    entityId: number;
+    propertyId: number;
+}
+
+export interface ITimelineComment extends IComment {
+    frameId: number;
+}
+
+export interface IComments {
+    [key:number]: IPropertyComment | ITimelineComment;
+}
+
 export interface INaiveRecordedData extends IRecordedData {
 	version: number;
 	storageVersion: number; // Version of the data file before patching
@@ -528,10 +557,11 @@ export interface INaiveRecordedData extends IRecordedData {
 	scenes: string[];
 	clientIds: Map<number, ClientData>;
     resources: IResourcesData;
+    comments: IComments;
 }
 
 export class NaiveRecordedData implements INaiveRecordedData {
-	readonly version: number = 3;
+	readonly version: number = 4;
 	readonly type: RecordingFileType = RecordingFileType.NaiveRecording;
 	static readonly UserProps = 0;
 	static readonly SpecialProps = 1;
@@ -540,6 +570,7 @@ export class NaiveRecordedData implements INaiveRecordedData {
 	scenes: string[];
 	clientIds: Map<number, ClientData>
 	resources: IResourcesData;
+    comments: IComments;
 	storageVersion: number;
 
 	constructor() {
@@ -548,6 +579,7 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		this.scenes = [];
 		this.clientIds = new Map<number, ClientData>();
 		this.resources = {};
+		this.comments = {};
 		this.storageVersion = this.version;
 	}
 
@@ -592,6 +624,7 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		this.scenes = dataJson.scenes;
 		this.storageVersion = dataJson.storageVersion != undefined ? dataJson.storageVersion : dataJson.version;
         this.resources = dataJson.resources;
+        this.comments = dataJson.comments;
 
 		if (this.layers == undefined)
 		{
@@ -620,12 +653,19 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		{
 			this.patchVersion1();
 			this.patchVersion2();
+            this.patchVersion3();
 		}
 
 		if (version == 2)
 		{
 			this.patchVersion2();
+            this.patchVersion3();
 		}
+
+        if (version == 3)
+        {
+            this.patchVersion3();
+        }
 	}
 
 	private patchVersion1()
@@ -658,6 +698,20 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		{
 			this.scenes = [];
 		}
+	}
+
+    private patchVersion3()
+	{
+		// Converts from version 3 to version 4
+		if (this.resources == undefined)
+		{
+			this.resources = {};
+		}
+
+        if (this.comments == undefined)
+        {
+            this.comments = {};
+        }
 	}
 
 	clear()
@@ -992,7 +1046,8 @@ export class NaiveRecordedData implements INaiveRecordedData {
 				{
 					let eventProperties = [
 						{ name: "Test string", type: CorePropertyTypes.String, value: "eventProp" + i },
-						{ name: "Test number", type: CorePropertyTypes.Number, value: j }
+						{ name: "Test number", type: CorePropertyTypes.Number, value: j },
+						{ name: "Test boolean", type: CorePropertyTypes.Bool, value: j % 2 == 0 },
 					];
 					let event = {
 						idx: 0,

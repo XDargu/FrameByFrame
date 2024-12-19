@@ -139,4 +139,43 @@ describe('Timeline', () => {
             expect(data.markers.getMarkerByIndex(1).name).to.equal("test2");
         });
     });
+
+    describe('Comments', () => {
+
+        it('returns the right amount of comments', () => {
+            let data = new Timeline.TimelineData();
+
+            expect(data.comments.getCommentAmount()).to.equal(0);
+
+            data.comments.addComment(2, 3);
+
+            expect(data.comments.getCommentAmount()).to.equal(1);
+
+            data.comments.addComment(7, 5);
+
+            expect(data.comments.getCommentAmount()).to.equal(2);
+        });
+
+        it('clears comments correctly', () => {
+            let data = new Timeline.TimelineData();
+
+            data.comments.addComment(2, 3);
+            data.comments.addComment(7, 5);
+            data.comments.clear();
+
+            expect(data.comments.getCommentAmount()).to.equal(0);
+        });
+
+        it('adds comments correctly', () => {
+            let data = new Timeline.TimelineData();
+
+            expect(data.comments.getCommentByIndex(0)).to.be.undefined;
+
+            data.comments.addComment(2, 3);
+            data.comments.addComment(7, 5);
+
+            expect(data.comments.getCommentByIndex(0).commentId).to.equal(3);
+            expect(data.comments.getCommentByIndex(1).commentId).to.equal(5);
+        });
+    });
 });
