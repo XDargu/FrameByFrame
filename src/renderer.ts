@@ -768,32 +768,32 @@ export default class Renderer {
         const do_unzip = promisify(zlib.unzip);
 
         this.openModal("Processing data");
-        try {
+        
+        let dataToLoad = data;
+
+        // Try uncompressing
+        try
+        {
             const inputBuffer = Buffer.from(data, 'base64');
             const buffer = await do_unzip(inputBuffer);
+            dataToLoad = buffer.toString('utf8');
+        }
+        catch(error)
+        {
+            // Raw recording
+        }
 
+        try
+        {
             this.openModal("Parsing file");
             await Utils.nextTick();
-            this.loadJsonData(buffer.toString('utf8'));
+            this.loadJsonData(dataToLoad);
             this.closeModal();
         }
         catch (error)
         {
-            if (error instanceof SyntaxError)
-            {
-                this.openModal("Parsing file");
-                await Utils.nextTick();
-                if (!this.loadJsonData(data))
-                {
-                    Console.log(LogLevel.Error, LogChannel.Files, "Error uncompressing file: " + error.message);
-                }
-                this.closeModal();
-            }
-            else
-            {
-                Console.log(LogLevel.Error, LogChannel.Files, "Error opening file: " + error.message);
-                this.closeModal();
-            }
+            Console.log(LogLevel.Error, LogChannel.Files, "Error opening file: " + error.message);
+            this.closeModal();
         }
     }
 
