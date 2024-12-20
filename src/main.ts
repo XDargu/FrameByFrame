@@ -70,7 +70,7 @@ function createWindow() {
     }
   });
 
-  initMessageHandling(fileManager);
+  initMessageHandling();
 }
 
 function onRendererReady()
