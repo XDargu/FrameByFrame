@@ -1,19 +1,18 @@
-import { app, BrowserWindow, Menu, ipcMain, dialog, ipcRenderer } from "electron";
+import { app, BrowserWindow } from "electron";
 import * as path from "path";
 import * as url from "url";
-import MenuBuilder from "./components/Menu";
-import FileManager from './files/FileManager';
-import { ISettings } from "./files/Settings";
-import { LogChannel, LogLevel, ILogAction } from "./frontend/ConsoleController";
-import * as Messaging from "./messaging/MessageDefinitions";
+import { LogChannel, LogLevel } from "./frontend/ConsoleController";
+import FileManager from "./files/FileManager";
+import { loadMods, onFileHistoryChanged, onOpenRecentFileClicked, onSettingsChanged } from "./mainThread/fileHandling";
+import { logToConsole } from "./mainThread/logging";
+import { SessionOptions } from "./mainThread/sessionOptions";
+import { initMessageHandling } from "./messaging/MainMessageHandler";
 
-let mainWindow: Electron.BrowserWindow;
-
+export let mainWindow: Electron.BrowserWindow;
+export let fileManager: FileManager;
+export let sessionOptions: SessionOptions;
+  
 const shell = require('electron').shell;
-
-// File Manager
-let fileManager: FileManager;
-let menuBuilder: MenuBuilder;
 
 function createWindow() {
   // Create the browser window.
@@ -55,10 +54,9 @@ function createWindow() {
     mainWindow = null;
   });
 
-  menuBuilder = new MenuBuilder(onOpenFileClicked, onExportFileClicked, onOpenRecentFileClicked);
-  Menu.setApplicationMenu(menuBuilder.buildMenu(mainWindow));
-
   fileManager = new FileManager();
+  sessionOptions = new SessionOptions();
+
   fileManager.initialize(onFileHistoryChanged, onSettingsChanged);
 
   mainWindow.webContents.once('dom-ready', onRendererReady);
@@ -71,6 +69,8 @@ function createWindow() {
       shell.openExternal(url);
     }
   });
+
+  initMessageHandling(fileManager);
 }
 
 function onRendererReady()
@@ -94,70 +94,6 @@ function onRendererReady()
 
   loadMods();
 }
-
-// File callbacks
-function onFileHistoryChanged(paths: string[])
-{
-  menuBuilder.updateRecentMenu(paths);
-  Menu.setApplicationMenu(menuBuilder.buildMenu(mainWindow));
-  mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.UpdateRecentFiles, paths.toString()));
-}
-
-function onSettingsChanged(settings: ISettings)
-{
-  mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.SettingsChanged, settings));
-}
-
-function onOpenFileClicked()
-{
-  fileManager.openRecordingsFile((pathName: string, content: string) => {
-    mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.FileOpened, pathName));
-    mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
-  }, (pathName: string) => {
-    mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LongOperationOngoing, "Opening File"));
-  });
-}
-
-function onExportFileClicked()
-{
-  mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.RequestSave, ""));
-}
-
-function onOpenRecentFileClicked(pathName : string)
-{
-  mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LongOperationOngoing, "Opening File"));
-  fileManager.loadRecordingFile(pathName, (pathName: string, content: string) => {
-    mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.FileOpened, pathName));
-    mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
-  });
-}
-
-function loadMods()
-{
-  const modFile = app.getPath('userData') + "/mods/mod.js";
-  if (fileManager.doesFileExist(modFile))
-  {
-    fileManager.loadFile(modFile, (pathName: string, content: string) => {
-      mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.ModFileOpened, content));
-    });
-  }
-}
-
-// Message helpers
-function createLogMessage(level: LogLevel, channel: LogChannel, ...message: (string | ILogAction)[]) : Messaging.Message
-{
-  return new Messaging.Message(Messaging.MessageType.LogToConsole, {
-    message: message,
-    level: level,
-    channel: channel
- });
-}
-
-function logToConsole(level: LogLevel, channel: LogChannel, ...message: (string | ILogAction)[])
-{
-  mainWindow.webContents.send('asynchronous-reply', createLogMessage(level, channel, ...message));
-};
-
 
 // Increase available memory
 app.commandLine.appendSwitch('js-flags', '--max-old-space-size=8192');
@@ -183,182 +119,3 @@ app.on("activate", () => {
     createWindow();
   }
 });
-
-// In this file you can include the rest of your app"s specific main process
-// code. You can also put them in separate files and require them here.
-class SessionOptions {
-  public showClearDataDialog: boolean = true;
-}
-
-let sessionOptions: SessionOptions = new SessionOptions();
-
-ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) => {
-
-  const logToConsole = (level: LogLevel, channel: LogChannel, ...message: (string | ILogAction)[]) => {
-    event.reply('asynchronous-reply', createLogMessage(level, channel, ...message));
-  };
-
-  switch(arg.type)
-  {
-    case Messaging.MessageType.RequestSavePath:
-    {
-      const request = arg.data as Messaging.IRequestSavePathData;
-      const requestSave = (saveOnlySelection: boolean) =>
-      {
-        fileManager.getRecordingSaveLocation(request.defaultName, (path: string) => {
-          event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.SavePathResult, {
-            path: path,
-            saveOnlySelection: saveOnlySelection
-          }));
-        });
-      }
-
-      if (request.askForPartialSave)
-      {
-        const options = {
-          type: 'question',
-          buttons: ['Save selection', 'Save all'],
-          defaultId: 0,
-          title: 'Save data',
-          message: 'Save only the selection or all data?',
-          detail: 'You have a partial selection of the recording. Do you want to save only the selected data, or the entire recording?',
-        };
-      
-        dialog.showMessageBox(null, options, (response) => {
-          const saveOnlySelection: boolean = response == 0;
-          const saveAll: boolean = response == 1;
-
-          if (saveOnlySelection || saveAll)
-          {
-            requestSave(saveOnlySelection);
-          }
-        });
-      }
-      else
-      {
-        requestSave(false);
-      }
-      
-      break;
-    }
-    case Messaging.MessageType.SaveToFile:
-    {
-      const fileSaveData = arg.data as Messaging.ISaveFileData;
-      fileManager.saveRecordingToFile(fileSaveData.path, fileSaveData.content)
-      break;
-    }
-    case Messaging.MessageType.Load:
-    {
-      const filePath = arg.data as string;
-      try {
-        if (fileManager.doesFileExist(filePath))
-        {
-          fileManager.loadRecordingFile(filePath, (pathName: string, content: string) => {
-            event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.FileOpened, pathName));
-            event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
-          });
-        }
-        else
-        {
-          const options = {
-            type: 'question',
-            buttons: ['Keep file', 'Remove from recent'],
-            title: 'File does not exist',
-            message: 'Looks like the file has been removed. Do you want to remove it from the recent file list?',
-          };
-        dialog.showMessageBox(null, options, (response) => {
-          const souldRemove: boolean = response == 1;
-          if (souldRemove) {
-            fileManager.removePathFromHistory(filePath);
-          }
-        });
-        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, null));
-        }
-      }
-      catch(err) {
-          const options = {
-              type: 'error',
-              buttons: ['OK'],
-              title: 'Error reading file',
-              message: 'An error ocurred reading the file',
-              detail: err.message,
-              checkboxChecked: false,
-            };
-          dialog.showMessageBox(null, options);
-          event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, null));
-      }
-      break;
-    }
-    case Messaging.MessageType.Open:
-    {
-      fileManager.openRecordingsFile((pathName: string, content: string) => {
-        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.FileOpened, pathName));
-        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenResult, content));
-      }, () => {
-        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LongOperationOngoing, "Opening File"));
-      });
-      break;
-    }
-    case Messaging.MessageType.Clear:
-    {
-      if (!sessionOptions.showClearDataDialog) {
-        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.ClearResult, {clear: true, remember: true}));
-        break;
-      }
-
-      const options = {
-        type: 'warning',
-        buttons: ['Remove data', 'Cancel'],
-        defaultId: 2,
-        title: 'Remove data',
-        message: 'Are you sure you want to remove all existing data?',
-        detail: 'This will remove all recorded data',
-        checkboxLabel: "Don't ask again",
-        checkboxChecked: false,
-      };
-    
-      dialog.showMessageBox(null, options, (response, checkboxChecked) => {
-        const shouldClear: boolean = response == 0;
-
-        if (shouldClear && checkboxChecked) {
-          sessionOptions.showClearDataDialog = false;
-        }
-
-        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.ClearResult, {clear: shouldClear, remember: checkboxChecked}));
-      });
-      break;
-    }
-    case Messaging.MessageType.SaveSettings:
-    {
-      fileManager.updateSettings(arg.data as ISettings);
-      break;
-    }
-    case Messaging.MessageType.OpenInExplorer:
-    {
-      shell.showItemInFolder(path.resolve(arg.data as string));
-      break;
-    }
-    case Messaging.MessageType.RequestExportFilters:
-    {
-      fileManager.getFiltersSaveLocation("filters", (path: string) => {
-        fileManager.saveFiltersToFile(path, arg.data as string);
-      });
-      break;
-    }
-    case Messaging.MessageType.RequestImportFilters:
-    {
-      fileManager.openFiltersFile((path: string, content: string) => {
-        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.ImportFiltersResult, content));
-      }, () => {
-        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LongOperationOngoing, "Importing Filters"));
-      });
-      break;
-    }
-    case Messaging.MessageType.DownloadResource:
-    {
-        const message = arg.data as Messaging.IDownloadResource;
-        fileManager.downloadResource(message.name, message.content, message.type);
-        break;
-    }
-  }
-})
