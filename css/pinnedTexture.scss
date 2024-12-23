@@ -1,3 +1,6 @@
+@import "colorStyles.scss";
+@import "../ui/css/variables.scss";
+
 #pinned-texture {
     display: none;
     margin: 0;
@@ -13,63 +16,46 @@
     background: #473D4F;
 }
 
-#pinned-texture .resizer {
+#pinned-texture .button {
     position: absolute;
     width: 20px;
     height: 20px;
-    background: #c4c4c4;
-    color: #362e3b;
-    cursor: nwse-resize;
+    color: surface-focused-color($primary-color);
+    cursor: pointer;
     font-size: 15px;
     text-align: center;
     line-height: 20px;
-    border-radius: 2px;
     z-index: 50;
+    opacity: 0.5;
+}   
+
+#pinned-texture .resizer {
+    cursor: nwse-resize;
 }
 
 #pinned-texture .resizer:hover
 {
-    background: white;
+    opacity: 0.9;
 }
 
-#close-pinned-texture {
-    position: absolute;
-    width: 20px;
-    height: 20px;
+#close-pinned-texture.button {
     right: 0px;
-    cursor: pointer;
-    background: #c4c4c4;
-    color: #362e3b;
     font-size: 13px;
-    text-align: center;
-    line-height: 20px;
-    border-radius: 2px;
-    z-index: 50;
 }
 
-#close-pinned-texture:hover
+#close-pinned-texture.button:hover
 {
-    background: white;
+    opacity: 0.9;
 }
 
-#new-window-pinned-texture {
-    position: absolute;
-    width: 20px;
-    height: 20px;
+#new-window-pinned-texture.button {
     right: 20px;
-    cursor: pointer;
-    background: #c4c4c4;
-    color: #362e3b;
     font-size: 13px;
-    text-align: center;
-    line-height: 20px;
-    border-radius: 2px;
-    z-index: 50;
 }
 
-#new-window-pinned-texture:hover
+#new-window-pinned-texture.button:hover
 {
-    background: white;
+    opacity: 0.9;
 }
 
 #pinned-texture.active {
@@ -86,7 +72,6 @@
 #pinned-texture-img {
     object-fit: contain;
 }
-
 
 #pinned-image-wrapper {
     overflow: hidden;
