@@ -32,7 +32,7 @@ import EntityPropertiesBuilder from "./frontend/EntityPropertiesBuilder";
 import PendingFrames from "./utils/pendingFrames";
 import { LIB_VERSION } from "./version";
 import ShapeLineController from "./frontend/ShapeLineController";
-import { loadResource } from "./resources/resources";
+import { isImageResource, loadResource } from "./resources/resources";
 import { ResourcePreview } from "./frontend/ResourcePreview";
 import { PinnedTexture } from "./frontend/PinnedTexture";
 import Comments, { CommentUtils } from "./frontend/Comments";
@@ -1813,18 +1813,6 @@ export default class Renderer {
         }
     }
 
-    // User windows
-    async openResourceInNewWindow(resource: RECORDING.IResource) : Promise<number>
-    {
-        const windowId = await UserWindows.requestOpenWindow(resource.path);
-        const content = await loadResource(resource);
-
-        // TODO: Only works with images for now!
-        UserWindows.sendImageData(windowId, content.textData, resource.path);
-
-        return windowId;
-    }
-
     async pinnedTextureNewWindow()
     {
         if (this.pinnedTextureWindowId == null)
@@ -1838,8 +1826,6 @@ export default class Renderer {
 
     onUserWindowClosed(id: number)
     {
-        console.log("window closed: " + id);
-        console.log(this.pinnedTexture);
         if (this.pinnedTextureWindowId == id)
         {
             this.pinnedTextureWindowId = null;

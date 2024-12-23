@@ -37,6 +37,17 @@ export function sendImageData(id: number, content: string, title: string)
     ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.UpdateWindow, request));
 }
 
+export function sendTextData(id: number, content: string, title: string)
+{
+    const request : Messaging.IUpdateWindowsContent = {
+        id: id,
+        type: Messaging.EUserWindowType.Text,
+        content: content,
+        title: title,
+    };
+    ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.UpdateWindow, request));
+}
+
 export async function requestOpenWindow(title: string)
 {
     return new Promise<number>((resolve, reject) => {

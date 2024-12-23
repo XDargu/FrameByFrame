@@ -1,6 +1,7 @@
 import { ipcRenderer } from 'electron';
 import * as RECORDING from '../recording/RecordingData';
 import * as Messaging from "../messaging/MessageDefinitions";
+import * as UserWindows from "../frontend/UserWindows";
 
 export function resourceExtensionFromType(type: string) : string
 {
@@ -34,6 +35,20 @@ export function getResourceContent(resource: RECORDING.IResource)
     const content = blobJson.blob.substring(separator + 1);
 
     return content;
+}
+
+// User windows
+export async function openResourceInNewWindow(resource: RECORDING.IResource) : Promise<number>
+{
+    const windowId = await UserWindows.requestOpenWindow(resource.path);
+    const content = await loadResource(resource);
+
+    if (isImageResource(resource))
+        UserWindows.sendImageData(windowId, content.textData, resource.path);
+    else
+        UserWindows.sendTextData(windowId, content.textData, resource.path);
+
+    return windowId;
 }
 
 

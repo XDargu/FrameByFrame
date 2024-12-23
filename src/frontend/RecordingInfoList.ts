@@ -1,4 +1,4 @@
-import { downloadResource } from '../resources/resources';
+import { downloadResource, openResourceInNewWindow } from '../resources/resources';
 import * as RECORDING from '../recording/RecordingData';
 import { addContextMenu } from './ContextMenu';
 import { ResourcePreview } from './ResourcePreview';
@@ -164,7 +164,10 @@ export class RecordingInfoList
                 const config = [
                     { text: "Download resource", icon: "fa-download", callback: () => { 
                         downloadResource(recording.resources[path]);
-                    } },
+                    }, },
+                    { text: "Open in new Window", icon: "fa-window-restore", callback: () => { 
+                        openResourceInNewWindow(recording.resources[path]);
+                    }, },
                 ];
                 addContextMenu(element, config);
             }

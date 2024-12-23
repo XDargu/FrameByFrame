@@ -56,7 +56,7 @@ export function createWindow() : BrowserWindow
 
     if (!app.isPackaged)
     {
-        //newWindow.webContents.openDevTools({mode: 'detach'});
+        newWindow.webContents.openDevTools({mode: 'detach'});
     }
 
     return newWindow;
