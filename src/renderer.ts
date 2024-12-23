@@ -26,13 +26,13 @@ import { RecordingInfoList } from "./frontend/RecordingInfoList";
 import { EntityTree } from "./frontend/EntityTree";
 import FiltersList, { ExportedFilters, FilterId } from "./frontend/FiltersList";
 import * as Utils from "./utils/utils";
+import * as UserWindows from "./frontend/UserWindows";
 import FilterTickers from "./frontend/FilterTickers";
 import EntityPropertiesBuilder from "./frontend/EntityPropertiesBuilder";
 import PendingFrames from "./utils/pendingFrames";
 import { LIB_VERSION } from "./version";
 import ShapeLineController from "./frontend/ShapeLineController";
 import { loadResource } from "./resources/resources";
-import * as TypeSystem from "./types/typeRegistry";
 import { ResourcePreview } from "./frontend/ResourcePreview";
 import { PinnedTexture } from "./frontend/PinnedTexture";
 import Comments, { CommentUtils } from "./frontend/Comments";
@@ -123,6 +123,7 @@ export default class Renderer {
 
     // Pin test
     private pinnedTexture: PinnedTexture;
+    private pinnedTextureWindowId: number = null;
 
     // Comments
     private comments: Comments;
@@ -169,7 +170,7 @@ export default class Renderer {
                     const pinnedPropertyPath = NaiveRecordedData.getEntityPropertyPath(entity, propId);
                     this.pinnedTexture.setPinnedEntityId(this.selectedEntityId, pinnedPropertyPath);
 
-                    this.pinnedTexture.applyPinnedTexture();
+                    this.pinnedTexture.applyPinnedTexture(this.pinnedTextureWindowId);
                 },
                 onAddComment: (propId) => {
                     // You can only add comments to the currently selected entity
@@ -192,7 +193,8 @@ export default class Renderer {
         this.pinnedTexture = new PinnedTexture();
         this.pinnedTexture.initialize(
             (entityId) => { return this.frameData?.entities[entityId]; },
-            (texture) => { return this.recordedData?.findResource(texture); }
+            (texture) => { return this.recordedData?.findResource(texture); },
+            () => { this.pinnedTextureNewWindow(); }
         );
         this.initializeTimeline();
         this.initializeUI();
@@ -715,7 +717,7 @@ export default class Renderer {
                             {
                                 const pinnedPropertyPath = NaiveRecordedData.getEntityPropertyPath(entity, property.id);
                                 this.pinnedTexture.setPinnedEntityId(entity.id, pinnedPropertyPath);
-                                this.pinnedTexture.applyPinnedTexture();
+                                this.pinnedTexture.applyPinnedTexture(this.pinnedTextureWindowId);
                             }
                         }
                     });
@@ -1007,7 +1009,7 @@ export default class Renderer {
         this.updateVisibleShapesSyncing();
 
         // Update pinned info
-        this.pinnedTexture.applyPinnedTexture();
+        this.pinnedTexture.applyPinnedTexture(this.pinnedTextureWindowId);
 
         // Update comments
         this.comments.selectionChanged(frame, this.selectedEntityId);
@@ -1809,6 +1811,27 @@ export default class Renderer {
             document.body.classList.add("welcome-active");
             this.controlTabs.closeAllTabs();
         }
+    }
+
+    // User windows
+    async openResourceInNewWindow(resource: RECORDING.IResource) : Promise<number>
+    {
+        const windowId = await UserWindows.requestOpenWindow();
+        const content = await loadResource(resource);
+
+        // TODO: Only works with images for now!
+        UserWindows.sendImageData(windowId, content.textData);
+
+        return windowId;
+    }
+
+    async pinnedTextureNewWindow()
+    {
+        //const id = await this.openResourceInNewWindow(resource);
+        const windowId = await UserWindows.requestOpenWindow();
+        this.pinnedTextureWindowId = windowId;
+
+        this.pinnedTexture.applyPinnedTexture(this.pinnedTextureWindowId);
     }
 }
 

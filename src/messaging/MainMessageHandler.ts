@@ -1,7 +1,9 @@
+import { BrowserWindow } from "electron";
 import { ipcMain, dialog } from "electron";
 import * as path from "path";
 import { ISettings } from "../files/Settings";
 import * as Messaging from "../messaging/MessageDefinitions";
+import * as UserWindowUtils from "../mainThread/userWindowUtils";
 import { fileManager, sessionOptions } from "../main";
 
 const shell = require('electron').shell;
@@ -213,6 +215,33 @@ export function initMessageHandling()
 
           case Messaging.MessageType.DownloadResource:
             downloadResource(arg.data as Messaging.IDownloadResource);
+            break;
+
+        case Messaging.MessageType.UpdateWindow:
+        {
+            const request = arg.data as Messaging.IUpdateWindowsContent;
+            const window = BrowserWindow.fromId(request.id);
+            if (window)
+            {
+                window.webContents.send('display-content', request);
+            }
+            break;
+        }
+
+        case Messaging.MessageType.OpenWindowRequest:
+            {
+                const request = arg.data as Messaging.IOpenWindowRequest;
+
+                const window = UserWindowUtils.createWindow();
+                window.webContents.once('did-finish-load', () =>
+                {
+                    const result : Messaging.IOpenWindowResult = {
+                        id: window.id,
+                        requestId: request.requestId
+                    }
+                    event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenWindowResult, result));
+                });
+            }
             break;
 
         }

@@ -52,6 +52,26 @@
     background: white;
 }
 
+#new-window-pinned-texture {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    right: 20px;
+    cursor: pointer;
+    background: #c4c4c4;
+    color: #362e3b;
+    font-size: 13px;
+    text-align: center;
+    line-height: 20px;
+    border-radius: 2px;
+    z-index: 50;
+}
+
+#new-window-pinned-texture:hover
+{
+    background: white;
+}
+
 #pinned-texture.active {
     display: flex;
     flex-direction: column;

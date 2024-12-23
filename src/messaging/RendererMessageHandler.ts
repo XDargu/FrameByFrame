@@ -5,6 +5,7 @@ import { LogChannel, LogLevel } from "../frontend/ConsoleController";
 import { Console } from "../frontend/ConsoleController";
 import * as Messaging from "../messaging/MessageDefinitions";
 import Renderer from "../renderer";
+import { onUserWindowOpened } from "../frontend/UserWindows";
 
 const { shell } = require('electron');
 
@@ -110,6 +111,12 @@ export function initMessageHandling(renderer: Renderer)
                 {
                     renderer.loadMod(result);
                 }
+                break;
+            }
+            case Messaging.MessageType.OpenWindowResult:
+            {
+                const result = arg.data as Messaging.IOpenWindowResult;
+                onUserWindowOpened(result.id, result.requestId);
                 break;
             }
         }

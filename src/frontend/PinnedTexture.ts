@@ -1,3 +1,5 @@
+import * as UserWindows from "../frontend/UserWindows";
+import * as Messaging from "../messaging/MessageDefinitions";
 import { NaiveRecordedData } from "../recording/RecordingData";
 import { loadResource } from "../resources/resources";
 import { ResizeObserver } from 'resize-observer';
@@ -14,6 +16,11 @@ export interface IGetEntityData
 export interface IGetResource
 {
     (name: string) : RECORDING.IResource
+}
+
+export interface OnOpenInNewWindow
+{
+    () : void
 }
 
 interface Point
@@ -100,13 +107,15 @@ export class PinnedTexture
 
     private getEntityCallback: IGetEntityData;
     private getResourceCallback: IGetResource;
+    private openInNewWindow: OnOpenInNewWindow;
 
     private pinnedImage: HTMLImageElement;
     private pinnedWrapper: HTMLElement;
 
     private targetResource: RECORDING.IResource;
-    private targetBitmap: ImageBitmap;
     private dirty = false;
+
+    private isEnabled = false;
 
     constructor()
     {
@@ -114,7 +123,6 @@ export class PinnedTexture
         this.pinnedPropertyPath = null;
         this.view = new View();
         this.targetResource = null;
-        this.targetBitmap = null;
     }
 
     setPinnedEntityId(pinnedEntityId: number, pinnedPropertyPath: string[])
@@ -131,6 +139,8 @@ export class PinnedTexture
         const title = document.getElementById(`pinned-texture-title`) as HTMLElement;
         const entity = this.getEntityCallback(pinnedEntityId);
         title.innerText = entity ? NaiveRecordedData.getEntityName(entity) : "";
+
+        this.isEnabled = true;
     }
 
     clear()
@@ -138,9 +148,9 @@ export class PinnedTexture
         this.pinnedEntityId = null;
         this.pinnedPropertyPath = null;
         this.targetResource = null;
-        this.targetBitmap = null;
         this.dirty = true;
         this.view.reset();
+        this.isEnabled = false;
     }
 
     clientToCanvasX(mouseX: number) : number
@@ -177,16 +187,18 @@ export class PinnedTexture
         this.dirty = true;
     }
 
-    initialize(getEntityCallback: IGetEntityData, getResourceCallback: IGetResource)
+    initialize(getEntityCallback: IGetEntityData, getResourceCallback: IGetResource, openInNewWindow: OnOpenInNewWindow)
     {
         this.getEntityCallback = getEntityCallback;
         this.getResourceCallback = getResourceCallback;
+        this.openInNewWindow = openInNewWindow;
         
         this.pinnedWrapper = document.getElementById(`pinned-texture`) as HTMLElement;
         this.pinnedImage = <HTMLImageElement><unknown>document.getElementById('pinned-texture-img');
 
         // Initialize pinned texture canvas
         let closePinnedBtn = document.getElementById(`close-pinned-texture`) as HTMLElement;
+        let newWindowBtn = document.getElementById(`new-window-pinned-texture`) as HTMLElement;
         let resizer = this.pinnedWrapper.querySelector('.resizer') as HTMLElement;
         this.pinnedImage.style.width = 300 + "px";
         this.pinnedImage.style.height = 300 + "px";
@@ -244,6 +256,9 @@ export class PinnedTexture
         // Close button
         closePinnedBtn.onclick = () => { this.closePinnedTexture(); };
 
+        // New window button
+        newWindowBtn.onclick = () => { this.openInNewWindow(); this.closePinnedTexture(); }
+
         // Control of resizer
         let resize = (e: MouseEvent) =>
         {
@@ -285,12 +300,12 @@ export class PinnedTexture
     {
         const pinnedElement = document.getElementById("pinned-texture");
         DOMUtils.setClass(pinnedElement, "active", false);
-        this.pinnedEntityId = null;
+        this.isEnabled = false;
     }
 
     render()
     {
-        if (this.pinnedEntityId && this.pinnedImage.naturalWidth > 0 && this.dirty)
+        if (this.isEnabled && this.pinnedEntityId && this.pinnedImage.naturalWidth > 0 && this.dirty)
         {
             const rectangle = this.pinnedWrapper.getBoundingClientRect();
 
@@ -318,19 +333,14 @@ export class PinnedTexture
         requestAnimationFrame(this.render.bind(this));
     }
 
-    async applyPinnedTexture()
+    private async loadResource()
     {
-        const pinnedElement = document.getElementById("pinned-texture");
-        DOMUtils.setClass(pinnedElement, "active", false);
-
         const pinnedEntity = this.getEntityCallback(this.pinnedEntityId);
         if (pinnedEntity)
         {
             const pinnedProperty = NaiveRecordedData.findPropertyPathInEntity(pinnedEntity, this.pinnedPropertyPath);
             if (pinnedProperty)
             {
-                DOMUtils.setClass(pinnedElement, "active", true);
-
                 if (RECORDING.isPropertyTextured(pinnedProperty))
                 {
                     const resourcePath = (pinnedProperty as RECORDING.IPropertyTextured).texture;
@@ -338,26 +348,51 @@ export class PinnedTexture
                     {
                         const resource = this.getResourceCallback(resourcePath);
 
-                        if (this.targetBitmap && this.targetResource?.path == resource.path)
+                        // The resource is already loaded
+                        if (this.targetResource?.path == resource.path)
                             return;
 
                         // We need to load the resource
                         try
                         {
                             this.targetResource = await loadResource(resource);
-                            this.pinnedImage.src = this.targetResource.url;
                         }
                         catch(e)
                         {
-                            this.targetBitmap = null;
                             this.targetResource = null;
                             Logger.Error("Error loading texture: " + resource?.path);
                         };
-
-                        this.dirty = true;
                     }
                 }
             }
+        }
+    }
+
+    async applyPinnedTexture(windowId: number)
+    {
+        const isActive = windowId != null || this.isEnabled;
+
+        if (!isActive)
+            return;
+
+        await this.loadResource();
+
+        if (!this.targetResource)
+            return;
+
+        // For the pinned texture panel
+        if (this.isEnabled)
+        {
+            const pinnedElement = document.getElementById("pinned-texture");
+            DOMUtils.setClass(pinnedElement, "active", true);
+            this.pinnedImage.src = this.targetResource.url;
+            this.dirty = true;
+        }
+
+        // For external windows
+        if (windowId != null)
+        {
+            UserWindows.sendImageData(windowId, this.targetResource.textData)
         }
     }
 }

@@ -23,6 +23,10 @@ export enum MessageType { // TODO: Maybe rename these to make clear the directio
     ImportFiltersResult,
     ModFileOpened,
     DownloadResource,
+    OpenWindowRequest,
+    OpenWindowResult,
+    UpdateWindow,
+
 }
 
 export interface IClearResultData
@@ -63,7 +67,33 @@ export interface IDownloadResource
     name: string;
 }
 
-type MessageData = string | IClearResultData | ILogData | ISettings | ISaveFileData | IRequestSavePathData | IResultSavePathData | IDownloadResource;
+export enum EUserWindowType
+{
+    Image,
+    Text,
+    PropertyGroup
+}
+
+export interface IOpenWindowRequest
+{
+    type: EUserWindowType;
+    requestId: number;
+}
+
+export interface IUpdateWindowsContent
+{
+    id: number;
+    type: EUserWindowType;
+    content: string;
+}
+
+export interface IOpenWindowResult
+{
+    id: number;
+    requestId: number;
+}
+
+type MessageData = string | IClearResultData | ILogData | ISettings | ISaveFileData | IRequestSavePathData | IResultSavePathData | IDownloadResource | IOpenWindowRequest | IOpenWindowResult | IUpdateWindowsContent;
 export class Message
 {
     public type: MessageType;
