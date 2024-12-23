@@ -217,6 +217,19 @@ export function initMessageHandling()
             downloadResource(arg.data as Messaging.IDownloadResource);
             break;
 
+        case Messaging.MessageType.CloseWindow:
+        {
+            const request = arg.data as Messaging.ICloseWindowRequest;
+            UserWindowUtils.closeWindowById(request.id);
+            break;
+        }
+
+        case Messaging.MessageType.CloseAllWindows:
+        {
+            UserWindowUtils.closeAllWindows();
+            break;
+        }
+
         case Messaging.MessageType.UpdateWindow:
         {
             const request = arg.data as Messaging.IUpdateWindowsContent;
@@ -233,10 +246,11 @@ export function initMessageHandling()
                 const request = arg.data as Messaging.IOpenWindowRequest;
 
                 const window = UserWindowUtils.createWindow();
+                const id = window.id;
                 window.webContents.once('did-finish-load', () =>
                 {
                     const result : Messaging.IOpenWindowResult = {
-                        id: window.id,
+                        id: id,
                         requestId: request.requestId
                     }
                     event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenWindowResult, result));

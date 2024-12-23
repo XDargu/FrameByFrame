@@ -7,6 +7,7 @@ import { loadMods, onFileHistoryChanged, onOpenRecentFileClicked, onSettingsChan
 import { logToConsole } from "./mainThread/logging";
 import { SessionOptions } from "./mainThread/sessionOptions";
 import { initMessageHandling } from "./messaging/MainMessageHandler";
+import * as UserWindowUtils from "./mainThread/userWindowUtils";
 
 export let mainWindow: Electron.BrowserWindow;
 export let fileManager: FileManager;
@@ -46,14 +47,17 @@ function createWindow() {
     mainWindow.webContents.openDevTools({mode: 'detach'});
   }
 
+  mainWindow.on("close", () => {
+    UserWindowUtils.closeAllWindows();
+    app.quit();
+  });
+
   // Emitted when the window is closed.
   mainWindow.on("closed", () => {
     // Dereference the window object, usually you would store windows
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
     mainWindow = null;
-
-    app.quit();
   });
 
   fileManager = new FileManager();

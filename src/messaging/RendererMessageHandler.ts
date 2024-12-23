@@ -119,6 +119,12 @@ export function initMessageHandling(renderer: Renderer)
                 onUserWindowOpened(result.id, result.requestId);
                 break;
             }
+            case Messaging.MessageType.WindowsClosed:
+            {
+                const result = arg.data as Messaging.IWindowsClosed;
+                renderer.onUserWindowClosed(result.id);
+                break;
+            }
         }
     });
 }

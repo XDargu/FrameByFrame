@@ -819,7 +819,7 @@ export default class Renderer {
         this.updateMetadata();
         ResourcePreview.Instance().setResourceData(this.recordedData.resources);
 
-        this.pinnedTexture.clear();
+        ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.CloseAllWindows, ""));
         this.comments.clear();
 
         // Trigger Garbace Collection
@@ -1832,6 +1832,18 @@ export default class Renderer {
         this.pinnedTextureWindowId = windowId;
 
         this.pinnedTexture.applyPinnedTexture(this.pinnedTextureWindowId);
+    }
+
+    onUserWindowClosed(id: number)
+    {
+        console.log("window closed: " + id);
+        console.log(this.pinnedTexture);
+        if (this.pinnedTextureWindowId == id)
+        {
+            this.pinnedTextureWindowId = null;
+            this.pinnedTexture.setEnabled();
+            this.pinnedTexture.applyPinnedTexture(this.pinnedTextureWindowId);
+        }
     }
 }
 

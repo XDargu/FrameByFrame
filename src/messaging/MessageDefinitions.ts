@@ -26,7 +26,9 @@ export enum MessageType { // TODO: Maybe rename these to make clear the directio
     OpenWindowRequest,
     OpenWindowResult,
     UpdateWindow,
-
+    CloseWindow,
+    CloseAllWindows,
+    WindowsClosed,
 }
 
 export interface IClearResultData
@@ -87,13 +89,23 @@ export interface IUpdateWindowsContent
     content: string;
 }
 
+export interface ICloseWindowRequest
+{
+    id: number;
+}
+
 export interface IOpenWindowResult
 {
     id: number;
     requestId: number;
 }
 
-type MessageData = string | IClearResultData | ILogData | ISettings | ISaveFileData | IRequestSavePathData | IResultSavePathData | IDownloadResource | IOpenWindowRequest | IOpenWindowResult | IUpdateWindowsContent;
+export interface IWindowsClosed
+{
+    id: number;
+}
+
+type MessageData = string | IClearResultData | ILogData | ISettings | ISaveFileData | IRequestSavePathData | IResultSavePathData | IDownloadResource | IOpenWindowRequest | IOpenWindowResult | IUpdateWindowsContent | IWindowsClosed | ICloseWindowRequest;
 export class Message
 {
     public type: MessageType;

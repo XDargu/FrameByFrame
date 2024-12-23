@@ -143,6 +143,12 @@ export class PinnedTexture
         this.isEnabled = true;
     }
 
+    setEnabled()
+    {
+        this.isEnabled = true;
+        this.dirty = true;
+    }
+
     clear()
     {
         this.pinnedEntityId = null;
