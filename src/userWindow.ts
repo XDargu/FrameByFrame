@@ -43,6 +43,8 @@ ipcRenderer.on('display-content', (event: any, request: Messaging.IUpdateWindows
         displayElement.innerHTML = "";
         displayElement.textContent = request.content;
     }
+
+    document.getElementById("window-title-text").innerText = request.title;
 });
 
 initWindowControls();

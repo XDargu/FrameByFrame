@@ -236,6 +236,7 @@ export function initMessageHandling()
             const window = BrowserWindow.fromId(request.id);
             if (window)
             {
+                window.setTitle(request.title);
                 window.webContents.send('display-content', request);
             }
             break;
@@ -247,6 +248,7 @@ export function initMessageHandling()
 
                 const window = UserWindowUtils.createWindow();
                 const id = window.id;
+                window.setTitle(request.title);
                 window.webContents.once('did-finish-load', () =>
                 {
                     const result : Messaging.IOpenWindowResult = {

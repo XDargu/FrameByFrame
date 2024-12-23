@@ -80,6 +80,7 @@ export interface IOpenWindowRequest
 {
     type: EUserWindowType;
     requestId: number;
+    title: string;
 }
 
 export interface IUpdateWindowsContent
@@ -87,6 +88,7 @@ export interface IUpdateWindowsContent
     id: number;
     type: EUserWindowType;
     content: string;
+    title: string;
 }
 
 export interface ICloseWindowRequest

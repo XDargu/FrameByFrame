@@ -111,6 +111,7 @@ export class PinnedTexture
 
     private pinnedImage: HTMLImageElement;
     private pinnedWrapper: HTMLElement;
+    private title: HTMLElement;
 
     private targetResource: RECORDING.IResource;
     private dirty = false;
@@ -123,6 +124,7 @@ export class PinnedTexture
         this.pinnedPropertyPath = null;
         this.view = new View();
         this.targetResource = null;
+        this.title = document.getElementById(`pinned-texture-title`) as HTMLElement;
     }
 
     setPinnedEntityId(pinnedEntityId: number, pinnedPropertyPath: string[])
@@ -136,11 +138,15 @@ export class PinnedTexture
         this.pinnedWrapper.style.height = 300 + "px";
 
         // Title
-        const title = document.getElementById(`pinned-texture-title`) as HTMLElement;
         const entity = this.getEntityCallback(pinnedEntityId);
-        title.innerText = entity ? NaiveRecordedData.getEntityName(entity) : "";
+        this.title.innerText = entity ? NaiveRecordedData.getEntityName(entity) : "";
 
         this.isEnabled = true;
+    }
+
+    getTitle() : string
+    {
+        return this.title.innerText;
     }
 
     setEnabled()
@@ -398,7 +404,7 @@ export class PinnedTexture
         // For external windows
         if (windowId != null)
         {
-            UserWindows.sendImageData(windowId, this.targetResource.textData)
+            UserWindows.sendImageData(windowId, this.targetResource.textData, this.getTitle())
         }
     }
 }

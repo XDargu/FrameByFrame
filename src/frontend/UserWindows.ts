@@ -26,24 +26,26 @@ function addUserwindowEvent(requestId: number, listener: UserWindowRequestListen
     pendingRequests.set(requestId, listener);
 }
 
-export function sendImageData(id: number, content: string)
+export function sendImageData(id: number, content: string, title: string)
 {
     const request : Messaging.IUpdateWindowsContent = {
         id: id,
         type: Messaging.EUserWindowType.Image,
-        content: content
+        content: content,
+        title: title,
     };
     ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.UpdateWindow, request));
 }
 
-export async function requestOpenWindow()
+export async function requestOpenWindow(title: string)
 {
     return new Promise<number>((resolve, reject) => {
         const requestId = userWindowRequestId++;
 
         const request : Messaging.IOpenWindowRequest = {
             type: Messaging.EUserWindowType.Image,
-            requestId: requestId
+            requestId: requestId,
+            title: title,
         };
         ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.OpenWindowRequest, request));
 

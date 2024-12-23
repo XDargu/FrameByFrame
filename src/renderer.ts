@@ -1816,20 +1816,22 @@ export default class Renderer {
     // User windows
     async openResourceInNewWindow(resource: RECORDING.IResource) : Promise<number>
     {
-        const windowId = await UserWindows.requestOpenWindow();
+        const windowId = await UserWindows.requestOpenWindow(resource.path);
         const content = await loadResource(resource);
 
         // TODO: Only works with images for now!
-        UserWindows.sendImageData(windowId, content.textData);
+        UserWindows.sendImageData(windowId, content.textData, resource.path);
 
         return windowId;
     }
 
     async pinnedTextureNewWindow()
     {
-        //const id = await this.openResourceInNewWindow(resource);
-        const windowId = await UserWindows.requestOpenWindow();
-        this.pinnedTextureWindowId = windowId;
+        if (this.pinnedTextureWindowId == null)
+        {
+            const windowId = await UserWindows.requestOpenWindow(this.pinnedTexture.getTitle());
+            this.pinnedTextureWindowId = windowId;
+        }
 
         this.pinnedTexture.applyPinnedTexture(this.pinnedTextureWindowId);
     }
