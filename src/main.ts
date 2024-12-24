@@ -48,7 +48,6 @@ function createWindow() {
   }
 
   mainWindow.on("close", () => {
-    UserWindowUtils.closeAllWindows();
     app.quit();
   });
 
