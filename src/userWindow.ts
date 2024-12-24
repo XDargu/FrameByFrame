@@ -3,7 +3,7 @@ import { initWindowControls } from "./frontend/WindowControls";
 import * as Messaging from "./messaging/MessageDefinitions";
 import * as DOMUtils from "./utils/DOMUtils";
 
-async function displayImageResource(textData: string)
+async function displayImageResource(url: string)
 {
     const displayElement = document.getElementById('window-content');
     DOMUtils.setClass(displayElement, "text-content", false);
@@ -22,25 +22,16 @@ async function displayImageResource(textData: string)
         displayElement.append(img);
     }
 
-    const parsed = JSON.parse(textData);
-
-    const response = await fetch(parsed.blob);
-    const blob = await response.blob();
-    const data = blob;
-    const url = URL.createObjectURL(data);
-
     img.src = url;
 }
 
-async function displayTextReource(textData: string)
+async function displayTextReource(url: string)
 {
     const displayElement = document.getElementById('window-content');
     displayElement.innerHTML = "";
     DOMUtils.setClass(displayElement, "text-content", true);
 
-    const parsed = JSON.parse(textData);
-
-    const response = await fetch(parsed.blob);
+    const response = await fetch(url);
     const blob = await response.blob();
 
     let reader = new FileReader();

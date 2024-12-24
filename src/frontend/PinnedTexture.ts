@@ -404,7 +404,7 @@ export class PinnedTexture
         // For external windows
         if (windowId != null)
         {
-            UserWindows.sendImageData(windowId, this.targetResource.textData, this.getTitle())
+            UserWindows.sendImageData(windowId, this.targetResource.url, this.getTitle())
         }
     }
 }

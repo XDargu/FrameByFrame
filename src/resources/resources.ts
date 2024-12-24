@@ -44,9 +44,9 @@ export async function openResourceInNewWindow(resource: RECORDING.IResource) : P
     const content = await loadResource(resource);
 
     if (isImageResource(resource))
-        UserWindows.sendImageData(windowId, content.textData, resource.path);
+        UserWindows.sendImageData(windowId, content.url, resource.url);
     else
-        UserWindows.sendTextData(windowId, content.textData, resource.path);
+        UserWindows.sendTextData(windowId, content.url, resource.path);
 
     return windowId;
 }
