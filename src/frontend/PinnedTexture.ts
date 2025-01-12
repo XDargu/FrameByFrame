@@ -157,6 +157,7 @@ export class PinnedTexture
 
     clear()
     {
+        this.closePinnedTexture();
         this.pinnedEntityId = null;
         this.pinnedPropertyPath = null;
         this.targetResource = null;
