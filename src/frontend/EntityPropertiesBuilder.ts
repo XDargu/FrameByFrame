@@ -6,7 +6,7 @@ import { TreeControl } from "../ui/tree";
 import { ICreateFilterFromPropCallback, IGoToEntityCallback, IIsEntityInFrame, IPropertyHoverCallback, PropertyTreeController } from "../frontend/PropertyTreeController";
 import { IContextMenuItem, addContextMenu, removeContextMenu } from './ContextMenu';
 
-namespace UI
+export namespace UI
 {
     export enum TreeFlags
     {
@@ -17,6 +17,8 @@ namespace UI
         AlwaysAdd        = 1 << 3,
         ShouldPrepend    = 1 << 4,
         CanOpenNewWindow = 1 << 5,
+        CanLock          = 1 << 6,
+        IsLocked         = 1 << 7,
     }
 
     export function HasFlag(flags: TreeFlags, flag: TreeFlags)
@@ -81,7 +83,7 @@ namespace UI
     function makeTitleStar(name: string, isStarred: boolean, onGroupStarred: IGroupStarredCallback)
     {
         let starElement = document.createElement("div");
-        starElement.classList.add("basico-star");
+        starElement.classList.add("basico-star", "star");
 
         let icon = document.createElement("i");
         icon.classList.add("fas", "fa-star");
@@ -111,6 +113,39 @@ namespace UI
         }
     }
 
+    function makeTitleLock(name: string, isLocked: boolean, onGroupLocked: IGroupLockedCallback)
+    {
+        let starElement = document.createElement("div");
+        starElement.classList.add("basico-star", "lock");
+
+        let icon = document.createElement("i");
+        icon.classList.add("fas", "fa-lock");
+        starElement.append(icon);
+
+        setTitleStar(starElement, name, isLocked, onGroupLocked);
+
+        return starElement;
+    }
+
+    function setTitleLock(lockElement: HTMLElement, name: string, isLocked: boolean, onGroupLocked: IGroupLockedCallback)
+    {
+        if (isLocked) {
+            if (!lockElement.classList.contains("active")) {
+                lockElement.classList.add("active");
+            }
+        }
+        else {
+            lockElement.classList.remove("active");
+        }
+
+        lockElement.onclick = (e) => {
+            lockElement.classList.toggle("active");
+            const isStarred = lockElement.classList.contains("active");                
+            onGroupLocked(name, isStarred);
+            e.stopPropagation();
+        }
+    }
+
     function makeTreeElement()
     {
         let treeElement = document.createElement("div");
@@ -129,11 +164,14 @@ namespace UI
         flags: UI.TreeFlags,
         onCreateFilterFromEvent: ICreateFilterFromEventCallback,
         onOpenInNewWindow: IOpenNewWindowCallback,
-        onGroupStarred: IGroupStarredCallback
+        onGroupStarred: IGroupStarredCallback,
+        onGroupLocked: IGroupLockedCallback
     )
     {
         const hasStar = UI.HasFlag(flags, UI.TreeFlags.HasStar);
         const isStarred = UI.HasFlag(flags, UI.TreeFlags.IsStarred);
+        const canLock = UI.HasFlag(flags, UI.TreeFlags.CanLock);
+        const isLocked = UI.HasFlag(flags, UI.TreeFlags.IsLocked);
         const canOpenNewWindow = UI.HasFlag(flags, UI.TreeFlags.CanOpenNewWindow);
 
         // Update name
@@ -165,7 +203,7 @@ namespace UI
         addTitleEventMenu(titleElement, name, tag, propId, onCreateFilterFromEvent, canOpenNewWindow ? onOpenInNewWindow : null);
 
         // Update star
-        let starElement = titleElement.querySelector(".basico-star") as HTMLElement;
+        let starElement = titleElement.querySelector(".basico-star.star") as HTMLElement;
         if (hasStar)
         {
             if (starElement)
@@ -182,6 +220,26 @@ namespace UI
         else if (starElement)
         {
             starElement.remove();
+        }
+
+        // Update lock
+        let lockElement = titleElement.querySelector(".basico-star.lock") as HTMLElement;
+        if (canLock)
+        {
+            if (lockElement)
+            {
+                setTitleLock(lockElement, name, isLocked, onGroupLocked);
+            }
+            else
+            {
+                let lockElement = makeTitleLock(name, isLocked, onGroupLocked);
+                titleElement.append(lockElement);
+            }
+            
+        }
+        else if (lockElement)
+        {
+            lockElement.remove();
         }
     }
 
@@ -223,10 +281,13 @@ namespace UI
         onCreateFilterFromEvent: ICreateFilterFromEventCallback,
         onOpenNewWindow: IOpenNewWindowCallback,
         onGroupStarred: IGroupStarredCallback,
+        onGroupLocked: IGroupLockedCallback,
         contextMenuItems: IContextMenuItem[])
     {
         const hasStar = UI.HasFlag(flags, UI.TreeFlags.HasStar);
         const isStarred = UI.HasFlag(flags, UI.TreeFlags.IsStarred);
+        const canLock = UI.HasFlag(flags, UI.TreeFlags.CanLock);
+        const isLocked = UI.HasFlag(flags, UI.TreeFlags.IsLocked);
         const canOpenNewWindow = UI.HasFlag(flags, UI.TreeFlags.CanOpenNewWindow);
 
         let titleElement = makeTitle(name);
@@ -244,6 +305,12 @@ namespace UI
         {
             let starElement = makeTitleStar(name, isStarred, onGroupStarred);
             titleElement.append(starElement);
+        }
+
+        if (canLock)
+        {
+            let lockElement = makeTitleLock(name, isLocked, onGroupLocked);
+            titleElement.append(lockElement);
         }
 
         let treeElement = makeTreeElement();
@@ -354,6 +421,11 @@ export interface IGroupStarredCallback
     (name: string, starred: boolean) : void
 }
 
+export interface IGroupLockedCallback
+{
+    (name: string, locked: boolean) : void
+}
+
 export interface IGoToShapeCallback {
     (entityId: number) : void;
 }
@@ -385,6 +457,7 @@ export interface EntityPropertiesBuilderCallbacks
     onAddComment: IAddComment;
     isEntityInFrame: IIsEntityInFrame;
     isPropertyVisible: IIsPropertyVisible;
+    onGroupLocked: IGroupLockedCallback;
 }
 
 export default class EntityPropertiesBuilder
@@ -463,7 +536,8 @@ export default class EntityPropertiesBuilder
                 flags | extraFlags,
                 this.callbacks.onCreateFilterFromEvent,
                 this.callbacks.onOpenInNewWindow,
-                onStarredCallback);
+                onStarredCallback,
+                this.callbacks.onGroupLocked);
             UI.setPropertyTree(storedGroup.propertyTree.root, name, nameIndex, storedGroup.title, this.collapsedGroups);
         }
         else
@@ -478,6 +552,7 @@ export default class EntityPropertiesBuilder
                 this.callbacks.onCreateFilterFromEvent,
                 this.callbacks.onOpenInNewWindow,
                 onStarredCallback,
+                this.callbacks.onGroupLocked,
                 this.contextMenuItems
             );
 

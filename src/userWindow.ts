@@ -3,7 +3,7 @@ import { initWindowControls } from "./frontend/WindowControls";
 import * as Messaging from "./messaging/MessageDefinitions";
 import * as DOMUtils from "./utils/DOMUtils";
 import * as RECORDING from './recording/RecordingData';
-import EntityPropertiesBuilder from "./frontend/EntityPropertiesBuilder";
+import EntityPropertiesBuilder, { UI } from "./frontend/EntityPropertiesBuilder";
 
 let propertiesBuilder: EntityPropertiesBuilder = new EntityPropertiesBuilder(
     {
@@ -22,9 +22,14 @@ let propertiesBuilder: EntityPropertiesBuilder = new EntityPropertiesBuilder(
         onAddComment: (propId) => {
         },
         isEntityInFrame: (id) => { return true; },
-        isPropertyVisible: (propId) => { return true; }
+        isPropertyVisible: (propId) => { return true; },
+        onGroupLocked: (name, locked) => { isLocked = locked; applyRequest(lastRequest); }
     }
 );
+
+// Locking
+let isLocked = false;
+let lastRequest: Messaging.IUpdateWindowsContent = null;
 
 async function displayImageResource(url: string)
 {
@@ -64,34 +69,53 @@ async function displayTextResource(url: string)
     reader.readAsText(blob);
 }
 
-async function displayPropertyGroup(propData: string)
+async function displayPropertyGroup(propData: Messaging.IPropertyGroupData)
 {
-    const property = JSON.parse(propData) as RECORDING.IPropertyGroup;
+    const property = propData.group;
 
     const displayElement = document.getElementById('window-content');
     displayElement.innerHTML = "";
     DOMUtils.setClass(displayElement, "text-content", false);
 
-    propertiesBuilder.buildSinglePropertyTreeBlock(displayElement, property, property.name, -1);
+    const wrapper = document.createElement("div");
+    wrapper.id = "events";
+    displayElement.appendChild(wrapper);
+
+    let flags = UI.TreeFlags.CanLock;
+    if (isLocked)
+        flags = flags | UI.TreeFlags.IsLocked;
+    propertiesBuilder.buildSinglePropertyTreeBlock(wrapper, property, propData.name, -1, propData.tag, flags);
+
+    // A bit hacky: remove click event from title
+    const title = document.querySelector("#events > div.basico-title") as HTMLElement;
+    title.onclick = null;
+}
+
+function applyRequest(request: Messaging.IUpdateWindowsContent)
+{
+    if (request.type == Messaging.EUserWindowType.Image)
+    {
+        displayImageResource(request.content as string);
+    }
+    else if (request.type == Messaging.EUserWindowType.PropertyGroup)
+    {
+        displayPropertyGroup(request.content as Messaging.IPropertyGroupData);
+    }
+    else
+    {
+        displayTextResource(request.content as string);
+    }
+
+    document.getElementById("window-title-text").innerText = request.title;
 }
 
 // Listen for the `display-text` event
 ipcRenderer.on('display-content', (event: any, request: Messaging.IUpdateWindowsContent) =>
 {
-    if (request.type == Messaging.EUserWindowType.Image)
-    {
-        displayImageResource(request.content);
-    }
-    else if (request.type == Messaging.EUserWindowType.PropertyGroup)
-    {
-        displayPropertyGroup(request.content);
-    }
-    else
-    {
-        displayTextResource(request.content);
-    }
+    lastRequest = request;
+    if (isLocked) return;
 
-    document.getElementById("window-title-text").innerText = request.title;
+    applyRequest(request);
 });
 
 initWindowControls();

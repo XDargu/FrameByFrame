@@ -1,5 +1,6 @@
 import { ISettings } from "../files/Settings";
-import { ConsoleWindow, LogLevel, ILogAction, LogChannel } from "../frontend/ConsoleController";
+import { LogLevel, ILogAction, LogChannel } from "../frontend/ConsoleController";
+import * as RECORDING from '../recording/RecordingData';
 
 export enum MessageType { // TODO: Maybe rename these to make clear the direction of the messge (main->render or render->main)
     RequestSave,
@@ -83,11 +84,18 @@ export interface IOpenWindowRequest
     title: string;
 }
 
+export interface IPropertyGroupData
+{
+    group: RECORDING.IPropertyGroup;
+    tag: string;
+    name: string;
+}
+
 export interface IUpdateWindowsContent
 {
     id: number;
     type: EUserWindowType;
-    content: string;
+    content: string | IPropertyGroupData;
     title: string;
 }
 

@@ -46,7 +46,7 @@ export function sendTextData(id: number, content: string, title: string)
     ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.UpdateWindow, request));
 }
 
-export function sendPropertyGroupData(id: number, content: string, title: string)
+export function sendPropertyGroupData(id: number, content: string | Messaging.IPropertyGroupData, title: string)
 {
     const request : Messaging.IUpdateWindowsContent = {
         id: id,

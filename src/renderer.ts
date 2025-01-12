@@ -187,7 +187,8 @@ export default class Renderer {
                         this.comments.addPropertyComment(this.getCurrentFrame(), entity.id, propId);
                 },
                 isEntityInFrame: (id) => { return this.frameData?.entities[Utils.toUniqueID(this.frameData.clientId, id)] != undefined; },
-                isPropertyVisible: (propId) => { return this.sceneController.isPropertyVisible(propId); }
+                isPropertyVisible: (propId) => { return this.sceneController.isPropertyVisible(propId); },
+                onGroupLocked: () => { /* Unused here */}
             }
         );
 

@@ -1,5 +1,6 @@
 import * as RECORDING from '../../recording/RecordingData';
 import * as UserWindows from "../../frontend/UserWindows";
+import * as Messaging from "../../messaging/MessageDefinitions";
 import { NaiveRecordedData } from "../../recording/RecordingData";
 
 interface PropertyWindowData
@@ -24,7 +25,7 @@ export class PropertyWindows
         this.getEntityCallback = getEntityCallback;
     }
 
-    private async sendPropertyGroupData(entity: RECORDING.IEntity, property: RECORDING.IPropertyGroup, title: string)
+    private async sendPropertyGroupData(entity: RECORDING.IEntity, property: RECORDING.IPropertyGroup, title: string, tag: string, name: string)
     {
         const winId = await UserWindows.requestOpenWindow(property.name);
 
@@ -34,7 +35,12 @@ export class PropertyWindows
             entityId: entity.id,
             propertyPath: propertyPath,
         });
-        UserWindows.sendPropertyGroupData(winId, JSON.stringify(property), title);
+        const propGroupData : Messaging.IPropertyGroupData = {
+            group: property,
+            tag: tag,
+            name: name,
+        };
+        UserWindows.sendPropertyGroupData(winId, propGroupData, title);
     }
 
     private getPropertyData(propertyId: number, entityId: number, frame: number, frameData: RECORDING.IFrameData)
@@ -47,8 +53,8 @@ export class PropertyWindows
         {
             const eventProps = eventData.resultEvent.properties
 
-            const title = `${eventData.resultEvent.name} - ${entityName} (Frame ${frame})`;
-            return { entity: entity, props: eventProps, title: title }
+            const title = `(Frame ${frame}) ${eventData.resultEvent.name} - ${entityName}`;
+            return { entity: entity, props: eventProps, title: title, tag: eventData.resultEvent.tag, name: eventData.resultEvent.name }
         }
 
         const property: RECORDING.IProperty = NaiveRecordedData.findPropertyIdInEntityProperties(entity, propertyId);
@@ -59,15 +65,15 @@ export class PropertyWindows
         
         if (NaiveRecordedData.isEntitySpecialProperty(entity, property))
         {
-            const title = `Basic Information - ${entityName} (Frame ${frame})`;
-            return { entity: entity, props: NaiveRecordedData.getSpecialProperties(entity), title: title }
+            const title = `(Frame ${frame}) Basic Information - ${entityName} `;
+            return { entity: entity, props: NaiveRecordedData.getSpecialProperties(entity), title: title, tag: null, name: "Basic Information" }
         }
 
         const propGroup = NaiveRecordedData.findGroupOfProperty(entity, property);
         if (propGroup)
         {
-            const title = `${propGroup.name} - ${entityName} (Frame ${frame})`;
-            return { entity: entity, props: propGroup, title: title }
+            const title = `(Frame ${frame}) ${propGroup.name} - ${entityName}`;
+            return { entity: entity, props: propGroup, title: title, tag: null, name: propGroup.name };
         }
 
         // TODO: Uncategorized properties
@@ -80,7 +86,7 @@ export class PropertyWindows
         const propertyData = this.getPropertyData(propertyId, entityId, frame, frameData);
         if (propertyData)
         {
-            this.sendPropertyGroupData(propertyData.entity, propertyData.props, propertyData.title);
+            this.sendPropertyGroupData(propertyData.entity, propertyData.props, propertyData.title, propertyData.tag, propertyData.name);
         }
     }
 
@@ -95,7 +101,12 @@ export class PropertyWindows
                 if (prop)
                 {
                     const propertyData = this.getPropertyData(prop.id, entity.id, frame, frameData);
-                    UserWindows.sendPropertyGroupData(propWinData.windowId, JSON.stringify(propertyData.props), propertyData.title);
+                    const propGroupData : Messaging.IPropertyGroupData = {
+                        group: propertyData.props,
+                        tag: propertyData.tag,
+                        name: propertyData.name,
+                    };
+                    UserWindows.sendPropertyGroupData(propWinData.windowId, propGroupData, propertyData.title);
                 }
             }
         }
