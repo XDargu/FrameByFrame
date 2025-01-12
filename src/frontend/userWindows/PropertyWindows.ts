@@ -42,7 +42,7 @@ export class PropertyWindows
         const entity = frameData.entities[entityId];
         const entityName = NaiveRecordedData.getEntityName(entity);
 
-        const eventData = NaiveRecordedData.findPropertyIdInEvents(frameData, propertyId);
+        const eventData = NaiveRecordedData.findPropertyIdInEntityEvents(entity, propertyId);
         if (eventData != null)
         {
             const eventProps = eventData.resultEvent.properties
@@ -51,16 +51,26 @@ export class PropertyWindows
             return { entity: entity, props: eventProps, title: title }
         }
 
-        const property: RECORDING.IProperty = NaiveRecordedData.findPropertyIdInProperties(frameData, propertyId);
-        const propGroup = NaiveRecordedData.findGroupOfProperty(entity, property);
+        const property: RECORDING.IProperty = NaiveRecordedData.findPropertyIdInEntityProperties(entity, propertyId);
+        console.log(property);
 
+        if (!property)
+            return;
+        
+        if (NaiveRecordedData.isEntitySpecialProperty(entity, property))
+        {
+            const title = `Basic Information - ${entityName} (Frame ${frame})`;
+            return { entity: entity, props: NaiveRecordedData.getSpecialProperties(entity), title: title }
+        }
+
+        const propGroup = NaiveRecordedData.findGroupOfProperty(entity, property);
         if (propGroup)
         {
             const title = `${propGroup.name} - ${entityName} (Frame ${frame})`;
             return { entity: entity, props: propGroup, title: title }
         }
 
-        // TODO: Special properties and uncategorized properties
+        // TODO: Uncategorized properties
 
         return null;
     }

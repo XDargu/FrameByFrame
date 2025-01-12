@@ -588,6 +588,11 @@ export class NaiveRecordedData implements INaiveRecordedData {
         return this.resources[path];
     }
 
+    static getSpecialProperties(entity: IEntity) : IPropertyGroup
+    {
+        return (entity.properties[NaiveRecordedData.SpecialProps] as IPropertyGroup);
+    }
+
 	static getEntityName(entity: IEntity) : string
 	{
 		// Name is always part of the special groups
@@ -947,13 +952,31 @@ export class NaiveRecordedData implements INaiveRecordedData {
 
                 if (found)
                     return properties[i] as IPropertyGroup;
-        }
+            }
 			else
 			{
-				return null;
+				// Uncategorized property
 			}
 		}
+
+        return null;
 	}
+
+    static isEntitySpecialProperty(entity: IEntity, property: IProperty)
+    {
+        const specialProps = this.getSpecialProperties(entity);
+        if (specialProps.id == property.id)
+            return true;
+
+        const propertyCount = specialProps.value.length;
+		for (let i=0; i<propertyCount; ++i)
+		{
+            if (specialProps.value[i].id == property.id)
+                return true;
+        }
+
+        return false;
+    }
 
 	buildFrameDataHeader(frame: number) : IFrameData {
 		let frameData = this.frameData[frame];
