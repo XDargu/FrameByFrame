@@ -8,6 +8,21 @@ import { IContextMenuItem, addContextMenu, removeContextMenu } from './ContextMe
 
 namespace UI
 {
+    export enum TreeFlags
+    {
+        None             = 0,
+        HasStar          = 1 << 0,
+        IsStarred        = 1 << 1,
+        IgnoreChildren   = 1 << 2,
+        AlwaysAdd        = 1 << 3,
+        ShouldPrepend    = 1 << 3,
+    }
+
+    export function HasFlag(flags: TreeFlags, flag: TreeFlags)
+    {
+        return (flags & flag) != 0;
+    }
+
     function makeTitle(name: string)
     {
         let titleElement = document.createElement("div");
@@ -107,13 +122,15 @@ namespace UI
         name: string,
         tag: string,
         propId: number,
-        hasStar: boolean,
-        isStarred: boolean,
+        flags: UI.TreeFlags,
         onCreateFilterFromEvent: ICreateFilterFromEventCallback,
         onOpenInNewWindow: IOpenNewWindowCallback,
         onGroupStarred: IGroupStarredCallback
     )
     {
+        const hasStar = UI.HasFlag(flags, UI.TreeFlags.HasStar);
+        const isStarred = UI.HasFlag(flags, UI.TreeFlags.IsStarred);
+
         // Update name
         // Hacky but fast way of accessing the title
         let nameElement = titleElement.children[1] as HTMLElement;
@@ -196,14 +213,16 @@ namespace UI
         nameIndex: number,
         tag: string = null,
         propId: number,
-        hasStar: boolean = false,
-        isStarred: boolean,
+        flags: UI.TreeFlags,
         collapsedGroups: CollapsedGroupIDsTracker,
         onCreateFilterFromEvent: ICreateFilterFromEventCallback,
         onOpenNewWindow: IOpenNewWindowCallback,
         onGroupStarred: IGroupStarredCallback,
         contextMenuItems: IContextMenuItem[])
-    {        
+    {
+        const hasStar = UI.HasFlag(flags, UI.TreeFlags.HasStar);
+        const isStarred = UI.HasFlag(flags, UI.TreeFlags.IsStarred);
+
         let titleElement = makeTitle(name);
         let iconElement = titleElement.children[0] as HTMLElement;
 
@@ -395,11 +414,12 @@ export default class EntityPropertiesBuilder
         name: string,
         nameIndex: number,
         tag: string = null,
-        ignoreChildren: boolean = false,
-        shouldPrepend: boolean = false,
-        hasStar: boolean = false,
-        alwaysAdd: boolean = false)
+        flags: UI.TreeFlags = UI.TreeFlags.None)
     {
+        const ignoreChildren = UI.HasFlag(flags, UI.TreeFlags.IgnoreChildren);
+        const alwaysAdd = UI.HasFlag(flags, UI.TreeFlags.AlwaysAdd);
+        const shouldPrepend = UI.HasFlag(flags, UI.TreeFlags.ShouldPrepend);
+        
         const propsToAdd = propertyGroup.value.filter((property) => {
             const shouldAdd = !ignoreChildren || ignoreChildren && property.type != CorePropertyTypes.Group;
             return shouldAdd;
@@ -422,6 +442,8 @@ export default class EntityPropertiesBuilder
             this.callbacks.onGroupStarred(name, starred);
         };
 
+        const extraFlags = isStarred ? UI.TreeFlags.IsStarred : UI.TreeFlags.None;
+
         if (storedGroup)
         {
             // For now, clear and re-build tree
@@ -432,8 +454,7 @@ export default class EntityPropertiesBuilder
                 name,
                 tag,
                 propertyGroup.id,
-                hasStar,
-                isStarred,
+                flags | extraFlags,
                 this.callbacks.onCreateFilterFromEvent,
                 this.callbacks.onOpenInNewWindow,
                 onStarredCallback);
@@ -446,8 +467,7 @@ export default class EntityPropertiesBuilder
                 nameIndex,
                 tag,
                 propertyGroup.id,
-                hasStar,
-                isStarred,
+                flags | extraFlags,
                 this.collapsedGroups,
                 this.callbacks.onCreateFilterFromEvent,
                 this.callbacks.onOpenInNewWindow,
@@ -510,13 +530,13 @@ export default class EntityPropertiesBuilder
                 if (currentGroup.name == "special")
                 {
                     const name = "Basic Information";
-                    this.buildSinglePropertyTreeBlock(propertyTrees, currentGroup, name, increaseNameId(groupsWithName, name), null, false, true);
+                    this.buildSinglePropertyTreeBlock(propertyTrees, currentGroup, name, increaseNameId(groupsWithName, name), null, UI.TreeFlags.ShouldPrepend);
                 }
                 else
                 {
                     const name = "Uncategorized";
 
-                    this.buildSinglePropertyTreeBlock(propertyTrees, currentGroup, name, increaseNameId(groupsWithName, name), null, true);
+                    this.buildSinglePropertyTreeBlock(propertyTrees, currentGroup, name, increaseNameId(groupsWithName, name), null, UI.TreeFlags.IgnoreChildren);
                     
                     let indices = [];
                     for (let j=0; j<currentGroup.value.length; ++j)
@@ -535,7 +555,7 @@ export default class EntityPropertiesBuilder
                         if (groupData.type == CorePropertyTypes.Group)
                         {
                             const childGroup = groupData as RECORDING.IPropertyGroup;
-                            this.buildSinglePropertyTreeBlock(propertyTrees, childGroup, childGroup.name, increaseNameId(groupsWithName, childGroup.name), null, false, false, true);
+                            this.buildSinglePropertyTreeBlock(propertyTrees, childGroup, childGroup.name, increaseNameId(groupsWithName, childGroup.name), null, UI.TreeFlags.HasStar);
                         }
                     }
                 }
@@ -551,7 +571,7 @@ export default class EntityPropertiesBuilder
             const propertyGroup = events[i].properties;
             const name = events[i].name;
 
-            this.buildSinglePropertyTreeBlock(eventTree, propertyGroup, name, increaseNameId(groupsWithName, name), events[i].tag, false, false, false, true);
+            this.buildSinglePropertyTreeBlock(eventTree, propertyGroup, name, increaseNameId(groupsWithName, name), events[i].tag, UI.TreeFlags.AlwaysAdd);
         }
     }
 
@@ -579,7 +599,7 @@ export default class EntityPropertiesBuilder
             id: Number.MAX_SAFE_INTEGER - 1
         };
 
-        this.buildSinglePropertyTreeBlock(propertyTrees, globalDataGroup, "Frame Data", increaseNameId(groupsWithName, "Frame Data"), null, false, true);
+        this.buildSinglePropertyTreeBlock(propertyTrees, globalDataGroup, "Frame Data", increaseNameId(groupsWithName, "Frame Data"), null, UI.TreeFlags.ShouldPrepend);
     }
 
     buildPropertyTree(entity: RECORDING.IEntity, globalData: PropertyTreeGlobalData)
