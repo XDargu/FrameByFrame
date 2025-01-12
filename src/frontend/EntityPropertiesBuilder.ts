@@ -15,7 +15,8 @@ namespace UI
         IsStarred        = 1 << 1,
         IgnoreChildren   = 1 << 2,
         AlwaysAdd        = 1 << 3,
-        ShouldPrepend    = 1 << 3,
+        ShouldPrepend    = 1 << 4,
+        CanOpenNewWindow = 1 << 5,
     }
 
     export function HasFlag(flags: TreeFlags, flag: TreeFlags)
@@ -61,16 +62,19 @@ namespace UI
         {
             const contextMenuItems = [
                 { text: "Create event filter", icon: "fa-plus-square", callback: () => { onCreateFilterFromEvent(name, tag); } },
-                { text: "Open in new window", icon: "fa-window-restore", callback: () => { onOpenInNewWindow(propId); } },
+                { text: "Open in new window", icon: "fa-window-restore", condition: ()=>{ return onOpenInNewWindow != null; }, callback: () => { onOpenInNewWindow(propId); } },
             ];
             addContextMenu(titleElement, contextMenuItems);
         }
         else
         {
-            const contextMenuItems = [
-                { text: "Open in new window", icon: "fa-window-restore", callback: () => { onOpenInNewWindow(propId); } },
-            ];
-            addContextMenu(titleElement, contextMenuItems);
+            if (onOpenInNewWindow)
+            {
+                const contextMenuItems = [
+                    { text: "Open in new window", icon: "fa-window-restore", callback: () => { onOpenInNewWindow(propId); } },
+                ];
+                addContextMenu(titleElement, contextMenuItems);
+            }
         }
     }
 
@@ -130,6 +134,7 @@ namespace UI
     {
         const hasStar = UI.HasFlag(flags, UI.TreeFlags.HasStar);
         const isStarred = UI.HasFlag(flags, UI.TreeFlags.IsStarred);
+        const canOpenNewWindow = UI.HasFlag(flags, UI.TreeFlags.CanOpenNewWindow);
 
         // Update name
         // Hacky but fast way of accessing the title
@@ -157,7 +162,7 @@ namespace UI
 
         // Update context menu
         removeContextMenu(titleElement);
-        addTitleEventMenu(titleElement, name, tag, propId, onCreateFilterFromEvent, onOpenInNewWindow);
+        addTitleEventMenu(titleElement, name, tag, propId, onCreateFilterFromEvent, canOpenNewWindow ? onOpenInNewWindow : null);
 
         // Update star
         let starElement = titleElement.querySelector(".basico-star") as HTMLElement;
@@ -222,6 +227,7 @@ namespace UI
     {
         const hasStar = UI.HasFlag(flags, UI.TreeFlags.HasStar);
         const isStarred = UI.HasFlag(flags, UI.TreeFlags.IsStarred);
+        const canOpenNewWindow = UI.HasFlag(flags, UI.TreeFlags.CanOpenNewWindow);
 
         let titleElement = makeTitle(name);
         let iconElement = titleElement.children[0] as HTMLElement;
@@ -232,7 +238,7 @@ namespace UI
             titleElement.append(TagElement);
         }
 
-        addTitleEventMenu(titleElement, name, tag, propId, onCreateFilterFromEvent, onOpenNewWindow);
+        addTitleEventMenu(titleElement, name, tag, propId, onCreateFilterFromEvent, canOpenNewWindow ? onOpenNewWindow : null);
 
         if (hasStar)
         {
@@ -530,7 +536,7 @@ export default class EntityPropertiesBuilder
                 if (currentGroup.name == "special")
                 {
                     const name = "Basic Information";
-                    this.buildSinglePropertyTreeBlock(propertyTrees, currentGroup, name, increaseNameId(groupsWithName, name), null, UI.TreeFlags.ShouldPrepend);
+                    this.buildSinglePropertyTreeBlock(propertyTrees, currentGroup, name, increaseNameId(groupsWithName, name), null, UI.TreeFlags.ShouldPrepend | UI.TreeFlags.CanOpenNewWindow);
                 }
                 else
                 {
@@ -555,7 +561,7 @@ export default class EntityPropertiesBuilder
                         if (groupData.type == CorePropertyTypes.Group)
                         {
                             const childGroup = groupData as RECORDING.IPropertyGroup;
-                            this.buildSinglePropertyTreeBlock(propertyTrees, childGroup, childGroup.name, increaseNameId(groupsWithName, childGroup.name), null, UI.TreeFlags.HasStar);
+                            this.buildSinglePropertyTreeBlock(propertyTrees, childGroup, childGroup.name, increaseNameId(groupsWithName, childGroup.name), null, UI.TreeFlags.HasStar | UI.TreeFlags.CanOpenNewWindow);
                         }
                     }
                 }
@@ -571,7 +577,7 @@ export default class EntityPropertiesBuilder
             const propertyGroup = events[i].properties;
             const name = events[i].name;
 
-            this.buildSinglePropertyTreeBlock(eventTree, propertyGroup, name, increaseNameId(groupsWithName, name), events[i].tag, UI.TreeFlags.AlwaysAdd);
+            this.buildSinglePropertyTreeBlock(eventTree, propertyGroup, name, increaseNameId(groupsWithName, name), events[i].tag, UI.TreeFlags.AlwaysAdd | UI.TreeFlags.CanOpenNewWindow);
         }
     }
 
