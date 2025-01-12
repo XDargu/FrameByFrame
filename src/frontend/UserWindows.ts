@@ -57,7 +57,7 @@ export function sendPropertyGroupData(id: number, content: string | Messaging.IP
     ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.UpdateWindow, request));
 }
 
-export async function requestOpenWindow(title: string)
+export async function requestOpenWindow(title: string, width: number, height: number)
 {
     return new Promise<number>((resolve, reject) => {
         const requestId = userWindowRequestId++;
@@ -66,6 +66,8 @@ export async function requestOpenWindow(title: string)
             type: Messaging.EUserWindowType.Image,
             requestId: requestId,
             title: title,
+            width: width,
+            height: height + 32, // 32 is the size of the title bar
         };
         ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.OpenWindowRequest, request));
 

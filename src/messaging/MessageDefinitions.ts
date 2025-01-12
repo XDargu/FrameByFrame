@@ -82,6 +82,8 @@ export interface IOpenWindowRequest
     type: EUserWindowType;
     requestId: number;
     title: string;
+    width: number;
+    height: number;
 }
 
 export interface IPropertyGroupData

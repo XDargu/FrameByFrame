@@ -175,6 +175,11 @@ export class PinnedTexture
         return mouseY - this.pinnedWrapper.getBoundingClientRect().y;
     }
 
+    getImgSize() : RECORDING.IVec2
+    {
+        return {x: this.pinnedImage.width, y: this.pinnedImage.height };
+    }
+
     changeSize(sizeX: number, sizeY: number)
     {
         const rectangleParent = this.pinnedWrapper.parentElement.getBoundingClientRect();

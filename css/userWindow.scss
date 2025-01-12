@@ -14,3 +14,8 @@
 {
     margin-bottom: 0; // Remove bottom margin, because we only display a single tree
 }
+
+#window-content > img
+{
+    display: block;
+}

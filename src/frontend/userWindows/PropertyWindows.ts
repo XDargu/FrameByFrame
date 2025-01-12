@@ -27,7 +27,7 @@ export class PropertyWindows
 
     private async sendPropertyGroupData(entity: RECORDING.IEntity, property: RECORDING.IPropertyGroup, title: string, tag: string, name: string)
     {
-        const winId = await UserWindows.requestOpenWindow(property.name);
+        const winId = await UserWindows.requestOpenWindow(property.name, 400, 300);
 
         const propertyPath = NaiveRecordedData.getEntityPropertyPath(entity, property.id);
         this.propertyWindowData.push({

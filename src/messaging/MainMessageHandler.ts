@@ -246,7 +246,7 @@ export function initMessageHandling()
             {
                 const request = arg.data as Messaging.IOpenWindowRequest;
 
-                const window = UserWindowUtils.createWindow();
+                const window = UserWindowUtils.createWindow(request.width, request.height);
                 const id = window.id;
                 window.setTitle(request.title);
                 window.webContents.once('did-finish-load', () =>

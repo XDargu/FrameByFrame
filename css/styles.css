@@ -4147,4 +4147,7 @@ body {
 #events .basico-tree {
   margin-bottom: 0; }
 
+#window-content > img {
+  display: block; }
+
 /*# sourceMappingURL=styles.css.map */

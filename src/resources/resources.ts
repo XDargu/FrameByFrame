@@ -40,15 +40,24 @@ export function getResourceContent(resource: RECORDING.IResource)
 // User windows
 export async function openResourceInNewWindow(resource: RECORDING.IResource) : Promise<number>
 {
-    const windowId = await UserWindows.requestOpenWindow(resource.path);
     const content = await loadResource(resource);
 
     if (isImageResource(resource))
-        UserWindows.sendImageData(windowId, content.url, resource.url);
+    {
+        const img = new Image();
+        img.src = resource.url;
+        await img.decode();  
+        
+        const windowId = await UserWindows.requestOpenWindow(resource.path, img.width, img.height);
+        UserWindows.sendImageData(windowId, content.url, resource.path);
+        return windowId;
+    }
     else
+    {
+        const windowId = await UserWindows.requestOpenWindow(resource.path, 400, 300);
         UserWindows.sendTextData(windowId, content.url, resource.path);
-
-    return windowId;
+        return windowId;
+    }
 }
 
 

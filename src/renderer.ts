@@ -1835,7 +1835,8 @@ export default class Renderer {
     {
         if (this.pinnedTextureWindowId == null)
         {
-            const windowId = await UserWindows.requestOpenWindow(this.pinnedTexture.getTitle());
+            const size = this.pinnedTexture.getImgSize();
+            const windowId = await UserWindows.requestOpenWindow(this.pinnedTexture.getTitle(), size.x, size.y);
             this.pinnedTextureWindowId = windowId;
         }
 
