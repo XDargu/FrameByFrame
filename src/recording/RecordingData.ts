@@ -726,6 +726,7 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		this.scenes.length = 0;
 		this.clientIds.clear();
         this.resources = {};
+        this.comments = {};
 	}
 
 	pushFrame(frame: IFrameData)
@@ -1136,6 +1137,15 @@ export class NaiveRecordedData implements INaiveRecordedData {
 			}
 
 			this.pushFrame(frameData);
+
+            const commentId = i + 1;
+            this.comments[commentId] = {
+                frameId: i,
+                id: commentId,
+                type: ECommentType.Property,
+                text: "Example comment in frame " + i,
+                pos: { x: 100 + i, y: 100 - i },
+            }
 		}
 	}
 

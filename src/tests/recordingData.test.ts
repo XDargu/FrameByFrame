@@ -26,6 +26,13 @@ describe('RecordingData', () => {
             expect(result).to.equal(0);
         });
 
+        it('has no comments when cleared', () => {
+
+            data.clear();
+            const result = data.comments;
+            expect(result).to.be.empty;
+        });
+
     });
 
     describe('NaiveRecordingData and FrameData', () => {
