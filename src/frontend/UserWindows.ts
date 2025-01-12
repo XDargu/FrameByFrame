@@ -1,7 +1,5 @@
 import { ipcRenderer } from "electron";
 import * as Messaging from "../messaging/MessageDefinitions";
-import { loadResource } from "../resources/resources";
-import * as RECORDING from '../recording/RecordingData';
 
 interface UserWindowRequestListener
 {
@@ -42,6 +40,17 @@ export function sendTextData(id: number, content: string, title: string)
     const request : Messaging.IUpdateWindowsContent = {
         id: id,
         type: Messaging.EUserWindowType.Text,
+        content: content,
+        title: title,
+    };
+    ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.UpdateWindow, request));
+}
+
+export function sendPropertyGroupData(id: number, content: string, title: string)
+{
+    const request : Messaging.IUpdateWindowsContent = {
+        id: id,
+        type: Messaging.EUserWindowType.PropertyGroup,
         content: content,
         title: title,
     };

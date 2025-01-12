@@ -38,13 +38,25 @@ namespace UI
         tagElement.style.background = Utils.colorFromHash(Utils.hashCode(tag));
     }
 
-    function addTitleEventMenu(titleElement: HTMLElement, name: string, tag: string, onCreateFilterFromEvent: ICreateFilterFromEventCallback)
+    function addTitleEventMenu(titleElement: HTMLElement, name: string, tag: string, propId: number, onCreateFilterFromEvent: ICreateFilterFromEventCallback, onOpenInNewWindow: IOpenNewWindowCallback)
     {
         // TODO: Maybe this can be moved to the main builder class
-        const contextMenuItems = [
-            { text: "Create event filter", icon: "fa-plus-square", callback: () => { onCreateFilterFromEvent(name, tag); } },
-        ];
-        addContextMenu(titleElement, contextMenuItems);
+        const isEvent = tag != null;
+        if (isEvent)
+        {
+            const contextMenuItems = [
+                { text: "Create event filter", icon: "fa-plus-square", callback: () => { onCreateFilterFromEvent(name, tag); } },
+                { text: "Open in new window", icon: "fa-window-restore", callback: () => { onOpenInNewWindow(propId); } },
+            ];
+            addContextMenu(titleElement, contextMenuItems);
+        }
+        else
+        {
+            const contextMenuItems = [
+                { text: "Open in new window", icon: "fa-window-restore", callback: () => { onOpenInNewWindow(propId); } },
+            ];
+            addContextMenu(titleElement, contextMenuItems);
+        }
     }
 
     function makeTitleStar(name: string, isStarred: boolean, onGroupStarred: IGroupStarredCallback)
@@ -94,9 +106,11 @@ namespace UI
         titleElement: HTMLElement,
         name: string,
         tag: string,
+        propId: number,
         hasStar: boolean,
         isStarred: boolean,
         onCreateFilterFromEvent: ICreateFilterFromEventCallback,
+        onOpenInNewWindow: IOpenNewWindowCallback,
         onGroupStarred: IGroupStarredCallback
     )
     {
@@ -125,15 +139,8 @@ namespace UI
         }
 
         // Update context menu
-        const isEvent = tag != null;
-        if (isEvent)
-        {
-            addTitleEventMenu(titleElement, name, tag, onCreateFilterFromEvent);
-        }
-        else
-        {
-            removeContextMenu(titleElement);
-        }
+        removeContextMenu(titleElement);
+        addTitleEventMenu(titleElement, name, tag, propId, onCreateFilterFromEvent, onOpenInNewWindow);
 
         // Update star
         let starElement = titleElement.querySelector(".basico-star") as HTMLElement;
@@ -188,10 +195,12 @@ namespace UI
         name: string,
         nameIndex: number,
         tag: string = null,
+        propId: number,
         hasStar: boolean = false,
         isStarred: boolean,
         collapsedGroups: CollapsedGroupIDsTracker,
         onCreateFilterFromEvent: ICreateFilterFromEventCallback,
+        onOpenNewWindow: IOpenNewWindowCallback,
         onGroupStarred: IGroupStarredCallback,
         contextMenuItems: IContextMenuItem[])
     {        
@@ -204,11 +213,7 @@ namespace UI
             titleElement.append(TagElement);
         }
 
-        const isEvent = tag != null;
-        if (isEvent)
-        {
-            addTitleEventMenu(titleElement, name, tag, onCreateFilterFromEvent);
-        }
+        addTitleEventMenu(titleElement, name, tag, propId, onCreateFilterFromEvent, onOpenNewWindow);
 
         if (hasStar)
         {
@@ -314,6 +319,11 @@ export interface ICreateFilterFromEventCallback
     (name: string, tag: string) : void
 }
 
+export interface IOpenNewWindowCallback
+{
+    (propertyId: number) : void
+}
+
 export interface IGroupStarredCallback
 {
     (name: string, starred: boolean) : void
@@ -342,6 +352,7 @@ export interface EntityPropertiesBuilderCallbacks
     onPropertyStopHovering: IPropertyHoverCallback;
     onCreateFilterFromProperty: ICreateFilterFromPropCallback;
     onCreateFilterFromEvent: ICreateFilterFromEventCallback;
+    onOpenInNewWindow: IOpenNewWindowCallback;
     onGroupStarred: IGroupStarredCallback;
     onGoToEntity: IGoToEntityCallback;
     onGoToShapePos: IGoToShapeCallback;
@@ -420,9 +431,11 @@ export default class EntityPropertiesBuilder
                 storedGroup.title,
                 name,
                 tag,
+                propertyGroup.id,
                 hasStar,
                 isStarred,
                 this.callbacks.onCreateFilterFromEvent,
+                this.callbacks.onOpenInNewWindow,
                 onStarredCallback);
             UI.setPropertyTree(storedGroup.propertyTree.root, name, nameIndex, storedGroup.title, this.collapsedGroups);
         }
@@ -432,10 +445,12 @@ export default class EntityPropertiesBuilder
                 name,
                 nameIndex,
                 tag,
+                propertyGroup.id,
                 hasStar,
                 isStarred,
                 this.collapsedGroups,
                 this.callbacks.onCreateFilterFromEvent,
+                this.callbacks.onOpenInNewWindow,
                 onStarredCallback,
                 this.contextMenuItems
             );

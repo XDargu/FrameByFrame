@@ -2,6 +2,29 @@ const { ipcRenderer } = require('electron');
 import { initWindowControls } from "./frontend/WindowControls";
 import * as Messaging from "./messaging/MessageDefinitions";
 import * as DOMUtils from "./utils/DOMUtils";
+import * as RECORDING from './recording/RecordingData';
+import EntityPropertiesBuilder from "./frontend/EntityPropertiesBuilder";
+
+let propertiesBuilder: EntityPropertiesBuilder = new EntityPropertiesBuilder(
+    {
+        onPropertyHover: () => {},
+        onPropertyStopHovering: () => {},
+        onCreateFilterFromProperty: () => {},
+        onCreateFilterFromEvent: () => {},
+        onOpenInNewWindow: (propId) => {},
+        onGroupStarred: () => {},
+        // Note: twe need to convert to uniqueID here, because the ids are coming from the recording
+        // As an alternative, we could re-create the entityrefs when building the frame data
+        onGoToEntity: (id) => {  },
+        onGoToShapePos: (id) => {  },
+        onPinTexture: (propId) => { 
+        },
+        onAddComment: (propId) => {
+        },
+        isEntityInFrame: (id) => { return true; },
+        isPropertyVisible: (propId) => { return true; }
+    }
+);
 
 async function displayImageResource(url: string)
 {
@@ -25,7 +48,7 @@ async function displayImageResource(url: string)
     img.src = url;
 }
 
-async function displayTextReource(url: string)
+async function displayTextResource(url: string)
 {
     const displayElement = document.getElementById('window-content');
     displayElement.innerHTML = "";
@@ -41,6 +64,17 @@ async function displayTextReource(url: string)
     reader.readAsText(blob);
 }
 
+async function displayPropertyGroup(propData: string)
+{
+    const property = JSON.parse(propData) as RECORDING.IPropertyGroup;
+
+    const displayElement = document.getElementById('window-content');
+    displayElement.innerHTML = "";
+    DOMUtils.setClass(displayElement, "text-content", false);
+
+    propertiesBuilder.buildSinglePropertyTreeBlock(displayElement, property, property.name, -1);
+}
+
 // Listen for the `display-text` event
 ipcRenderer.on('display-content', (event: any, request: Messaging.IUpdateWindowsContent) =>
 {
@@ -48,9 +82,13 @@ ipcRenderer.on('display-content', (event: any, request: Messaging.IUpdateWindows
     {
         displayImageResource(request.content);
     }
+    else if (request.type == Messaging.EUserWindowType.PropertyGroup)
+    {
+        displayPropertyGroup(request.content);
+    }
     else
     {
-        displayTextReource(request.content);
+        displayTextResource(request.content);
     }
 
     document.getElementById("window-title-text").innerText = request.title;

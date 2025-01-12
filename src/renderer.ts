@@ -1,4 +1,4 @@
-import { ipcRenderer } from "electron";
+import { BrowserWindow, ipcRenderer } from "electron";
 import ConnectionsList from './frontend/ConnectionsList';
 import ConnectionButtons from "./frontend/ConnectionButtons";
 import { Console, ConsoleWindow, ILogAction, LogChannel, LogLevel } from "./frontend/ConsoleController";
@@ -37,6 +37,7 @@ import { ResourcePreview } from "./frontend/ResourcePreview";
 import { PinnedTexture } from "./frontend/PinnedTexture";
 import Comments, { CommentUtils } from "./frontend/Comments";
 import { addContextMenu } from "./frontend/ContextMenu";
+import { PropertyWindows } from "./frontend/userWindows/PropertyWindows";
 
 const zlib = require('zlib');
 
@@ -121,9 +122,12 @@ export default class Renderer {
     // Info
     private recordingInfoList: RecordingInfoList;
 
-    // Pin test
+    // Texture pinning
     private pinnedTexture: PinnedTexture;
     private pinnedTextureWindowId: number = null;
+
+    // Property Windows
+    private propertyWindows: PropertyWindows;
 
     // Comments
     private comments: Comments;
@@ -158,6 +162,7 @@ export default class Renderer {
                 onPropertyStopHovering: this.onPropertyStopHovering.bind(this),
                 onCreateFilterFromProperty: this.onCreateFilterFromProperty.bind(this),
                 onCreateFilterFromEvent: this.onCreateFilterFromEvent.bind(this),
+                onOpenInNewWindow: this.onOpenPropertyNewWindow.bind(this),
                 onGroupStarred: this.onGroupStarred.bind(this),
                 // Note: twe need to convert to uniqueID here, because the ids are coming from the recording
                 // As an alternative, we could re-create the entityrefs when building the frame data
@@ -240,6 +245,8 @@ export default class Renderer {
             },
             this.recordedData.comments
         );
+
+        this.propertyWindows = new PropertyWindows((entityId) => { return this.frameData?.entities[entityId]; },);
 
         this.requestApplyFrame({ frame: 0});
     }
@@ -812,6 +819,7 @@ export default class Renderer {
         this.timeline.setLength(this.recordedData.getSize());
         this.timeline.clearEvents();
         this.pinnedTexture.clear();
+        this.propertyWindows.clear();
         // Avoid clearing recording options, since in all cases when we clear it's better to keep them
         //this.recordingOptions.setOptions([]);
         this.layerController.setLayers([]);
@@ -1010,6 +1018,9 @@ export default class Renderer {
 
         // Update pinned info
         this.pinnedTexture.applyPinnedTexture(this.pinnedTextureWindowId);
+
+        // Update propert windows
+        this.propertyWindows.updateData(this.frameData, frame);
 
         // Update comments
         this.comments.selectionChanged(frame, this.selectedEntityId);
@@ -1344,6 +1355,12 @@ export default class Renderer {
             this.filterList.addFilter(new Filters.PropertyFilter("", Filters.createMemberFilterFromProperty(property)));
             this.controlTabs.openTabByIndex(TabIndices.Filters);
         }
+    }
+
+    onOpenPropertyNewWindow(propertyId: number)
+    {
+        const frame = this.getCurrentFrame();
+        this.propertyWindows.openPropertyNewWindow(propertyId, this.selectedEntityId, frame, this.frameData);
     }
 
     onCreateFilterFromEvent(name: string, tag: string)
@@ -1832,6 +1849,8 @@ export default class Renderer {
             this.pinnedTexture.setEnabled();
             this.pinnedTexture.applyPinnedTexture(this.pinnedTextureWindowId);
         }
+
+        this.propertyWindows.onWindowClosed(id);
     }
 }
 

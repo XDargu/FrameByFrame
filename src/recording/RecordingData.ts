@@ -921,6 +921,40 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		}
 	}
 
+    static findGroupOfProperty(entity: IEntity, property: IProperty) : IPropertyGroup
+	{
+        const properties = NaiveRecordedData.getEntityUserProperties(entity).value;
+        
+		const propertyCount = properties.length;
+		for (let i=0; i<propertyCount; ++i)
+		{
+			if (properties[i].type == 'group')
+			{
+                if (properties[i].id == property.id)
+                {
+                    return properties[i] as IPropertyGroup;
+                }
+
+                let found = false;
+
+                NaiveRecordedData.visitProperties((properties[i] as IPropertyGroup).value, (prop) => {
+                    if (property.id == prop.id)
+                    {
+                        found = true;
+                        return VisitorResult.Stop;
+                    }
+                });
+
+                if (found)
+                    return properties[i] as IPropertyGroup;
+        }
+			else
+			{
+				return null;
+			}
+		}
+	}
+
 	buildFrameDataHeader(frame: number) : IFrameData {
 		let frameData = this.frameData[frame];
 
