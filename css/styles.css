@@ -4144,7 +4144,7 @@ body {
 #window-content.text-content {
   padding: 10px; }
 
-#events .basico-tree {
+#window-content #events .basico-tree {
   margin-bottom: 0; }
 
 #window-content > img {

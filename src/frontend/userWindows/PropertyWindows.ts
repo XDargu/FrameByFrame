@@ -15,19 +15,28 @@ export interface IGetEntityCallback
     (entityId: number) : RECORDING.IEntity
 }
 
+export interface IGetPropertyItemCallback {
+    (propertyId: number) : HTMLElement;
+}
+
 export class PropertyWindows
 {
     private propertyWindowData: PropertyWindowData[] = [];
     private getEntityCallback: IGetEntityCallback;
+    private getPropertyItem: IGetPropertyItemCallback;
 
-    constructor(getEntityCallback: IGetEntityCallback)
+    constructor(getEntityCallback: IGetEntityCallback, getPropertyItem: IGetPropertyItemCallback)
     {
         this.getEntityCallback = getEntityCallback;
+        this.getPropertyItem = getPropertyItem;
     }
 
     private async sendPropertyGroupData(entity: RECORDING.IEntity, property: RECORDING.IPropertyGroup, title: string, tag: string, name: string)
     {
-        const winId = await UserWindows.requestOpenWindow(property.name, 400, 300);
+        const element = this.getPropertyItem(property.id);
+        const elementSize = element.getBoundingClientRect();
+
+        const winId = await UserWindows.requestOpenWindow(property.name, elementSize.width, elementSize.height + 25); // 25 is the size of the header
 
         const propertyPath = NaiveRecordedData.getEntityPropertyPath(entity, property.id);
         this.propertyWindowData.push({

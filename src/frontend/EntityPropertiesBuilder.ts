@@ -318,7 +318,7 @@ export namespace UI
 
         addContextMenu(treeElement, contextMenuItems);
 
-        return { title: titleElement, tree: new TreeControl(treeElement) };
+        return { title: titleElement, tree: new TreeControl(treeElement, propId + "") };
     }
 }
 
@@ -527,6 +527,7 @@ export default class EntityPropertiesBuilder
         {
             // For now, clear and re-build tree
             storedGroup.propertyTree.clear();
+            storedGroup.propertyTree.rootValue = propertyGroup.id + "";
 
             UI.updatePropertyTreeTitle(
                 storedGroup.title,
@@ -707,7 +708,12 @@ export default class EntityPropertiesBuilder
     {
         for (let i=0; i<this.activePropertyGroups.length; ++i)
         {
-            const item = this.activePropertyGroups[i].propertyTree.getItemWithValue(value);
+            const tree = this.activePropertyGroups[i].propertyTree;
+
+            if (tree.rootValue == value)
+                return tree.root;
+
+            const item = tree.getItemWithValue(value);
             if (item)
             {
                 return item;

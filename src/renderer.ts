@@ -247,7 +247,10 @@ export default class Renderer {
             this.recordedData.comments
         );
 
-        this.propertyWindows = new PropertyWindows((entityId) => { return this.frameData?.entities[entityId]; },);
+        this.propertyWindows = new PropertyWindows(
+            (entityId) => { return this.frameData?.entities[entityId]; },
+            (propertyId) => { return this.entityPropsBuilder.findItemWithValue(propertyId + "") as HTMLElement; },
+        );
 
         this.requestApplyFrame({ frame: 0});
     }

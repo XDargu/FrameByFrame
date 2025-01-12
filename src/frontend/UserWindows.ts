@@ -61,13 +61,12 @@ export async function requestOpenWindow(title: string, width: number, height: nu
 {
     return new Promise<number>((resolve, reject) => {
         const requestId = userWindowRequestId++;
-
         const request : Messaging.IOpenWindowRequest = {
             type: Messaging.EUserWindowType.Image,
             requestId: requestId,
             title: title,
-            width: width,
-            height: height + 32, // 32 is the size of the title bar
+            width: Math.ceil(width),
+            height: Math.ceil(height + 32), // 32 is the size of the title bar
         };
         ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.OpenWindowRequest, request));
 

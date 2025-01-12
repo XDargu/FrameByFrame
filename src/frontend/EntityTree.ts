@@ -67,7 +67,7 @@ export class EntityTree {
     private cachedItemsById: Map<number, CachedTreeItem>;
 
     constructor(propertyTree: HTMLElement, searchFilter: HTMLInputElement, entityCallbacks: IEntityCallbacks) {
-        this.entityTree = new TREE.TreeControl(propertyTree);
+        this.entityTree = new TREE.TreeControl(propertyTree, "");
         this.searchFilter = searchFilter;
         this.searchFilter.onkeyup = () => { this.filterElements(); };
         this.callbacks = {

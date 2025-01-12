@@ -21,9 +21,11 @@ export interface ITreeItemOptions {
 export class TreeControl {
 
     root: HTMLElement;
+    rootValue: string;
 
-    constructor(treeElement : HTMLElement) {
+    constructor(treeElement : HTMLElement, value: string) {
         this.root = treeElement;
+        this.rootValue = value;
     }
 
     buildItem(content : HTMLElement[], options: ITreeItemOptions) {
