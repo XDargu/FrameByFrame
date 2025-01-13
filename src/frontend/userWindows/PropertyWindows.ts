@@ -123,7 +123,7 @@ export class PropertyWindows
 
     onWindowClosed(winId: number)
     {
-        this.propertyWindowData = this.propertyWindowData.filter((winData) => { return winData.windowId == winId; });
+        this.propertyWindowData = this.propertyWindowData.filter((winData) => { return winData.windowId != winId; });
     }
 
     clear()
