@@ -611,18 +611,31 @@ export default class EntityPropertiesBuilder
 
                 if (currentGroup.name == "special")
                 {
-                    currentGroup.value[0].icon = "address-card";
-                    currentGroup.value[1].icon = "map-marker";
-                    currentGroup.value[2].icon = "arrow-up";
-                    currentGroup.value[3].icon = "arrow-right";
-                    currentGroup.value[4].icon = "fingerprint";
+                    // Temporary icon assignment
+                    if (currentGroup.value[0])
+                        currentGroup.value[0].icon = "address-card";
+                    if (currentGroup.value[1])
+                        currentGroup.value[1].icon = "map-marker";
+                    if (currentGroup.value[2])
+                        currentGroup.value[2].icon = "arrow-up";
+                    if (currentGroup.value[3])
+                        currentGroup.value[3].icon = "arrow-right";
+                    if (currentGroup.value[4])
+                        currentGroup.value[4].icon = "fingerprint";
+                    
                     const name = "Basic Information";
                     this.buildSinglePropertyTreeBlock(propertyTrees, currentGroup, name, increaseNameId(groupsWithName, name), null, UI.TreeFlags.ShouldPrepend | UI.TreeFlags.CanOpenNewWindow);
-                    delete currentGroup.value[0].icon;
-                    delete currentGroup.value[1].icon;
-                    delete currentGroup.value[2].icon;
-                    delete currentGroup.value[3].icon;
-                    delete currentGroup.value[4].icon;
+
+                    if (currentGroup.value[0])
+                        delete currentGroup.value[0].icon;
+                    if (currentGroup.value[1])
+                        delete currentGroup.value[1].icon;
+                    if (currentGroup.value[2])
+                        delete currentGroup.value[2].icon;
+                    if (currentGroup.value[3])
+                        delete currentGroup.value[3].icon;
+                    if (currentGroup.value[4])
+                        delete currentGroup.value[4].icon;
                 }
                 else
                 {
