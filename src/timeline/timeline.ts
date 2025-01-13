@@ -1188,6 +1188,7 @@ class TimelineRenderer {
 
     canvas2frame(canvasPosition : number) : number
     {
+        if (this.frameSize == 0) return 0;
         return (canvasPosition + this.translation) / this.frameSize;
     }
 
