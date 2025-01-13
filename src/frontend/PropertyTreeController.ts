@@ -304,7 +304,20 @@ export class PropertyTreeController {
             {
                 let comment = document.createElement("div");
                 comment.classList.add("property-comment");
-                comment.textContent = property.value as string;
+                if (iconContent[0])
+                {
+                    comment.append(iconContent[0]);
+                    if (property.icolor)
+                    {
+                        comment.style.border = "1px solid " + property.icolor;
+                        // Add DOM element with background
+                        const background = document.createElement("div");
+                        background.classList.add("property-comment-overlay");
+                        background.style.backgroundColor = property.icolor;
+                        comment.prepend(background);
+                    }
+                }
+                comment.insertAdjacentText("beforeend", property.value as string);
 
                 this.propertyTree.addItem(parent, [comment], {
                     value:  property.id.toString(),

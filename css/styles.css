@@ -1142,8 +1142,21 @@ body {
   width: 50%; }
 
 .property-comment {
-  padding: 6px;
+  padding: 3px 6px;
   border: 1px solid #5f516a;
+  border-radius: 2px;
+  width: 100%;
+  margin-right: 2px;
+  position: relative; }
+
+.property-comment-overlay {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  top: 0;
+  left: 0;
+  opacity: 0.1;
+  pointer-events: none;
   border-radius: 2px; }
 
 .property-group {
