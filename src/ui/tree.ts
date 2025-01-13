@@ -44,12 +44,12 @@ export class TreeControl {
 
         let contentWrapper = document.createElement("span");
         contentWrapper.classList.add("basico-tree-item-content");
-        if (options.text)
-        {
-            contentWrapper.innerText = options.text;
-        }
         for (let i=0; i<content.length; ++i) {
             contentWrapper.appendChild(content[i]);
+        }
+        if (options.text)
+        {
+            contentWrapper.insertAdjacentText("beforeend", options.text);
         }
         wrapper.appendChild(contentWrapper);
 

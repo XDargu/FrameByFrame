@@ -105,6 +105,8 @@ export interface IProperty {
 	value: string | number | boolean | IVec2 | IVec3 | IPropertyCustomType | IEntityRef | IPropertyTable | IProperty[];
 	id?: number;
 	flags?: EPropertyFlags;
+    icon?: string;
+    icolor?: string;
 }
 
 export interface IProperyShape extends IProperty {
@@ -199,6 +201,8 @@ export interface IPropertyGroup {
 	name: string;
 	value: IProperty[];
 	id?: number;
+    icon?: string;
+    icolor?: string;
 }
 
 export interface IEvent {

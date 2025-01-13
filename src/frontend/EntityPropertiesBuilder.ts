@@ -611,8 +611,18 @@ export default class EntityPropertiesBuilder
 
                 if (currentGroup.name == "special")
                 {
+                    currentGroup.value[0].icon = "address-card";
+                    currentGroup.value[1].icon = "map-marker";
+                    currentGroup.value[2].icon = "arrow-up";
+                    currentGroup.value[3].icon = "arrow-right";
+                    currentGroup.value[4].icon = "fingerprint";
                     const name = "Basic Information";
                     this.buildSinglePropertyTreeBlock(propertyTrees, currentGroup, name, increaseNameId(groupsWithName, name), null, UI.TreeFlags.ShouldPrepend | UI.TreeFlags.CanOpenNewWindow);
+                    delete currentGroup.value[0].icon;
+                    delete currentGroup.value[1].icon;
+                    delete currentGroup.value[2].icon;
+                    delete currentGroup.value[3].icon;
+                    delete currentGroup.value[4].icon;
                 }
                 else
                 {
@@ -661,7 +671,7 @@ export default class EntityPropertiesBuilder
     {
         let groupsWithName = new Map<string, number>();
 
-        const globalDataGroup = {
+        const globalDataGroup : RECORDING.IPropertyGroup = {
             type: CorePropertyTypes.Group,
             name: "Frame Data",
             value: [
@@ -669,13 +679,15 @@ export default class EntityPropertiesBuilder
                     type: CorePropertyTypes.Number,
                     name: "Elapsed Time",
                     value: globalData.elapsedTime,
-                    id: Number.MAX_SAFE_INTEGER - 2
+                    id: Number.MAX_SAFE_INTEGER - 2,
+                    icon: "clock"
                 },
                 {
                     type: CorePropertyTypes.Number,
                     name: "Server Time",
                     value: globalData.serverTime,
-                    id: Number.MAX_SAFE_INTEGER - 3
+                    id: Number.MAX_SAFE_INTEGER - 3,
+                    icon: "clock"
                 }
             ],
             id: Number.MAX_SAFE_INTEGER - 1

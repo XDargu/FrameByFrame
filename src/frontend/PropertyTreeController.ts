@@ -74,6 +74,15 @@ namespace UI
         return wrapper;
     }
 
+    export function wrapPropertyIcon(icon: string, color: string = null): HTMLElement
+    {
+        let wrapper = document.createElement("i");
+        wrapper.className = "prop-icon fas fa-" + icon;
+        if (color)
+            wrapper.style.color = color;
+        return wrapper;
+    }
+
     export function getLayoutOfPrimitiveType(value: any, primitiveType: TypeSystem.EPrimitiveType)
     {
         return wrapPrimitiveType(getPrimitiveTypeAsString(value, primitiveType));
@@ -113,9 +122,14 @@ export class PropertyTreeController {
         this.callbacks = callbacks;
     }
 
-    addValueToPropertyTree(parent: HTMLElement, name: string, content: HTMLElement[], propertyId: number = null)
+    addValueToPropertyTree(parent: HTMLElement, name: string, content: HTMLElement[], propertyId: number, icon: string, iconColor: string = null)
     {
-        const elements = [UI.wrapPropertyName(name), UI.wrapPropertyGroup(content)];
+        const elements = [];
+        if (icon)
+            elements.push(UI.wrapPropertyIcon(icon, iconColor));
+        elements.push(UI.wrapPropertyName(name));
+        elements.push(UI.wrapPropertyGroup(content));
+
         const listItem = this.propertyTree.addItem(parent, elements, {
             value:  propertyId == null ? null : propertyId.toString(),
             selectable: false,
@@ -128,7 +142,7 @@ export class PropertyTreeController {
         });
     }
 
-    addTabletoPropertyTree(parent: HTMLElement, name: string, table: HTMLElement, propertyId: number = null)
+    addTabletoPropertyTree(parent: HTMLElement, name: string, table: HTMLElement, propertyId: number)
     {
         const elements = [table];
         const listItem = this.propertyTree.addItem(parent, elements, {
@@ -143,7 +157,7 @@ export class PropertyTreeController {
         });
     }
 
-    addCustomTypeToPropertyTree(parent: HTMLElement, property: RECORDING.IProperty, type: TypeSystem.IType) {
+    addCustomTypeToPropertyTree(parent: HTMLElement, property: RECORDING.IProperty, type: TypeSystem.IType, icon: string) {
         // Complex value type
         let content = [];
         for (const [layoutId, primitiveType] of Object.entries(type.layout)) {
@@ -154,10 +168,10 @@ export class PropertyTreeController {
             }
         }
 
-        this.addValueToPropertyTree(parent, property.name, content, property.id);
+        this.addValueToPropertyTree(parent, property.name, content, property.id, icon);
     }
 
-    addEntityRef(parent: HTMLElement, name: string, value: RECORDING.IEntityRef, propertyId: number = null)
+    addEntityRef(parent: HTMLElement, name: string, value: RECORDING.IEntityRef, icon: string, propertyId: number)
     {
         const content = [
             UI.getLayoutOfPrimitiveType(value.name, TypeSystem.EPrimitiveType.String),
@@ -165,10 +179,10 @@ export class PropertyTreeController {
             UI.createGoToEntityButton(value.id, this.callbacks.onGoToEntity, this.callbacks.isEntityInFrame(value.id))
         ];
 
-        this.addValueToPropertyTree(parent, name, content, propertyId);
+        this.addValueToPropertyTree(parent, name, content, propertyId, icon);
     }
 
-    addTable(parent: HTMLElement, name: string, value: RECORDING.IPropertyTable, propertyId: number = null)
+    addTable(parent: HTMLElement, name: string, value: RECORDING.IPropertyTable, propertyId: number)
     {
         let gridContainerWrapper = document.createElement("div");
         gridContainerWrapper.className = "property-table-wrapper";
@@ -203,7 +217,7 @@ export class PropertyTreeController {
         this.addTabletoPropertyTree(parent, name, gridContainerWrapper, propertyId);
     }
 
-    addVec3(parent: HTMLElement, name: string, value: RECORDING.IVec3, propertyId: number = null)
+    addVec3(parent: HTMLElement, name: string, value: RECORDING.IVec3, icon: string, propertyId: number)
     {
         const content = [
             UI.getLayoutOfPrimitiveType(value.x, TypeSystem.EPrimitiveType.Number),
@@ -211,10 +225,10 @@ export class PropertyTreeController {
             UI.getLayoutOfPrimitiveType(value.z, TypeSystem.EPrimitiveType.Number)
         ];
 
-        this.addValueToPropertyTree(parent, name, content, propertyId);
+        this.addValueToPropertyTree(parent, name, content, propertyId, icon);
     }
 
-    addColor(parent: HTMLElement, name: string, value: RECORDING.IColor, propertyId: number = null)
+    addColor(parent: HTMLElement, name: string, value: RECORDING.IColor, icon: string, propertyId: number)
     {
         const content =[ 
             UI.getLayoutOfPrimitiveType(value.r, TypeSystem.EPrimitiveType.Number),
@@ -223,21 +237,21 @@ export class PropertyTreeController {
             UI.getLayoutOfPrimitiveType(value.a, TypeSystem.EPrimitiveType.Number)
         ];
 
-        this.addValueToPropertyTree(parent, name, content, propertyId);
+        this.addValueToPropertyTree(parent, name, content, propertyId, icon);
     }
 
-    addNumber(parent: HTMLElement, name: string, value: number, propertyId: number = null)
+    addNumber(parent: HTMLElement, name: string, value: number, icon: string, propertyId: number)
     {
         const content = UI.getLayoutOfPrimitiveType(value, TypeSystem.EPrimitiveType.Number)
-        this.addValueToPropertyTree(parent, name, [content], propertyId);
+        this.addValueToPropertyTree(parent, name, [content], propertyId, icon);
     }
 
-    addOptionalResource(parent: HTMLElement, name: string, value: string, propertyId: number = null)
+    addOptionalResource(parent: HTMLElement, name: string, value: string, icon: string, propertyId: number)
     {
         if (value && value != "")
         {
             const content = UI.getLayoutOfPrimitiveType(value, TypeSystem.EPrimitiveType.String)
-            this.addValueToPropertyTree(parent, name, [content], propertyId);
+            this.addValueToPropertyTree(parent, name, [content], propertyId, icon);
             content.onmouseenter = (ev) => {
                 ResourcePreview.Instance().showAtPosition(ev.pageX, ev.pageY, value);
             };
@@ -265,12 +279,14 @@ export class PropertyTreeController {
             }
         };
 
+        const iconContent = property.icon ? [UI.wrapPropertyIcon(property.icon, property.icolor)] : [];
+
         const isHidden = property.flags != undefined && ((property.flags & RECORDING.EPropertyFlags.Hidden) != 0);
         if (isHidden) return;
 
         if (property.type == TypeSystem.CorePropertyTypes.Group) {
             
-            let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
+            let addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
             const propertyGroup = property as RECORDING.IPropertyGroup;
 
             for (let i = 0; i < propertyGroup.value.length; ++i) {
@@ -282,7 +298,7 @@ export class PropertyTreeController {
             const type = this.typeRegistry.findType(property.type);
             if (type)
             {
-                this.addCustomTypeToPropertyTree(parent, property, type);
+                this.addCustomTypeToPropertyTree(parent, property, type, property.icon);
             }
             else if (property.type == TypeSystem.CorePropertyTypes.Comment)
             {
@@ -297,7 +313,7 @@ export class PropertyTreeController {
             }
             else if (property.type == TypeSystem.CorePropertyTypes.EntityRef)
             {
-                this.addEntityRef(parent, property.name, property.value as RECORDING.IEntityRef, property.id);
+                this.addEntityRef(parent, property.name, property.value as RECORDING.IEntityRef, property.icon, property.id);
             }
             else if (property.type == TypeSystem.CorePropertyTypes.Table)
             {
@@ -313,102 +329,102 @@ export class PropertyTreeController {
                         {
                             const sphere = property as RECORDING.IPropertySphere;
 
-                            let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
-                            this.addVec3(addedItem, "Position", sphere.position, property.id);
-                            this.addNumber(addedItem, "Radius", sphere.radius, property.id);
-                            this.addOptionalResource(addedItem, "Texture", sphere.texture, property.id);
+                            let addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
+                            this.addVec3(addedItem, "Position", sphere.position, "map-marker", property.id);
+                            this.addNumber(addedItem, "Radius", sphere.radius, "arrows-alt-h", property.id);
+                            this.addOptionalResource(addedItem, "Texture", sphere.texture, "image", property.id);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Capsule:
                         {
                             const capsule = property as RECORDING.IPropertyCapsule;
 
-                            let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
-                            this.addVec3(addedItem, "Position", capsule.position, property.id);
-                            this.addVec3(addedItem, "Direction", capsule.direction, property.id);
-                            this.addNumber(addedItem, "Radius", capsule.radius, property.id);
-                            this.addNumber(addedItem, "Height", capsule.height, property.id);
-                            this.addOptionalResource(addedItem, "Texture", capsule.texture, property.id);
+                            let addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
+                            this.addVec3(addedItem, "Position", capsule.position, "map-marker", property.id);
+                            this.addVec3(addedItem, "Direction", capsule.direction, "location-arrow", property.id);
+                            this.addNumber(addedItem, "Radius", capsule.radius, "arrows-alt-h", property.id);
+                            this.addNumber(addedItem, "Height", capsule.height, "arrows-alt-v", property.id);
+                            this.addOptionalResource(addedItem, "Texture", capsule.texture, "image", property.id);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.AABB:
                         {
                             const aabb = property as RECORDING.IPropertyAABB;
 
-                            let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
-                            this.addVec3(addedItem, "Position", aabb.position, property.id);
-                            this.addVec3(addedItem, "Size", aabb.size, property.id);
-                            this.addOptionalResource(addedItem, "Texture", aabb.texture, property.id);
+                            let addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
+                            this.addVec3(addedItem, "Position", aabb.position, "map-marker", property.id);
+                            this.addVec3(addedItem, "Size", aabb.size, "arrows-alt", property.id);
+                            this.addOptionalResource(addedItem, "Texture", aabb.texture, "image", property.id);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.OOBB:
                         {
                             const oobb = property as RECORDING.IPropertyOOBB;
 
-                            let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
-                            this.addVec3(addedItem, "Position", oobb.position, property.id);
-                            this.addVec3(addedItem, "Size", oobb.size, property.id);
-                            this.addVec3(addedItem, "Forward", oobb.forward, property.id);
-                            this.addVec3(addedItem, "Up", oobb.up, property.id);
-                            this.addOptionalResource(addedItem, "Texture", oobb.texture, property.id);
+                            let addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
+                            this.addVec3(addedItem, "Position", oobb.position, "map-marker", property.id);
+                            this.addVec3(addedItem, "Size", oobb.size, "arrows-alt", property.id);
+                            this.addVec3(addedItem, "Forward", oobb.forward, "arrow-right", property.id);
+                            this.addVec3(addedItem, "Up", oobb.up, "arrow-up", property.id);
+                            this.addOptionalResource(addedItem, "Texture", oobb.texture, "image", property.id);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Plane:
                         {
                             const plane = property as RECORDING.IPropertyPlane;
 
-                            let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
-                            this.addVec3(addedItem, "Position", plane.position, property.id);
-                            this.addVec3(addedItem, "Normal", plane.normal, property.id);
-                            this.addVec3(addedItem, "Up", plane.up, property.id);
-                            this.addNumber(addedItem, "Width", plane.width, property.id);
-                            this.addNumber(addedItem, "Length", plane.length, property.id);
-                            this.addOptionalResource(addedItem, "Texture", plane.texture, property.id);
+                            let addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
+                            this.addVec3(addedItem, "Position", plane.position, "map-marker", property.id);
+                            this.addVec3(addedItem, "Normal", plane.normal, "level-up-alt", property.id);
+                            this.addVec3(addedItem, "Up", plane.up, "arrow-up", property.id);
+                            this.addNumber(addedItem, "Width", plane.width, "arrows-alt-h", property.id);
+                            this.addNumber(addedItem, "Length", plane.length, "arrows-alt-v", property.id);
+                            this.addOptionalResource(addedItem, "Texture", plane.texture, "image", property.id);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Line:
                         {
                             const line = property as RECORDING.IPropertyLine;
 
-                            let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
-                            this.addVec3(addedItem, "Origin", line.origin, property.id);
-                            this.addVec3(addedItem, "Destination", line.destination, property.id);
+                            let addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
+                            this.addVec3(addedItem, "Origin", line.origin, "map-marker-alt", property.id);
+                            this.addVec3(addedItem, "Destination", line.destination, "flag-checkered", property.id);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Arrow:
                         {
                             const arrow = property as RECORDING.IPropertyArrow;
 
-                            let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
-                            this.addVec3(addedItem, "Origin", arrow.origin, property.id);
-                            this.addVec3(addedItem, "Destination", arrow.destination, property.id);
+                            let addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
+                            this.addVec3(addedItem, "Origin", arrow.origin, "map-marker-alt", property.id);
+                            this.addVec3(addedItem, "Destination", arrow.destination, "flag-checkered", property.id);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Vector:
                         {
                             const vector = property as RECORDING.IPropertyVector;
 
-                            let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
-                            this.addVec3(addedItem, "Vector", vector.vector, property.id);
+                            let addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
+                            this.addVec3(addedItem, "Vector", vector.vector, "location-arrow", property.id);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Mesh:
                         {
                             const mesh = property as RECORDING.IPropertyMesh;
 
-                            let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
+                            let addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
                             // Ignore vertices/indices
-                            this.addOptionalResource(addedItem, "Texture", mesh.texture, property.id);
+                            this.addOptionalResource(addedItem, "Texture", mesh.texture, "image", property.id);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Path:
                         {
                             const path = property as RECORDING.IPropertyPath;
-                            let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
+                            let addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
                             let idx = 0;
                             for (const point of path.points)
                             {
-                                this.addVec3(addedItem, `Point ${idx}`, point, property.id);
+                                this.addVec3(addedItem, `Point ${idx}`, point, "map-marker", property.id);
                                 ++idx;
                             }
                             break;
@@ -417,11 +433,11 @@ export class PropertyTreeController {
                         {
                             const triangle = property as RECORDING.IPropertyTriangle;
 
-                            let addedItem = this.propertyTree.addItem(parent, [], treeItemOptions);
-                            this.addVec3(addedItem, "p1", triangle.p1, property.id);
-                            this.addVec3(addedItem, "p2", triangle.p2, property.id);
-                            this.addVec3(addedItem, "p3", triangle.p3, property.id);
-                            this.addOptionalResource(addedItem, "Texture", triangle.texture, property.id);
+                            let addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
+                            this.addVec3(addedItem, "p1", triangle.p1, "map-marker", property.id);
+                            this.addVec3(addedItem, "p2", triangle.p2, "map-marker", property.id);
+                            this.addVec3(addedItem, "p3", triangle.p3, "map-marker", property.id);
+                            this.addOptionalResource(addedItem, "Texture", triangle.texture, "image", property.id);
                             break;
                         }
                     }
@@ -432,7 +448,7 @@ export class PropertyTreeController {
                 const primitiveType = TypeSystem.buildPrimitiveType(property.type);
                 const value = primitiveType ? UI.getPrimitiveTypeAsString(property.value, primitiveType) : property.value as string;
                 const content = UI.wrapPrimitiveType(value);
-                this.addValueToPropertyTree(parent, property.name, [content], property.id);
+                this.addValueToPropertyTree(parent, property.name, [content], property.id, property.icon, property.icolor);
 
                 if (primitiveType == undefined)
                 {
