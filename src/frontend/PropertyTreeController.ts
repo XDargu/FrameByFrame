@@ -204,11 +204,15 @@ export class PropertyTreeController {
         }
         for (let row of value.rows)
         {
+            let rowGroup = document.createElement("div");
+            rowGroup.classList.add("property-table-row-group");
+            gridContainer.append(rowGroup);
+
             for (let item of row)
             {
                 let content = UI.getLayoutOfPrimitiveType(item, TypeSystem.EPrimitiveType.String);
                 content.classList.add("property-table-row");
-                gridContainer.append(content);
+                rowGroup.append(content);
             }
         }
 

@@ -105,14 +105,23 @@ body {
 .property-table {
     width: 100%;
     display: grid;
-    grid-gap: 5px 0px;
+}
+
+.property-table .property-table-row-group {
+    display: contents;
 }
 
 .property-table .basico-tag.property-primitive.property-table-row {
+    padding: 4px 11px;
+    border-radius: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     background: none;
+}
+
+.property-table .property-table-row-group:nth-child(odd) .basico-tag.property-table-row {
+    background-color: #3f3646;
 }
 
 .property-table .basico-tag.property-primitive.property-table-row.property-table-header {
