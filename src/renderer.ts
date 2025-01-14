@@ -1345,18 +1345,18 @@ export default class Renderer {
         this.shapeArrowController.deactivate();
     }
 
-    onCreateFilterFromProperty(propertyId: number)
+    onCreateFilterFromProperty(propertyId: number, subIndex: number)
     {
         const eventData = NaiveRecordedData.findPropertyIdInEvents(this.frameData, propertyId);
         if (eventData != null)
         {
-            this.filterList.addFilter(new Filters.EventFilter(eventData.resultEvent.name, eventData.resultEvent.tag, Filters.createMemberFilterFromProperty(eventData.resultProp)));
+            this.filterList.addFilter(new Filters.EventFilter(eventData.resultEvent.name, eventData.resultEvent.tag, Filters.createMemberFilterFromProperty(eventData.resultProp, subIndex)));
             this.controlTabs.openTabByIndex(TabIndices.Filters);
         }
         else
         {
             const property: RECORDING.IProperty = NaiveRecordedData.findPropertyIdInProperties(this.frameData, propertyId);
-            this.filterList.addFilter(new Filters.PropertyFilter("", Filters.createMemberFilterFromProperty(property)));
+            this.filterList.addFilter(new Filters.PropertyFilter("", Filters.createMemberFilterFromProperty(property, subIndex)));
             this.controlTabs.openTabByIndex(TabIndices.Filters);
         }
     }

@@ -622,7 +622,7 @@ export default class EntityPropertiesBuilder
                         currentGroup.value[3].icon = "arrow-right";
                     if (currentGroup.value[4])
                         currentGroup.value[4].icon = "fingerprint";
-                    
+
                     const name = "Basic Information";
                     this.buildSinglePropertyTreeBlock(propertyTrees, currentGroup, name, increaseNameId(groupsWithName, name), null, UI.TreeFlags.ShouldPrepend | UI.TreeFlags.CanOpenNewWindow);
 
@@ -750,11 +750,13 @@ export default class EntityPropertiesBuilder
 
     private onAddFilter(item: HTMLElement)
     {
+        const subIndexElement = item.closest("div[data-tree-subvalue]");
         const treeElement = item.closest("li[data-tree-value]");
         const propertyId = treeElement.getAttribute('data-tree-value');
+        const subIndex = subIndexElement.getAttribute('data-tree-subvalue');
         if (propertyId != null)
         {
-            this.callbacks.onCreateFilterFromProperty(Number.parseInt(propertyId));
+            this.callbacks.onCreateFilterFromProperty(Number.parseInt(propertyId), subIndex ? Number.parseInt(subIndex) : null);
         }
     }
 

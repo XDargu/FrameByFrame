@@ -18,7 +18,7 @@ export interface IPropertyHoverCallback {
 }
 
 export interface ICreateFilterFromPropCallback {
-    (propertyId: number) : void;
+    (propertyId: number, subIndex: number) : void;
 }
 
 interface PropertyTreeControllerCallbacks {
@@ -203,10 +203,13 @@ export class PropertyTreeController {
             content.classList.add("property-table-row", "property-table-header");
             gridContainer.append(content);
         }
-        for (let row of value.rows)
+        for (let i=0; i<value.rows.length; ++i)
         {
+            const row = value.rows[i];
+
             let rowGroup = document.createElement("div");
             rowGroup.classList.add("property-table-row-group");
+            rowGroup.setAttribute('data-tree-subvalue', i+"");
             gridContainer.append(rowGroup);
 
             for (let item of row)
