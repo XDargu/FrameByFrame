@@ -148,6 +148,7 @@ export class PropertyTreeController {
         const listItem = this.propertyTree.addItem(parent, elements, {
             value:  propertyId == null ? null : propertyId.toString(),
             selectable: false,
+            noHover: true,
             callbacks: {
                 onItemSelected: null,
                 onItemDoubleClicked: null,

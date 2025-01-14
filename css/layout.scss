@@ -1,3 +1,5 @@
+@import "colorStyles.scss";
+
 html,
 body {
     overflow: hidden;
@@ -118,10 +120,15 @@ body {
     text-overflow: ellipsis;
     white-space: nowrap;
     background: none;
+    transition: none;
 }
 
 .property-table .property-table-row-group:nth-child(odd) .basico-tag.property-table-row {
     background-color: #3f3646;
+}
+
+.property-table .property-table-row-group:hover .basico-tag.property-table-row {
+    background-color: $light-selection;
 }
 
 .property-table .basico-tag.property-primitive.property-table-row.property-table-header {

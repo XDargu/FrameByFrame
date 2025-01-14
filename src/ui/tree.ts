@@ -16,6 +16,7 @@ export interface ITreeItemOptions {
     collapsed?: boolean;
     selectable?: boolean;
     callbacks?: ITreeCallbacks;
+    noHover?: boolean;
 }
 
 export class TreeControl {
@@ -35,6 +36,8 @@ export class TreeControl {
 
         let wrapper = document.createElement("span");
         wrapper.classList.add("basico-tree-item-wrapper");
+        if (options.noHover)
+            wrapper.classList.add("basico-no-hover");
         this.toggleItem(wrapper);
         listItem.appendChild(wrapper);
 
