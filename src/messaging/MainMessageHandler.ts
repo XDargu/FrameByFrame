@@ -171,49 +171,74 @@ function downloadResource(resource: Messaging.IDownloadResource)
     fileManager.downloadResource(resource.name, resource.content, resource.type);
 }
 
+function openUserWindow(event: any, request: Messaging.IOpenWindowRequest)
+{
+    const window = UserWindowUtils.createWindow(request.width, request.height);
+    const id = window.id;
+    window.setTitle(request.title);
+    window.webContents.once('did-finish-load', () =>
+    {
+        const result: Messaging.IOpenWindowResult = {
+            id: id,
+            requestId: request.requestId
+        };
+        event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenWindowResult, result));
+    });
+}
+
+function updateUserWindow(request : Messaging.IUpdateWindowsContent)
+{
+    const window = BrowserWindow.fromId(request.id);
+    if (window)
+    {
+        window.setTitle(request.title);
+        window.webContents.send('display-content', request);
+    }
+}
+
 export function initMessageHandling()
 {
     ipcMain.on('asynchronous-message', (event: any, arg: Messaging.Message) =>
     {
         switch(arg.type)
         {
-          case Messaging.MessageType.RequestSavePath:
+        case Messaging.MessageType.RequestSavePath:
             requestSavePath(event, arg.data as Messaging.IRequestSavePathData)
             break;
 
-          case Messaging.MessageType.SaveToFile:
+        case Messaging.MessageType.SaveToFile:
             saveToFile(event, arg.data as Messaging.ISaveFileData);
             break;
 
-          case Messaging.MessageType.Load:
+        case Messaging.MessageType.Load:
             load(event, arg.data as string);
             break;
 
-          case Messaging.MessageType.Open:
+        case Messaging.MessageType.Open:
             open(event);
             break;
 
-          case Messaging.MessageType.Clear:
+        case Messaging.MessageType.Clear:
             clear(event);
             break;
 
-          case Messaging.MessageType.SaveSettings:
+        case Messaging.MessageType.SaveSettings:
             fileManager.updateSettings(arg.data as ISettings);
             break;
 
-          case Messaging.MessageType.OpenInExplorer:
+        case Messaging.MessageType.OpenInExplorer:
             shell.showItemInFolder(path.resolve(arg.data as string));
             break;
-            
-          case Messaging.MessageType.RequestExportFilters:
+        
+        case Messaging.MessageType.RequestExportFilters:
             requestExportFilters(event, arg.data as string);
             break;
 
-          case Messaging.MessageType.RequestImportFilters:
+        case Messaging.MessageType.RequestImportFilters:
             requestImportFilters(event);
             break;
 
-          case Messaging.MessageType.DownloadResource:
+        case Messaging.MessageType.DownloadResource:
             downloadResource(arg.data as Messaging.IDownloadResource);
             break;
 
@@ -225,41 +250,18 @@ export function initMessageHandling()
         }
 
         case Messaging.MessageType.CloseAllWindows:
-        {
             UserWindowUtils.closeAllWindows();
             break;
-        }
 
         case Messaging.MessageType.UpdateWindow:
-        {
-            const request = arg.data as Messaging.IUpdateWindowsContent;
-            const window = BrowserWindow.fromId(request.id);
-            if (window)
-            {
-                window.setTitle(request.title);
-                window.webContents.send('display-content', request);
-            }
+            updateUserWindow(arg.data as Messaging.IUpdateWindowsContent);
             break;
-        }
 
         case Messaging.MessageType.OpenWindowRequest:
-            {
-                const request = arg.data as Messaging.IOpenWindowRequest;
-
-                const window = UserWindowUtils.createWindow(request.width, request.height);
-                const id = window.id;
-                window.setTitle(request.title);
-                window.webContents.once('did-finish-load', () =>
-                {
-                    const result : Messaging.IOpenWindowResult = {
-                        id: id,
-                        requestId: request.requestId
-                    }
-                    event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenWindowResult, result));
-                });
-            }
+            openUserWindow(event, arg.data as Messaging.IOpenWindowRequest);
             break;
 
         }
     });
 }
+
