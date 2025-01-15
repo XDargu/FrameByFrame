@@ -3,7 +3,7 @@ import * as Utils from "../utils/utils";
 import * as DOMUtils from '../utils/DOMUtils';
 import { CorePropertyTypes } from "../types/typeRegistry";
 import { TreeControl } from "../ui/tree";
-import { ICreateFilterFromPropCallback, IGoToEntityCallback, IIsEntityInFrame, IPropertyHoverCallback, PropertyTreeController } from "../frontend/PropertyTreeController";
+import { ICreateFilterFromPropCallback, IGoToEntityCallback, IIsEntityInFrame, IOpenResourceCallback, IPropertyHoverCallback, PropertyTreeController } from "../frontend/PropertyTreeController";
 import { IContextMenuItem, addContextMenu, removeContextMenu } from './ContextMenu';
 import { Filtering } from '../filters/propertyFilters';
 
@@ -453,6 +453,7 @@ export interface EntityPropertiesBuilderCallbacks
     onOpenInNewWindow: IOpenNewWindowCallback;
     onGroupStarred: IGroupStarredCallback;
     onGoToEntity: IGoToEntityCallback;
+    onOpenResource: IOpenResourceCallback;
     onGoToShapePos: IGoToShapeCallback;
     onPinTexture: IPinTexture;
     onAddComment: IAddComment;
@@ -570,6 +571,7 @@ export default class EntityPropertiesBuilder
                     onPropertyHover: this.callbacks.onPropertyHover,
                     onPropertyStopHovering: this.callbacks.onPropertyStopHovering,
                     onGoToEntity: this.callbacks.onGoToEntity,
+                    onOpenResource: this.callbacks.onOpenResource,
                     isEntityInFrame: this.callbacks.isEntityInFrame
                 }
             );

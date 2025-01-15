@@ -12,6 +12,7 @@ let propertiesBuilder: EntityPropertiesBuilder = new EntityPropertiesBuilder(
         onCreateFilterFromProperty: () => {},
         onCreateFilterFromEvent: () => {},
         onOpenInNewWindow: (propId) => {},
+        onOpenResource: () => {},
         onGroupStarred: () => {},
         // Note: twe need to convert to uniqueID here, because the ids are coming from the recording
         // As an alternative, we could re-create the entityrefs when building the frame data

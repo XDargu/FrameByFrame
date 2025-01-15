@@ -9,6 +9,10 @@ export interface IGoToEntityCallback {
     (entityId: number) : void;
 }
 
+export interface IOpenResourceCallback {
+    (resourcePath: string) : void;
+}
+
 export interface IIsEntityInFrame
 {
     (id: number) : boolean
@@ -26,6 +30,7 @@ interface PropertyTreeControllerCallbacks {
     onPropertyHover: IPropertyHoverCallback;
     onPropertyStopHovering: IPropertyHoverCallback;
     onGoToEntity: IGoToEntityCallback;
+    onOpenResource: IOpenResourceCallback;
     isEntityInFrame: IIsEntityInFrame;
 }
 
@@ -106,6 +111,21 @@ namespace UI
             resetButton.title = "Entity unavailable";
             resetButton.disabled = true;
         }
+
+        return resetButton;
+    }
+
+    export function createOpenResourceButton(resourcePath: string, callback: IOpenResourceCallback) : HTMLButtonElement
+    {
+        let resetButton: HTMLButtonElement = document.createElement("button");
+        resetButton.className = "basico-button basico-small";
+
+        let icon: HTMLElement = document.createElement("i");
+        icon.className = "fa fa-folder-open";
+        resetButton.append(icon);
+
+        resetButton.title = "Open";
+            resetButton.onclick = () => { callback(resourcePath); };
 
         return resetButton;
     }
@@ -260,12 +280,13 @@ export class PropertyTreeController {
         this.addValueToPropertyTree(parent, name, [content], propertyId, icon);
     }
 
-    addOptionalResource(parent: HTMLElement, name: string, value: string, icon: string, propertyId: number)
+    addOptionalResource(parent: HTMLElement, name: string, value: string, icon: string, propertyId: number, callback: IOpenResourceCallback)
     {
         if (value && value != "")
         {
             const content = UI.getLayoutOfPrimitiveType(value, TypeSystem.EPrimitiveType.String)
-            this.addValueToPropertyTree(parent, name, [content], propertyId, icon);
+            const button = UI.createOpenResourceButton(value, callback);
+            this.addValueToPropertyTree(parent, name, [content, button], propertyId, icon);
             content.onmouseenter = (ev) => {
                 ResourcePreview.Instance().showAtPosition(ev.pageX, ev.pageY, value);
             };
@@ -365,7 +386,7 @@ export class PropertyTreeController {
                             let addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
                             this.addVec3(addedItem, "Position", sphere.position, "map-marker", property.id);
                             this.addNumber(addedItem, "Radius", sphere.radius, "arrows-alt-h", property.id);
-                            this.addOptionalResource(addedItem, "Texture", sphere.texture, "image", property.id);
+                            this.addOptionalResource(addedItem, "Texture", sphere.texture, "image", property.id, this.callbacks.onOpenResource);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Capsule:
@@ -377,7 +398,7 @@ export class PropertyTreeController {
                             this.addVec3(addedItem, "Direction", capsule.direction, "location-arrow", property.id);
                             this.addNumber(addedItem, "Radius", capsule.radius, "arrows-alt-h", property.id);
                             this.addNumber(addedItem, "Height", capsule.height, "arrows-alt-v", property.id);
-                            this.addOptionalResource(addedItem, "Texture", capsule.texture, "image", property.id);
+                            this.addOptionalResource(addedItem, "Texture", capsule.texture, "image", property.id, this.callbacks.onOpenResource);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.AABB:
@@ -387,7 +408,7 @@ export class PropertyTreeController {
                             let addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
                             this.addVec3(addedItem, "Position", aabb.position, "map-marker", property.id);
                             this.addVec3(addedItem, "Size", aabb.size, "arrows-alt", property.id);
-                            this.addOptionalResource(addedItem, "Texture", aabb.texture, "image", property.id);
+                            this.addOptionalResource(addedItem, "Texture", aabb.texture, "image", property.id, this.callbacks.onOpenResource);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.OOBB:
@@ -399,7 +420,7 @@ export class PropertyTreeController {
                             this.addVec3(addedItem, "Size", oobb.size, "arrows-alt", property.id);
                             this.addVec3(addedItem, "Forward", oobb.forward, "arrow-right", property.id);
                             this.addVec3(addedItem, "Up", oobb.up, "arrow-up", property.id);
-                            this.addOptionalResource(addedItem, "Texture", oobb.texture, "image", property.id);
+                            this.addOptionalResource(addedItem, "Texture", oobb.texture, "image", property.id, this.callbacks.onOpenResource);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Plane:
@@ -412,7 +433,7 @@ export class PropertyTreeController {
                             this.addVec3(addedItem, "Up", plane.up, "arrow-up", property.id);
                             this.addNumber(addedItem, "Width", plane.width, "arrows-alt-h", property.id);
                             this.addNumber(addedItem, "Length", plane.length, "arrows-alt-v", property.id);
-                            this.addOptionalResource(addedItem, "Texture", plane.texture, "image", property.id);
+                            this.addOptionalResource(addedItem, "Texture", plane.texture, "image", property.id, this.callbacks.onOpenResource);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Line:
@@ -447,7 +468,7 @@ export class PropertyTreeController {
 
                             let addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
                             // Ignore vertices/indices
-                            this.addOptionalResource(addedItem, "Texture", mesh.texture, "image", property.id);
+                            this.addOptionalResource(addedItem, "Texture", mesh.texture, "image", property.id, this.callbacks.onOpenResource);
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Path:
@@ -470,7 +491,7 @@ export class PropertyTreeController {
                             this.addVec3(addedItem, "p1", triangle.p1, "map-marker", property.id);
                             this.addVec3(addedItem, "p2", triangle.p2, "map-marker", property.id);
                             this.addVec3(addedItem, "p3", triangle.p3, "map-marker", property.id);
-                            this.addOptionalResource(addedItem, "Texture", triangle.texture, "image", property.id);
+                            this.addOptionalResource(addedItem, "Texture", triangle.texture, "image", property.id, this.callbacks.onOpenResource);
                             break;
                         }
                     }

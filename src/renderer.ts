@@ -32,7 +32,7 @@ import EntityPropertiesBuilder from "./frontend/EntityPropertiesBuilder";
 import PendingFrames from "./utils/pendingFrames";
 import { LIB_VERSION } from "./version";
 import ShapeLineController from "./frontend/ShapeLineController";
-import { isImageResource, loadResource } from "./resources/resources";
+import { loadResource, openResource } from "./resources/resources";
 import { ResourcePreview } from "./frontend/ResourcePreview";
 import { PinnedTexture } from "./frontend/PinnedTexture";
 import Comments, { CommentUtils } from "./frontend/Comments";
@@ -191,7 +191,12 @@ export default class Renderer {
                 },
                 isEntityInFrame: (id) => { return this.frameData?.entities[Utils.toUniqueID(this.frameData.clientId, id)] != undefined; },
                 isPropertyVisible: (propId) => { return this.sceneController.isPropertyVisible(propId); },
-                onGroupLocked: () => { /* Unused here */}
+                onGroupLocked: () => { /* Unused here */},
+                onOpenResource: (resourcePath) => {
+                    const resource = this.recordedData.findResource(resourcePath);
+                    if (resource)
+                        openResource(resource);
+                }
             }
         );
 
