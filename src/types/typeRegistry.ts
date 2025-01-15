@@ -8,6 +8,7 @@ export enum EPrimitiveType
 export enum CorePropertyTypes {
 	Group = "group",
 	Comment = "comment",
+	Resource = "resource",
 	/* Types */
 	Number = "number",
 	String = "string",

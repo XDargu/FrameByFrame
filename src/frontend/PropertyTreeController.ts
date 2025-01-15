@@ -365,6 +365,10 @@ export class PropertyTreeController {
                     selectable: false,
                 });
             }
+            else if (property.type == TypeSystem.CorePropertyTypes.Resource)
+            {
+                this.addOptionalResource(parent, property.name, property.value as string, property.icon, property.id, this.callbacks.onOpenResource);
+            }
             else if (property.type == TypeSystem.CorePropertyTypes.EntityRef)
             {
                 this.addEntityRef(parent, property.name, property.value as RECORDING.IEntityRef, property.icon, property.id);
