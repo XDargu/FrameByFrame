@@ -77,6 +77,25 @@ async function displayPropertyGroup(propData: Messaging.IPropertyGroupData)
     displayElement.innerHTML = "";
     DOMUtils.setClass(displayElement, "text-content", false);
 
+    let propertySearchInput = document.getElementById("property-entity-search") as HTMLInputElement;
+
+    if (!propertySearchInput)
+    {
+        const searchForm = 
+        `<div class="basico-container search-container">
+            <div class="basico-form-field search-form">
+                <input type="text" id="property-entity-search" placeholder="Type here to filter..." class="basico-input" value="">
+                <i class="fa fa-search"></i>
+            </div>
+        </div>`;
+
+        const searchFormElem = document.createElement("div");
+        searchFormElem.innerHTML = searchForm;
+
+        displayElement.parentElement.insertBefore(searchFormElem, displayElement);
+        propertySearchInput = document.getElementById("property-entity-search") as HTMLInputElement;
+    }
+
     const wrapper = document.createElement("div");
     wrapper.id = "events";
     displayElement.appendChild(wrapper);
@@ -84,11 +103,18 @@ async function displayPropertyGroup(propData: Messaging.IPropertyGroupData)
     let flags = UI.TreeFlags.CanLock;
     if (isLocked)
         flags = flags | UI.TreeFlags.IsLocked;
-    propertiesBuilder.buildSinglePropertyTreeBlock(wrapper, property, propData.name, -1, "", propData.tag, flags);
 
-    // A bit hacky: remove click event from title
-    const title = document.querySelector("#events > div.basico-title") as HTMLElement;
-    title.onclick = null;
+    const buildTree = () => {
+        propertiesBuilder.buildSinglePropertyTreeBlock(wrapper, property, propData.name, -1, propertySearchInput.value, propData.tag, flags);
+
+        // A bit hacky: remove click event from title
+        const title = document.querySelector("#events > div.basico-title") as HTMLElement;
+        title.onclick = null;
+    };
+
+    buildTree();
+
+    propertySearchInput.onkeyup = () => { buildTree(); };
 }
 
 function applyRequest(request: Messaging.IUpdateWindowsContent)

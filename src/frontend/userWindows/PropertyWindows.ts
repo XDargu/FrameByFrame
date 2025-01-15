@@ -36,7 +36,7 @@ export class PropertyWindows
         const element = this.getPropertyItem(property.id);
         const elementSize = element.getBoundingClientRect();
 
-        const winId = await UserWindows.requestOpenWindow(property.name, elementSize.width, elementSize.height + 25); // 25 is the size of the header
+        const winId = await UserWindows.requestOpenWindow(property.name, elementSize.width, elementSize.height + 25 + 40); // 25 is the size of the header, 40 is the size of the search form
 
         const propertyPath = NaiveRecordedData.getEntityPropertyPath(entity, property.id);
         this.propertyWindowData.push({
