@@ -84,7 +84,7 @@ async function displayPropertyGroup(propData: Messaging.IPropertyGroupData)
     let flags = UI.TreeFlags.CanLock;
     if (isLocked)
         flags = flags | UI.TreeFlags.IsLocked;
-    propertiesBuilder.buildSinglePropertyTreeBlock(wrapper, property, propData.name, -1, propData.tag, flags);
+    propertiesBuilder.buildSinglePropertyTreeBlock(wrapper, property, propData.name, -1, "", propData.tag, flags);
 
     // A bit hacky: remove click event from title
     const title = document.querySelector("#events > div.basico-title") as HTMLElement;

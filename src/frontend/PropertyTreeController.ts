@@ -3,6 +3,7 @@ import * as TREE from '../ui/tree';
 import * as TypeSystem from "../types/typeRegistry";
 import { Console, LogChannel, LogLevel } from './ConsoleController';
 import { ResourcePreview } from './ResourcePreview';
+import { Filtering } from '../filters/propertyFilters';
 
 export interface IGoToEntityCallback {
     (entityId: number) : void;
@@ -183,7 +184,7 @@ export class PropertyTreeController {
         this.addValueToPropertyTree(parent, name, content, propertyId, icon);
     }
 
-    addTable(parent: HTMLElement, name: string, value: RECORDING.IPropertyTable, propertyId: number)
+    addTable(parent: HTMLElement, name: string, value: RECORDING.IPropertyTable, propertyId: number, filter: string)
     {
         let gridContainerWrapper = document.createElement("div");
         gridContainerWrapper.className = "property-table-wrapper";
@@ -203,20 +204,25 @@ export class PropertyTreeController {
             content.classList.add("property-table-row", "property-table-header");
             gridContainer.append(content);
         }
+
+        const hasFilter = filter != "";
         for (let i=0; i<value.rows.length; ++i)
         {
             const row = value.rows[i];
 
-            let rowGroup = document.createElement("div");
-            rowGroup.classList.add("property-table-row-group");
-            rowGroup.setAttribute('data-tree-subvalue', i+"");
-            gridContainer.append(rowGroup);
-
-            for (let item of row)
+            if (!hasFilter || Filtering.filterTableRow(filter, row))
             {
-                let content = UI.getLayoutOfPrimitiveType(item, TypeSystem.EPrimitiveType.String);
-                content.classList.add("property-table-row");
-                rowGroup.append(content);
+                let rowGroup = document.createElement("div");
+                rowGroup.classList.add("property-table-row-group");
+                rowGroup.setAttribute('data-tree-subvalue', i+"");
+                gridContainer.append(rowGroup);
+
+                for (let item of row)
+                {
+                    let content = UI.getLayoutOfPrimitiveType(item, TypeSystem.EPrimitiveType.String);
+                    content.classList.add("property-table-row");
+                    rowGroup.append(content);
+                }
             }
         }
 
@@ -272,13 +278,13 @@ export class PropertyTreeController {
         }
     }
 
-    addToPropertyTree(parent: HTMLElement, property: RECORDING.IProperty)
+    addToPropertyTree(parent: HTMLElement, property: RECORDING.IProperty, filter: string, parentMatchedName: boolean = false)
     {
         const treeItemOptions : TREE.ITreeItemOptions = {
             text: property.name,
             value:  property.id.toString(),
             selectable: false,
-            collapsed: property.flags != undefined && ((property.flags & RECORDING.EPropertyFlags.Collapsed) != 0),
+            collapsed: property.flags != undefined && ((property.flags & RECORDING.EPropertyFlags.Collapsed) != 0) && filter == "",
             callbacks: {
                 onItemSelected: null,
                 onItemDoubleClicked: null,
@@ -287,22 +293,28 @@ export class PropertyTreeController {
             }
         };
 
-        const iconContent = property.icon ? [UI.wrapPropertyIcon(property.icon, property.icolor)] : [];
-
+        
         const isHidden = property.flags != undefined && ((property.flags & RECORDING.EPropertyFlags.Hidden) != 0);
         if (isHidden) return;
+        
+        if (!parentMatchedName && !Filtering.filterProperty(filter, property))
+            return;
+        
+        const iconContent = property.icon ? [UI.wrapPropertyIcon(property.icon, property.icolor)] : [];
 
         if (property.type == TypeSystem.CorePropertyTypes.Group) {
             
             let addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
             const propertyGroup = property as RECORDING.IPropertyGroup;
 
-            for (let i = 0; i < propertyGroup.value.length; ++i) {
-                this.addToPropertyTree(addedItem, propertyGroup.value[i]);
+            for (let i = 0; i < propertyGroup.value.length; ++i)
+            {
+                this.addToPropertyTree(addedItem, propertyGroup.value[i], filter, parentMatchedName || Filtering.filterPropertyName(filter, property));
             }
         }
         // Find type
-        else {
+        else
+        {
             const type = this.typeRegistry.findType(property.type);
             if (type)
             {
@@ -338,7 +350,7 @@ export class PropertyTreeController {
             }
             else if (property.type == TypeSystem.CorePropertyTypes.Table)
             {
-                this.addTable(parent, property.name, property.value as RECORDING.IPropertyTable, property.id);
+                this.addTable(parent, property.name, property.value as RECORDING.IPropertyTable, property.id, filter);
             }
             else if (RECORDING.isPropertyShape(property))
             {
@@ -475,6 +487,58 @@ export class PropertyTreeController {
                 {
                     Console.log(LogLevel.Error, LogChannel.Default, `Unknown property type: ${property.type} in property ${property.name}`);
                 }
+            }
+        }
+
+        this.highlightSearch(property, filter);
+    }
+
+    highlightSearch(property: RECORDING.IProperty, filter: string)
+    {
+        if (filter != "" && Filtering.filterProperty(filter, property, false))
+        {
+            const item = this.propertyTree.getItemWithValue(property.id+"") as HTMLElement;
+            const wrapper = item.querySelector(".basico-tree-item-wrapper") as HTMLElement;
+            const itemToQuery = RECORDING.isPropertyShape(property) ? item : wrapper;
+            const candidates = itemToQuery.querySelectorAll(".property-table-row, .property-table-title, .property-name, .property-primitive, .basico-tree-item-content");
+
+            for (let candidate of candidates)
+            {
+                const prop = candidate as HTMLElement;
+
+                for (const child of prop.childNodes)
+                {
+                    if (child.nodeType === Node.TEXT_NODE)
+                    {
+                        if (Filtering.filterText(filter, child.nodeValue))
+                        {
+                            const regex = new RegExp(`(${filter})`, 'gi');
+                            const tokens = child.nodeValue.split(regex); // Split case insensitive
+
+                            for (let i=0; i<tokens.length; ++i)
+                            {
+                                const token = tokens[i];
+
+                                if (regex.test(token))
+                                {
+                                    const newSpan = document.createElement("span");
+                                    newSpan.innerText = token;
+                                    newSpan.style.backgroundColor = "#bb86fc99";
+                                    prop.insertBefore(newSpan, child);
+                                }
+                                else
+                                {
+                                    const newText = document.createTextNode(token);
+                                    prop.insertBefore(newText, child);
+                                }
+                            }
+
+                            prop.removeChild(child);
+                        }
+                        break;
+                    }
+                }
+                
             }
         }
     }

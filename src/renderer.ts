@@ -89,6 +89,9 @@ export default class Renderer {
     private entityPropsBuilder: EntityPropertiesBuilder;
     private shapeArrowController: ShapeLineController;
     
+    // Property filter
+    private propertySearchInput: HTMLInputElement;
+    
     // Tooltio
     private sceneTooltip: HTMLElement;
 
@@ -423,6 +426,9 @@ export default class Renderer {
             document.getElementById("entity-tree"),
             document.getElementById('entity-search') as HTMLInputElement,
             callbacks);
+
+        this.propertySearchInput = document.getElementById("property-entity-search") as HTMLInputElement;
+        this.propertySearchInput.onkeyup = () => { this.buildPropertyTree(); };
 
         this.initializeSideBarUI();
 
@@ -834,6 +840,8 @@ export default class Renderer {
         ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.CloseAllWindows, ""));
         this.comments.clear();
 
+        this.propertySearchInput.value = "";
+
         // Trigger Garbace Collection
         global.gc();
     }
@@ -1108,8 +1116,10 @@ export default class Renderer {
             elapsedTime: this.frameData.elapsedTime,
             serverTime: this.frameData.serverTime
         }
+
+        const filter = this.propertySearchInput.value.toLowerCase();
         
-        this.entityPropsBuilder.buildPropertyTree(selectedEntity, globalData);
+        this.entityPropsBuilder.buildPropertyTree(selectedEntity, globalData, filter);
     }
 
     updateFrameDataEvents(frameData: RECORDING.IFrameData, frameIdx: number)

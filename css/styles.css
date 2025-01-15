@@ -1418,7 +1418,7 @@ body {
 #layers-container {
   flex: 0 0 250px; }
 
-#search-container {
+.search-container {
   flex: 0 0 auto; }
 
 #default-console > div {
