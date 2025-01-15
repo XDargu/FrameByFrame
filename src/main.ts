@@ -124,3 +124,5 @@ app.on("activate", () => {
     createWindow();
   }
 });
+
+process.on('exit', () => { if (fileManager) fileManager.cleanUpTempFiles(); });

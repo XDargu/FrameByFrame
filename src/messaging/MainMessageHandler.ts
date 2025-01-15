@@ -171,6 +171,11 @@ function downloadResource(resource: Messaging.IDownloadResource)
     fileManager.downloadResource(resource.name, resource.content, resource.type);
 }
 
+function openResource(resource: Messaging.IOpenResource)
+{
+    fileManager.openResource(resource.name, resource.content, resource.type);
+}
+
 function openUserWindow(event: any, request: Messaging.IOpenWindowRequest)
 {
     const window = UserWindowUtils.createWindow(request.width, request.height);
@@ -240,6 +245,10 @@ export function initMessageHandling()
 
         case Messaging.MessageType.DownloadResource:
             downloadResource(arg.data as Messaging.IDownloadResource);
+            break;
+
+        case Messaging.MessageType.OpenResource:
+            openResource(arg.data as Messaging.IOpenResource);
             break;
 
         case Messaging.MessageType.CloseWindow:

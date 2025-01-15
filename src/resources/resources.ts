@@ -91,10 +91,22 @@ export async function downloadResource(resource: RECORDING.IResource)
         content: content,
     }
 
-    console.log(resource)
-    console.log(request)
-
     ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.DownloadResource, request));
+}
+
+export async function openResource(resource: RECORDING.IResource)
+{
+    const result = await loadResource(resource);
+    const content = getResourceContent(resource);
+
+    const request : Messaging.IOpenResource = 
+    {
+        name: resource.path,
+        type: result.data.type,
+        content: content,
+    }
+
+    ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.OpenResource, request));
 }
 
 export function loadResource(resource: RECORDING.IResource)

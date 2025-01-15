@@ -24,6 +24,7 @@ export enum MessageType { // TODO: Maybe rename these to make clear the directio
     ImportFiltersResult,
     ModFileOpened,
     DownloadResource,
+    OpenResource,
     OpenWindowRequest,
     OpenWindowResult,
     UpdateWindow,
@@ -64,6 +65,13 @@ export interface ISaveFileData
 }
 
 export interface IDownloadResource
+{
+    content: string;
+    type: string;
+    name: string;
+}
+
+export interface IOpenResource
 {
     content: string;
     type: string;
@@ -117,7 +125,7 @@ export interface IWindowsClosed
     id: number;
 }
 
-type MessageData = string | IClearResultData | ILogData | ISettings | ISaveFileData | IRequestSavePathData | IResultSavePathData | IDownloadResource | IOpenWindowRequest | IOpenWindowResult | IUpdateWindowsContent | IWindowsClosed | ICloseWindowRequest;
+type MessageData = string | IClearResultData | ILogData | ISettings | ISaveFileData | IRequestSavePathData | IResultSavePathData | IDownloadResource | IOpenResource | IOpenWindowRequest | IOpenWindowResult | IUpdateWindowsContent | IWindowsClosed | ICloseWindowRequest;
 export class Message
 {
     public type: MessageType;
