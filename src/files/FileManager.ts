@@ -321,6 +321,8 @@ export default class FileManager
 
     addPathToHistory(path : string)
     {
+        app.addRecentDocument(path);
+
         // Limit recent paths to 15
         const index = this.pathHistory.paths.indexOf(path);
         if (index > -1)
