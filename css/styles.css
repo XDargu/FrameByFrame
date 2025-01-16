@@ -1381,6 +1381,16 @@ body {
   text-align: center;
   padding: 3px; }
 
+.property-chart-wrapper {
+  position: relative;
+  margin: 0px 2px;
+  flex: 1; }
+
+.property-chart {
+  background-color: #4f435a;
+  border-radius: 2px;
+  position: absolute; }
+
 #central-content {
   flex: 1 1 auto;
   position: relative; }

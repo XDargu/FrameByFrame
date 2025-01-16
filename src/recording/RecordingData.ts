@@ -92,6 +92,16 @@ export interface IPropertyTable
     rows: TableRow[];
 }
 
+export interface IPropertyLineChart
+{
+    data: number[];
+    yscale: number;
+    ylabel: string;
+    xscale: number;
+    chart?: string;
+    height?: number;
+}
+
 export enum EPropertyFlags
 {
 	None = 0,
@@ -102,7 +112,7 @@ export enum EPropertyFlags
 export interface IProperty {
 	type: string;
 	name?: string;
-	value: string | number | boolean | IVec2 | IVec3 | IPropertyCustomType | IEntityRef | IPropertyTable | IProperty[];
+	value: string | number | boolean | IVec2 | IVec3 | IPropertyCustomType | IEntityRef | IPropertyTable | IPropertyLineChart | IProperty[];
 	id?: number;
 	flags?: EPropertyFlags;
     icon?: string;

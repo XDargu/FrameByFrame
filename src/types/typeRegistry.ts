@@ -18,6 +18,7 @@ export enum CorePropertyTypes {
     EntityRef = "eref",
     Table = "table",
     Quat = "quat",
+    LineChart = "linechart",
 	/* Shapes */
 	Sphere = "sphere",
 	Capsule = "capsule",

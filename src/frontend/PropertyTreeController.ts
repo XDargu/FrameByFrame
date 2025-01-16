@@ -1,5 +1,7 @@
+import { ResizeObserver } from 'resize-observer';
 import * as RECORDING from '../recording/RecordingData';
 import * as TREE from '../ui/tree';
+import * as DOMUtils from '../utils/DOMUtils';
 import * as TypeSystem from "../types/typeRegistry";
 import { Console, LogChannel, LogLevel } from './ConsoleController';
 import { ResourcePreview } from './ResourcePreview';
@@ -129,6 +131,258 @@ namespace UI
 
         return resetButton;
     }
+
+    // Charts
+    function setupCanvas(height: number) : { canvas: HTMLCanvasElement; canvasWrapper: HTMLElement; ctx: CanvasRenderingContext2D }
+    {
+        const canvasWrapper = document.createElement("div");
+        canvasWrapper.classList.add("property-chart-wrapper");
+        canvasWrapper.style.height = `${height}px`;
+    
+        const canvas = document.createElement("canvas");
+        canvas.classList.add("property-chart");
+        canvas.height = height;
+        canvasWrapper.appendChild(canvas);
+    
+        const ctx = canvas.getContext("2d")!;
+        return { canvas, canvasWrapper, ctx };
+    }
+
+    function drawAxes(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, padding: number)
+    {
+        ctx.strokeStyle = "#ddd";
+    
+        // Draw X axis
+        ctx.beginPath();
+        ctx.moveTo(padding, canvas.height - padding);
+        ctx.lineTo(canvas.width - padding, canvas.height - padding);
+        ctx.stroke();
+    
+        // Draw Y axis
+        ctx.beginPath();
+        ctx.moveTo(padding, canvas.height - padding);
+        ctx.lineTo(padding, padding);
+        ctx.stroke();
+    }
+
+    function drawLabels(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, data: number[], xMax: number, yMax: number, padding: number)
+    {
+        ctx.font = "12px Arial";
+        ctx.fillStyle = "#ddd";
+    
+        // X axis labels
+        for (let i = 0; i < data.length; i++)
+        {
+            const x = padding + (i * (canvas.width - 2 * padding)) / (data.length - 1);
+            ctx.fillText(
+                Math.round((i / (data.length - 1)) * xMax) + "",
+                x - 10,
+                canvas.height - padding + 15
+            );
+        }
+    
+        // Y axis labels
+        ctx.fillText("0", padding - 20, canvas.height - padding + 5);
+        ctx.fillText(`${yMax}`, padding - 20, padding + 5);
+    }
+
+    function setupMouseHandlers(
+        canvas: HTMLCanvasElement,
+        data: number[],
+        chart: RECORDING.IPropertyLineChart,
+        drawChart: (hoveredIndex: number) => void,
+        getHoveredIndex: (mouseX: number, mouseY: number) => number
+    )
+    {
+        const tooltip = document.getElementById("sceneTooltip")!;
+        let hoveredIndex = -1;
+    
+        function showTooltip(x: number, y: number, content: number)
+        {
+            DOMUtils.setClass(tooltip, "disabled", false);
+            tooltip.style.left = `${x + 10}px`;
+            tooltip.style.top = `${y - 25}px`;
+            tooltip.textContent = `${chart.ylabel}: ${content}`;
+        }
+    
+        function hideTooltip()
+        {
+            DOMUtils.setClass(tooltip, "disabled", true);
+        }
+    
+        function checkMousePosition(event: MouseEvent)
+        {
+            const mouseX = event.offsetX;
+            const mouseY = event.offsetY;
+
+            const index = getHoveredIndex(mouseX, mouseY);
+    
+            if (index !== hoveredIndex)
+            {
+                hoveredIndex = index;
+                drawChart(hoveredIndex); // Redraw the chart with hover effect
+            }
+    
+            if (index === -1)
+            {
+                hideTooltip();
+            }
+            else
+            {
+                showTooltip(event.clientX, event.clientY, data[index]);
+            }
+        }
+    
+        canvas.onmousemove = checkMousePosition;
+        canvas.onmouseout = hideTooltip;
+    }
+
+    export function createBarChart(chart: RECORDING.IPropertyLineChart, height: number): HTMLElement
+    {
+        const isCompact = height < 100;
+        const { yscale: yMax, xscale: xMax, data } = chart;
+        const chartPadding = isCompact ? 0 : 25;
+        const barPadding = 4;
+    
+        const { canvas, canvasWrapper, ctx } = setupCanvas(height);
+
+        function getBarMetrics(i: number)
+        {
+            const barWidth = (canvas.width - 2 * chartPadding) / data.length;
+            const x = chartPadding + i * barWidth;
+            const y = canvas.height - chartPadding - (data[i] / yMax) * (canvas.height - 2 * chartPadding);
+            const barHeight = (data[i] / yMax) * (canvas.height - 2 * chartPadding);
+
+            return { x, y, barWidth, barHeight };
+        } 
+    
+        function drawBarChart(hoveredIndex: number)
+        {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (!isCompact)
+            {
+                drawAxes(ctx, canvas, chartPadding);
+                drawLabels(ctx, canvas, data, xMax, yMax, chartPadding);
+            }
+    
+            for (let i = 0; i < data.length; i++)
+            {
+                const metrics = getBarMetrics(i);
+    
+                ctx.fillStyle = (i === hoveredIndex) ? "#6DE080" : "#8442B9";
+                ctx.fillRect(metrics.x, metrics.y, metrics.barWidth - barPadding, metrics.barHeight);
+            }
+        }
+
+        function getHoveredIndex(mouseX: number, mouseY: number)
+        {
+            for (let i = 0; i < data.length; i++)
+            {
+                const metrics = getBarMetrics(i);
+
+                // Check if the mouse is within the bar's bounds
+                if (
+                    mouseX >= metrics.x &&
+                    mouseX <= metrics.x + metrics.barWidth - barPadding &&
+                    mouseY >= metrics.y &&
+                    mouseY <= metrics.y + metrics.barHeight
+                )
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+    
+        setupMouseHandlers(canvas, data, chart, drawBarChart, getHoveredIndex);
+        drawBarChart(-1);
+    
+        const resizeObserver = new ResizeObserver(() => {
+            canvas.width = canvas.parentElement.offsetWidth;
+            canvas.height = height;
+            drawBarChart(-1);
+        });
+        resizeObserver.observe(canvasWrapper);
+    
+        return canvasWrapper;
+    }
+
+    export function createLineChart(chart: RECORDING.IPropertyLineChart, height: number): HTMLElement
+    {
+        const { yscale: yMax, xscale: xMax, data } = chart;
+        const chartPadding = 25;
+    
+        const { canvas, canvasWrapper, ctx } = setupCanvas(height);
+
+        function getLineMetrics(i: number)
+        {
+            const width = (canvas.width - 2 * chartPadding) / data.length;
+            const x = chartPadding + i * width;
+            const y = canvas.height - chartPadding - (data[i] / yMax) * (canvas.height - 2 * chartPadding);
+
+            return { x, y, width };
+        } 
+
+        function drawLineChart(hoveredIndex: number)
+        {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawAxes(ctx, canvas, chartPadding);
+            drawLabels(ctx, canvas, data, xMax, yMax, chartPadding);
+    
+            ctx.beginPath();
+            ctx.moveTo(chartPadding, canvas.height - chartPadding - (data[0] / yMax) * (canvas.height - 2 * chartPadding));
+    
+            for (let i = 1; i < data.length; i++)
+            {
+                const metrics = getLineMetrics(i);
+                ctx.lineTo(metrics.x, metrics.y);
+            }
+    
+            ctx.strokeStyle = "#8442B9";
+            ctx.stroke();
+
+            if (hoveredIndex != -1)
+            {
+                const metrics = getLineMetrics(hoveredIndex);
+
+                ctx.strokeStyle = '#6DE080';
+                ctx.beginPath();
+                ctx.arc(metrics.x, metrics.y, 5, 0, 2 * Math.PI);
+                ctx.stroke();
+            }
+        }
+
+        function getHoveredIndex(mouseX: number, mouseY: number)
+        {
+            for (let i = 0; i < data.length; i++)
+            {
+                const metrics = getLineMetrics(i);
+
+                if (
+                    mouseX >= metrics.x &&
+                    mouseX <= metrics.x + metrics.width
+                )
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+    
+        setupMouseHandlers(canvas, data, chart, drawLineChart, getHoveredIndex);
+        drawLineChart(-1);
+    
+        const resizeObserver = new ResizeObserver(() => {
+            canvas.width = canvas.parentElement!.offsetWidth;
+            canvas.height = height;
+            drawLineChart(-1);
+        });
+        resizeObserver.observe(canvasWrapper);
+    
+        return canvasWrapper;
+    }
 }
 
 export class PropertyTreeController {
@@ -200,6 +454,18 @@ export class PropertyTreeController {
             //UI.getLayoutOfPrimitiveType(value.id, TypeSystem.EPrimitiveType.Number), // Don't display id for now, too noisy
             UI.createGoToEntityButton(value.id, this.callbacks.onGoToEntity, this.callbacks.isEntityInFrame(value.id))
         ];
+
+        this.addValueToPropertyTree(parent, name, content, propertyId, icon);
+    }
+
+    addLineChart(parent: HTMLElement, name: string, value: RECORDING.IPropertyLineChart, icon: string, propertyId: number)
+    {
+        const height = value.height ? value.height : 200;
+        let content = [];
+        if (value.chart && value.chart == "bar")
+            content = [UI.createBarChart(value, height)]
+        else
+            content = [UI.createLineChart(value, height)];
 
         this.addValueToPropertyTree(parent, name, content, propertyId, icon);
     }
@@ -372,6 +638,10 @@ export class PropertyTreeController {
             else if (property.type == TypeSystem.CorePropertyTypes.EntityRef)
             {
                 this.addEntityRef(parent, property.name, property.value as RECORDING.IEntityRef, property.icon, property.id);
+            }
+            else if (property.type == TypeSystem.CorePropertyTypes.LineChart)
+            {
+                this.addLineChart(parent, property.name, property.value as RECORDING.IPropertyLineChart, property.icon, property.id);
             }
             else if (property.type == TypeSystem.CorePropertyTypes.Table)
             {

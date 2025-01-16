@@ -4,6 +4,7 @@ import * as Messaging from "./messaging/MessageDefinitions";
 import * as DOMUtils from "./utils/DOMUtils";
 import * as RECORDING from './recording/RecordingData';
 import EntityPropertiesBuilder, { UI } from "./frontend/EntityPropertiesBuilder";
+import { ResourcePreview } from "./frontend/ResourcePreview";
 
 let propertiesBuilder: EntityPropertiesBuilder = new EntityPropertiesBuilder(
     {
@@ -142,6 +143,8 @@ ipcRenderer.on('display-content', (event: any, request: Messaging.IUpdateWindows
     lastRequest = request;
     if (isLocked) return;
 
+    ResourcePreview.Init(document.getElementById("resourcePreview"));
+    ResourcePreview.Instance().setResourceData({});
     applyRequest(request);
 });
 
