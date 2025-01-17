@@ -188,8 +188,7 @@ namespace UI
 
     function setupMouseHandlers(
         canvas: HTMLCanvasElement,
-        data: number[],
-        chart: RECORDING.IPropertyLineChart,
+        data: RECORDING.ILineChartData[],
         drawChart: (hoveredIndex: number) => void,
         getHoveredIndex: (mouseX: number, mouseY: number) => number
     )
@@ -197,12 +196,21 @@ namespace UI
         const tooltip = document.getElementById("sceneTooltip")!;
         let hoveredIndex = -1;
     
-        function showTooltip(x: number, y: number, content: number)
+        function showTooltip(x: number, y: number, index: number)
         {
             DOMUtils.setClass(tooltip, "disabled", false);
             tooltip.style.left = `${x + 10}px`;
             tooltip.style.top = `${y - 25}px`;
-            tooltip.textContent = `${chart.ylabel}: ${content}`;
+
+            let html = "";
+            for (let lineChartData of data)
+            {
+                const col = lineChartData.color ? lineChartData.color : "#8442B9";
+                const color = '<div class="property-chart-legend" style="background-color: ' + col + '"></div>';
+                const content = lineChartData.values[index];
+                html += `<div>${color} ${lineChartData.ylabel}: ${content}</div>`;
+            }
+            tooltip.innerHTML = html;
         }
     
         function hideTooltip()
@@ -229,12 +237,12 @@ namespace UI
             }
             else
             {
-                showTooltip(event.clientX, event.clientY, data[index]);
+                showTooltip(event.clientX, event.clientY, hoveredIndex);
             }
         }
     
         canvas.onmousemove = checkMousePosition;
-        canvas.onmouseout = hideTooltip;
+        canvas.onmouseleave = hideTooltip;
     }
 
     export function createBarChart(chart: RECORDING.IPropertyLineChart, height: number): HTMLElement
@@ -243,15 +251,16 @@ namespace UI
         const { yscale: yMax, xscale: xMax, data } = chart;
         const chartPadding = isCompact ? 0 : 25;
         const barPadding = 4;
+        const firstData = data[0]; // TODO: Remove
     
         const { canvas, canvasWrapper, ctx } = setupCanvas(height);
 
-        function getBarMetrics(i: number)
+        function getBarMetrics(valueIdx: number, dataIdx: number, lineChartData: RECORDING.ILineChartData)
         {
-            const barWidth = (canvas.width - 2 * chartPadding) / data.length;
-            const x = chartPadding + i * barWidth;
-            const y = canvas.height - chartPadding - (data[i] / yMax) * (canvas.height - 2 * chartPadding);
-            const barHeight = (data[i] / yMax) * (canvas.height - 2 * chartPadding);
+            const barWidth = ((canvas.width - 2 * chartPadding) / lineChartData.values.length) / data.length;
+            const x = chartPadding + (data.length * valueIdx + dataIdx) * barWidth;
+            const y = canvas.height - chartPadding - (lineChartData.values[valueIdx] / yMax) * (canvas.height - 2 * chartPadding);
+            const barHeight = (lineChartData.values[valueIdx] / yMax) * (canvas.height - 2 * chartPadding);
 
             return { x, y, barWidth, barHeight };
         } 
@@ -262,40 +271,35 @@ namespace UI
             if (!isCompact)
             {
                 drawAxes(ctx, canvas, chartPadding);
-                drawLabels(ctx, canvas, data, xMax, yMax, chartPadding);
+                drawLabels(ctx, canvas, firstData.values, xMax, yMax, chartPadding);
             }
-    
-            for (let i = 0; i < data.length; i++)
+
+            for (let dataIdx = 0; dataIdx < data.length; dataIdx++)
             {
-                const metrics = getBarMetrics(i);
-    
-                ctx.fillStyle = (i === hoveredIndex) ? "#6DE080" : "#8442B9";
-                ctx.fillRect(metrics.x, metrics.y, metrics.barWidth - barPadding, metrics.barHeight);
+                const lineChartData = data[dataIdx]
+                const color = lineChartData.color ? lineChartData.color : "#8442B9";
+
+                for (let valueIdx = 0; valueIdx < lineChartData.values.length; valueIdx++)
+                {
+                    const metrics = getBarMetrics(valueIdx, dataIdx, lineChartData);
+        
+                    ctx.fillStyle = (valueIdx === hoveredIndex) ? "#6DE080" : color;
+                    ctx.fillRect(metrics.x, metrics.y, metrics.barWidth - barPadding, metrics.barHeight);
+                }
             }
         }
 
         function getHoveredIndex(mouseX: number, mouseY: number)
         {
-            for (let i = 0; i < data.length; i++)
-            {
-                const metrics = getBarMetrics(i);
+            return firstData.values.findIndex((value, index) => {
+                const metrics = getBarMetrics(index, 0, firstData);
 
-                // Check if the mouse is within the bar's bounds
-                if (
-                    mouseX >= metrics.x &&
-                    mouseX <= metrics.x + metrics.barWidth - barPadding &&
-                    mouseY >= metrics.y &&
-                    mouseY <= metrics.y + metrics.barHeight
-                )
-                {
-                    return i;
-                }
-            }
-
-            return -1;
+                return  mouseX >= metrics.x &&
+                        mouseX <= metrics.x + metrics.barWidth;
+            });
         }
     
-        setupMouseHandlers(canvas, data, chart, drawBarChart, getHoveredIndex);
+        setupMouseHandlers(canvas, data, drawBarChart, getHoveredIndex);
         drawBarChart(-1);
     
         const resizeObserver = new ResizeObserver(() => {
@@ -310,16 +314,18 @@ namespace UI
 
     export function createLineChart(chart: RECORDING.IPropertyLineChart, height: number): HTMLElement
     {
+        const isCompact = height < 100;
         const { yscale: yMax, xscale: xMax, data } = chart;
-        const chartPadding = 25;
+        const chartPadding = isCompact ? 0 : 25;
+        const firstData = data[0]; // TODO: Remove
     
         const { canvas, canvasWrapper, ctx } = setupCanvas(height);
 
-        function getLineMetrics(i: number)
+        function getLineMetrics(i: number, data: RECORDING.ILineChartData)
         {
-            const width = (canvas.width - 2 * chartPadding) / data.length;
+            const width = (canvas.width - 2 * chartPadding) / data.values.length;
             const x = chartPadding + i * width;
-            const y = canvas.height - chartPadding - (data[i] / yMax) * (canvas.height - 2 * chartPadding);
+            const y = canvas.height - chartPadding - (data.values[i] / yMax) * (canvas.height - 2 * chartPadding);
 
             return { x, y, width };
         } 
@@ -327,51 +333,53 @@ namespace UI
         function drawLineChart(hoveredIndex: number)
         {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawAxes(ctx, canvas, chartPadding);
-            drawLabels(ctx, canvas, data, xMax, yMax, chartPadding);
-    
-            ctx.beginPath();
-            ctx.moveTo(chartPadding, canvas.height - chartPadding - (data[0] / yMax) * (canvas.height - 2 * chartPadding));
-    
-            for (let i = 1; i < data.length; i++)
+            if (!isCompact)
             {
-                const metrics = getLineMetrics(i);
-                ctx.lineTo(metrics.x, metrics.y);
+                drawAxes(ctx, canvas, chartPadding);
+                drawLabels(ctx, canvas, firstData.values, xMax, yMax, chartPadding);
             }
-    
-            ctx.strokeStyle = "#8442B9";
-            ctx.stroke();
 
-            if (hoveredIndex != -1)
+            ctx.lineWidth = 2;
+
+            for (let lineChartData of data)
             {
-                const metrics = getLineMetrics(hoveredIndex);
-
-                ctx.strokeStyle = '#6DE080';
                 ctx.beginPath();
-                ctx.arc(metrics.x, metrics.y, 5, 0, 2 * Math.PI);
+                ctx.moveTo(chartPadding, canvas.height - chartPadding - (lineChartData.values[0] / yMax) * (canvas.height - 2 * chartPadding));
+        
+                for (let i = 1; i < lineChartData.values.length; i++)
+                {
+                    const metrics = getLineMetrics(i, lineChartData);
+                    ctx.lineTo(metrics.x, metrics.y);
+                }
+        
+                ctx.strokeStyle = lineChartData.color ? lineChartData.color : "#8442B9";
                 ctx.stroke();
+    
+                if (hoveredIndex != -1)
+                {
+                    const metrics = getLineMetrics(hoveredIndex, lineChartData);
+    
+                    ctx.strokeStyle = '#6DE080';
+                    ctx.beginPath();
+                    ctx.arc(metrics.x, metrics.y, 5, 0, 2 * Math.PI);
+                    ctx.stroke();
+                }
             }
+
+            ctx.lineWidth = 1;
         }
 
         function getHoveredIndex(mouseX: number, mouseY: number)
         {
-            for (let i = 0; i < data.length; i++)
-            {
-                const metrics = getLineMetrics(i);
+            return firstData.values.findIndex((value, index) => {
+                const metrics = getLineMetrics(index, firstData);
 
-                if (
-                    mouseX >= metrics.x &&
-                    mouseX <= metrics.x + metrics.width
-                )
-                {
-                    return i;
-                }
-            }
-
-            return -1;
+                return  mouseX >= metrics.x &&
+                        mouseX <= metrics.x + metrics.width;
+            });
         }
     
-        setupMouseHandlers(canvas, data, chart, drawLineChart, getHoveredIndex);
+        setupMouseHandlers(canvas, data, drawLineChart, getHoveredIndex);
         drawLineChart(-1);
     
         const resizeObserver = new ResizeObserver(() => {

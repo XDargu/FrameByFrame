@@ -92,11 +92,17 @@ export interface IPropertyTable
     rows: TableRow[];
 }
 
+export interface ILineChartData
+{
+    values: number[];
+    ylabel: string;
+    color?: string;
+}
+
 export interface IPropertyLineChart
 {
-    data: number[];
+    data: ILineChartData[];
     yscale: number;
-    ylabel: string;
     xscale: number;
     chart?: string;
     height?: number;

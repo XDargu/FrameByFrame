@@ -1391,6 +1391,15 @@ body {
   border-radius: 2px;
   position: absolute; }
 
+.property-chart-legend {
+  border-radius: 2px;
+  height: 0.7rem;
+  width: 0.7rem;
+  content: "";
+  display: inline-block;
+  margin-inline-end: .3rem;
+  vertical-align: middle; }
+
 #central-content {
   flex: 1 1 auto;
   position: relative; }
