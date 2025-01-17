@@ -295,7 +295,7 @@ namespace UI
                 const metrics = getBarMetrics(index, 0, firstData);
 
                 return  mouseX >= metrics.x &&
-                        mouseX <= metrics.x + metrics.barWidth;
+                        mouseX <= metrics.x + metrics.barWidth * data.length;
             });
         }
     
@@ -374,8 +374,8 @@ namespace UI
             return firstData.values.findIndex((value, index) => {
                 const metrics = getLineMetrics(index, firstData);
 
-                return  mouseX >= metrics.x &&
-                        mouseX <= metrics.x + metrics.width;
+                return  mouseX >= metrics.x - metrics.width * 0.5 &&
+                        mouseX <= metrics.x + metrics.width * 0.5;
             });
         }
     
