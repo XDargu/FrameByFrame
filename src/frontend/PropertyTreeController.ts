@@ -242,7 +242,11 @@ namespace UI
         }
     
         canvas.onmousemove = checkMousePosition;
-        canvas.onmouseleave = hideTooltip;
+        canvas.onmouseleave = () => {
+            hoveredIndex = -1;
+            drawChart(-1);
+            hideTooltip();
+        };
     }
 
     export function createBarChart(chart: RECORDING.IPropertyLineChart, height: number): HTMLElement
