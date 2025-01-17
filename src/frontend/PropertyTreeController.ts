@@ -2,6 +2,7 @@ import { ResizeObserver } from 'resize-observer';
 import * as RECORDING from '../recording/RecordingData';
 import * as TREE from '../ui/tree';
 import * as DOMUtils from '../utils/DOMUtils';
+import * as Utils from '../utils/utils';
 import * as TypeSystem from "../types/typeRegistry";
 import { Console, LogChannel, LogLevel } from './ConsoleController';
 import { ResourcePreview } from './ResourcePreview';
@@ -242,7 +243,7 @@ namespace UI
         }
     
         canvas.onmousemove = checkMousePosition;
-        canvas.onmouseleave = () => {
+        canvas.onmouseout = () => {
             hoveredIndex = -1;
             drawChart(-1);
             hideTooltip();
@@ -254,7 +255,6 @@ namespace UI
         const isCompact = height < 100;
         const { yscale: yMax, xscale: xMax, data } = chart;
         const chartPadding = isCompact ? 0 : 25;
-        const barPadding = 4;
         const firstData = data[0]; // TODO: Remove
     
         const { canvas, canvasWrapper, ctx } = setupCanvas(height);
@@ -265,8 +265,9 @@ namespace UI
             const x = chartPadding + (data.length * valueIdx + dataIdx) * barWidth;
             const y = canvas.height - chartPadding - (lineChartData.values[valueIdx] / yMax) * (canvas.height - 2 * chartPadding);
             const barHeight = (lineChartData.values[valueIdx] / yMax) * (canvas.height - 2 * chartPadding);
+            const barPadding =  Utils.clamp(barWidth * 0.1, 0, 4);
 
-            return { x, y, barWidth, barHeight };
+            return { x, y, barWidth, barHeight, barPadding };
         } 
     
         function drawBarChart(hoveredIndex: number)
@@ -288,7 +289,7 @@ namespace UI
                     const metrics = getBarMetrics(valueIdx, dataIdx, lineChartData);
         
                     ctx.fillStyle = (valueIdx === hoveredIndex) ? "#6DE080" : color;
-                    ctx.fillRect(metrics.x, metrics.y, metrics.barWidth - barPadding, metrics.barHeight);
+                    ctx.fillRect(metrics.x, metrics.y, metrics.barWidth - metrics.barPadding, metrics.barHeight);
                 }
             }
         }
