@@ -25,7 +25,10 @@ let propertiesBuilder: EntityPropertiesBuilder = new EntityPropertiesBuilder(
         },
         isEntityInFrame: (id) => { return true; },
         isPropertyVisible: (propId) => { return true; },
-        onGroupLocked: (name, locked) => { isLocked = locked; applyRequest(lastRequest); }
+        onGroupLocked: (name, locked) => { isLocked = locked; applyRequest(lastRequest); },
+        getPropertyPath: (id) => { return null; },
+        onTogglePropertyHistory: (id) => {},
+        getPrevValues: (propPath, amount) => { return []; },
     }
 );
 
@@ -107,7 +110,7 @@ async function displayPropertyGroup(propData: Messaging.IPropertyGroupData)
         flags = flags | UI.TreeFlags.IsLocked;
 
     const buildTree = () => {
-        propertiesBuilder.buildSinglePropertyTreeBlock(wrapper, property, propData.name, -1, propertySearchInput.value, propData.tag, flags);
+        propertiesBuilder.buildSinglePropertyTreeBlock(wrapper, property, propData.name, -1, propertySearchInput.value, [], propData.tag, flags);
 
         // A bit hacky: remove click event from title
         const title = document.querySelector("#events > div.basico-title") as HTMLElement;

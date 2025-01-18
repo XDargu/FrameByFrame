@@ -3,7 +3,7 @@ import * as Utils from "../utils/utils";
 import * as DOMUtils from '../utils/DOMUtils';
 import { CorePropertyTypes } from "../types/typeRegistry";
 import { TreeControl } from "../ui/tree";
-import { ICreateFilterFromPropCallback, IGoToEntityCallback, IIsEntityInFrame, IOpenResourceCallback, IPropertyHoverCallback, PropertyTreeController } from "../frontend/PropertyTreeController";
+import { ICreateFilterFromPropCallback, IGetPrevValues, ITogglePropertyHistory, IGoToEntityCallback, IIsEntityInFrame, IOpenResourceCallback, IPropertyHoverCallback, PropertyTreeController, IGetPropertyPath } from "../frontend/PropertyTreeController";
 import { IContextMenuItem, addContextMenu, removeContextMenu } from './ContextMenu';
 import { Filtering } from '../filters/propertyFilters';
 
@@ -283,7 +283,8 @@ export namespace UI
         onOpenNewWindow: IOpenNewWindowCallback,
         onGroupStarred: IGroupStarredCallback,
         onGroupLocked: IGroupLockedCallback,
-        contextMenuItems: IContextMenuItem[])
+        contextMenuItems: IContextMenuItem[],
+        propertiesWithHistory: string[][])
     {
         const hasStar = UI.HasFlag(flags, UI.TreeFlags.HasStar);
         const isStarred = UI.HasFlag(flags, UI.TreeFlags.IsStarred);
@@ -460,6 +461,9 @@ export interface EntityPropertiesBuilderCallbacks
     isEntityInFrame: IIsEntityInFrame;
     isPropertyVisible: IIsPropertyVisible;
     onGroupLocked: IGroupLockedCallback;
+    onTogglePropertyHistory: ITogglePropertyHistory;
+    getPrevValues: IGetPrevValues;
+    getPropertyPath: IGetPropertyPath;
 }
 
 export default class EntityPropertiesBuilder
@@ -495,6 +499,7 @@ export default class EntityPropertiesBuilder
         name: string,
         nameIndex: number,
         filter: string,
+        propertiesWithHistory: string[][],
         tag: string = null,
         flags: UI.TreeFlags = UI.TreeFlags.None)
     {
@@ -563,7 +568,8 @@ export default class EntityPropertiesBuilder
                 this.callbacks.onOpenInNewWindow,
                 onStarredCallback,
                 this.callbacks.onGroupLocked,
-                this.contextMenuItems
+                this.contextMenuItems,
+                propertiesWithHistory
             );
 
             let propertyTreeController = new PropertyTreeController(propertyTree.tree,
@@ -572,7 +578,10 @@ export default class EntityPropertiesBuilder
                     onPropertyStopHovering: this.callbacks.onPropertyStopHovering,
                     onGoToEntity: this.callbacks.onGoToEntity,
                     onOpenResource: this.callbacks.onOpenResource,
-                    isEntityInFrame: this.callbacks.isEntityInFrame
+                    isEntityInFrame: this.callbacks.isEntityInFrame,
+                    onTogglePropertyHistory: this.callbacks.onTogglePropertyHistory,
+                    getPrevValues: this.callbacks.getPrevValues,
+                    getPropertyPath: this.callbacks.getPropertyPath,
                 }
             );
             
@@ -592,7 +601,7 @@ export default class EntityPropertiesBuilder
 
             for (let i=0; i<propsToAdd.length; ++i)
             {
-                storedGroup.propertyTreeController.addToPropertyTree(storedGroup.propertyTree.root, propsToAdd[i], filter);
+                storedGroup.propertyTreeController.addToPropertyTree(storedGroup.propertyTree.root, propsToAdd[i], filter, propertiesWithHistory);
             }
 
             // Add to parent
@@ -609,7 +618,7 @@ export default class EntityPropertiesBuilder
         }
     }
 
-    buildPropertiesPropertyTrees(propertyTrees: HTMLElement, properties: RECORDING.IProperty[], filter: string)
+    buildPropertiesPropertyTrees(propertyTrees: HTMLElement, properties: RECORDING.IProperty[], filter: string, propertiesWithHistory: string[][])
     {
         let groupsWithName = new Map<string, number>();
 
@@ -634,7 +643,7 @@ export default class EntityPropertiesBuilder
                         currentGroup.value[4].icon = "fingerprint";
 
                     const name = "Basic Information";
-                    this.buildSinglePropertyTreeBlock(propertyTrees, currentGroup, name, increaseNameId(groupsWithName, name), filter, null, UI.TreeFlags.ShouldPrepend | UI.TreeFlags.CanOpenNewWindow);
+                    this.buildSinglePropertyTreeBlock(propertyTrees, currentGroup, name, increaseNameId(groupsWithName, name), filter, propertiesWithHistory, null, UI.TreeFlags.ShouldPrepend | UI.TreeFlags.CanOpenNewWindow);
 
                     if (currentGroup.value[0])
                         delete currentGroup.value[0].icon;
@@ -651,7 +660,7 @@ export default class EntityPropertiesBuilder
                 {
                     const name = "Uncategorized";
 
-                    this.buildSinglePropertyTreeBlock(propertyTrees, currentGroup, name, increaseNameId(groupsWithName, name), filter, null, UI.TreeFlags.IgnoreChildren);
+                    this.buildSinglePropertyTreeBlock(propertyTrees, currentGroup, name, increaseNameId(groupsWithName, name), filter, propertiesWithHistory, null, UI.TreeFlags.IgnoreChildren);
                     
                     let indices = [];
                     for (let j=0; j<currentGroup.value.length; ++j)
@@ -670,7 +679,7 @@ export default class EntityPropertiesBuilder
                         if (groupData.type == CorePropertyTypes.Group)
                         {
                             const childGroup = groupData as RECORDING.IPropertyGroup;
-                            this.buildSinglePropertyTreeBlock(propertyTrees, childGroup, childGroup.name, increaseNameId(groupsWithName, childGroup.name), filter, null, UI.TreeFlags.HasStar | UI.TreeFlags.CanOpenNewWindow);
+                            this.buildSinglePropertyTreeBlock(propertyTrees, childGroup, childGroup.name, increaseNameId(groupsWithName, childGroup.name), filter, propertiesWithHistory, null, UI.TreeFlags.HasStar | UI.TreeFlags.CanOpenNewWindow);
                         }
                     }
                 }
@@ -678,7 +687,7 @@ export default class EntityPropertiesBuilder
         }
     }
 
-    buildEventsPropertyTree(eventTree: HTMLElement, events: RECORDING.IEvent[], filter: string)
+    buildEventsPropertyTree(eventTree: HTMLElement, events: RECORDING.IEvent[], filter: string, propertiesWithHistory: string[][])
     {
         let groupsWithName = new Map<string, number>();
         for (let i=0; i<events.length; ++i)
@@ -686,11 +695,11 @@ export default class EntityPropertiesBuilder
             const propertyGroup = events[i].properties;
             const name = events[i].name;
 
-            this.buildSinglePropertyTreeBlock(eventTree, propertyGroup, name, increaseNameId(groupsWithName, name), filter, events[i].tag, UI.TreeFlags.AlwaysAdd | UI.TreeFlags.CanOpenNewWindow);
+            this.buildSinglePropertyTreeBlock(eventTree, propertyGroup, name, increaseNameId(groupsWithName, name), filter, propertiesWithHistory, events[i].tag, UI.TreeFlags.AlwaysAdd | UI.TreeFlags.CanOpenNewWindow);
         }
     }
 
-    buildGlobalData(propertyTrees: HTMLElement, globalData: PropertyTreeGlobalData, filter: string)
+    buildGlobalData(propertyTrees: HTMLElement, globalData: PropertyTreeGlobalData, filter: string, propertiesWithHistory: string[][])
     {
         let groupsWithName = new Map<string, number>();
 
@@ -716,10 +725,10 @@ export default class EntityPropertiesBuilder
             id: Number.MAX_SAFE_INTEGER - 1
         };
 
-        this.buildSinglePropertyTreeBlock(propertyTrees, globalDataGroup, "Frame Data", increaseNameId(groupsWithName, "Frame Data"), filter, null, UI.TreeFlags.ShouldPrepend);
+        this.buildSinglePropertyTreeBlock(propertyTrees, globalDataGroup, "Frame Data", increaseNameId(groupsWithName, "Frame Data"), filter, propertiesWithHistory, null, UI.TreeFlags.ShouldPrepend);
     }
 
-    buildPropertyTree(entity: RECORDING.IEntity, globalData: PropertyTreeGlobalData, filter: string)
+    buildPropertyTree(entity: RECORDING.IEntity, globalData: PropertyTreeGlobalData, filter: string, propertiesWithHistory: string[][])
     {
         // TODO: Instead of destroying everything, reuse/pool the already existing ones!
         let propertyTree = document.getElementById('properties');
@@ -732,11 +741,11 @@ export default class EntityPropertiesBuilder
 
         if (entity)
         {
-            this.buildPropertiesPropertyTrees(propertyTree, entity.properties, filter);
-            this.buildEventsPropertyTree(eventTree, entity.events, filter);
+            this.buildPropertiesPropertyTrees(propertyTree, entity.properties, filter, propertiesWithHistory);
+            this.buildEventsPropertyTree(eventTree, entity.events, filter, propertiesWithHistory);
         }
 
-        this.buildGlobalData(propertyTree, globalData, filter);
+        this.buildGlobalData(propertyTree, globalData, filter, propertiesWithHistory);
     }
 
     findItemWithValue(value: string)

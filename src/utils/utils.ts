@@ -3,6 +3,20 @@ export function clamp(value: number, min: number, max: number)
     return Math.min(Math.max(value, min), max);
 }
 
+export function arrayMax(arr: number[])
+{
+    let len = arr.length;
+    let max = -Infinity;
+    while (len--)
+    {
+        if (arr[len] > max)
+        {
+            max = arr[len];
+        }
+    }
+    return max;
+};
+
 export function hashCode(str: string): number
 {
     var h: number = 0;
@@ -238,4 +252,22 @@ export function LiangBarsky(edgeLeft: number, edgeRight: number, edgeBottom: num
     const y1clip = y0src + t1*ydelta;
 
     return { x0: x0clip, y0: y0clip, x1: x1clip, y1: y1clip };        // (clipped) line is drawn
+}
+
+export function compareStringArrays(arr1: string[], arr2: string[])
+{
+    if (arr1.length !== arr2.length)
+    {
+        return false;
+    }
+
+    for (let i = 0; i < arr1.length; i++)
+    {
+        if (arr1[i] !== arr2[i])
+        {
+            return false;
+        }
+    }
+
+    return true;
 }

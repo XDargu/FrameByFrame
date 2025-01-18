@@ -16,6 +16,48 @@ describe('Utils', () => {
 
   });
 
+  describe('arrayMax', () => {
+
+    it('works with empty arrays', () => {
+      const result = Utils.arrayMax([]);
+      expect(result).to.equal(-Infinity);
+    });
+
+    it('finds max value', () => {
+        const result = Utils.arrayMax([4, 2, 3, -6]);
+        expect(result).to.equal(4);
+    });
+
+    it('finds max value with negative numbers', () => {
+        const result = Utils.arrayMax([-1, -2, -6, -7]);
+        expect(result).to.equal(-1);
+    });
+
+  });
+
+  describe('compareStringArrays', () => {
+
+    it('works with empty arrays', () => {
+      const result = Utils.compareStringArrays([], []);
+      expect(result).to.equal(true);
+    });
+
+    it('returns true for equal string arrays', () => {
+        expect(Utils.compareStringArrays(["abc", "test", "test2"], ["abc", "test", "test2"])).to.equal(true);
+        expect(Utils.compareStringArrays(["abc", "test"], ["abc", "test"])).to.equal(true);
+        expect(Utils.compareStringArrays(["abc"], ["abc"])).to.equal(true);
+    });
+
+    it('returns false for different string arrays', () => {
+        expect(Utils.compareStringArrays(["abc", "test"], ["abc", "test2"])).to.equal(false);
+        expect(Utils.compareStringArrays(["abc"], ["abc", "test"])).to.equal(false);
+        expect(Utils.compareStringArrays(["abc", "test"], ["abc"])).to.equal(false);
+        expect(Utils.compareStringArrays([], ["abc"])).to.equal(false);
+        expect(Utils.compareStringArrays(["abc", "test"], [])).to.equal(false);
+    });
+
+  });
+
   describe('rgbToHex', () => {
 
     it('converts RGB(255,255,255) to #ffffff', () => {

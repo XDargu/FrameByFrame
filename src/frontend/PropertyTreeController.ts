@@ -12,6 +12,18 @@ export interface IGoToEntityCallback {
     (entityId: number) : void;
 }
 
+export interface ITogglePropertyHistory {
+    (propertyId: number) : void;
+}
+
+export interface IGetPropertyPath {
+    (propertyId: number) : string[];
+}
+
+export interface IGetPrevValues {
+    (propertyPath: string[], amount: number) : number[];
+}
+
 export interface IOpenResourceCallback {
     (resourcePath: string) : void;
 }
@@ -35,6 +47,9 @@ interface PropertyTreeControllerCallbacks {
     onGoToEntity: IGoToEntityCallback;
     onOpenResource: IOpenResourceCallback;
     isEntityInFrame: IIsEntityInFrame;
+    onTogglePropertyHistory: ITogglePropertyHistory;
+    getPropertyPath: IGetPropertyPath;
+    getPrevValues: IGetPrevValues;
 }
 
 namespace UI
@@ -114,6 +129,21 @@ namespace UI
             resetButton.title = "Entity unavailable";
             resetButton.disabled = true;
         }
+
+        return resetButton;
+    }
+
+    export function createDisplayChartButton(id: number, callback: (id: number) => void) : HTMLButtonElement
+    {
+        let resetButton: HTMLButtonElement = document.createElement("button");
+        resetButton.className = "basico-button basico-small";
+
+        let icon: HTMLElement = document.createElement("i");
+        icon.className = "fa fa-chart-bar";
+        resetButton.append(icon);
+
+        resetButton.title = "View Property History";
+        resetButton.onclick = () => { callback(id); };
 
         return resetButton;
     }
@@ -559,6 +589,42 @@ export class PropertyTreeController {
         this.addValueToPropertyTree(parent, name, [content], propertyId, icon);
     }
 
+    addNumberHistory(parent: HTMLElement, name: string, value: number, icon: string, propertyId: number, propertiesWithHistory: string[][], callbacks: PropertyTreeControllerCallbacks)
+    {
+        const path = callbacks.getPropertyPath(propertyId);
+        if (!path)
+        {
+            this.addNumber(parent, name, value, icon, propertyId);
+            return;
+        }
+
+        if (propertiesWithHistory.length > 0 && propertiesWithHistory.findIndex((propPath) => { return Utils.compareStringArrays(propPath, path); }) != -1)
+        {
+            const amount = 20;
+            const values = callbacks.getPrevValues(path, amount);
+            const max = Utils.arrayMax(values);
+            const chartData : RECORDING.IPropertyLineChart =
+            {
+                data: [{
+                    values: values,
+                    ylabel: name
+                }],
+                yscale: max * 1.2,
+                xscale: amount,
+            }
+            const height = 50;
+            const chart = UI.createLineChart(chartData, height);
+            const button = UI.createDisplayChartButton(propertyId, callbacks.onTogglePropertyHistory);
+
+            this.addValueToPropertyTree(parent, name, [chart, button], propertyId, icon);
+
+            return;
+        }
+        const content = UI.getLayoutOfPrimitiveType(value, TypeSystem.EPrimitiveType.Number)
+        const button = UI.createDisplayChartButton(propertyId, callbacks.onTogglePropertyHistory);
+        this.addValueToPropertyTree(parent, name, [content, button], propertyId, icon);
+    }
+
     addOptionalResource(parent: HTMLElement, name: string, value: string, icon: string, propertyId: number, callback: IOpenResourceCallback)
     {
         if (value && value != "")
@@ -578,7 +644,7 @@ export class PropertyTreeController {
         }
     }
 
-    addToPropertyTree(parent: HTMLElement, property: RECORDING.IProperty, filter: string, parentMatchedName: boolean = false)
+    addToPropertyTree(parent: HTMLElement, property: RECORDING.IProperty, filter: string, propertiesWithHistory: string[][], parentMatchedName: boolean = false)
     {
         const treeItemOptions : TREE.ITreeItemOptions = {
             text: property.name,
@@ -609,7 +675,7 @@ export class PropertyTreeController {
 
             for (let i = 0; i < propertyGroup.value.length; ++i)
             {
-                this.addToPropertyTree(addedItem, propertyGroup.value[i], filter, parentMatchedName || Filtering.filterPropertyName(filter, property));
+                this.addToPropertyTree(addedItem, propertyGroup.value[i], filter, propertiesWithHistory, parentMatchedName || Filtering.filterPropertyName(filter, property));
             }
         }
         // Find type
@@ -787,13 +853,22 @@ export class PropertyTreeController {
             else
             {
                 const primitiveType = TypeSystem.buildPrimitiveType(property.type);
-                const value = primitiveType ? UI.getPrimitiveTypeAsString(property.value, primitiveType) : property.value as string;
-                const content = UI.wrapPrimitiveType(value);
-                this.addValueToPropertyTree(parent, property.name, [content], property.id, property.icon, property.icolor);
 
-                if (primitiveType == undefined)
+                // Uncomment once number history is a bit more mature
+                /*if (property.type == TypeSystem.CorePropertyTypes.Number)
                 {
-                    Console.log(LogLevel.Error, LogChannel.Default, `Unknown property type: ${property.type} in property ${property.name}`);
+                    this.addNumberHistory(parent, property.name, property.value as number, property.icon, property.id, propertiesWithHistory, this.callbacks);
+                }
+                else*/
+                {
+                    const value = primitiveType ? UI.getPrimitiveTypeAsString(property.value, primitiveType) : property.value as string;
+                    const content = UI.wrapPrimitiveType(value);
+                    this.addValueToPropertyTree(parent, property.name, [content], property.id, property.icon, property.icolor);
+
+                    if (primitiveType == undefined)
+                    {
+                        Console.log(LogLevel.Error, LogChannel.Default, `Unknown property type: ${property.type} in property ${property.name}`);
+                    }
                 }
             }
         }

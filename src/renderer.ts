@@ -38,6 +38,7 @@ import { PinnedTexture } from "./frontend/PinnedTexture";
 import Comments, { CommentUtils } from "./frontend/Comments";
 import { addContextMenu } from "./frontend/ContextMenu";
 import { PropertyWindows } from "./frontend/userWindows/PropertyWindows";
+import { CorePropertyTypes } from "./types/typeRegistry";
 
 const zlib = require('zlib');
 
@@ -135,6 +136,9 @@ export default class Renderer {
     // Comments
     private comments: Comments;
 
+    // Property history
+    private propertiesWithHistory: string[][] = [];
+
     initialize(canvas: HTMLCanvasElement) {
         const defaultSettings = createDefaultSettings();
 
@@ -196,6 +200,54 @@ export default class Renderer {
                     const resource = this.recordedData.findResource(resourcePath);
                     if (resource)
                         openResource(resource);
+                },
+                onTogglePropertyHistory: (id) => {
+                    const entity = this.frameData.entities[this.selectedEntityId];
+                    if (entity)
+                    {
+                        const propertyPath = NaiveRecordedData.getEntityPropertyPath(entity, id);
+                        const index = this.propertiesWithHistory.findIndex((propPath) => { return Utils.compareStringArrays(propPath, propertyPath); });
+                        if (index == -1)
+                            this.propertiesWithHistory.push(propertyPath);
+                        else
+                            this.propertiesWithHistory.splice(index);
+                    }
+                    
+                    this.buildPropertyTree();
+                },
+                getPropertyPath: (id) => {
+                    const entity = this.frameData.entities[this.selectedEntityId];
+                    if (entity)
+                        return NaiveRecordedData.getEntityPropertyPath(entity, id);
+
+                    return [];
+                },
+                getPrevValues: (propPath, amount) => {
+
+                    let values : number[] = [];
+
+                    const currentFrame = this.getCurrentFrame();
+
+                    const start = Math.max(0, currentFrame - amount);
+
+                    for (let i=start; i<=currentFrame; ++i)
+                    {
+                        const frameData = this.recordedData.buildFrameData(i);
+                        const testEntity = frameData.entities[this.selectedEntityId];
+                        if (testEntity)
+                        {
+                            const prop = NaiveRecordedData.findPropertyPathInEntity(testEntity, propPath);
+                            if (prop)
+                            {
+                                if (prop.type == CorePropertyTypes.Number)
+                                {
+                                    values.push(prop.value as number);
+                                }
+                            }
+                        }
+                    }
+
+                    return values;
                 }
             }
         );
@@ -835,6 +887,7 @@ export default class Renderer {
         this.timeline.clearEvents();
         this.pinnedTexture.clear();
         this.propertyWindows.clear();
+        this.propertiesWithHistory = [];
         // Avoid clearing recording options, since in all cases when we clear it's better to keep them
         //this.recordingOptions.setOptions([]);
         this.layerController.setLayers([]);
@@ -1124,7 +1177,7 @@ export default class Renderer {
 
         const filter = this.propertySearchInput.value.toLowerCase();
         
-        this.entityPropsBuilder.buildPropertyTree(selectedEntity, globalData, filter);
+        this.entityPropsBuilder.buildPropertyTree(selectedEntity, globalData, filter, this.propertiesWithHistory);
     }
 
     updateFrameDataEvents(frameData: RECORDING.IFrameData, frameIdx: number)
