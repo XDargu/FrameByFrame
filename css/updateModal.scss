@@ -12,6 +12,7 @@
 #updateModal .modal-content {
     width: 500px;
     border: none;
+    border-top: 5px solid #8e7da2;
 }
 
 #update-title {
@@ -27,34 +28,76 @@
     max-height: 400px;
 }
 
-#update-content h1 {
-    font-size: 16px;
-    margin: 8px 0;
-}
-
-#update-content h2 {
-    font-size: 16px;
-    margin: 8px 0;
-}
-
-#update-content h3 {
-    font-size: 14px;
-    margin: 5px 0;
-}
-
-#update-content ul,
-#update-content ol {
-    font-size: 14px;
-    margin: 0;
-}
-
-#update-content b {
-    font-size: 14px;
-    margin: 5px 0;
-}
-
 #update-content a {
-    font-size: 14px;
     color: $strong-secondary;
     cursor: pointer;
+}
+
+#update-changes h1 {
+    font-size: 16px;
+    margin: 8px 0;
+    font-weight: 100;
+}
+
+#update-changes h2 {
+    font-size: 16px;
+    margin: 8px 0;
+    font-weight: 100;
+}
+
+#update-changes h3 {
+    font-size: 14px;
+    margin: 5px 0;
+    background-color: #5a63d2;
+    width: fit-content;
+    border-radius: 4px;
+    padding: 2px 8px;
+    color: #333333;
+    font-weight: 600;
+}
+
+#update-changes ul,
+#update-changes ol {
+    font-size: 14px;
+    margin: 0;
+    padding: 3px 30px;
+    font-weight: 100;
+}
+
+#update-changes b {
+    font-size: 14px;
+    margin: 5px 0;
+}
+
+#update-changes a {
+    font-size: 14px;
+}
+
+#decline-update-button,
+#install-update-button {
+    font-size: 16px;
+    padding: 8px 14px;
+    font-weight: 600;
+}
+
+#decline-update-button i,
+#install-update-button i {
+    margin-right: 7px;
+}
+
+#install-update-button {
+    background-color: #369c47;
+    color: white;
+}
+
+#install-update-button:hover {
+    background-color: #42a953;
+}
+
+#decline-update-button {
+    background-color: #ccc;
+}
+
+#decline-update-button:hover {
+    background-color: #e6e6e6;
 }

@@ -1,7 +1,5 @@
 type Token = { type: string; content: string };
 
-const urlRegex = /(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})/gi;
-
 /**
  * Tokenize the input Markdown string into a series of tokens.
  * @param markdown The raw Markdown string.
@@ -72,6 +70,7 @@ function tokenize(markdown: string): Token[] {
         if (line.trim() === "") {
             tokens.push({ type: "blank-line", content: "" });
         } else {
+            const urlRegex = /(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})/gi;
             if (urlRegex.test(line))
                 tokens.push({ type: "paragraph-link", content: line });
             else
@@ -200,6 +199,5 @@ function tokensToHtml(tokens: Token[]): string {
  */
 export function markdownToHtml(markdown: string): string {
     const tokens = tokenize(markdown);
-    console.log(tokens);
     return tokensToHtml(tokens);
 }

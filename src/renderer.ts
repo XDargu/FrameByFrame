@@ -654,6 +654,9 @@ export default class Renderer {
         // Check for updates button
         document.getElementById("check-updates-button").onclick = () => {
             ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.RequestCheckForUpdates, ""));
+
+            const updateElem = document.getElementById(`check-updates-result`);
+            updateElem.innerHTML = "Checking updates...";
         }
     }
 
@@ -1749,24 +1752,39 @@ export default class Renderer {
         if (!updateResult.error)
         {
             if (!Utils.compareVersions(updateResult.version, LIB_VERSION))
-                updateElem.textContent = `Frame by Frame is up to date`;
+                updateElem.innerHTML = `Frame by Frame is up to date`;
             else
-                updateElem.textContent = `New Frame by Frame version available: ${updateResult.version}`;
+                updateElem.innerHTML = `<i class="fas fa-bell" style="margin-right: 10px;"></i>New Frame by Frame version available: ${updateResult.version}`;
         }
         else
-            updateElem.textContent = `Couldn't find latest Frame by Frame version`;
-
-        console.log(updateElem.textContent);
+            updateElem.innerHTML = `<i class="fas fa-exclamation-triangle" style="margin-right: 10px;"></i>Couldn't find latest Frame by Frame version`;
 
         if (updateResult.available)
         {
             DOMUtils.setClass(document.getElementById("updateModal"), "active", true);
-            document.getElementById("update-title").innerText = 'New Update Available';
+            document.getElementById("update-title").innerHTML = '<i class="fas fa-bell" style="margin-right: 10px;"></i>Update Available';
             document.getElementById("update-content").innerHTML = 
-                `<div>Frame by Frame ${updateResult.version} available. <a href="${updateResult.release.html_url}">View on Github.</a></div>
+                `<div>Great news! <a href="${updateResult.release.html_url}">Frame by Frame ${updateResult.version}</a> is available.</div>
+                <div> Would you like to update now?</div>
                 <br>
+                <div id="update-changes">
                 ${markdownToHtml(updateResult.release.body)}
+                </div>
                 `;
+
+            // Simplify compare link 
+            const links = document.getElementById("update-changes").querySelectorAll("a");
+            links.forEach((element) => {
+                if (element.textContent.startsWith('https://github.com/XDargu/FrameByFrame/compare/'))
+                    element.textContent = element.textContent.substring('https://github.com/XDargu/FrameByFrame/compare/'.length);
+            });
+                
+            // Apply colors to headers
+            const headerColors = ['#fc9f5b', '#7db1ff','#D6A3FF','#DFC956','#f08c8c','#6DE080'];
+            const headers = document.getElementById("update-changes").querySelectorAll("h3");
+            headers.forEach((element) => {
+                element.style.backgroundColor = Utils.colorFromHash(Utils.hashCode(element.textContent), headerColors);
+            });
             
             document.getElementById('install-update-button').onclick = () =>
             {
