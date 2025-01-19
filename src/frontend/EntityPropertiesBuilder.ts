@@ -37,6 +37,7 @@ export namespace UI
 
         let nameElement = document.createElement("span");
         nameElement.innerText = name;
+        nameElement.className = "tree-group-name";
         titleElement.append(iconElement, nameElement);
 
         return titleElement;
@@ -114,6 +115,23 @@ export namespace UI
         }
     }
 
+    function makeTitleIcon(icon: string, color: string)
+    {
+        let iconElem = document.createElement("i");
+        iconElem.classList.add("fas", "fa-" + icon, "title-user-icon", "prop-icon");
+        if (color)
+            iconElem.style.color = color;
+        return iconElem;
+    }
+
+    function setTitleIcon(iconElement: HTMLElement, icon: string, color: string)
+    {
+        iconElement.className = '';
+        iconElement.classList.add("fas", "fa-" + icon, "title-user-icon", "prop-icon");
+        if (color)
+            iconElement.style.color = color;
+    }
+
     function makeTitleLock(name: string, isLocked: boolean, onGroupLocked: IGroupLockedCallback)
     {
         let starElement = document.createElement("div");
@@ -161,6 +179,8 @@ export namespace UI
         titleElement: HTMLElement,
         name: string,
         tag: string,
+        icon: string,
+        iconColor: string,
         propId: number,
         flags: UI.TreeFlags,
         onCreateFilterFromEvent: ICreateFilterFromEventCallback,
@@ -176,8 +196,7 @@ export namespace UI
         const canOpenNewWindow = UI.HasFlag(flags, UI.TreeFlags.CanOpenNewWindow);
 
         // Update name
-        // Hacky but fast way of accessing the title
-        let nameElement = titleElement.children[1] as HTMLElement;
+        let nameElement = titleElement.querySelector(".tree-group-name") as HTMLElement;
         nameElement.innerText = name;
 
         // Update tag
@@ -242,6 +261,28 @@ export namespace UI
         {
             lockElement.remove();
         }
+
+        // Update icon
+        let iconElement = titleElement.querySelector(".title-user-icon") as HTMLElement;
+        if (icon)
+        {
+            if (iconElement)
+            {
+                // Update icon
+                setTitleIcon(iconElement, icon, iconColor);
+            }
+            else
+            {
+                const arrowIcon = titleElement.querySelector('.filter-arrow-icon');
+                const iconElement = makeTitleIcon(icon, iconColor);
+                arrowIcon.after(iconElement)
+            }
+            
+        }
+        else if (iconElement)
+        {
+            iconElement.remove();
+        }
     }
 
     export function setPropertyTree(
@@ -276,6 +317,8 @@ export namespace UI
         name: string,
         nameIndex: number,
         tag: string = null,
+        icon: string,
+        iconColor: string,
         propId: number,
         flags: UI.TreeFlags,
         collapsedGroups: CollapsedGroupIDsTracker,
@@ -313,6 +356,13 @@ export namespace UI
         {
             let lockElement = makeTitleLock(name, isLocked, onGroupLocked);
             titleElement.append(lockElement);
+        }
+
+        if (icon)
+        {
+            const arrowIcon = titleElement.querySelector('.filter-arrow-icon');
+            const iconElement = makeTitleIcon(icon, iconColor);
+            arrowIcon.after(iconElement)
         }
 
         let treeElement = makeTreeElement();
@@ -547,6 +597,8 @@ export default class EntityPropertiesBuilder
                 storedGroup.title,
                 name,
                 tag,
+                propertyGroup.icon,
+                propertyGroup.icolor,
                 propertyGroup.id,
                 flags | extraFlags,
                 this.callbacks.onCreateFilterFromEvent,
@@ -561,6 +613,8 @@ export default class EntityPropertiesBuilder
                 name,
                 nameIndex,
                 tag,
+                propertyGroup.icon,
+                propertyGroup.icolor,
                 propertyGroup.id,
                 flags | extraFlags,
                 this.collapsedGroups,
