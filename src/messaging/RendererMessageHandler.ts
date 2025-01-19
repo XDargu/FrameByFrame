@@ -128,7 +128,7 @@ export function initMessageHandling(renderer: Renderer)
             case Messaging.MessageType.UpdateResult:
             {
                 const result = arg.data as Messaging.IUpdateResult;
-                renderer.openUpdateModal(result);
+                renderer.onUpdateResult(result);
                 break;
             }
             case Messaging.MessageType.UpdateInstallFailed:

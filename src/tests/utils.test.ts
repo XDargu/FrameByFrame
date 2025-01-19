@@ -432,7 +432,14 @@ describe('Utils', () => {
         expect(Utils.compareVersions('1.0', '5')).to.equal(false);
         expect(Utils.compareVersions('1', '5.0')).to.equal(false);
         expect(Utils.compareVersions('1', '5')).to.equal(false);
-      });
+    });
+
+    it('returns false for the same update', () => {
+        expect(Utils.compareVersions('1.5.0', '1.5.0')).to.equal(false);
+        expect(Utils.compareVersions('1.5', '1.5')).to.equal(false);
+        expect(Utils.compareVersions('1', '1')).to.equal(false);
+        expect(Utils.compareVersions('5', '5')).to.equal(false);
+    });
 
   });
 

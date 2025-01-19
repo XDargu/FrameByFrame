@@ -53,12 +53,9 @@ export async function checkForUpdates()
     if (updateResult.error != undefined)
     {
         logToConsole(LogLevel.Error, LogChannel.Updates, "Error checking for updates: " + updateResult.error);
-        mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.UpdateResult, updateData));
     }
-    else if (updateResult.available)
-    {
-        mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.UpdateResult, updateData));
-    }
+
+    mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.UpdateResult, updateData));
 }
 
 async function findLatestUpdate() : Promise<ICheckUpdateResult>

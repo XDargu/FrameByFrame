@@ -1742,8 +1742,22 @@ export default class Renderer {
     }
 
     // Update modal
-    openUpdateModal(updateResult: Messaging.IUpdateResult)
+    onUpdateResult(updateResult: Messaging.IUpdateResult)
     {
+        const updateElem = document.getElementById(`check-updates-result`);
+
+        if (!updateResult.error)
+        {
+            if (!Utils.compareVersions(updateResult.version, LIB_VERSION))
+                updateElem.textContent = `Frame by Frame is up to date`;
+            else
+                updateElem.textContent = `New Frame by Frame version available: ${updateResult.version}`;
+        }
+        else
+            updateElem.textContent = `Couldn't find latest Frame by Frame version`;
+
+        console.log(updateElem.textContent);
+
         if (updateResult.available)
         {
             DOMUtils.setClass(document.getElementById("updateModal"), "active", true);
