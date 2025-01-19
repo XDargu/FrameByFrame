@@ -271,3 +271,16 @@ export function compareStringArrays(arr1: string[], arr2: string[])
 
     return true;
 }
+
+export function compareVersions(latest: string, current: string)
+{
+    const latestParts = latest.split('.').map(Number);
+    const currentParts = current.split('.').map(Number);
+
+    for (let i = 0; i < latestParts.length; i++)
+    {
+        if ((latestParts[i] || 0) > (currentParts[i] || 0)) return true;
+        if ((latestParts[i] || 0) < (currentParts[i] || 0)) return false;
+    }
+    return false;
+}

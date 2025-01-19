@@ -15,6 +15,16 @@
           <p><span><i class="fas fa-spinner fa-spin"></i></span><span id="modalText"></span></p>
         </div>
     </div>
+    <div id="updateModal" class="modal">
+        <div class="modal-content">
+            <div id="update-title"></div>
+            <div id="update-content"></div>
+            <div class="basico-button-group">
+                <button id="install-update-button" class="basico-button">Install Update</button>
+                <button id="decline-update-button" class="basico-button">Not now</button>
+            </div>
+        </div>
+    </div>
     <div id="contextMenu" class="context-menu" style="display: none"></div>
     <div id="resourcePreview" class="resource-preview hidden"></div>
     <div id="eventPopup" class="event-popup hidden"></div>
@@ -234,6 +244,7 @@
                                         <li><p id="version-text">Version: 0.2.1</p></li>
                                         <li><p>Find the <a href="https://github.com/XDargu/FrameByFrame/releases"><b>latest version here</b></a></p></li>
                                         <li><p>Report bugs and request features in the  <a href="https://github.com/XDargu/FrameByFrame/issues"><b>issues page</b></a></p></li>
+                                        <li><div id="check-updates-button" class="basico-button">Check for updates</div></li>
                                     </ul>
                                 </div>
                             </div>

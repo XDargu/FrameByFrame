@@ -425,4 +425,25 @@ export default class FileManager
                 fs.unlinkSync(file);
         });
     }
+
+    unblockFileWindows(filePath: string) : Promise<void>
+    {
+        return new Promise((resolve, reject) => {
+            const zoneIdentifierPath = `${filePath}:Zone.Identifier`;
+            fs.unlink(zoneIdentifierPath, (err) =>
+            {
+                if (err)
+                {
+                    if (err.code === 'ENOENT')
+                        resolve(); // File not locked
+                    else
+                        reject(err);
+                }
+                else
+                {
+                    resolve();
+                }
+            });
+        });
+    }
 }

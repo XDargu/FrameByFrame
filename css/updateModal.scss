@@ -1,0 +1,60 @@
+@import "colorStyles.scss";
+
+#updateModal {
+    padding: 0;
+    z-index: 40;
+}
+
+#updateModal.active {
+    display: flex;
+}
+
+#updateModal .modal-content {
+    width: 500px;
+    border: none;
+}
+
+#update-title {
+    font-size: 24px;
+    font-weight: 100;
+}
+
+#update-content {
+    font-size: 16px;
+    padding: 20px 0px;
+    text-align: left;
+    overflow: auto;
+    max-height: 400px;
+}
+
+#update-content h1 {
+    font-size: 16px;
+    margin: 8px 0;
+}
+
+#update-content h2 {
+    font-size: 16px;
+    margin: 8px 0;
+}
+
+#update-content h3 {
+    font-size: 14px;
+    margin: 5px 0;
+}
+
+#update-content ul,
+#update-content ol {
+    font-size: 14px;
+    margin: 0;
+}
+
+#update-content b {
+    font-size: 14px;
+    margin: 5px 0;
+}
+
+#update-content a {
+    font-size: 14px;
+    color: $strong-secondary;
+    cursor: pointer;
+}

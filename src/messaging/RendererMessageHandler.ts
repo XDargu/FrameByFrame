@@ -125,6 +125,17 @@ export function initMessageHandling(renderer: Renderer)
                 renderer.onUserWindowClosed(result.id);
                 break;
             }
+            case Messaging.MessageType.UpdateResult:
+            {
+                const result = arg.data as Messaging.IUpdateResult;
+                renderer.openUpdateModal(result);
+                break;
+            }
+            case Messaging.MessageType.UpdateInstallFailed:
+            {
+                renderer.onUpdateInstallationFailed(arg.data as string);
+                break;
+            }
         }
     });
 }

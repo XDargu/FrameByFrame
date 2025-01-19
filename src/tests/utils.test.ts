@@ -412,4 +412,28 @@ describe('Utils', () => {
 
   });
 
+  describe('compareVersions', () => {
+
+    it('returns true for later updates', () => {
+      expect(Utils.compareVersions('1.5.2', '1.5.0')).to.equal(true);
+      expect(Utils.compareVersions('2.0', '1.5')).to.equal(true);
+      expect(Utils.compareVersions('2.0', '1.5.2')).to.equal(true);
+      expect(Utils.compareVersions('5.0.6.2', '1.0')).to.equal(true);
+      expect(Utils.compareVersions('5', '1.0')).to.equal(true);
+      expect(Utils.compareVersions('5.0', '1')).to.equal(true);
+      expect(Utils.compareVersions('5', '1')).to.equal(true);
+    });
+
+    it('returns false for earlier updates', () => {
+        expect(Utils.compareVersions('1.5.0', '1.5.2')).to.equal(false);
+        expect(Utils.compareVersions('1.5', '2.0')).to.equal(false);
+        expect(Utils.compareVersions('1.5.2', '2.0')).to.equal(false);
+        expect(Utils.compareVersions('1.0', '5.0.6.2')).to.equal(false);
+        expect(Utils.compareVersions('1.0', '5')).to.equal(false);
+        expect(Utils.compareVersions('1', '5.0')).to.equal(false);
+        expect(Utils.compareVersions('1', '5')).to.equal(false);
+      });
+
+  });
+
 });

@@ -1,3 +1,4 @@
+import { GitHubRelease } from "../updates/gitHub";
 import { ISettings } from "../files/Settings";
 import { LogLevel, ILogAction, LogChannel } from "../frontend/ConsoleController";
 import * as RECORDING from '../recording/RecordingData';
@@ -31,6 +32,11 @@ export enum MessageType { // TODO: Maybe rename these to make clear the directio
     CloseWindow,
     CloseAllWindows,
     WindowsClosed,
+    // Updates
+    UpdateResult, // Main to Renderer
+    UpdateInstallFailed, // Main to Renderer
+    RequestCheckForUpdates, // Renderer to Main
+    RequestInstallUpdate, // Renderer to Main
 }
 
 export interface IClearResultData
@@ -125,7 +131,16 @@ export interface IWindowsClosed
     id: number;
 }
 
-type MessageData = string | IClearResultData | ILogData | ISettings | ISaveFileData | IRequestSavePathData | IResultSavePathData | IDownloadResource | IOpenResource | IOpenWindowRequest | IOpenWindowResult | IUpdateWindowsContent | IWindowsClosed | ICloseWindowRequest;
+export interface IUpdateResult
+{
+    available: boolean,
+    version: string,
+    release?: GitHubRelease,
+    error?: string,
+    downloadUrl?: string,
+}
+
+type MessageData = string | IClearResultData | ILogData | ISettings | ISaveFileData | IRequestSavePathData | IResultSavePathData | IDownloadResource | IOpenResource | IOpenWindowRequest | IOpenWindowResult | IUpdateWindowsContent | IWindowsClosed | ICloseWindowRequest | IUpdateResult;
 export class Message
 {
     public type: MessageType;

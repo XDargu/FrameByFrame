@@ -26,6 +26,7 @@ import { RecordingInfoList } from "./frontend/RecordingInfoList";
 import { EntityTree } from "./frontend/EntityTree";
 import FiltersList, { ExportedFilters, FilterId } from "./frontend/FiltersList";
 import * as Utils from "./utils/utils";
+import * as DOMUtils from "./utils/DOMUtils";
 import * as UserWindows from "./frontend/UserWindows";
 import FilterTickers from "./frontend/FilterTickers";
 import EntityPropertiesBuilder from "./frontend/EntityPropertiesBuilder";
@@ -39,6 +40,7 @@ import Comments, { CommentUtils } from "./frontend/Comments";
 import { addContextMenu } from "./frontend/ContextMenu";
 import { PropertyWindows } from "./frontend/userWindows/PropertyWindows";
 import { CorePropertyTypes } from "./types/typeRegistry";
+import { markdownToHtml } from "./utils/markdown";
 
 const zlib = require('zlib');
 
@@ -648,6 +650,11 @@ export default class Renderer {
 
         // Resource previewer
         ResourcePreview.Init(document.getElementById("resourcePreview"));
+
+        // Check for updates button
+        document.getElementById("check-updates-button").onclick = () => {
+            ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.RequestCheckForUpdates, ""));
+        }
     }
 
     onSettingsChanged()
@@ -1732,6 +1739,39 @@ export default class Renderer {
     closeModal()
     {
         document.getElementById("loadingModal").style.display = "none";
+    }
+
+    // Update modal
+    openUpdateModal(updateResult: Messaging.IUpdateResult)
+    {
+        if (updateResult.available)
+        {
+            DOMUtils.setClass(document.getElementById("updateModal"), "active", true);
+            document.getElementById("update-title").innerText = 'New Update Available';
+            document.getElementById("update-content").innerHTML = 
+                `<div>Frame by Frame ${updateResult.version} available. <a href="${updateResult.release.html_url}">View on Github.</a></div>
+                <br>
+                ${markdownToHtml(updateResult.release.body)}
+                `;
+            
+            document.getElementById('install-update-button').onclick = () =>
+            {
+                ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.RequestInstallUpdate, updateResult));
+                this.openModal("Downloading update");
+            }
+            document.getElementById('decline-update-button').onclick = () => { this.closeUpdateModal(); }
+        }
+    }
+
+    closeUpdateModal()
+    {
+        DOMUtils.setClass(document.getElementById("updateModal"), "active", false);
+    }
+
+    onUpdateInstallationFailed(reason: string)
+    {
+        this.closeModal();
+        this.logErrorToConsole("Update installation failed: " + reason);
     }
 
     // Logging wrappers

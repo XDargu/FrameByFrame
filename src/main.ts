@@ -7,7 +7,7 @@ import { loadMods, onFileHistoryChanged, onOpenRecentFileClicked, onSettingsChan
 import { logToConsole } from "./mainThread/logging";
 import { SessionOptions } from "./mainThread/sessionOptions";
 import { initMessageHandling } from "./messaging/MainMessageHandler";
-import * as UserWindowUtils from "./mainThread/userWindowUtils";
+import * as AutoUpdater from "./updates/updateCheker";
 
 export let mainWindow: Electron.BrowserWindow;
 export let fileManager: FileManager;
@@ -98,6 +98,8 @@ function onRendererReady()
   }
 
   loadMods();
+
+  AutoUpdater.checkForUpdates();
 }
 
 // Increase available memory
