@@ -165,6 +165,18 @@ export namespace UI
         }
     }
 
+    function setTitleHeaderColor(titleElement: HTMLElement, nameElement: HTMLElement, color: string)
+    {
+        const colRGB = Utils.hexToRgb(color);
+        const colHSL = Utils.rgbToHsl(colRGB);
+        
+        // Update header color
+        titleElement.style.backgroundColor = `hsl(${colHSL.h}, ${colHSL.s}%, ${12}%)`;
+
+        // Update text color
+        nameElement.style.color = `hsl(${colHSL.h}, ${colHSL.s}%, ${90}%)`;
+    }
+
     function makeTreeElement()
     {
         let treeElement = document.createElement("div");
@@ -283,6 +295,17 @@ export namespace UI
         {
             iconElement.remove();
         }
+
+        // Header color
+        if (iconColor)
+        {
+            setTitleHeaderColor(titleElement, nameElement, iconColor);
+        }
+        else
+        {
+            titleElement.style.backgroundColor = ``;
+            nameElement.style.color = ``;
+        }
     }
 
     export function setPropertyTree(
@@ -363,6 +386,13 @@ export namespace UI
             const arrowIcon = titleElement.querySelector('.filter-arrow-icon');
             const iconElement = makeTitleIcon(icon, iconColor);
             arrowIcon.after(iconElement)
+        }
+
+        // Header color
+        if (iconColor)
+        {
+            let nameElement = titleElement.querySelector(".tree-group-name") as HTMLElement;
+            setTitleHeaderColor(titleElement, nameElement, iconColor);
         }
 
         let treeElement = makeTreeElement();

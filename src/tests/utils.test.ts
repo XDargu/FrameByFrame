@@ -78,6 +78,32 @@ describe('Utils', () => {
 
   });
 
+  describe('rgbToHsl', () => {
+
+    it('converts RGB(255, 87, 51) to (11, 100, 60)', () => {
+      const result = Utils.rgbToHsl({r: 255, g: 87, b: 51});
+
+      expect(result).property("h").to.equal(11);
+      expect(result).property("s").to.equal(100);
+      expect(result).property("l").to.equal(60);
+    });
+
+    it('converts RGB(255,0,0) to (0, 100, 50)', () => {
+      const result = Utils.rgbToHsl({r: 255, g: 0, b: 0});
+      expect(result).property("h").to.equal(0);
+      expect(result).property("s").to.equal(100);
+      expect(result).property("l").to.equal(50);
+    });
+
+    it('converts RGB(117, 138, 179) to (220, 29, 58)', () => {
+        const result = Utils.rgbToHsl({r: 117, g: 138, b: 179});
+        expect(result).property("h").to.equal(220);
+        expect(result).property("s").to.equal(29);
+        expect(result).property("l").to.equal(58);
+      });
+
+  });
+
   describe('isHexColor', () => {
 
     it('returns true for correct colors', () => {

@@ -47,6 +47,13 @@ export function componentToHex(c: number)
 }
 
 // Colors
+export class HSLColor
+{
+    h: number;
+    s: number;
+    l: number;
+}
+
 export class RGBColor
 {
     r: number;
@@ -82,6 +89,51 @@ export function RgbToRgb01(color: RGBColor) : RGBColor01
         r: color.r / 255,
         g: color.g / 255,
         b: color.b / 255
+    };
+}
+
+export function rgbToHsl(color: RGBColor): HSLColor
+{
+    // Convert RGB values from [0, 255] to [0, 1]
+    color.r /= 255;
+    color.g /= 255;
+    color.b /= 255;
+
+    const max = Math.max(color.r, color.g, color.b);
+    const min = Math.min(color.r, color.g, color.b);
+    const delta = max - min;
+
+    let h = 0; // Hue
+    let s = 0; // Saturation
+    const l = (max + min) / 2; // Lightness
+
+    if (delta !== 0)
+    {
+        // Calculate saturation
+        s = l > 0.5 ? delta / (2 - max - min) : delta / (max + min);
+
+        // Calculate hue
+        switch (max)
+        {
+            case color.r:
+                h = ((color.g - color.b) / delta + (color.g < color.b ? 6 : 0)) % 6;
+                break;
+            case color.g:
+                h = (color.b - color.r) / delta + 2;
+                break;
+            case color.b:
+                h = (color.r - color.g) / delta + 4;
+                break;
+        }
+
+        h *= 60; // Convert to degrees
+    }
+
+    // Return HSL values, with hue rounded to nearest integer and saturation/lightness as percentages
+    return {
+        h: Math.round(h),
+        s: Math.round(s * 100),
+        l: Math.round(l * 100),
     };
 }
 
