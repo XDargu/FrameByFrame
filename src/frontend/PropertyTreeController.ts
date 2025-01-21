@@ -202,11 +202,15 @@ namespace UI
         ctx.fillStyle = "#ddd";
     
         // X axis labels
-        for (let i = 0; i < data.length; i++)
+        const width = canvas.width - padding * 2;
+        const labels = Math.round(width / 20); // At least 20 pixels between labels
+
+        for (let i = 0; i < labels; i++)
         {
-            const x = padding + (i * (canvas.width - 2 * padding)) / (data.length - 1);
+            const index = i * 20;
+            const x = padding + (index * width) / (data.length - 1);
             ctx.fillText(
-                Math.round((i / (data.length - 1)) * xMax) + "",
+                index + "",
                 x - 10,
                 canvas.height - padding + 15
             );
@@ -230,8 +234,14 @@ namespace UI
         function showTooltip(x: number, y: number, index: number)
         {
             DOMUtils.setClass(tooltip, "disabled", false);
-            tooltip.style.left = `${x + 10}px`;
-            tooltip.style.top = `${y - 25}px`;
+
+            let posX = x + 10;
+            let posY = y - 25;
+
+            const clampedPos = DOMUtils.clampElementToScreen(posX, posY, tooltip);
+
+            tooltip.style.left = `${clampedPos.x}px`;
+            tooltip.style.top = `${clampedPos.y}px`;
 
             let html = "";
             for (let lineChartData of data)
@@ -380,11 +390,24 @@ namespace UI
             {
                 ctx.beginPath();
                 ctx.moveTo(chartPadding, canvas.height - chartPadding - (lineChartData.values[0] / yMax) * (canvas.height - 2 * chartPadding));
-        
-                for (let i = 1; i < lineChartData.values.length; i++)
+
+                let prevValue = Infinity;
+
+                for (let i = 0; i < lineChartData.values.length; i++)
                 {
-                    const metrics = getLineMetrics(i, lineChartData);
-                    ctx.lineTo(metrics.x, metrics.y);
+                    // Small optimization to prevent rendering extra lines
+                    if (prevValue != lineChartData.values[i] || i == lineChartData.values.length - 1)
+                    {
+                        if (i != 0)
+                        {
+                            const metricsPrev = getLineMetrics(i-1, lineChartData);
+                            ctx.lineTo(metricsPrev.x, metricsPrev.y);
+                        }
+
+                        const metrics = getLineMetrics(i, lineChartData);
+                        ctx.lineTo(metrics.x, metrics.y);
+                        prevValue = lineChartData.values[i];
+                    }
                 }
         
                 ctx.strokeStyle = lineChartData.color ? lineChartData.color : "#8442B9";

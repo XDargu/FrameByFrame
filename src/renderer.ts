@@ -643,9 +643,11 @@ export default class Renderer {
         document.addEventListener('mousemove', evt => {
             let x = evt.clientX + 20;
             let y = evt.clientY + 20;
-         
-            this.sceneTooltip.style.left = x + "px";
-            this.sceneTooltip.style.top = y + "px";
+
+            const clampedPos = DOMUtils.clampElementToScreen(x, y, this.sceneTooltip);
+            
+            this.sceneTooltip.style.left = `${clampedPos.x}px`;
+            this.sceneTooltip.style.top = `${clampedPos.y}px`;
         });
 
         // Resource previewer
