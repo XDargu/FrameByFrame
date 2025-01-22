@@ -459,16 +459,27 @@ namespace UI
     }
 }
 
+interface ElementData
+{
+    visited: boolean;
+    path: string;
+}
+
 export class PropertyTreeController {
     propertyTree: TREE.TreeControl;
     typeRegistry: TypeSystem.TypeRegistry;
 
     callbacks: PropertyTreeControllerCallbacks;
 
+    elementsPerPath: Map<string, HTMLElement>;
+    visitedElements: Map<HTMLElement, ElementData>;
+
     constructor(propertyTree: TREE.TreeControl, callbacks: PropertyTreeControllerCallbacks) {
         this.propertyTree = propertyTree;
         this.typeRegistry = TypeSystem.TypeRegistry.getInstance();
         this.callbacks = callbacks;
+        this.elementsPerPath = new Map<string, HTMLElement>();
+        this.visitedElements = new Map<HTMLElement, ElementData>();
     }
 
     getPropertyGroup(listItem: HTMLElement) : HTMLElement
@@ -808,6 +819,30 @@ export class PropertyTreeController {
         return path.join("#%#");
     }
 
+    clearVisited()
+    {
+        let toRemove = [];
+
+        for (let item of this.visitedElements)
+        {
+            if (!item[1].visited)
+            {
+                toRemove.push(item);
+            }
+            else
+                item[1].visited = false;
+        }
+
+        for (let [element, data] of toRemove)
+        {
+            element.remove();
+            this.visitedElements.delete(element);
+
+            // Remove from the path map
+            this.elementsPerPath.delete(data.path);
+        }
+    }
+
     addToPropertyTree(parent: HTMLElement, property: RECORDING.IProperty, filter: string, propertiesWithHistory: string[][], parentMatchedName: boolean, optimizeUpdates: boolean, displayUpdates: boolean)
     {
         const treeItemOptions : TREE.ITreeItemOptions = {
@@ -831,10 +866,10 @@ export class PropertyTreeController {
         
         
 
-        const propertyPath = optimizeUpdates ? this.callbacks.getPropertyPath(property.id) : null;
+        const propertyPath = optimizeUpdates ? property.path : null;// this.callbacks.getPropertyPath(property.id) : null;
         const propertyPathStr = propertyPath ? this.propertyPathAsString(propertyPath) : null;
         
-        const itemWithPath = propertyPathStr ? this.propertyTree.root.querySelector('[data-tree-path="' + propertyPathStr + '"]') as HTMLElement : null;
+        const itemWithPath = propertyPathStr ? this.elementsPerPath.get(propertyPathStr) : null;
 
         // For now, assume same type
         if (itemWithPath)
@@ -1055,8 +1090,8 @@ export class PropertyTreeController {
 
         if (addedItem)
         {
-            addedItem.setAttribute('data-tree-visited', "1");
-            addedItem.setAttribute("data-tree-path", propertyPathStr);
+            this.elementsPerPath.set(propertyPathStr, addedItem);
+            this.visitedElements.set(addedItem, { visited: true, path: propertyPathStr });
 
             if (displayUpdates)
             {

@@ -120,6 +120,7 @@ export interface IProperty {
 	name?: string;
 	value: string | number | boolean | IVec2 | IVec3 | IPropertyCustomType | IEntityRef | IPropertyTable | IPropertyLineChart | IProperty[];
 	id?: number;
+    path?: string[];
 	flags?: EPropertyFlags;
     icon?: string;
     icolor?: string;
@@ -260,7 +261,7 @@ export enum VisitorResult
 
 export interface IPropertyVisitorCallback
 {
-    (property: IProperty) : VisitorResult | void
+    (property: IProperty, path?: string[]) : VisitorResult | void
 }
 
 export interface IEventVisitorCallback
@@ -915,23 +916,25 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		NaiveRecordedData.visitProperties(entity.properties, callback);
 	}
 
-	static visitProperties(properties: IProperty[], callback: IPropertyVisitorCallback, visitChildGroups: boolean = true)
+	static visitProperties(properties: IProperty[], callback: IPropertyVisitorCallback, visitChildGroups: boolean = true, path: string[] = null)
 	{
 		const propertyCount = properties.length;
 		for (let i=0; i<propertyCount; ++i)
 		{
+            const propPath = path ? path.concat(properties[i].name) : null;
+
 			if (properties[i].type == 'group')
 			{
-				const res = callback(properties[i]);
+				const res = callback(properties[i], propPath);
 				if (res == VisitorResult.Stop) { return; }
 				if (visitChildGroups)
 				{
-					NaiveRecordedData.visitProperties((properties[i] as IPropertyGroup).value, callback);
+					NaiveRecordedData.visitProperties((properties[i] as IPropertyGroup).value, callback, true, propPath);
 				}
 			}
 			else
 			{
-				const res = callback(properties[i]);
+				const res = callback(properties[i], propPath);
 				if (res == VisitorResult.Stop) { return; }
 			}
 		}
@@ -1064,15 +1067,16 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		
 		for (let id in mergedFrameData.entities)
 		{
-			NaiveRecordedData.visitProperties(mergedFrameData.entities[id].properties, (property: IProperty) => {
+			NaiveRecordedData.visitProperties(mergedFrameData.entities[id].properties, (property: IProperty, path: string[]) => {
 				property.id = propId++;
-			});
+                property.path = path;
+			}, true, []);
 			NaiveRecordedData.visitEvents(mergedFrameData.entities[id].events, (event: IEvent) => {
 				event.id = eventId++;
 
 				NaiveRecordedData.visitProperties([event.properties], (property: IProperty) => {
 					property.id = propId++;
-				});
+				}, true, []);
 			});
 		}
 		

@@ -701,10 +701,7 @@ export default class EntityPropertiesBuilder
             }
 
             // Delete all non-visited nodes, mark all visited as non-visited
-            const visited = storedGroup.propertyTreeController.propertyTree.root.querySelectorAll(`[data-tree-visited="1"]`);
-            const notVisited = storedGroup.propertyTreeController.propertyTree.root.querySelectorAll(`[data-tree-visited="0"]`);
-            notVisited.forEach((elem) => { elem.remove(); });
-            visited.forEach((elem) => { elem.setAttribute('data-tree-visited', "0"); });
+            storedGroup.propertyTreeController.clearVisited();
 
             // Add to parent
             if (shouldPrepend)
