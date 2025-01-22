@@ -554,6 +554,8 @@ export default class EntityPropertiesBuilder
     collapsedGroups: CollapsedGroupIDsTracker;
     starredGroups: string[];
     private propertyGroupsById: Map<string, PropertyTreeGroup>;
+    private isDebuggingEnabled: boolean = false;
+    private areOptimizationsEnabled: boolean = false;
 
     private readonly contextMenuItems: IContextMenuItem[] = [
         { text: "Copy value", icon: "fa-copy", callback: this.onCopyValue.bind(this) },
@@ -571,6 +573,16 @@ export default class EntityPropertiesBuilder
         this.collapsedGroups = new CollapsedGroupIDsTracker();
         this.starredGroups = [];
         this.propertyGroupsById = new Map<string, PropertyTreeGroup>();
+    }
+
+    setDebugEnabled(enabled: boolean)
+    {
+        this.isDebuggingEnabled = enabled;
+    }
+
+    setOptimizationsEnabled(enabled: boolean)
+    {
+        this.areOptimizationsEnabled = enabled;
     }
 
     buildSinglePropertyTreeBlock(
@@ -620,7 +632,7 @@ export default class EntityPropertiesBuilder
         if (storedGroup)
         {
             // For now, clear and re-build tree
-            storedGroup.propertyTree.clear();
+            //storedGroup.propertyTree.clear();
             storedGroup.propertyTree.rootValue = propertyGroup.id + "";
 
             UI.updatePropertyTreeTitle(
@@ -685,8 +697,14 @@ export default class EntityPropertiesBuilder
 
             for (let i=0; i<propsToAdd.length; ++i)
             {
-                storedGroup.propertyTreeController.addToPropertyTree(storedGroup.propertyTree.root, propsToAdd[i], filter, propertiesWithHistory);
+                storedGroup.propertyTreeController.addToPropertyTree(storedGroup.propertyTree.root, propsToAdd[i], filter, propertiesWithHistory, false, this.areOptimizationsEnabled, this.isDebuggingEnabled);
             }
+
+            // Delete all non-visited nodes, mark all visited as non-visited
+            const visited = storedGroup.propertyTreeController.propertyTree.root.querySelectorAll(`[data-tree-visited="1"]`);
+            const notVisited = storedGroup.propertyTreeController.propertyTree.root.querySelectorAll(`[data-tree-visited="0"]`);
+            notVisited.forEach((elem) => { elem.remove(); });
+            visited.forEach((elem) => { elem.setAttribute('data-tree-visited', "0"); });
 
             // Add to parent
             if (shouldPrepend)

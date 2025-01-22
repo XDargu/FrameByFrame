@@ -696,6 +696,9 @@ export default class Renderer {
             this.sceneController.stopFollowEntity();
         }
 
+        this.entityPropsBuilder.setDebugEnabled(settings.showProperyTreeUpdates);
+        this.entityPropsBuilder.setOptimizationsEnabled(settings.optimizePropertyTreeUpdates);
+
         this.sceneController.setGridHeight(settings.gridHeight);
         this.sceneController.setGridSpacing(settings.gridSpacing);
         this.sceneController.setBackgroundColor(settings.backgroundColor);
