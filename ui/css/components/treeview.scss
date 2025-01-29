@@ -28,10 +28,6 @@
     cursor: pointer;
 }
 
-.basico-tree .basico-tree-item-wrapper:hover {
-    @include surface-hovered($list-elevation);
-}
-
 .basico-tree .basico-tree-item-wrapper:hover:not(.basico-no-hover) {
     @include surface-hovered($list-elevation);
     cursor: pointer;

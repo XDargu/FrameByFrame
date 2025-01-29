@@ -1,6 +1,7 @@
-import * as Utils from '../utils/utils';
+import * as DOMUtils from '../utils/DOMUtils';
 import * as RECORDING from '../recording/RecordingData';
-import { loadImageResource } from '../render/resources/images';
+import { loadResource } from '../resources/resources';
+import { getResourceContent, isImageResource } from '../resources/resources';
 
 export class ResourcePreview
 {
@@ -31,7 +32,7 @@ export class ResourcePreview
         this.resourceData = resourceData;
     }
 
-    showAtPosition(x: number, y: number, resourcePath: string)
+    async showAtPosition(x: number, y: number, resourcePath: string)
     {
         if (!this.isActive) { return; }
         if (!this.resourceData) { return; }
@@ -39,16 +40,31 @@ export class ResourcePreview
         const resource = this.resourceData[resourcePath];
         if (!resource) { return; }
 
-        Utils.setClass(this.popup, "hidden", false);
+        DOMUtils.setClass(this.popup, "hidden", false);
 
         this.popup.innerHTML = "";
-        let img = document.createElement("img");
-        this.popup.appendChild(img);
+        
 
-        loadImageResource(resource).then((result) => {
-            const url = URL.createObjectURL(result.data);
-            img.src = url;
-        });
+        const result = await loadResource(resource);
+
+        if (isImageResource(result))
+        {
+            let img = document.createElement("img");
+            this.popup.appendChild(img);
+            img.src = result.url;
+        }
+        else
+        {
+            let div = document.createElement("div");
+            this.popup.appendChild(div);
+            
+            console.log(result);
+            const content = getResourceContent(result);
+            // Decode from base64 to text
+            const buffer = Buffer.from(content, 'base64')
+            const decoded = buffer.toString();
+            div.innerText = decoded.substring(0, 60);
+        }
 
         this.setPosition(x, y);
     }
@@ -58,7 +74,7 @@ export class ResourcePreview
         clearTimeout(this.hideTimeout);
         this.hideTimeout = null;
 
-        const clampedPos = Utils.clampElementToScreen(x, y, this.popup, 20, 20);
+        const clampedPos = DOMUtils.clampElementToScreen(x, y, this.popup, 20, 20);
 
         this.popup.style.left = (clampedPos.x) + "px";
         this.popup.style.top = (clampedPos.y) + "px";
@@ -69,7 +85,7 @@ export class ResourcePreview
         if (this.hideTimeout == null)
         {
             this.hideTimeout = setTimeout(() => {
-                Utils.setClass(this.popup, "hidden", true);
+                DOMUtils.setClass(this.popup, "hidden", true);
             }, 5);
         }
     }

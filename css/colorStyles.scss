@@ -47,7 +47,6 @@ $recording-button: #DE0000;
     background: $dark-background;
 }
 
-.basico-tree .basico-tree-item-wrapper:hover,
 .basico-tree .basico-tree-item-wrapper:hover:not(.basico-no-hover)
 {
     background: $light-selection;
@@ -162,6 +161,12 @@ $recording-button: #DE0000;
     display: none;
 }
 
+.title-user-icon
+{
+    margin-right: 7px;
+    margin-left: 4px;
+}
+
 /* Tags: maybe move to UI code? */
 #events .basico-title
 {
@@ -207,6 +212,13 @@ $recording-button: #DE0000;
 {
     border-top: 2px solid #5f516a;
     background: #2b2530;
+}
+
+i.prop-icon
+{
+    line-height: 14px;
+    min-width: 18px;
+    color: #e0c7ff;
 }
 
 #entity-list .basico-title,

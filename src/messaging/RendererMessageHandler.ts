@@ -5,6 +5,7 @@ import { LogChannel, LogLevel } from "../frontend/ConsoleController";
 import { Console } from "../frontend/ConsoleController";
 import * as Messaging from "../messaging/MessageDefinitions";
 import Renderer from "../renderer";
+import { onUserWindowOpened } from "../frontend/UserWindows";
 
 const { shell } = require('electron');
 
@@ -110,6 +111,29 @@ export function initMessageHandling(renderer: Renderer)
                 {
                     renderer.loadMod(result);
                 }
+                break;
+            }
+            case Messaging.MessageType.OpenWindowResult:
+            {
+                const result = arg.data as Messaging.IOpenWindowResult;
+                onUserWindowOpened(result.id, result.requestId);
+                break;
+            }
+            case Messaging.MessageType.WindowsClosed:
+            {
+                const result = arg.data as Messaging.IWindowsClosed;
+                renderer.onUserWindowClosed(result.id);
+                break;
+            }
+            case Messaging.MessageType.UpdateResult:
+            {
+                const result = arg.data as Messaging.IUpdateResult;
+                renderer.onUpdateResult(result);
+                break;
+            }
+            case Messaging.MessageType.UpdateInstallFailed:
+            {
+                renderer.onUpdateInstallationFailed(arg.data as string);
                 break;
             }
         }

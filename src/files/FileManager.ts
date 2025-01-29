@@ -1,6 +1,13 @@
-import { app, remote, dialog } from "electron";
+import { app, dialog } from "electron";
 import * as fs from 'fs';
+import * as os from 'os';
+import * as path from "path";
 import { createDefaultSettings, ISettings } from "./Settings";
+import { resourceExtensionFromType } from "../resources/resources";
+import { logToConsole } from "../mainThread/logging";
+import { LogChannel, LogLevel } from "../frontend/ConsoleController";
+
+const shell = require('electron').shell;
 
 export interface IFileAcceptedCallback
 {
@@ -125,6 +132,8 @@ export default class FileManager
 
     pathHistory : IPathHistory;
     settings : ISettings;
+
+    tempFiles : string[] = [];
 
     onHistoryChangedCallback : IHistoryChangedCallback;
     onSettingsChangedCallback: ISettingsChangedCallback;
@@ -312,6 +321,8 @@ export default class FileManager
 
     addPathToHistory(path : string)
     {
+        app.addRecentDocument(path);
+
         // Limit recent paths to 15
         const index = this.pathHistory.paths.indexOf(path);
         if (index > -1)
@@ -362,5 +373,77 @@ export default class FileManager
                 }
             });
         }
+    }
+
+    async downloadResource(name: string, content: string, type: string)
+    {
+        const extension = resourceExtensionFromType(type);
+
+        const nameWithExtension = extension && !name.endsWith("." + extension) ? `${name}.${extension}` : name;
+        const options = {
+            defaultPath: `${app.getPath('documents')}/${nameWithExtension}`,
+        }
+
+        dialog.showSaveDialog(null, options, (path: string) => {
+            if (path === undefined){
+                console.log("You didn't save the file");
+                return;
+            }
+
+            const binaryData = Buffer.from(content, 'base64');
+            fs.writeFileSync(path, binaryData);
+        });
+    }
+
+    async openResource(name: string, content: string, type: string)
+    {
+        const extension = resourceExtensionFromType(type);
+        const fileName = path.basename(name);
+        const tempName = `${Date.now()}-${fileName}`;
+        const nameWithExtension = extension && !name.endsWith("." + extension) ? `${tempName}.${extension}` : tempName;
+
+        const tempDir = os.tmpdir();
+        const tempFileDir = path.join(tempDir, "FrameByFrame");
+        const tempFilePath = path.join(tempDir, "FrameByFrame", nameWithExtension);
+      
+        const binaryData = Buffer.from(content, 'base64');
+        fs.mkdirSync(tempFileDir, { recursive: true });
+        fs.writeFileSync(tempFilePath, binaryData);
+
+        this.tempFiles.push(tempFilePath);
+
+        logToConsole(LogLevel.Verbose, LogChannel.Files, 'Temporary file created: ' + tempFilePath);
+
+        shell.openExternal(tempFilePath);
+    }
+
+    cleanUpTempFiles()
+    {
+        this.tempFiles.forEach((file) =>
+        {
+            if (fs.existsSync(file))
+                fs.unlinkSync(file);
+        });
+    }
+
+    unblockFileWindows(filePath: string) : Promise<void>
+    {
+        return new Promise((resolve, reject) => {
+            const zoneIdentifierPath = `${filePath}:Zone.Identifier`;
+            fs.unlink(zoneIdentifierPath, (err) =>
+            {
+                if (err)
+                {
+                    if (err.code === 'ENOENT')
+                        resolve(); // File not locked
+                    else
+                        reject(err);
+                }
+                else
+                {
+                    resolve();
+                }
+            });
+        });
     }
 }

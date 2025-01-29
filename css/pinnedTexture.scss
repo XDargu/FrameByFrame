@@ -1,0 +1,84 @@
+@import "colorStyles.scss";
+@import "../ui/css/variables.scss";
+
+#pinned-texture {
+    display: none;
+    margin: 0;
+    border: 1px solid #473d4f;
+    border-bottom: none;
+    border-right: none;
+    z-index: 10;
+    width: 300px;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    padding: 0;
+    background: #473D4F;
+}
+
+#pinned-texture .button {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    color: surface-focused-color($primary-color);
+    cursor: pointer;
+    font-size: 15px;
+    text-align: center;
+    line-height: 20px;
+    z-index: 50;
+    opacity: 0.5;
+}   
+
+#pinned-texture .resizer {
+    cursor: nwse-resize;
+}
+
+#pinned-texture .resizer:hover
+{
+    opacity: 0.9;
+}
+
+#close-pinned-texture.button {
+    right: 0px;
+    font-size: 13px;
+}
+
+#close-pinned-texture.button:hover
+{
+    opacity: 0.9;
+}
+
+#new-window-pinned-texture.button {
+    right: 20px;
+    font-size: 13px;
+}
+
+#new-window-pinned-texture.button:hover
+{
+    opacity: 0.9;
+}
+
+#pinned-texture.active {
+    display: flex;
+    flex-direction: column;
+}
+
+#pinned-texture-canvas {
+    width: 100%;
+    height: 100%;
+    margin: 0px;
+}
+
+#pinned-texture-img {
+    object-fit: contain;
+}
+
+#pinned-image-wrapper {
+    overflow: hidden;
+    margin: auto;
+    max-height: -webkit-fill-available;
+}
+
+#pinned-texture-title {
+    font-size: 12px;
+}

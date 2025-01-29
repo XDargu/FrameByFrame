@@ -16,11 +16,14 @@ export interface ISettings
     hoverColor: string,
     shapeHoverColor: string,
     selectionOutlineWidth: number,
+    /* Pinning */
+    autoPinScreenshotEntity: boolean,
     /* Syncing */
     syncVisibleShapes: boolean,
     syncCameraPosition: boolean,
     /* Timeline */
     showEventPopup: boolean,
+    showCommentPopup: boolean,
     /* Grid */
     gridHeight: number,
     gridSpacing: number,
@@ -30,6 +33,8 @@ export interface ISettings
     removeOldFrames: boolean,
     removeOldFramesAmount: number,
     removeOldFramesUpdate: boolean,
+    /* Comments */
+    showComments: boolean,
     /* Debug */
     showRenderDebug: boolean,
     /* Graphics */
@@ -57,11 +62,14 @@ export function createDefaultSettings() : ISettings
         hoverColor: "#8442B9",
         shapeHoverColor: "#FFFF00",
         selectionOutlineWidth: 1,
+        /* Pinning */
+        autoPinScreenshotEntity: true,
         /* Syncing */
         syncVisibleShapes: false,
         syncCameraPosition: false,
         /* Timeline */
         showEventPopup: true,
+        showCommentPopup: true,
         /* Grid */
         gridHeight: 0,
         gridSpacing: 1,
@@ -71,6 +79,8 @@ export function createDefaultSettings() : ISettings
         removeOldFrames: false,
         removeOldFramesAmount: 500,
         removeOldFramesUpdate: true,
+        /* Comments */
+        showComments: true,
         /* Debug */
         showRenderDebug: false,
         /* Graphics */

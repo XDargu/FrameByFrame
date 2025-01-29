@@ -1,4 +1,5 @@
 import * as Utils from '../utils/utils'
+import * as DOMUtils from '../utils/DOMUtils';
 import { Filter, FilterMode, filterTypeAsString } from "../filters/filters";
 import { FilterId } from './FiltersList';
 
@@ -68,7 +69,7 @@ namespace UI
         visibilityIcon.className = 'fas fa-eye';
 
         tickerViewButton.onclick = () => {
-            Utils.toggleClasses(visibilityIcon, 'fa-eye', 'fa-eye-slash');
+            DOMUtils.toggleClasses(visibilityIcon, 'fa-eye', 'fa-eye-slash');
             creationData.onTickerVisibilityChanged(creationData.id, visibilityIcon.classList.contains('fa-eye'));
         };
 
@@ -141,7 +142,7 @@ export default class FilterTickers
         let tickerData = this.tickers.get(id);
         if (tickerData)
         {
-            Utils.addUniqueClass(tickerData.element, 'active');
+            DOMUtils.addUniqueClass(tickerData.element, 'active');
         }
     }
 

@@ -26,6 +26,13 @@ describe('RecordingData', () => {
             expect(result).to.equal(0);
         });
 
+        it('has no comments when cleared', () => {
+
+            data.clear();
+            const result = data.comments;
+            expect(result).to.be.empty;
+        });
+
     });
 
     describe('NaiveRecordingData and FrameData', () => {
@@ -140,6 +147,21 @@ describe('RecordingData', () => {
             dataV1.patch(version);
 
             expect(dataV1.scenes).to.not.be.undefined;
+        });
+    });
+
+    describe('NaiveRecordingData version 3', () => {
+
+        it('correctly converts to latest version', () => {
+
+            const version = 3;
+            let dataV1 = new Recording.NaiveRecordedData();
+            dataV1.addTestData(100, 15, version);
+
+            dataV1.patch(version);
+
+            expect(dataV1.resources).to.not.be.undefined;
+            expect(dataV1.comments).to.not.be.undefined;
         });
     });
 });

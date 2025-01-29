@@ -16,6 +16,48 @@ describe('Utils', () => {
 
   });
 
+  describe('arrayMax', () => {
+
+    it('works with empty arrays', () => {
+      const result = Utils.arrayMax([]);
+      expect(result).to.equal(-Infinity);
+    });
+
+    it('finds max value', () => {
+        const result = Utils.arrayMax([4, 2, 3, -6]);
+        expect(result).to.equal(4);
+    });
+
+    it('finds max value with negative numbers', () => {
+        const result = Utils.arrayMax([-1, -2, -6, -7]);
+        expect(result).to.equal(-1);
+    });
+
+  });
+
+  describe('compareStringArrays', () => {
+
+    it('works with empty arrays', () => {
+      const result = Utils.compareStringArrays([], []);
+      expect(result).to.equal(true);
+    });
+
+    it('returns true for equal string arrays', () => {
+        expect(Utils.compareStringArrays(["abc", "test", "test2"], ["abc", "test", "test2"])).to.equal(true);
+        expect(Utils.compareStringArrays(["abc", "test"], ["abc", "test"])).to.equal(true);
+        expect(Utils.compareStringArrays(["abc"], ["abc"])).to.equal(true);
+    });
+
+    it('returns false for different string arrays', () => {
+        expect(Utils.compareStringArrays(["abc", "test"], ["abc", "test2"])).to.equal(false);
+        expect(Utils.compareStringArrays(["abc"], ["abc", "test"])).to.equal(false);
+        expect(Utils.compareStringArrays(["abc", "test"], ["abc"])).to.equal(false);
+        expect(Utils.compareStringArrays([], ["abc"])).to.equal(false);
+        expect(Utils.compareStringArrays(["abc", "test"], [])).to.equal(false);
+    });
+
+  });
+
   describe('rgbToHex', () => {
 
     it('converts RGB(255,255,255) to #ffffff', () => {
@@ -33,6 +75,32 @@ describe('Utils', () => {
       const result = Utils.rgbToHex(Utils.hexToRgb(hexColor));
       expect(result).to.equal(hexColor);
     });
+
+  });
+
+  describe('rgbToHsl', () => {
+
+    it('converts RGB(255, 87, 51) to (11, 100, 60)', () => {
+      const result = Utils.rgbToHsl({r: 255, g: 87, b: 51});
+
+      expect(result).property("h").to.equal(11);
+      expect(result).property("s").to.equal(100);
+      expect(result).property("l").to.equal(60);
+    });
+
+    it('converts RGB(255,0,0) to (0, 100, 50)', () => {
+      const result = Utils.rgbToHsl({r: 255, g: 0, b: 0});
+      expect(result).property("h").to.equal(0);
+      expect(result).property("s").to.equal(100);
+      expect(result).property("l").to.equal(50);
+    });
+
+    it('converts RGB(117, 138, 179) to (220, 29, 58)', () => {
+        const result = Utils.rgbToHsl({r: 117, g: 138, b: 179});
+        expect(result).property("h").to.equal(220);
+        expect(result).property("s").to.equal(29);
+        expect(result).property("l").to.equal(58);
+      });
 
   });
 
@@ -366,6 +434,37 @@ describe('Utils', () => {
       const format = 'test_%a:%%a_%%%a';
       const result = Utils.getFormattedString(format, formatTable);
       expect(result).to.equal('test_TEST:%a_%TEST');
+    });
+
+  });
+
+  describe('compareVersions', () => {
+
+    it('returns true for later updates', () => {
+      expect(Utils.compareVersions('1.5.2', '1.5.0')).to.equal(true);
+      expect(Utils.compareVersions('2.0', '1.5')).to.equal(true);
+      expect(Utils.compareVersions('2.0', '1.5.2')).to.equal(true);
+      expect(Utils.compareVersions('5.0.6.2', '1.0')).to.equal(true);
+      expect(Utils.compareVersions('5', '1.0')).to.equal(true);
+      expect(Utils.compareVersions('5.0', '1')).to.equal(true);
+      expect(Utils.compareVersions('5', '1')).to.equal(true);
+    });
+
+    it('returns false for earlier updates', () => {
+        expect(Utils.compareVersions('1.5.0', '1.5.2')).to.equal(false);
+        expect(Utils.compareVersions('1.5', '2.0')).to.equal(false);
+        expect(Utils.compareVersions('1.5.2', '2.0')).to.equal(false);
+        expect(Utils.compareVersions('1.0', '5.0.6.2')).to.equal(false);
+        expect(Utils.compareVersions('1.0', '5')).to.equal(false);
+        expect(Utils.compareVersions('1', '5.0')).to.equal(false);
+        expect(Utils.compareVersions('1', '5')).to.equal(false);
+    });
+
+    it('returns false for the same update', () => {
+        expect(Utils.compareVersions('1.5.0', '1.5.0')).to.equal(false);
+        expect(Utils.compareVersions('1.5', '1.5')).to.equal(false);
+        expect(Utils.compareVersions('1', '1')).to.equal(false);
+        expect(Utils.compareVersions('5', '5')).to.equal(false);
     });
 
   });

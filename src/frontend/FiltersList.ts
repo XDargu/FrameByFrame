@@ -1,5 +1,6 @@
 import { availableModesPerMemberType, EventFilter, Filter, FilterMode, filterModeAsString, FilterType, filterTypeAsString, getDefaultValuePerMemberType, MemberFilter, MemberFilterType, memberFilterTypeAsString, PropertyFilter } from "../filters/filters";
 import * as Utils from '../utils/utils'
+import * as DOMUtils from '../utils/DOMUtils';
 import { Console, LogChannel, LogLevel } from "./ConsoleController";
 
 export type FilterId = number;
@@ -422,7 +423,7 @@ namespace UI
         title.onclick = () => {
             card.classList.toggle("hidden");
             let arrowIcon = title.querySelector(".filter-arrow-icon") as HTMLElement;
-            Utils.toggleClasses(arrowIcon, "fa-angle-down", "fa-angle-right");
+            DOMUtils.toggleClasses(arrowIcon, "fa-angle-down", "fa-angle-right");
         };
 
         const resultCount = document.createElement("div");
@@ -542,7 +543,7 @@ export default class FiltersList
 
         this.addDropdown.onmouseenter = () => {
             const isNearBottom = window.innerHeight - this.addDropdown.getBoundingClientRect().bottom < 70;
-            Utils.setClass(content, "bottom", isNearBottom);
+            DOMUtils.setClass(content, "bottom", isNearBottom);
         };
 
         let importFilter = document.getElementById("import-filters-button");

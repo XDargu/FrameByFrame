@@ -1,7 +1,7 @@
 import * as BABYLON from 'babylonjs';
 import * as RECORDING from '../recording/RecordingData';
 import { Console, LogChannel, LogLevel } from '../frontend/ConsoleController';
-import { loadImageResource } from './resources/images';
+import { loadResource } from '../resources/resources';
 
 export interface IGetResourceFunction
 {
@@ -58,9 +58,8 @@ export class MaterialPool
         const resource = this.getResourceFunc(path);
         if (resource)
         {
-            loadImageResource(resource).then((result)=>{
-                const url = URL.createObjectURL(result.data);
-                material.diffuseTexture = new BABYLON.Texture(url, this.scene);
+            loadResource(resource).then((result)=>{
+                material.diffuseTexture = new BABYLON.Texture(result.url, this.scene);
                 material.diffuseTexture.hasAlpha = true;
             }).catch((e) => {
                 // Apply invalid texture

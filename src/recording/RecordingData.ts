@@ -92,6 +92,22 @@ export interface IPropertyTable
     rows: TableRow[];
 }
 
+export interface ILineChartData
+{
+    values: number[];
+    ylabel: string;
+    color?: string;
+}
+
+export interface IPropertyLineChart
+{
+    data: ILineChartData[];
+    yscale: number;
+    xscale: number;
+    chart?: string;
+    height?: number;
+}
+
 export enum EPropertyFlags
 {
 	None = 0,
@@ -102,9 +118,11 @@ export enum EPropertyFlags
 export interface IProperty {
 	type: string;
 	name?: string;
-	value: string | number | boolean | IVec2 | IVec3 | IPropertyCustomType | IEntityRef | IPropertyTable | IProperty[];
+	value: string | number | boolean | IVec2 | IVec3 | IPropertyCustomType | IEntityRef | IPropertyTable | IPropertyLineChart | IProperty[];
 	id?: number;
 	flags?: EPropertyFlags;
+    icon?: string;
+    icolor?: string;
 }
 
 export interface IProperyShape extends IProperty {
@@ -199,6 +217,8 @@ export interface IPropertyGroup {
 	name: string;
 	value: IProperty[];
 	id?: number;
+    icon?: string;
+    icolor?: string;
 }
 
 export interface IEvent {
@@ -513,10 +533,40 @@ export interface IResource {
     data: Blob;
     textData: string;
     type: string;
+    url: string;
 }
 
 export interface IResourcesData {
 	[key:string]: IResource;
+}
+
+export enum ECommentType
+{
+    Timeline = 0,
+    Property,
+    EventProperty
+}
+
+export interface IComment {
+    id: number;
+    type: ECommentType;
+    text: string;
+    pos: IVec2;
+    color?: string;
+}
+
+export interface IPropertyComment extends IComment {
+    frameId: number;
+    entityId: number;
+    propertyId: number;
+}
+
+export interface ITimelineComment extends IComment {
+    frameId: number;
+}
+
+export interface IComments {
+    [key:number]: IPropertyComment | ITimelineComment;
 }
 
 export interface INaiveRecordedData extends IRecordedData {
@@ -527,10 +577,11 @@ export interface INaiveRecordedData extends IRecordedData {
 	scenes: string[];
 	clientIds: Map<number, ClientData>;
     resources: IResourcesData;
+    comments: IComments;
 }
 
 export class NaiveRecordedData implements INaiveRecordedData {
-	readonly version: number = 3;
+	readonly version: number = 4;
 	readonly type: RecordingFileType = RecordingFileType.NaiveRecording;
 	static readonly UserProps = 0;
 	static readonly SpecialProps = 1;
@@ -539,6 +590,7 @@ export class NaiveRecordedData implements INaiveRecordedData {
 	scenes: string[];
 	clientIds: Map<number, ClientData>
 	resources: IResourcesData;
+    comments: IComments;
 	storageVersion: number;
 
 	constructor() {
@@ -547,12 +599,18 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		this.scenes = [];
 		this.clientIds = new Map<number, ClientData>();
 		this.resources = {};
+		this.comments = {};
 		this.storageVersion = this.version;
 	}
 
     findResource(path: string) : IResource
     {
         return this.resources[path];
+    }
+
+    static getSpecialProperties(entity: IEntity) : IPropertyGroup
+    {
+        return (entity.properties[NaiveRecordedData.SpecialProps] as IPropertyGroup);
     }
 
 	static getEntityName(entity: IEntity) : string
@@ -591,6 +649,7 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		this.scenes = dataJson.scenes;
 		this.storageVersion = dataJson.storageVersion != undefined ? dataJson.storageVersion : dataJson.version;
         this.resources = dataJson.resources;
+        this.comments = dataJson.comments;
 
 		if (this.layers == undefined)
 		{
@@ -619,12 +678,19 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		{
 			this.patchVersion1();
 			this.patchVersion2();
+            this.patchVersion3();
 		}
 
 		if (version == 2)
 		{
 			this.patchVersion2();
+            this.patchVersion3();
 		}
+
+        if (version == 3)
+        {
+            this.patchVersion3();
+        }
 	}
 
 	private patchVersion1()
@@ -659,6 +725,20 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		}
 	}
 
+    private patchVersion3()
+	{
+		// Converts from version 3 to version 4
+		if (this.resources == undefined)
+		{
+			this.resources = {};
+		}
+
+        if (this.comments == undefined)
+        {
+            this.comments = {};
+        }
+	}
+
 	clear()
 	{
 		this.frameData.length = 0;
@@ -666,6 +746,7 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		this.scenes.length = 0;
 		this.clientIds.clear();
         this.resources = {};
+        this.comments = {};
 	}
 
 	pushFrame(frame: IFrameData)
@@ -762,6 +843,73 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		return null;
 	}
 
+    static findPropertyPathInEntity(entity: IEntity, propertyPath: string[]) : IProperty
+    {
+        const resultProps = NaiveRecordedData.findPropertyPathInProperties(entity.properties, propertyPath);
+		if (resultProps)
+		{
+			return resultProps;
+		}
+
+        return null;
+    }
+
+    static findPropertyPathInProperties(properties: IProperty[], propertyPath: string[]) : IProperty
+    {
+        const propertyCount = properties.length;
+		for (let i=0; i<propertyCount; ++i)
+		{
+            const sameName = properties[i].name == propertyPath[0];
+
+            if (propertyPath.length == 1 && sameName)
+            {
+                return properties[i];
+            }
+
+			if (properties[i].type == 'group')
+			{
+                if (propertyPath.length > 1 && sameName)
+                {
+                    const prop = NaiveRecordedData.findPropertyPathInProperties((properties[i] as IPropertyGroup).value, propertyPath.slice(1));
+                    if (prop != null)
+                    {
+                        return prop;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    static getEntityPropertyPath(entity: IEntity, propertyId: number) : string[]
+    {
+        return NaiveRecordedData.getPropertyPath(entity.properties, propertyId);
+    }
+
+    static getPropertyPath(properties: IProperty[], propertyId: number) : string[]
+    {
+        const propertyCount = properties.length;
+		for (let i=0; i<propertyCount; ++i)
+		{
+            if (properties[i].id == propertyId)
+            {
+                return [properties[i].name];
+            }
+
+			if (properties[i].type == 'group')
+			{
+                const result = NaiveRecordedData.getPropertyPath((properties[i] as IPropertyGroup).value, propertyId);
+                if (result != null)
+                {
+                    return [properties[i].name].concat(result);
+                }
+			}
+		}
+
+        return null;
+    }
+
 	static visitEntityProperties(entity: IEntity, callback: IPropertyVisitorCallback)
 	{
 		NaiveRecordedData.visitProperties(entity.properties, callback);
@@ -798,6 +946,58 @@ export class NaiveRecordedData implements INaiveRecordedData {
 			if (res == VisitorResult.Stop) { return; }
 		}
 	}
+
+    static findGroupOfProperty(entity: IEntity, property: IProperty) : IPropertyGroup
+	{
+        const properties = NaiveRecordedData.getEntityUserProperties(entity).value;
+        
+		const propertyCount = properties.length;
+		for (let i=0; i<propertyCount; ++i)
+		{
+			if (properties[i].type == 'group')
+			{
+                if (properties[i].id == property.id)
+                {
+                    return properties[i] as IPropertyGroup;
+                }
+
+                let found = false;
+
+                NaiveRecordedData.visitProperties((properties[i] as IPropertyGroup).value, (prop) => {
+                    if (property.id == prop.id)
+                    {
+                        found = true;
+                        return VisitorResult.Stop;
+                    }
+                });
+
+                if (found)
+                    return properties[i] as IPropertyGroup;
+            }
+			else
+			{
+				// Uncategorized property
+			}
+		}
+
+        return null;
+	}
+
+    static isEntitySpecialProperty(entity: IEntity, property: IProperty)
+    {
+        const specialProps = this.getSpecialProperties(entity);
+        if (specialProps.id == property.id)
+            return true;
+
+        const propertyCount = specialProps.value.length;
+		for (let i=0; i<propertyCount; ++i)
+		{
+            if (specialProps.value[i].id == property.id)
+                return true;
+        }
+
+        return false;
+    }
 
 	buildFrameDataHeader(frame: number) : IFrameData {
 		let frameData = this.frameData[frame];
@@ -924,7 +1124,8 @@ export class NaiveRecordedData implements INaiveRecordedData {
 				{
 					let eventProperties = [
 						{ name: "Test string", type: CorePropertyTypes.String, value: "eventProp" + i },
-						{ name: "Test number", type: CorePropertyTypes.Number, value: j }
+						{ name: "Test number", type: CorePropertyTypes.Number, value: j },
+						{ name: "Test boolean", type: CorePropertyTypes.Bool, value: j % 2 == 0 },
 					];
 					let event = {
 						idx: 0,
@@ -956,6 +1157,15 @@ export class NaiveRecordedData implements INaiveRecordedData {
 			}
 
 			this.pushFrame(frameData);
+
+            const commentId = i + 1;
+            this.comments[commentId] = {
+                frameId: i,
+                id: commentId,
+                type: ECommentType.Property,
+                text: "Example comment in frame " + i,
+                pos: { x: 100 + i, y: 100 - i },
+            }
 		}
 	}
 
@@ -998,6 +1208,7 @@ export class NaiveRecordedData implements INaiveRecordedData {
                                 data: null,
                                 textData: null,
                                 type: null,
+                                url: null,
                             };
                         }
                     }

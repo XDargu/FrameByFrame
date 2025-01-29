@@ -1,4 +1,4 @@
-import * as Utils from '../utils/utils';
+import * as DOMUtils from '../utils/DOMUtils';
 
 export interface IContextMenuCallback {
     (element: HTMLElement) : void
@@ -56,7 +56,7 @@ function createContextMenu(posX:  number, posY: number, element: HTMLElement, it
 
     menu.append(list);
 
-    const clampedPos = Utils.clampElementToScreen(posX, posY, menu);
+    const clampedPos = DOMUtils.clampElementToScreen(posX, posY, menu);
     
     menu.style.left = clampedPos.x + "px";
     menu.style.top = clampedPos.y + "px";

@@ -1,5 +1,7 @@
+import { GitHubRelease } from "../updates/gitHub";
 import { ISettings } from "../files/Settings";
-import { ConsoleWindow, LogLevel, ILogAction, LogChannel } from "../frontend/ConsoleController";
+import { LogLevel, ILogAction, LogChannel } from "../frontend/ConsoleController";
+import * as RECORDING from '../recording/RecordingData';
 
 export enum MessageType { // TODO: Maybe rename these to make clear the direction of the messge (main->render or render->main)
     RequestSave,
@@ -22,6 +24,19 @@ export enum MessageType { // TODO: Maybe rename these to make clear the directio
     RequestImportFilters,
     ImportFiltersResult,
     ModFileOpened,
+    DownloadResource,
+    OpenResource,
+    OpenWindowRequest,
+    OpenWindowResult,
+    UpdateWindow,
+    CloseWindow,
+    CloseAllWindows,
+    WindowsClosed,
+    // Updates
+    UpdateResult, // Main to Renderer
+    UpdateInstallFailed, // Main to Renderer
+    RequestCheckForUpdates, // Renderer to Main
+    RequestInstallUpdate, // Renderer to Main
 }
 
 export interface IClearResultData
@@ -55,7 +70,77 @@ export interface ISaveFileData
     path: string;
 }
 
-type MessageData = string | IClearResultData | ILogData | ISettings | ISaveFileData | IRequestSavePathData | IResultSavePathData;
+export interface IDownloadResource
+{
+    content: string;
+    type: string;
+    name: string;
+}
+
+export interface IOpenResource
+{
+    content: string;
+    type: string;
+    name: string;
+}
+
+export enum EUserWindowType
+{
+    Image,
+    Text,
+    PropertyGroup
+}
+
+export interface IOpenWindowRequest
+{
+    type: EUserWindowType;
+    requestId: number;
+    title: string;
+    width: number;
+    height: number;
+}
+
+export interface IPropertyGroupData
+{
+    group: RECORDING.IPropertyGroup;
+    tag: string;
+    name: string;
+}
+
+export interface IUpdateWindowsContent
+{
+    id: number;
+    type: EUserWindowType;
+    content: string | IPropertyGroupData;
+    title: string;
+}
+
+export interface ICloseWindowRequest
+{
+    id: number;
+}
+
+export interface IOpenWindowResult
+{
+    id: number;
+    requestId: number;
+}
+
+export interface IWindowsClosed
+{
+    id: number;
+}
+
+export interface IUpdateResult
+{
+    available: boolean,
+    version: string,
+    release?: GitHubRelease,
+    error?: string,
+    downloadUrl?: string,
+}
+
+type MessageData = string | IClearResultData | ILogData | ISettings | ISaveFileData | IRequestSavePathData | IResultSavePathData | IDownloadResource | IOpenResource | IOpenWindowRequest | IOpenWindowResult | IUpdateWindowsContent | IWindowsClosed | ICloseWindowRequest | IUpdateResult;
 export class Message
 {
     public type: MessageType;

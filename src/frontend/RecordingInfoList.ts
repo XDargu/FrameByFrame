@@ -1,6 +1,11 @@
-import * as Utils from '../utils/utils';
+import { downloadResource, openResource, openResourceInNewWindow } from '../resources/resources';
 import * as RECORDING from '../recording/RecordingData';
+import { addContextMenu } from './ContextMenu';
 import { ResourcePreview } from './ResourcePreview';
+
+export interface ICommentClickedCallback {
+	(frame: number, commentId: number) : void;
+}
 
 interface InfoBuilderGroup
 {
@@ -85,10 +90,12 @@ namespace InfoBuiler
 export class RecordingInfoList
 {
     private infoList: HTMLElement;
+    private onCommentClicked: ICommentClickedCallback;
 
-    constructor(infoList: HTMLElement)
+    constructor(infoList: HTMLElement, onCommentClicked: ICommentClickedCallback)
     {
         this.infoList = infoList;
+        this.onCommentClicked = onCommentClicked;
     }
 
     buildInfoList(recording: RECORDING.INaiveRecordedData)
@@ -122,6 +129,23 @@ export class RecordingInfoList
         }
 
         {
+            let group = InfoBuiler.createGroup("Comments");
+
+            for (let commentId in recording.comments)
+            {
+                const comment = recording.comments[commentId];
+
+                const element = InfoBuiler.addElement(group, comment.text, comment.text);
+                element.classList.remove("basico-no-hover");
+                
+                element.onclick = (ev) => {
+                    this.onCommentClicked(comment.frameId, comment.id);
+                };
+            }
+            this.infoList.appendChild(group.fragment);
+        }
+
+        {
             let group = InfoBuiler.createGroup("Resources");
             for (let path in recording.resources)
             {
@@ -135,6 +159,20 @@ export class RecordingInfoList
                 element.onmouseout = () => {
                     ResourcePreview.Instance().hide();
                 }
+
+                // Context menu
+                const config = [
+                    { text: "Download resource", icon: "fa-download", callback: () => { 
+                        downloadResource(recording.resources[path]);
+                    }, },
+                    { text: "Open in new Window", icon: "fa-window-restore", callback: () => { 
+                        openResourceInNewWindow(recording.resources[path]);
+                    }, },
+                    { text: "Open resource", icon: "fa-folder-open", callback: () => { 
+                        openResource(recording.resources[path]);
+                    }, },
+                ];
+                addContextMenu(element, config);
             }
             this.infoList.appendChild(group.fragment);
         }

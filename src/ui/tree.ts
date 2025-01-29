@@ -16,14 +16,17 @@ export interface ITreeItemOptions {
     collapsed?: boolean;
     selectable?: boolean;
     callbacks?: ITreeCallbacks;
+    noHover?: boolean;
 }
 
 export class TreeControl {
 
     root: HTMLElement;
+    rootValue: string;
 
-    constructor(treeElement : HTMLElement) {
+    constructor(treeElement : HTMLElement, value: string) {
         this.root = treeElement;
+        this.rootValue = value;
     }
 
     buildItem(content : HTMLElement[], options: ITreeItemOptions) {
@@ -33,6 +36,8 @@ export class TreeControl {
 
         let wrapper = document.createElement("span");
         wrapper.classList.add("basico-tree-item-wrapper");
+        if (options.noHover)
+            wrapper.classList.add("basico-no-hover");
         this.toggleItem(wrapper);
         listItem.appendChild(wrapper);
 
@@ -42,12 +47,12 @@ export class TreeControl {
 
         let contentWrapper = document.createElement("span");
         contentWrapper.classList.add("basico-tree-item-content");
-        if (options.text)
-        {
-            contentWrapper.innerText = options.text;
-        }
         for (let i=0; i<content.length; ++i) {
             contentWrapper.appendChild(content[i]);
+        }
+        if (options.text)
+        {
+            contentWrapper.insertAdjacentText("beforeend", options.text);
         }
         wrapper.appendChild(contentWrapper);
 

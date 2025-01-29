@@ -1,4 +1,4 @@
-import * as Utils from "../utils/utils";
+import * as DOMUtils from '../utils/DOMUtils';
 
 var recordActive = false;
 var recordButton = document.getElementById("button-record");
@@ -38,10 +38,10 @@ function updateIcon()
     const icon = recordButton.querySelector("i") as HTMLElement;
     if (recordActive) {
         recordButton.classList.toggle("recording");
-        Utils.swapClass(icon, "fa-circle", "fa-stop");
+        DOMUtils.swapClass(icon, "fa-circle", "fa-stop");
     }
     else {
         recordButton.classList.toggle("recording");
-        Utils.swapClass(icon, "fa-stop", "fa-circle");        
+        DOMUtils.swapClass(icon, "fa-stop", "fa-circle");        
     }
 }

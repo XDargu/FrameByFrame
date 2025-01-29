@@ -196,6 +196,32 @@ describe('Filters', () => {
             expect(result.length).to.equal(frames);
         });
 
+        it('Finds events with boolean property with exact value', () => {
+
+            let property: Filters.MemberFilter = {
+                name: "Test boolean",
+                type: Filters.MemberFilterType.Boolean, 
+                mode: Filters.FilterMode.Equals,
+                value: true
+            };
+            let eventFilter = new Filters.EventFilter("", "", [property]);
+            const result = eventFilter.filter(data);
+            expect(result.length).to.equal(frames * 0.5 * entities * 0.5);
+        });
+
+        it('Finds events with boolean property with different value', () => {
+
+            let property: Filters.MemberFilter = {
+                name: "Test boolean",
+                type: Filters.MemberFilterType.Boolean, 
+                mode: Filters.FilterMode.Different,
+                value: true
+            };
+            let eventFilter = new Filters.EventFilter("", "", [property]);
+            const result = eventFilter.filter(data);
+            expect(result.length).to.equal(frames * 0.5 * entities * 0.5);
+        });
+
         it('Doesn´t find events with invalid string properties', () => {
 
             let property: Filters.MemberFilter = {

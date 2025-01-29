@@ -1,0 +1,21 @@
+#window-content
+{
+    font-size: 12px;
+    text-align: left;
+    overflow: auto;
+}
+
+#window-content.text-content
+{
+    padding: 10px;
+}
+
+#window-content #events .basico-tree
+{
+    margin-bottom: 0; // Remove bottom margin, because we only display a single tree
+}
+
+#window-content > img
+{
+    display: block;
+}

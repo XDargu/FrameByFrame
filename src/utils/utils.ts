@@ -3,6 +3,20 @@ export function clamp(value: number, min: number, max: number)
     return Math.min(Math.max(value, min), max);
 }
 
+export function arrayMax(arr: number[])
+{
+    let len = arr.length;
+    let max = -Infinity;
+    while (len--)
+    {
+        if (arr[len] > max)
+        {
+            max = arr[len];
+        }
+    }
+    return max;
+};
+
 export function hashCode(str: string): number
 {
     var h: number = 0;
@@ -33,6 +47,13 @@ export function componentToHex(c: number)
 }
 
 // Colors
+export class HSLColor
+{
+    h: number;
+    s: number;
+    l: number;
+}
+
 export class RGBColor
 {
     r: number;
@@ -71,6 +92,51 @@ export function RgbToRgb01(color: RGBColor) : RGBColor01
     };
 }
 
+export function rgbToHsl(color: RGBColor): HSLColor
+{
+    // Convert RGB values from [0, 255] to [0, 1]
+    color.r /= 255;
+    color.g /= 255;
+    color.b /= 255;
+
+    const max = Math.max(color.r, color.g, color.b);
+    const min = Math.min(color.r, color.g, color.b);
+    const delta = max - min;
+
+    let h = 0; // Hue
+    let s = 0; // Saturation
+    const l = (max + min) / 2; // Lightness
+
+    if (delta !== 0)
+    {
+        // Calculate saturation
+        s = l > 0.5 ? delta / (2 - max - min) : delta / (max + min);
+
+        // Calculate hue
+        switch (max)
+        {
+            case color.r:
+                h = ((color.g - color.b) / delta + (color.g < color.b ? 6 : 0)) % 6;
+                break;
+            case color.g:
+                h = (color.b - color.r) / delta + 2;
+                break;
+            case color.b:
+                h = (color.r - color.g) / delta + 4;
+                break;
+        }
+
+        h *= 60; // Convert to degrees
+    }
+
+    // Return HSL values, with hue rounded to nearest integer and saturation/lightness as percentages
+    return {
+        h: Math.round(h),
+        s: Math.round(s * 100),
+        l: Math.round(l * 100),
+    };
+}
+
 export function blend(color1: RGBColor, color2: RGBColor, amount: number) : RGBColor
 {
     const bias = clamp(amount, 0, 1);
@@ -106,43 +172,6 @@ export function memoryToString(bytes : number, si = false, dp = 1)
     } while (Math.round(Math.abs(bytes) * r) / r >= thresh && u < units.length - 1);
   
     return bytes.toFixed(dp) + ' ' + units[u];
-}
-  
-
-export function addUniqueClass(element: HTMLElement, classToAdd: string)
-{
-    if (!element.classList.contains(classToAdd))
-    {
-        element.classList.add(classToAdd);
-    }
-}
-
-export function swapClass(element: HTMLElement, classToRemove: string, classToAdd: string)
-{
-    element.classList.remove(classToRemove);
-    element.classList.add(classToAdd);
-}
-
-export function toggleClasses(element: HTMLElement, class1: string, class2: string)
-{
-    if (element.classList.contains(class1))
-    {
-        swapClass(element, class1, class2)
-    }
-    else
-    {
-        swapClass(element, class2, class1);
-    }
-}
-
-export function setClass(element: HTMLElement, className: string, isActive: boolean)
-{
-    if (isActive) {
-        addUniqueClass(element, className);
-    }
-    else {
-        element.classList.remove(className);
-    }
 }
 
 export function filterText(filter: string, content: string)
@@ -238,17 +267,6 @@ export function delay(time: number) {
     });
 }
 
-export function clampElementToScreen(pageX: number, pageY: number, element: HTMLElement, offsetX: number = 0, offsetY: number = 0)
-{
-    const isNearRight = (window.innerWidth - pageX) < element.offsetWidth + offsetX;
-    const isNearBottom = (window.innerHeight - pageY) < element.offsetHeight + offsetY;
-
-    const x = isNearRight ? pageX - element.offsetWidth - offsetX : pageX + offsetX;
-    const y = isNearBottom ? pageY - element.offsetHeight - offsetY : pageY + offsetY;
-
-    return {x: x, y: y};
-}
-
 // Liang-Barsky function by Daniel White @ https://www.skytopia.com/project/articles/compsci/clipping.html
 export function LiangBarsky(edgeLeft: number, edgeRight: number, edgeBottom: number, edgeTop: number,   // Define the x/y clipping values for the border.
                 x0src: number, y0src: number, x1src: number, y1src: number)                             // Define the start and end points of the line.
@@ -286,4 +304,35 @@ export function LiangBarsky(edgeLeft: number, edgeRight: number, edgeBottom: num
     const y1clip = y0src + t1*ydelta;
 
     return { x0: x0clip, y0: y0clip, x1: x1clip, y1: y1clip };        // (clipped) line is drawn
+}
+
+export function compareStringArrays(arr1: string[], arr2: string[])
+{
+    if (arr1.length !== arr2.length)
+    {
+        return false;
+    }
+
+    for (let i = 0; i < arr1.length; i++)
+    {
+        if (arr1[i] !== arr2[i])
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+export function compareVersions(latest: string, current: string)
+{
+    const latestParts = latest.split('.').map(Number);
+    const currentParts = current.split('.').map(Number);
+
+    for (let i = 0; i < latestParts.length; i++)
+    {
+        if ((latestParts[i] || 0) > (currentParts[i] || 0)) return true;
+        if ((latestParts[i] || 0) < (currentParts[i] || 0)) return false;
+    }
+    return false;
 }

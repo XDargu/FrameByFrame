@@ -1,4 +1,4 @@
-import { ipcRenderer } from "electron";
+import { BrowserWindow, ipcRenderer } from "electron";
 import ConnectionsList from './frontend/ConnectionsList';
 import ConnectionButtons from "./frontend/ConnectionButtons";
 import { Console, ConsoleWindow, ILogAction, LogChannel, LogLevel } from "./frontend/ConsoleController";
@@ -26,13 +26,21 @@ import { RecordingInfoList } from "./frontend/RecordingInfoList";
 import { EntityTree } from "./frontend/EntityTree";
 import FiltersList, { ExportedFilters, FilterId } from "./frontend/FiltersList";
 import * as Utils from "./utils/utils";
+import * as DOMUtils from "./utils/DOMUtils";
+import * as UserWindows from "./frontend/UserWindows";
 import FilterTickers from "./frontend/FilterTickers";
 import EntityPropertiesBuilder from "./frontend/EntityPropertiesBuilder";
 import PendingFrames from "./utils/pendingFrames";
 import { LIB_VERSION } from "./version";
 import ShapeLineController from "./frontend/ShapeLineController";
-import { loadImageResource } from "./render/resources/images";
+import { loadResource, openResource } from "./resources/resources";
 import { ResourcePreview } from "./frontend/ResourcePreview";
+import { PinnedTexture } from "./frontend/PinnedTexture";
+import Comments, { CommentUtils } from "./frontend/Comments";
+import { addContextMenu } from "./frontend/ContextMenu";
+import { PropertyWindows } from "./frontend/userWindows/PropertyWindows";
+import { CorePropertyTypes } from "./types/typeRegistry";
+import { markdownToHtml } from "./utils/markdown";
 
 const zlib = require('zlib');
 
@@ -84,6 +92,9 @@ export default class Renderer {
     private entityPropsBuilder: EntityPropertiesBuilder;
     private shapeArrowController: ShapeLineController;
     
+    // Property filter
+    private propertySearchInput: HTMLInputElement;
+    
     // Tooltio
     private sceneTooltip: HTMLElement;
 
@@ -117,8 +128,20 @@ export default class Renderer {
     // Info
     private recordingInfoList: RecordingInfoList;
 
-    initialize(canvas: HTMLCanvasElement) {
+    // Texture pinning
+    private pinnedTexture: PinnedTexture;
+    private pinnedTextureWindowId: number = null;
 
+    // Property Windows
+    private propertyWindows: PropertyWindows;
+
+    // Comments
+    private comments: Comments;
+
+    // Property history
+    private propertiesWithHistory: string[][] = [];
+
+    initialize(canvas: HTMLCanvasElement) {
         const defaultSettings = createDefaultSettings();
 
         this.sceneController = new SceneController();
@@ -148,13 +171,86 @@ export default class Renderer {
                 onPropertyStopHovering: this.onPropertyStopHovering.bind(this),
                 onCreateFilterFromProperty: this.onCreateFilterFromProperty.bind(this),
                 onCreateFilterFromEvent: this.onCreateFilterFromEvent.bind(this),
+                onOpenInNewWindow: this.onOpenPropertyNewWindow.bind(this),
                 onGroupStarred: this.onGroupStarred.bind(this),
                 // Note: twe need to convert to uniqueID here, because the ids are coming from the recording
                 // As an alternative, we could re-create the entityrefs when building the frame data
                 onGoToEntity: (id) => { this.selectEntity(Utils.toUniqueID(this.frameData.clientId, id)); },
                 onGoToShapePos: (id) => { this.moveCameraToShape(id); },
+                onPinTexture: (propId) => { 
+                    
+                    const entity = this.frameData.entities[this.selectedEntityId];
+
+                    const pinnedPropertyPath = NaiveRecordedData.getEntityPropertyPath(entity, propId);
+                    this.pinnedTexture.setPinnedEntityId(this.selectedEntityId, pinnedPropertyPath);
+
+                    this.pinnedTexture.applyPinnedTexture(this.pinnedTextureWindowId);
+                },
+                onAddComment: (propId) => {
+                    // You can only add comments to the currently selected entity
+                    const entity = this.frameData.entities[this.selectedEntityId];
+                    const isFromEvent = NaiveRecordedData.findPropertyIdInEntityEvents(entity, propId) != null;
+                    if (isFromEvent)
+                        this.comments.addEventPropertyComment(this.getCurrentFrame(), entity.id, propId);
+                    else
+                        this.comments.addPropertyComment(this.getCurrentFrame(), entity.id, propId);
+                },
                 isEntityInFrame: (id) => { return this.frameData?.entities[Utils.toUniqueID(this.frameData.clientId, id)] != undefined; },
-                isPropertyVisible: (propId) => { return this.sceneController.isPropertyVisible(propId); }
+                isPropertyVisible: (propId) => { return this.sceneController.isPropertyVisible(propId); },
+                onGroupLocked: () => { /* Unused here */},
+                onOpenResource: (resourcePath) => {
+                    const resource = this.recordedData.findResource(resourcePath);
+                    if (resource)
+                        openResource(resource);
+                },
+                onTogglePropertyHistory: (id) => {
+                    const entity = this.frameData.entities[this.selectedEntityId];
+                    if (entity)
+                    {
+                        const propertyPath = NaiveRecordedData.getEntityPropertyPath(entity, id);
+                        const index = this.propertiesWithHistory.findIndex((propPath) => { return Utils.compareStringArrays(propPath, propertyPath); });
+                        if (index == -1)
+                            this.propertiesWithHistory.push(propertyPath);
+                        else
+                            this.propertiesWithHistory.splice(index);
+                    }
+                    
+                    this.buildPropertyTree();
+                },
+                getPropertyPath: (id) => {
+                    const entity = this.frameData.entities[this.selectedEntityId];
+                    if (entity)
+                        return NaiveRecordedData.getEntityPropertyPath(entity, id);
+
+                    return [];
+                },
+                getPrevValues: (propPath, amount) => {
+
+                    let values : number[] = [];
+
+                    const currentFrame = this.getCurrentFrame();
+
+                    const start = Math.max(0, currentFrame - amount);
+
+                    for (let i=start; i<=currentFrame; ++i)
+                    {
+                        const frameData = this.recordedData.buildFrameData(i);
+                        const testEntity = frameData.entities[this.selectedEntityId];
+                        if (testEntity)
+                        {
+                            const prop = NaiveRecordedData.findPropertyPathInEntity(testEntity, propPath);
+                            if (prop)
+                            {
+                                if (prop.type == CorePropertyTypes.Number)
+                                {
+                                    values.push(prop.value as number);
+                                }
+                            }
+                        }
+                    }
+
+                    return values;
+                }
             }
         );
 
@@ -162,6 +258,12 @@ export default class Renderer {
         this.connectionsList = new ConnectionsList(connectionsListElement, this.onMessageArrived.bind(this));
         this.connectionsList.initialize();
 
+        this.pinnedTexture = new PinnedTexture();
+        this.pinnedTexture.initialize(
+            (entityId) => { return this.frameData?.entities[entityId]; },
+            (texture) => { return this.recordedData?.findResource(texture); },
+            () => { this.pinnedTextureNewWindow(); }
+        );
         this.initializeTimeline();
         this.initializeUI();
 
@@ -194,6 +296,23 @@ export default class Renderer {
 
         this.currentFrameRequest = null;
         window.requestAnimationFrame(this.render.bind(this));
+
+        this.comments = new Comments(
+            {
+                getPropertyItem: (propertyId) => { return this.entityPropsBuilder.findItemWithValue(propertyId + "") as HTMLElement; },
+                frameCallback: (frame) => { this.requestApplyFrame({ frame: frame }); },
+                getTimelineFramePos: (frame) => { return this.timeline.getFramePosition(frame); },
+                onCommentAdded: (frame, commentId) => { this.timeline.addComment(frame, commentId); this.updateMetadata(); },
+                onCommentDeleted: (frame, commentId) => { this.timeline.removecomment(commentId); this.updateMetadata(); },
+                onCommentChanged: (frame, commentId) => { this.updateMetadata(); },
+            },
+            this.recordedData.comments
+        );
+
+        this.propertyWindows = new PropertyWindows(
+            (entityId) => { return this.frameData?.entities[entityId]; },
+            (propertyId) => { return this.entityPropsBuilder.findItemWithValue(propertyId + "") as HTMLElement; },
+        );
 
         this.requestApplyFrame({ frame: 0});
     }
@@ -367,6 +486,9 @@ export default class Renderer {
             document.getElementById('entity-search') as HTMLInputElement,
             callbacks);
 
+        this.propertySearchInput = document.getElementById("property-entity-search") as HTMLInputElement;
+        this.propertySearchInput.onkeyup = () => { this.buildPropertyTree(); };
+
         this.initializeSideBarUI();
 
         const consoleElement = document.getElementById("default-console").children[0] as HTMLElement;
@@ -473,7 +595,9 @@ export default class Renderer {
         );
 
         // Create info
-        this.recordingInfoList = new RecordingInfoList(document.getElementById("recording-info"));
+        this.recordingInfoList = new RecordingInfoList(document.getElementById("recording-info"), (frame, commentId) => {
+            this.onTimelineCommentClicked(frame, commentId);
+        });
 
         // Connection buttons
         this.connectionButtons = new ConnectionButtons(document.getElementById(`connection-buttons`), (id: ConnectionId) => {
@@ -519,13 +643,23 @@ export default class Renderer {
         document.addEventListener('mousemove', evt => {
             let x = evt.clientX + 20;
             let y = evt.clientY + 20;
-         
-            this.sceneTooltip.style.left = x + "px";
-            this.sceneTooltip.style.top = y + "px";
+
+            const clampedPos = DOMUtils.clampElementToScreen(x, y, this.sceneTooltip);
+            
+            this.sceneTooltip.style.left = `${clampedPos.x}px`;
+            this.sceneTooltip.style.top = `${clampedPos.y}px`;
         });
 
         // Resource previewer
         ResourcePreview.Init(document.getElementById("resourcePreview"));
+
+        // Check for updates button
+        document.getElementById("check-updates-button").onclick = () => {
+            ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.RequestCheckForUpdates, ""));
+
+            const updateElem = document.getElementById(`check-updates-result`);
+            updateElem.innerHTML = "Checking updates...";
+        }
     }
 
     onSettingsChanged()
@@ -575,7 +709,10 @@ export default class Renderer {
         this.shapeArrowController.setColor(settings.shapeHoverColor);
         this.shapeArrowController.setEnabled(settings.showShapeLineOnHover);
 
-        this.timeline.setPopupActive(settings.showEventPopup);
+        this.timeline.setEventPopupActive(settings.showEventPopup);
+        this.timeline.setCommentPopupActive(settings.showCommentPopup);
+
+        this.comments.showComments(settings.showComments);
     }
 
     updateSettings(settings: ISettings)
@@ -648,8 +785,36 @@ export default class Renderer {
         // Show only selected names as default when opening a file
         this.layerController.setLayerState(CoreLayers.EntityNames, LayerState.Selected);
 
+        // Try to find the screenshot entity if needed
+        if (this.settings.autoPinScreenshotEntity)
+        {
+            for (let entityId in this.frameData.entities)
+            {
+                const entity = this.frameData.entities[entityId];
+                if (NaiveRecordedData.getEntityName(entity) == "Screenshot")
+                {
+                    // Try to find the resource
+                    NaiveRecordedData.visitEntityProperties(entity, (property: RECORDING.IProperty) => {
+
+                        if (RECORDING.isPropertyTextured(property))
+                        {
+                            const resourcePath = (property as RECORDING.IPropertyTextured).texture;
+                            if (resourcePath)
+                            {
+                                const pinnedPropertyPath = NaiveRecordedData.getEntityPropertyPath(entity, property.id);
+                                this.pinnedTexture.setPinnedEntityId(entity.id, pinnedPropertyPath);
+                                this.pinnedTexture.applyPinnedTexture(this.pinnedTextureWindowId);
+                            }
+                        }
+                    });
+                }
+            }
+        }
+
         this.updateMetadata();
-        
+
+        this.comments.setCommentsData(this.recordedData.comments);
+
         // Select any first entity
         Utils.runAsync(() => {
             for (let entity in this.frameData.entities)
@@ -689,24 +854,35 @@ export default class Renderer {
         const { promisify } = require('util');
         const do_unzip = promisify(zlib.unzip);
 
-        this.openModal("Processing data");
-        try {
-            const inputBuffer = Buffer.from(data, 'base64');
-            const buffer = await do_unzip(inputBuffer);
+        try
+        {
+            this.openModal("Processing data");
+            await Utils.nextTick();
+
+            const gzipMagicNumberBase64 = "H4s";
+
+            let dataToLoad = data;
+            const isCompressed = data.startsWith(gzipMagicNumberBase64);
+
+            // Try uncompressing
+            if (isCompressed)
+            {
+                this.openModal("Uncompressing");
+                await Utils.nextTick();
+
+                const inputBuffer = Buffer.from(data, 'base64');
+                const buffer = await do_unzip(inputBuffer);
+                dataToLoad = buffer.toString('utf8');
+            }
 
             this.openModal("Parsing file");
             await Utils.nextTick();
-            this.loadJsonData(buffer.toString('utf8'));
+            this.loadJsonData(dataToLoad);
             this.closeModal();
         }
         catch (error)
         {
-            this.openModal("Parsing file");
-            await Utils.nextTick();
-            if (!this.loadJsonData(data))
-            {
-                Console.log(LogLevel.Error, LogChannel.Files, "Error uncompressing file: " + error.message);
-            }
+            Console.log(LogLevel.Error, LogChannel.Files, "Error opening file: " + error.message);
             this.closeModal();
         }
     }
@@ -721,12 +897,20 @@ export default class Renderer {
         this.timeline.clear();
         this.timeline.setLength(this.recordedData.getSize());
         this.timeline.clearEvents();
+        this.pinnedTexture.clear();
+        this.propertyWindows.clear();
+        this.propertiesWithHistory = [];
         // Avoid clearing recording options, since in all cases when we clear it's better to keep them
         //this.recordingOptions.setOptions([]);
         this.layerController.setLayers([]);
         this.applyFrame(0);
         this.updateMetadata();
         ResourcePreview.Instance().setResourceData(this.recordedData.resources);
+
+        ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.CloseAllWindows, ""));
+        this.comments.clear();
+
+        this.propertySearchInput.value = "";
 
         // Trigger Garbace Collection
         global.gc();
@@ -813,6 +997,15 @@ export default class Renderer {
             frameToBuild.entities[entityData.id] = entityData;
         }
 
+        // Resources
+        if (frame.resources)
+        {
+            for (let resource of frame.resources)
+            {
+                this.recordedData.resources[resource.path] = resource;
+            }
+        }
+
         this.recordedData.pushFrame(frameToBuild);
 
         this.timeline.setLength(this.recordedData.getSize());
@@ -856,54 +1049,71 @@ export default class Renderer {
     }
 
     applyFrame(frame : number) {
-        this.frameData = this.recordedData.buildFrameData(frame);
 
-        this.timeline.setCurrentFrame(frame);
-
-        this.layerController.setLayers(this.recordedData.layers);
-
-        // Update frame counter
-        const frameText = (this.getFrameCount() > 0) ? (`Frame: ${frame + 1} / ${this.getFrameCount()} (Frame ID: ${this.frameData.frameId}, Tag: ${this.frameData.tag})`) : "No frames";
-        document.getElementById("timeline-frame-counter").textContent = frameText;
-
-        // Update entity list
-        this.entityTree.setEntities(this.frameData.entities, this.recordedData);
-
-        // Update renderer
-        this.sceneController.setCoordinateSystem(this.frameData.coordSystem ?? RECORDING.ECoordinateSystem.LeftHand);
-        this.sceneController.hideAllEntities();
-
-        for (let entityID in this.frameData.entities) {
-
-            const entity = this.frameData.entities[entityID];
-
-            // Set in the scene renderer
-            this.sceneController.setEntity(entity);
-        }
-
-        if (this.settings && this.settings.followCurrentSelection)
+        try
         {
-            this.sceneController.followEntity();
+            this.frameData = this.recordedData.buildFrameData(frame);
+
+            this.timeline.setCurrentFrame(frame);
+
+            this.layerController.setLayers(this.recordedData.layers);
+
+            // Update frame counter
+            const frameText = (this.getFrameCount() > 0) ? (`Frame: ${frame + 1} / ${this.getFrameCount()} (Frame ID: ${this.frameData.frameId}, Tag: ${this.frameData.tag})`) : "No frames";
+            document.getElementById("timeline-frame-counter").textContent = frameText;
+
+            // Update entity list
+            this.entityTree.setEntities(this.frameData.entities, this.recordedData);
+
+            // Update renderer
+            this.sceneController.setCoordinateSystem(this.frameData.coordSystem ?? RECORDING.ECoordinateSystem.LeftHand);
+            this.sceneController.hideAllEntities();
+
+            for (let entityID in this.frameData.entities) {
+
+                const entity = this.frameData.entities[entityID];
+
+                // Set in the scene renderer
+                this.sceneController.setEntity(entity);
+            }
+
+            if (this.settings && this.settings.followCurrentSelection)
+            {
+                this.sceneController.followEntity();
+            }
+
+            if (this.selectedEntityId) {
+                this.entityTree.selectEntity(this.selectedEntityId);
+            }
+
+            // Draw properties
+            this.renderProperties();
+
+            // Update events
+            this.updateTimelineEvents();
+
+            // Update markers
+            this.updateTimelineMarkers();
+
+            // Rebuild property tree
+            this.buildPropertyTree();
+
+            // Update connections
+            this.updateVisibleShapesSyncing();
+
+            // Update pinned info
+            this.pinnedTexture.applyPinnedTexture(this.pinnedTextureWindowId);
+
+            // Update propert windows
+            this.propertyWindows.updateData(this.frameData, frame);
+
+            // Update comments
+            this.comments.selectionChanged(frame, this.selectedEntityId);
         }
-
-        if (this.selectedEntityId) {
-            this.entityTree.selectEntity(this.selectedEntityId);
+        catch (error)
+        {
+            Console.log(LogLevel.Error, LogChannel.Files, "Error applying frame: " + error.message);
         }
-
-        // Draw properties
-        this.renderProperties();
-
-        // Update events
-        this.updateTimelineEvents();
-
-        // Update markers
-        this.updateTimelineMarkers();
-
-        // Rebuild property tree
-        this.buildPropertyTree();
-
-        // Update connections
-        this.updateVisibleShapesSyncing();
     }
 
     moveCameraToSelection()
@@ -967,6 +1177,8 @@ export default class Renderer {
         this.sceneController.markEntityAsSelected(entityId);
         this.timeline.setSelectedEntity(entityId);
         this.renderProperties();
+
+        this.comments.selectionChanged(this.getCurrentFrame(), this.selectedEntityId);
     }
 
     selectEntity(entityId: number)
@@ -982,8 +1194,10 @@ export default class Renderer {
             elapsedTime: this.frameData.elapsedTime,
             serverTime: this.frameData.serverTime
         }
+
+        const filter = this.propertySearchInput.value.toLowerCase();
         
-        this.entityPropsBuilder.buildPropertyTree(selectedEntity, globalData);
+        this.entityPropsBuilder.buildPropertyTree(selectedEntity, globalData, filter, this.propertiesWithHistory);
     }
 
     updateFrameDataEvents(frameData: RECORDING.IFrameData, frameIdx: number)
@@ -1128,14 +1342,25 @@ export default class Renderer {
 
     initializeTimeline()
     {
-        let timelineElement: HTMLCanvasElement = <HTMLCanvasElement>document.getElementById('timeline');
+        let timelineElement: HTMLCanvasElement = <HTMLCanvasElement><unknown>document.getElementById('timeline');
         let timelineWrapper: HTMLElement = document.getElementById('timeline-wrapper');
         this.timeline = new Timeline(timelineElement, timelineWrapper);
         this.timeline.setFrameClickedCallback(this.onTimelineClicked.bind(this));
         this.timeline.setEventClickedCallback(this.onTimelineEventClicked.bind(this));
+        this.timeline.setCommentClickedCallback(this.onTimelineCommentClicked.bind(this));
         this.timeline.setTimelineUpdatedCallback(this.onTimelineUpdated.bind(this));
         this.timeline.setRangeChangedCallback((initFrame, endFrame) => { this.playbackController.updateUI(); });
         this.timeline.setGetEntityNameCallback((entity, frameIdx) => { return this.findEntityNameOnFrame(Number.parseInt(entity), frameIdx); });
+        this.timeline.setGetCommentTextCallback((commentId) => { return this.recordedData.comments[commentId].text; });
+
+        // Context menu
+        const config = [
+            { text: "Add comment in current frame", icon: "fa-comment", callback: () => { 
+                const currentFrame = this.getCurrentFrame();
+                this.comments.addTimelineComment(currentFrame);
+            } },
+        ];
+        addContextMenu(timelineWrapper, config);
     }
 
     getCurrentFrame()
@@ -1208,20 +1433,26 @@ export default class Renderer {
         this.shapeArrowController.deactivate();
     }
 
-    onCreateFilterFromProperty(propertyId: number)
+    onCreateFilterFromProperty(propertyId: number, subIndex: number)
     {
         const eventData = NaiveRecordedData.findPropertyIdInEvents(this.frameData, propertyId);
         if (eventData != null)
         {
-            this.filterList.addFilter(new Filters.EventFilter(eventData.resultEvent.name, eventData.resultEvent.tag, Filters.createMemberFilterFromProperty(eventData.resultProp)));
+            this.filterList.addFilter(new Filters.EventFilter(eventData.resultEvent.name, eventData.resultEvent.tag, Filters.createMemberFilterFromProperty(eventData.resultProp, subIndex)));
             this.controlTabs.openTabByIndex(TabIndices.Filters);
         }
         else
         {
             const property: RECORDING.IProperty = NaiveRecordedData.findPropertyIdInProperties(this.frameData, propertyId);
-            this.filterList.addFilter(new Filters.PropertyFilter("", Filters.createMemberFilterFromProperty(property)));
+            this.filterList.addFilter(new Filters.PropertyFilter("", Filters.createMemberFilterFromProperty(property, subIndex)));
             this.controlTabs.openTabByIndex(TabIndices.Filters);
         }
+    }
+
+    onOpenPropertyNewWindow(propertyId: number)
+    {
+        const frame = this.getCurrentFrame();
+        this.propertyWindows.openPropertyNewWindow(propertyId, this.selectedEntityId, frame, this.frameData);
     }
 
     onCreateFilterFromEvent(name: string, tag: string)
@@ -1247,6 +1478,35 @@ export default class Renderer {
         const uniqueId = Utils.toUniqueID(clientId, Number.parseInt(entityId));
         this.logEntity(LogLevel.Verbose, LogChannel.Timeline, "Event selected in timeline. ", frame, uniqueId);
         this.requestApplyFrame({ frame: frame, entityIdSel: Number.parseInt(entityId) });
+    }
+
+    onTimelineCommentClicked(frame: number, commentId: number)
+    {
+        // Find the right comment
+        for (let comId in this.recordedData.comments)
+        {
+            if (parseInt(comId) == commentId)
+            {
+                const comment = this.recordedData.comments[comId];
+                switch (comment.type)
+                {
+                    case RECORDING.ECommentType.Timeline:
+                    {
+                        this.logFrame(LogLevel.Verbose, LogChannel.Timeline, "Timeline comment selected in timeline. ", frame);
+                        this.requestApplyFrame({ frame: frame });
+                    }
+                    break;
+                    case RECORDING.ECommentType.Property:
+                    case RECORDING.ECommentType.EventProperty:
+                    {
+                        const propComment = comment as RECORDING.IPropertyComment;
+                        this.logEntity(LogLevel.Verbose, LogChannel.Timeline, "Property comment selected in timeline. ", frame, propComment.entityId);
+                        this.requestApplyFrame({ frame: frame, entityIdSel: propComment.entityId });
+                    }
+                    break;
+                }
+            }
+        }
     }
 
     onTimelineUpdated(elapsedSeconds: number)
@@ -1293,6 +1553,50 @@ export default class Renderer {
                 for (let i=firstFrame; i<=lastFrame; ++i)
                 {
                     data.frameData.push(this.recordedData.frameData[i]);
+
+                    // Collect resources. Note: this is quite slow, since we need to visit every single property
+                    for (let entityId in this.recordedData.frameData[i].entities)
+                    {
+                        const entityData = this.recordedData.frameData[i].entities[entityId];
+
+                        let collectResources = (property: RECORDING.IProperty) =>
+                        {
+                            if (RECORDING.isPropertyTextured(property))
+                            {
+                                const resourcePath = (property as RECORDING.IPropertyTextured).texture;
+                                if (resourcePath)
+                                    data.resources[resourcePath] = dataToSave.resources[resourcePath];
+                            }
+                        };
+                        
+                        NaiveRecordedData.visitProperties(entityData.properties, (property: RECORDING.IProperty) => {
+                            collectResources(property);
+                        });
+                        NaiveRecordedData.visitEvents(entityData.events, (event: RECORDING.IEvent) => {
+                            NaiveRecordedData.visitProperties([event.properties], (property: RECORDING.IProperty) => {
+                                collectResources(property);
+                            });
+                        });
+                    }
+                }
+
+                // Collect comments
+                for (let commentId in this.recordedData.comments)
+                {
+                    const comment = this.recordedData.comments[commentId];
+                    if (comment.frameId >= firstFrame && comment.frameId <= lastFrame)
+                    {
+                        // We need to correct the frame, which mens we need a deep copy, to avoid changing the original comment
+                        const deepCopy = JSON.parse(JSON.stringify(comment));
+                        data.comments[comment.id] = deepCopy;
+                        
+                        // Adapt frameId and frameRefs in text
+                        const diff = -firstFrame;
+                        let copiedComment = data.comments[comment.id];
+                        copiedComment.frameId += diff;
+
+                        copiedComment.text = CommentUtils.shiftContentFrameRefs(copiedComment.text, diff);
+                    }
                 }
 
                 dataToSave = data;
@@ -1305,7 +1609,7 @@ export default class Renderer {
             {
                 try {
                     const resource = dataToSave.resources[path];
-                    await loadImageResource(resource);
+                    await loadResource(resource);
                 }
                 catch(e) {
                     Console.log(LogLevel.Warning, LogChannel.Files, "Coudn't load resource, skipping: " + path);
@@ -1448,6 +1752,68 @@ export default class Renderer {
     closeModal()
     {
         document.getElementById("loadingModal").style.display = "none";
+    }
+
+    // Update modal
+    onUpdateResult(updateResult: Messaging.IUpdateResult)
+    {
+        const updateElem = document.getElementById(`check-updates-result`);
+
+        if (!updateResult.error)
+        {
+            if (!Utils.compareVersions(updateResult.version, LIB_VERSION))
+                updateElem.innerHTML = `Frame by Frame is up to date`;
+            else
+                updateElem.innerHTML = `<i class="fas fa-bell" style="margin-right: 10px;"></i>New Frame by Frame version available: ${updateResult.version}`;
+        }
+        else
+            updateElem.innerHTML = `<i class="fas fa-exclamation-triangle" style="margin-right: 10px;"></i>Couldn't find latest Frame by Frame version`;
+
+        if (updateResult.available)
+        {
+            DOMUtils.setClass(document.getElementById("updateModal"), "active", true);
+            document.getElementById("update-title").innerHTML = '<i class="fas fa-bell" style="margin-right: 10px;"></i>Update Available';
+            document.getElementById("update-content").innerHTML = 
+                `<div>Great news! <a href="${updateResult.release.html_url}">Frame by Frame ${updateResult.version}</a> is available.</div>
+                <div> Would you like to update now?</div>
+                <br>
+                <div id="update-changes">
+                ${markdownToHtml(updateResult.release.body)}
+                </div>
+                `;
+
+            // Simplify compare link 
+            const links = document.getElementById("update-changes").querySelectorAll("a");
+            links.forEach((element) => {
+                if (element.textContent.startsWith('https://github.com/XDargu/FrameByFrame/compare/'))
+                    element.textContent = element.textContent.substring('https://github.com/XDargu/FrameByFrame/compare/'.length);
+            });
+                
+            // Apply colors to headers
+            const headerColors = ['#fc9f5b', '#7db1ff','#D6A3FF','#DFC956','#f08c8c','#6DE080'];
+            const headers = document.getElementById("update-changes").querySelectorAll("h3");
+            headers.forEach((element) => {
+                element.style.backgroundColor = Utils.colorFromHash(Utils.hashCode(element.textContent), headerColors);
+            });
+            
+            document.getElementById('install-update-button').onclick = () =>
+            {
+                ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.RequestInstallUpdate, updateResult));
+                this.openModal("Downloading update");
+            }
+            document.getElementById('decline-update-button').onclick = () => { this.closeUpdateModal(); }
+        }
+    }
+
+    closeUpdateModal()
+    {
+        DOMUtils.setClass(document.getElementById("updateModal"), "active", false);
+    }
+
+    onUpdateInstallationFailed(reason: string)
+    {
+        this.closeModal();
+        this.logErrorToConsole("Update installation failed: " + reason);
     }
 
     // Logging wrappers
@@ -1617,9 +1983,33 @@ export default class Renderer {
             this.controlTabs.closeAllTabs();
         }
     }
+
+    async pinnedTextureNewWindow()
+    {
+        if (this.pinnedTextureWindowId == null)
+        {
+            const size = this.pinnedTexture.getImgSize();
+            const windowId = await UserWindows.requestOpenWindow(this.pinnedTexture.getTitle(), size.x, size.y);
+            this.pinnedTextureWindowId = windowId;
+        }
+
+        this.pinnedTexture.applyPinnedTexture(this.pinnedTextureWindowId);
+    }
+
+    onUserWindowClosed(id: number)
+    {
+        if (this.pinnedTextureWindowId == id)
+        {
+            this.pinnedTextureWindowId = null;
+            this.pinnedTexture.setEnabled();
+            this.pinnedTexture.applyPinnedTexture(this.pinnedTextureWindowId);
+        }
+
+        this.propertyWindows.onWindowClosed(id);
+    }
 }
 
 const renderer = new Renderer();
-renderer.initialize(document.getElementById('render-canvas') as HTMLCanvasElement);
+renderer.initialize(document.getElementById('render-canvas') as unknown as HTMLCanvasElement);
 initWindowControls();
 initMessageHandling(renderer);

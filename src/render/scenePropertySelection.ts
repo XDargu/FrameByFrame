@@ -1,5 +1,6 @@
 import * as BABYLON from 'babylonjs';
 import * as Utils from '../utils/utils';
+import * as DOMUtils from '../utils/DOMUtils';
 import { SceneEntityData } from './commonTypes';
 import RenderPools from './renderPools';
 
@@ -100,7 +101,7 @@ export default class ScenePropertySelection
                 property.mesh.material = this.previousMaterial;
                 this.previousMaterial = null;
              
-                Utils.addUniqueClass(document.getElementById("sceneTooltip"), "disabled");
+                DOMUtils.addUniqueClass(document.getElementById("sceneTooltip"), "disabled");
             }
         }
     }

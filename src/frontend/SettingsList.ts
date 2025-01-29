@@ -353,6 +353,13 @@ export class SettingsList
         }
 
         {
+            let group = SettingsBuilder.createGroup("Texture Pinning");
+            SettingsBuilder.addBooleanSetting(group, "Auto-pin Screenshot Entity", settings.autoPinScreenshotEntity, (value) => {settings.autoPinScreenshotEntity = value; this.onSettingsChanged(); })
+
+            this.settingsList.appendChild(group.fragment);
+        }
+
+        {
             let group = SettingsBuilder.createGroup("Syncing");
             SettingsBuilder.addBooleanSetting(group, "Sync Visible Shapes", settings.syncVisibleShapes, (value) => {settings.syncVisibleShapes = value; this.onSettingsChanged(); })
             SettingsBuilder.addBooleanSetting(group, "Sync Camera Position", settings.syncCameraPosition, (value) => {settings.syncCameraPosition = value; this.onSettingsChanged(); })
@@ -363,6 +370,7 @@ export class SettingsList
         {
             let group = SettingsBuilder.createGroup("Timeline");
             SettingsBuilder.addBooleanSetting(group, "Show event popup", settings.showEventPopup, (value) => {settings.showEventPopup = value; this.onSettingsChanged(); })
+            SettingsBuilder.addBooleanSetting(group, "Show comment popup", settings.showCommentPopup, (value) => {settings.showCommentPopup = value; this.onSettingsChanged(); })
             this.settingsList.appendChild(group.fragment);
         }
 
@@ -438,6 +446,12 @@ You can use the following formatting options:
                 settings.removeOldFramesAmount,
                 (value) => {  settings.removeOldFramesAmount = Math.max(1, Number.parseInt(value)); this.onSettingsChanged(); });
             SettingsBuilder.addBooleanSetting(group, "Update frame on removal", settings.removeOldFramesUpdate, (value) => {settings.removeOldFramesUpdate = value; this.onSettingsChanged(); })
+            this.settingsList.appendChild(group.fragment);
+        }
+
+        {
+            let group = SettingsBuilder.createGroup("Comments");
+            SettingsBuilder.addBooleanSetting(group, "Show comments", settings.showComments, (value) => {settings.showComments = value; this.onSettingsChanged(); })
             this.settingsList.appendChild(group.fragment);
         }
 

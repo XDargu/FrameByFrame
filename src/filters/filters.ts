@@ -68,7 +68,7 @@ export function getDefaultValuePerMemberType(type: MemberFilterType): string | b
     }
 }
 
-function createMemberFilterOfType(type: CorePropertyTypes, name: string, value: string | number | boolean | RECORDING.IVec2 | RECORDING.IVec3 | RECORDING.IEntityRef | RECORDING.IPropertyTable ) : MemberFilter[]
+function createMemberFilterOfType(type: CorePropertyTypes, name: string, value: string | number | boolean | RECORDING.IVec2 | RECORDING.IVec3 | RECORDING.IEntityRef | RECORDING.IPropertyTable, subIndex?: number) : MemberFilter[]
 {
     switch (type) {
         case CorePropertyTypes.Bool: return [{ name: name, type: MemberFilterType.Boolean, value: value as boolean, mode: FilterMode.Equals }];
@@ -102,13 +102,12 @@ function createMemberFilterOfType(type: CorePropertyTypes, name: string, value: 
             {
                 const colName = table.header[colIdx];
 
-                for (let row of table.rows)
+                const row = table.rows[subIndex];
+
+                if (row)
                 {
                     const rowValue = row[colIdx];
                     filters.push({ name: `${name}.${colName}`, type: MemberFilterType.String, value: rowValue, mode: FilterMode.Equals });
-
-                    // Only filter one of each column, as an example, not everything
-                    break;
                 }
             }
 
@@ -119,7 +118,7 @@ function createMemberFilterOfType(type: CorePropertyTypes, name: string, value: 
     return [];
 }
 
-export function createMemberFilterFromProperty(property: RECORDING.IProperty): MemberFilter[]
+export function createMemberFilterFromProperty(property: RECORDING.IProperty, subIndex: number): MemberFilter[]
 {
     console.log(property)
     switch (property.type) {
@@ -129,7 +128,7 @@ export function createMemberFilterFromProperty(property: RECORDING.IProperty): M
         case CorePropertyTypes.Vec2: return createMemberFilterOfType(property.type, property.name, property.value as RECORDING.IVec2);
         case CorePropertyTypes.Vec3: return createMemberFilterOfType(property.type, property.name, property.value as RECORDING.IVec3);
         case CorePropertyTypes.EntityRef: return createMemberFilterOfType(property.type, property.name, property.value as RECORDING.IEntityRef);
-        case CorePropertyTypes.Table: return createMemberFilterOfType(property.type, property.name, property.value as RECORDING.IPropertyTable);
+        case CorePropertyTypes.Table: return createMemberFilterOfType(property.type, property.name, property.value as RECORDING.IPropertyTable, subIndex);
         case CorePropertyTypes.Quat: return createMemberFilterOfType(property.type, property.name, property.value as RECORDING.IQuat);
 
         // Shapes
@@ -300,8 +299,7 @@ export namespace Common {
 
     export function filterPropertyBoolean(property: RECORDING.IProperty, filters: MemberFilter[]): boolean {
         const name = property.name.toLowerCase();
-        const value = property.value == "true" ? true : false;
-
+        const value = property.value as boolean;
         for (let i = 0; i < filters.length; ++i) {
             if (applyFilterBoolean(name, value, filters[i])) {
                 return true;

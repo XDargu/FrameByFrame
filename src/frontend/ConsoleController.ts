@@ -52,6 +52,8 @@ export enum LogChannel
     Files,
     Connections,
     Filters,
+    Comments,
+    Updates,
 
     Count
 }
