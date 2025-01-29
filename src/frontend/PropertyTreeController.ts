@@ -484,7 +484,11 @@ export class PropertyTreeController {
 
     getPropertyGroup(listItem: HTMLElement) : HTMLElement
     {
-        return listItem.querySelector('.property-group');
+        // Test to improve speed
+        const content = listItem.children[0].children[1];
+        if (content.children[0].nodeName == "I") // Icon first
+            return content.children[2] as HTMLElement;
+        return content.children[1] as HTMLElement;
     }
 
     getPropertyName(listItem: HTMLElement) : HTMLElement
