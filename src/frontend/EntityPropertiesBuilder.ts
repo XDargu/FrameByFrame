@@ -833,9 +833,7 @@ export default class EntityPropertiesBuilder
         let propertyTree = document.getElementById('properties');
         let eventTree = document.getElementById('events');
 
-        propertyTree.innerHTML = "";
-        eventTree.innerHTML = "";
-
+        const oldActiveGroups = this.activePropertyGroups.slice();
         this.activePropertyGroups = [];
 
         if (entity)
@@ -845,6 +843,17 @@ export default class EntityPropertiesBuilder
         }
 
         this.buildGlobalData(propertyTree, globalData, filter, propertiesWithHistory);
+
+        for (let oldActiveGroup of oldActiveGroups)
+        {
+            const found = this.activePropertyGroups.find((group) => { return oldActiveGroup == group; });
+            if (!found)
+            {
+                const header = oldActiveGroup.propertyTree.root.previousSibling;
+                header.remove();
+                oldActiveGroup.propertyTree.root.remove();
+            }
+        }
     }
 
     findItemWithValue(value: string)
