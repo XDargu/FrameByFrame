@@ -846,13 +846,26 @@ export class NaiveRecordedData implements INaiveRecordedData {
 
     static findPropertyPathInEntity(entity: IEntity, propertyPath: string[]) : IProperty
     {
-        const resultProps = NaiveRecordedData.findPropertyPathInProperties(entity.properties, propertyPath);
+        let resultProps = NaiveRecordedData.findPropertyPathInProperties(entity.properties, propertyPath);
 		if (resultProps)
 		{
 			return resultProps;
 		}
 
-        return null;
+        // Not in properties, try in events
+        NaiveRecordedData.visitEvents(entity.events, (event: IEvent) => {
+
+            if (propertyPath.length > 0 && propertyPath[0] == event.name)
+            {
+                resultProps = NaiveRecordedData.findPropertyPathInProperties(event.properties.value, propertyPath.slice(1));
+                if (resultProps)
+                {
+                    return VisitorResult.Stop;
+                }
+            }
+        });
+
+        return resultProps;
     }
 
     static findPropertyPathInProperties(properties: IProperty[], propertyPath: string[]) : IProperty
@@ -885,7 +898,20 @@ export class NaiveRecordedData implements INaiveRecordedData {
 
     static getEntityPropertyPath(entity: IEntity, propertyId: number) : string[]
     {
-        return NaiveRecordedData.getPropertyPath(entity.properties, propertyId);
+        let propertyPath = NaiveRecordedData.getPropertyPath(entity.properties, propertyId);
+        if (!propertyPath)
+        {
+            NaiveRecordedData.visitEvents(entity.events, (event: IEvent) => {
+                const eventPath = NaiveRecordedData.getPropertyPath(event.properties.value, propertyId);
+                if (eventPath)
+                {
+                    propertyPath = [event.name].concat(eventPath);
+                    return VisitorResult.Stop;
+                }
+            });
+        }
+
+        return propertyPath;
     }
 
     static getPropertyPath(properties: IProperty[], propertyId: number) : string[]
@@ -1074,8 +1100,9 @@ export class NaiveRecordedData implements INaiveRecordedData {
 			NaiveRecordedData.visitEvents(mergedFrameData.entities[id].events, (event: IEvent) => {
 				event.id = eventId++;
 
-				NaiveRecordedData.visitProperties([event.properties], (property: IProperty) => {
+				NaiveRecordedData.visitProperties([event.properties], (property: IProperty, path: string[]) => {
 					property.id = propId++;
+                    property.path = [event.name].concat(path);
 				}, true, []);
 			});
 		}
