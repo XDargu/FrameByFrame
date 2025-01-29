@@ -59,7 +59,7 @@ namespace UI
             case TypeSystem.EPrimitiveType.Number:
                 {
                     // TODO: Either check type here, or validate incomming data so this is always valid data
-                    return (+value.toFixed(2)).toString();
+                    return ((+value).toFixed(2)).toString();
                 }
             case TypeSystem.EPrimitiveType.String:
                 {

@@ -1052,63 +1052,71 @@ export default class Renderer {
     }
 
     applyFrame(frame : number) {
-        this.frameData = this.recordedData.buildFrameData(frame);
 
-        this.timeline.setCurrentFrame(frame);
-
-        this.layerController.setLayers(this.recordedData.layers);
-
-        // Update frame counter
-        const frameText = (this.getFrameCount() > 0) ? (`Frame: ${frame + 1} / ${this.getFrameCount()} (Frame ID: ${this.frameData.frameId}, Tag: ${this.frameData.tag})`) : "No frames";
-        document.getElementById("timeline-frame-counter").textContent = frameText;
-
-        // Update entity list
-        this.entityTree.setEntities(this.frameData.entities, this.recordedData);
-
-        // Update renderer
-        this.sceneController.setCoordinateSystem(this.frameData.coordSystem ?? RECORDING.ECoordinateSystem.LeftHand);
-        this.sceneController.hideAllEntities();
-
-        for (let entityID in this.frameData.entities) {
-
-            const entity = this.frameData.entities[entityID];
-
-            // Set in the scene renderer
-            this.sceneController.setEntity(entity);
-        }
-
-        if (this.settings && this.settings.followCurrentSelection)
+        try
         {
-            this.sceneController.followEntity();
+            this.frameData = this.recordedData.buildFrameData(frame);
+
+            this.timeline.setCurrentFrame(frame);
+
+            this.layerController.setLayers(this.recordedData.layers);
+
+            // Update frame counter
+            const frameText = (this.getFrameCount() > 0) ? (`Frame: ${frame + 1} / ${this.getFrameCount()} (Frame ID: ${this.frameData.frameId}, Tag: ${this.frameData.tag})`) : "No frames";
+            document.getElementById("timeline-frame-counter").textContent = frameText;
+
+            // Update entity list
+            this.entityTree.setEntities(this.frameData.entities, this.recordedData);
+
+            // Update renderer
+            this.sceneController.setCoordinateSystem(this.frameData.coordSystem ?? RECORDING.ECoordinateSystem.LeftHand);
+            this.sceneController.hideAllEntities();
+
+            for (let entityID in this.frameData.entities) {
+
+                const entity = this.frameData.entities[entityID];
+
+                // Set in the scene renderer
+                this.sceneController.setEntity(entity);
+            }
+
+            if (this.settings && this.settings.followCurrentSelection)
+            {
+                this.sceneController.followEntity();
+            }
+
+            if (this.selectedEntityId) {
+                this.entityTree.selectEntity(this.selectedEntityId);
+            }
+
+            // Draw properties
+            this.renderProperties();
+
+            // Update events
+            this.updateTimelineEvents();
+
+            // Update markers
+            this.updateTimelineMarkers();
+
+            // Rebuild property tree
+            this.buildPropertyTree();
+
+            // Update connections
+            this.updateVisibleShapesSyncing();
+
+            // Update pinned info
+            this.pinnedTexture.applyPinnedTexture(this.pinnedTextureWindowId);
+
+            // Update propert windows
+            this.propertyWindows.updateData(this.frameData, frame);
+
+            // Update comments
+            this.comments.selectionChanged(frame, this.selectedEntityId);
         }
-
-        if (this.selectedEntityId) {
-            this.entityTree.selectEntity(this.selectedEntityId);
+        catch (error)
+        {
+            Console.log(LogLevel.Error, LogChannel.Files, "Error applying frame: " + error.message);
         }
-
-        // Draw properties
-        this.renderProperties();
-
-        // Update events
-        this.updateTimelineEvents();
-
-        // Update markers
-        this.updateTimelineMarkers();
-
-        // Rebuild property tree
-        this.buildPropertyTree();
-
-        // Update connections
-        this.updateVisibleShapesSyncing();
-
-        // Update pinned info
-        this.pinnedTexture.applyPinnedTexture(this.pinnedTextureWindowId);
-
-        // Update propert windows
-        this.propertyWindows.updateData(this.frameData, frame);
-
-        // Update comments
-        this.comments.selectionChanged(frame, this.selectedEntityId);
     }
 
     moveCameraToSelection()
