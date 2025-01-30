@@ -496,6 +496,15 @@ export class PropertyTreeController {
         return listItem.querySelector('.property-name');
     }
 
+    getPropertyTable(listItem: HTMLElement) : HTMLElement
+    {
+        // Test to improve speed
+        const content = listItem.children[0].children[1];
+        if (content.children[0].nodeName == "I") // Icon first
+            return content.children[1] as HTMLElement;
+        return content.children[0] as HTMLElement;
+    }
+
     addValueToPropertyTree(parent: HTMLElement, name: string, content: HTMLElement[], propertyId: number, icon: string, iconColor: string = null)
     {
         const elements = [];
@@ -613,6 +622,53 @@ export class PropertyTreeController {
             content = [UI.createLineChart(value, height)];
 
         return this.addValueToPropertyTree(parent, name, content, propertyId, icon);
+    }
+
+    isTableSameLength(listItem: HTMLElement, value: RECORDING.IPropertyTable)
+    {
+        const tableWrapper = this.getPropertyTable(listItem);
+        const content = tableWrapper.children[1];
+
+        return content.children.length == value.header.length + value.rows.length;
+    }
+
+    setTable(listItem: HTMLElement, name: string, value: RECORDING.IPropertyTable, propertyId: number, filter: string)
+    {
+        const tableWrapper = this.getPropertyTable(listItem);
+        const title = tableWrapper.children[0];
+        title.textContent = name;
+
+        const content = tableWrapper.children[1];
+
+        let currentIdx = 0;
+        // TODO: What happens if the columns are different?
+        // What happens if there is no header?
+        for (let item of value.header)
+        {
+            const headerElement = content.children[currentIdx];
+            currentIdx++;
+            headerElement.textContent = item;
+        }
+
+        const hasFilter = filter != "";
+        for (let i=0; i<value.rows.length; ++i)
+        {
+            const row = value.rows[i];
+            const rowElement = content.children[currentIdx];
+            currentIdx++;
+
+            if (!hasFilter || Filtering.filterTableRow(filter, row))
+            {
+                let rowIdx = 0;
+                for (let item of row)
+                {
+                    rowElement.children[rowIdx].textContent = item;
+                    rowIdx++;
+                }
+            }
+        }
+
+        return listItem;
     }
 
     addTable(parent: HTMLElement, name: string, value: RECORDING.IPropertyTable, propertyId: number, filter: string)
@@ -826,6 +882,7 @@ export class PropertyTreeController {
     clearVisited()
     {
         let toRemove = [];
+        let visited = [];
 
         for (let item of this.visitedElements)
         {
@@ -834,7 +891,9 @@ export class PropertyTreeController {
                 toRemove.push(item);
             }
             else
-                item[1].visited = false;
+                visited.push(item);
+            
+            item[1].visited = false;
         }
 
         for (let [element, data] of toRemove)
@@ -844,6 +903,12 @@ export class PropertyTreeController {
 
             // Remove from the path map
             this.elementsPerPath.delete(data.path);
+        }
+
+        // We might have deleted existing elements on the previous step
+        for (let item of visited)
+        {
+            this.elementsPerPath.set(item[1].path, item[0]);
         }
     }
 
@@ -926,7 +991,10 @@ export class PropertyTreeController {
             }
             else if (property.type == TypeSystem.CorePropertyTypes.Table)
             {
-                addedItem = this.addTable(parent, property.name, property.value as RECORDING.IPropertyTable, property.id, filter);
+                if (itemWithPath && this.isTableSameLength(itemWithPath, property.value as RECORDING.IPropertyTable))
+                    addedItem = this.setTable(itemWithPath, property.name, property.value as RECORDING.IPropertyTable, property.id, filter);
+                else
+                    addedItem = this.addTable(parent, property.name, property.value as RECORDING.IPropertyTable, property.id, filter);
             }
             else if (RECORDING.isPropertyShape(property))
             {
@@ -1011,9 +1079,20 @@ export class PropertyTreeController {
                         {
                             const line = property as RECORDING.IPropertyLine;
 
-                            addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
-                            this.addVec3(addedItem, "Origin", line.origin, "map-marker-alt", property.id);
-                            this.addVec3(addedItem, "Destination", line.destination, "flag-checkered", property.id);
+                            if (itemWithPath)
+                            {
+                                addedItem = itemWithPath;
+                                const ul = itemWithPath.children[1];
+                                // TODO: Icon
+                                this.setVec3(ul.children[0] as HTMLElement, line.origin);
+                                this.setVec3(ul.children[1] as HTMLElement, line.destination);
+                            }
+                            else
+                            {
+                                addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
+                                this.addVec3(addedItem, "Origin", line.origin, "map-marker-alt", property.id);
+                                this.addVec3(addedItem, "Destination", line.destination, "flag-checkered", property.id);
+                            }
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Arrow:
@@ -1029,8 +1108,18 @@ export class PropertyTreeController {
                         {
                             const vector = property as RECORDING.IPropertyVector;
 
-                            addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
-                            this.addVec3(addedItem, "Vector", vector.vector, "location-arrow", property.id);
+                            if (itemWithPath)
+                            {
+                                addedItem = itemWithPath;
+                                const ul = itemWithPath.children[1];
+                                // TODO: Icon
+                                this.setVec3(ul.children[0] as HTMLElement, vector.vector);
+                            }
+                            else
+                            {
+                                addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
+                                this.addVec3(addedItem, "Vector", vector.vector, "location-arrow", property.id);
+                            }
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Mesh:
