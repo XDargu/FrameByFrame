@@ -409,6 +409,7 @@ interface PropertyTreeGroup
     title: HTMLElement;
     propertyTree: TreeControl;
     propertyTreeController: PropertyTreeController;
+    order: number;
 }
 
 interface PropertyTreeGlobalData
@@ -593,7 +594,8 @@ export default class EntityPropertiesBuilder
         filter: string,
         propertiesWithHistory: string[][],
         tag: string = null,
-        flags: UI.TreeFlags = UI.TreeFlags.None)
+        flags: UI.TreeFlags = UI.TreeFlags.None,
+        order: number)
     {
         const ignoreChildren = UI.HasFlag(flags, UI.TreeFlags.IgnoreChildren);
         const alwaysAdd = UI.HasFlag(flags, UI.TreeFlags.AlwaysAdd);
@@ -605,13 +607,13 @@ export default class EntityPropertiesBuilder
         });
 
         const shouldAdd = propsToAdd.length > 0 || alwaysAdd;
-        if (!shouldAdd) return;
+        if (!shouldAdd) return false;
 
         const propsFiltered = propsToAdd.filter((property) => {
             return Filtering.filterProperty(filter, property);
         });
 
-        if (propsFiltered.length == 0) return;
+        if (propsFiltered.length == 0) return false;
 
         // TODO: Replace with two maps
         let storedGroup = this.propertyGroupsById.get(name + nameIndex);
@@ -684,7 +686,8 @@ export default class EntityPropertiesBuilder
             let newPropertyGroup = { 
                 title: propertyTree.title,
                 propertyTree: propertyTree.tree,
-                propertyTreeController: propertyTreeController
+                propertyTreeController: propertyTreeController,
+                order: order
             };
     
             this.propertyGroups.push(newPropertyGroup);
@@ -694,6 +697,7 @@ export default class EntityPropertiesBuilder
         // Fill group now that is stored
         {
             let storedGroup = this.propertyGroupsById.get(name + nameIndex);
+            storedGroup.order = order;
 
             for (let i=0; i<propsToAdd.length; ++i)
             {
@@ -703,10 +707,7 @@ export default class EntityPropertiesBuilder
             // Delete all non-visited nodes, mark all visited as non-visited
             storedGroup.propertyTreeController.clearVisited();
 
-            const isAlreadyIn = treeParent.contains(storedGroup.propertyTree.root);
-
-            // TODO: Similarly to property items, this does not respect order when done this way. Fix this
-            if (!isAlreadyIn || this.areOptimizationsEnabled)
+            if (!this.areOptimizationsEnabled)
             {
                 // Add to parent
                 if (shouldPrepend)
@@ -721,11 +722,15 @@ export default class EntityPropertiesBuilder
 
             this.activePropertyGroups.push(storedGroup);
         }
+
+        return true;
     }
 
     buildPropertiesPropertyTrees(propertyTrees: HTMLElement, properties: RECORDING.IProperty[], filter: string, propertiesWithHistory: string[][])
     {
         let groupsWithName = new Map<string, number>();
+
+        let order = 2; // 0 is global data, 1 is basic information
 
         for (let i=0; i<properties.length; ++i)
         {
@@ -748,7 +753,7 @@ export default class EntityPropertiesBuilder
                         currentGroup.value[4].icon = "fingerprint";
 
                     const name = "Basic Information";
-                    this.buildSinglePropertyTreeBlock(propertyTrees, currentGroup, name, increaseNameId(groupsWithName, name), filter, propertiesWithHistory, null, UI.TreeFlags.ShouldPrepend | UI.TreeFlags.CanOpenNewWindow);
+                    this.buildSinglePropertyTreeBlock(propertyTrees, currentGroup, name, increaseNameId(groupsWithName, name), filter, propertiesWithHistory, null, UI.TreeFlags.ShouldPrepend | UI.TreeFlags.CanOpenNewWindow, 1);
 
                     if (currentGroup.value[0])
                         delete currentGroup.value[0].icon;
@@ -765,8 +770,9 @@ export default class EntityPropertiesBuilder
                 {
                     const name = "Uncategorized";
 
-                    this.buildSinglePropertyTreeBlock(propertyTrees, currentGroup, name, increaseNameId(groupsWithName, name), filter, propertiesWithHistory, null, UI.TreeFlags.IgnoreChildren);
-                    
+                    if (this.buildSinglePropertyTreeBlock(propertyTrees, currentGroup, name, increaseNameId(groupsWithName, name), filter, propertiesWithHistory, null, UI.TreeFlags.IgnoreChildren, order))
+                        order++;
+
                     let indices = [];
                     for (let j=0; j<currentGroup.value.length; ++j)
                     {
@@ -784,7 +790,8 @@ export default class EntityPropertiesBuilder
                         if (groupData.type == CorePropertyTypes.Group)
                         {
                             const childGroup = groupData as RECORDING.IPropertyGroup;
-                            this.buildSinglePropertyTreeBlock(propertyTrees, childGroup, childGroup.name, increaseNameId(groupsWithName, childGroup.name), filter, propertiesWithHistory, null, UI.TreeFlags.HasStar | UI.TreeFlags.CanOpenNewWindow);
+                            if (this.buildSinglePropertyTreeBlock(propertyTrees, childGroup, childGroup.name, increaseNameId(groupsWithName, childGroup.name), filter, propertiesWithHistory, null, UI.TreeFlags.HasStar | UI.TreeFlags.CanOpenNewWindow, order))
+                                order++;
                         }
                     }
                 }
@@ -800,7 +807,7 @@ export default class EntityPropertiesBuilder
             const propertyGroup = events[i].properties;
             const name = events[i].name;
 
-            this.buildSinglePropertyTreeBlock(eventTree, propertyGroup, name, increaseNameId(groupsWithName, name), filter, propertiesWithHistory, events[i].tag, UI.TreeFlags.AlwaysAdd | UI.TreeFlags.CanOpenNewWindow);
+            this.buildSinglePropertyTreeBlock(eventTree, propertyGroup, name, increaseNameId(groupsWithName, name), filter, propertiesWithHistory, events[i].tag, UI.TreeFlags.AlwaysAdd | UI.TreeFlags.CanOpenNewWindow, i);
         }
     }
 
@@ -830,7 +837,41 @@ export default class EntityPropertiesBuilder
             id: Number.MAX_SAFE_INTEGER - 1
         };
 
-        this.buildSinglePropertyTreeBlock(propertyTrees, globalDataGroup, "Frame Data", increaseNameId(groupsWithName, "Frame Data"), filter, propertiesWithHistory, null, UI.TreeFlags.ShouldPrepend);
+        this.buildSinglePropertyTreeBlock(propertyTrees, globalDataGroup, "Frame Data", increaseNameId(groupsWithName, "Frame Data"), filter, propertiesWithHistory, null, UI.TreeFlags.ShouldPrepend, 0);
+    }
+
+    arraysEqual(arr1: Element[], arr2: Element[]) {
+        if (arr1.length !== arr2.length) return false;
+        return arr1.every((el: Element, i: number) => el === arr2[i]);
+    }
+
+    ensurePairsCorrectOrder(A: HTMLElement, pairsWithIndices: { B: HTMLElement, C: HTMLElement, index: number }[])
+    {
+        // Sort pairs by index to process them in the right order
+        pairsWithIndices.sort((a, b) => a.index - b.index);
+
+        // Create the desired order of children
+        const correctOrder = [];
+        for (const { B, C } of pairsWithIndices) {
+            correctOrder.push(B, C); // Each pair takes two consecutive positions
+        }
+
+        // Get current children of A as an array
+        const currentChildren = Array.from(A.children);
+
+        // If current order is already correct, do nothing
+        if (this.arraysEqual(currentChildren, correctOrder)) {
+            return;
+        }
+
+        // Perform batch reordering to minimize DOM operations
+        for (const element of correctOrder) {
+            if (A.contains(element)) {
+                A.appendChild(element); // Moves it to the correct position
+            } else {
+                A.appendChild(element); // Inserts it if it's missing
+            }
+        }
     }
 
     buildPropertyTree(entity: RECORDING.IEntity, globalData: PropertyTreeGlobalData, filter: string, propertiesWithHistory: string[][])
@@ -842,21 +883,47 @@ export default class EntityPropertiesBuilder
         const oldActiveGroups = this.activePropertyGroups.slice();
         this.activePropertyGroups = [];
 
+        this.buildGlobalData(propertyTree, globalData, filter, propertiesWithHistory);
+
         if (entity)
         {
             this.buildPropertiesPropertyTrees(propertyTree, entity.properties, filter, propertiesWithHistory);
-            this.buildEventsPropertyTree(eventTree, entity.events, filter, propertiesWithHistory);
-        }
 
-        this.buildGlobalData(propertyTree, globalData, filter, propertiesWithHistory);
+            const propertyGroups = this.activePropertyGroups.slice();
+            let pairsWithIndices: { B: HTMLElement, C: HTMLElement, index: number }[] = [];
+            for (let activeGroup of propertyGroups)
+            {
+                pairsWithIndices.push({
+                    B: activeGroup.title,
+                    C: activeGroup.propertyTree.root,
+                    index: activeGroup.order
+                });
+            }
+            this.ensurePairsCorrectOrder(propertyTree, pairsWithIndices);
+
+            this.buildEventsPropertyTree(eventTree, entity.events, filter, propertiesWithHistory);
+
+            const eventGroups = this.activePropertyGroups.filter((group) => { 
+                return !propertyGroups.find((propGroup) => { return propGroup == group; });
+            });
+            pairsWithIndices = [];
+            for (let activeGroup of eventGroups)
+            {
+                pairsWithIndices.push({
+                    B: activeGroup.title,
+                    C: activeGroup.propertyTree.root,
+                    index: activeGroup.order
+                });
+            }
+            this.ensurePairsCorrectOrder(eventTree, pairsWithIndices);
+        }
 
         for (let oldActiveGroup of oldActiveGroups)
         {
             const found = this.activePropertyGroups.find((group) => { return oldActiveGroup == group; });
             if (!found)
             {
-                const header = oldActiveGroup.propertyTree.root.previousSibling;
-                header.remove();
+                oldActiveGroup.title.remove();
                 oldActiveGroup.propertyTree.root.remove();
             }
         }
