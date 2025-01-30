@@ -703,14 +703,20 @@ export default class EntityPropertiesBuilder
             // Delete all non-visited nodes, mark all visited as non-visited
             storedGroup.propertyTreeController.clearVisited();
 
-            // Add to parent
-            if (shouldPrepend)
+            const isAlreadyIn = treeParent.contains(storedGroup.propertyTree.root);
+
+            // TODO: Similarly to property items, this does not respect order when done this way. Fix this
+            if (!isAlreadyIn || this.areOptimizationsEnabled)
             {
-                treeParent.prepend(storedGroup.title, storedGroup.propertyTree.root);
-            }
-            else
-            {
-                treeParent.append(storedGroup.title, storedGroup.propertyTree.root);
+                // Add to parent
+                if (shouldPrepend)
+                {
+                    treeParent.prepend(storedGroup.title, storedGroup.propertyTree.root);
+                }
+                else
+                {
+                    treeParent.append(storedGroup.title, storedGroup.propertyTree.root);
+                }
             }
 
             this.activePropertyGroups.push(storedGroup);
