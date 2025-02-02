@@ -85,7 +85,7 @@ export function createDefaultSettings() : ISettings
         showComments: true,
         /* Debug */
         showRenderDebug: false,
-        optimizePropertyTreeUpdates: true,
+        optimizePropertyTreeUpdates: false,
         showProperyTreeUpdates: false,
         /* Graphics */
         antialiasingSamples: 4,

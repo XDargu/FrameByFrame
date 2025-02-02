@@ -458,7 +458,7 @@ You can use the following formatting options:
         {
             let group = SettingsBuilder.createGroup("Debug");
             SettingsBuilder.addBooleanSetting(group, "Show render debug info", settings.showRenderDebug, (value) => {settings.showRenderDebug = value; this.onSettingsChanged(); })
-            SettingsBuilder.addBooleanSetting(group, "Optimize property tree updates", settings.optimizePropertyTreeUpdates, (value) => {settings.optimizePropertyTreeUpdates = value; this.onSettingsChanged(); })
+            SettingsBuilder.addBooleanSetting(group, "Experimental: Optimize property tree updates", settings.optimizePropertyTreeUpdates, (value) => {settings.optimizePropertyTreeUpdates = value; this.onSettingsChanged(); })
             SettingsBuilder.addBooleanSetting(group, "Show property tree updates", settings.showProperyTreeUpdates, (value) => {settings.showProperyTreeUpdates = value; this.onSettingsChanged(); })
             this.settingsList.appendChild(group.fragment);
 
