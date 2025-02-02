@@ -1186,6 +1186,9 @@ export class PropertyTreeController {
             this.elementsPerPath.set(propertyPathStr, addedItem);
             this.visitedElements.set(addedItem, { visited: true, path: propertyPathStr });
 
+            if (addedItem == itemWithPath)
+                this.propertyTree.setItem(addedItem, treeItemOptions);
+
             if (displayUpdates)
             {
                 const isNew = itemWithPath == null;
