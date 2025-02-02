@@ -912,7 +912,7 @@ export class PropertyTreeController {
         }
     }
 
-    addToPropertyTree(parent: HTMLElement, property: RECORDING.IProperty, filter: string, propertiesWithHistory: string[][], parentMatchedName: boolean, optimizeUpdates: boolean, displayUpdates: boolean)
+    addToPropertyTree(parent: HTMLElement, property: RECORDING.IProperty, filter: string, propertiesWithHistory: string[][], parentMatchedName: boolean, optimizeUpdates: boolean, displayUpdates: boolean) : HTMLElement
     {
         const treeItemOptions : TREE.ITreeItemOptions = {
             text: property.name,
@@ -957,9 +957,23 @@ export class PropertyTreeController {
             else
                 addedItem = this.addGroup(parent, propertyGroup, treeItemOptions);
 
+            let sortedElements: HTMLElement[] = [];
+
             for (let i = 0; i < propertyGroup.value.length; ++i)
             {
-                this.addToPropertyTree(addedItem, propertyGroup.value[i], filter, propertiesWithHistory, parentMatchedName || Filtering.filterPropertyName(filter, property), optimizeUpdates, displayUpdates);
+                const child = this.addToPropertyTree(addedItem, propertyGroup.value[i], filter, propertiesWithHistory, parentMatchedName || Filtering.filterPropertyName(filter, property), optimizeUpdates, displayUpdates);
+
+                if (child)
+                {
+                    sortedElements.push(child);
+                }
+            }
+
+            // Sort created groups
+            if (optimizeUpdates)
+            {
+                let targetList = addedItem.querySelector("ul");
+                DOMUtils.ensureElementsCorrectOrder(targetList, sortedElements);
             }
         }
         // Find type
@@ -1207,6 +1221,8 @@ export class PropertyTreeController {
         }
 
         this.highlightSearch(property, filter);
+
+        return addedItem;
     }
 
     highlightSearch(property: RECORDING.IProperty, filter: string)

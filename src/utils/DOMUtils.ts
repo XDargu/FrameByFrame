@@ -84,3 +84,58 @@ export function FindFirstVisibleTree(el: HTMLElement)
 
     return null;
 }
+
+function arraysEqual(arr1: Element[], arr2: Element[])
+{
+    if (arr1.length !== arr2.length) return false;
+    return arr1.every((el: Element, i: number) => el === arr2[i]);
+}
+
+export function ensurePairsCorrectOrder(parent: HTMLElement, pairsWithIndices: { first: HTMLElement, second: HTMLElement, index: number }[])
+{
+    // Sort pairs by index to process them in the right order
+    pairsWithIndices.sort((a, b) => a.index - b.index);
+
+    // Create the desired order of children
+    const correctOrder = [];
+    for (const { first, second } of pairsWithIndices) {
+        correctOrder.push(first, second); // Each pair takes two consecutive positions
+    }
+
+    // Get current children of A as an array
+    const currentChildren = Array.from(parent.children);
+
+    // If current order is already correct, do nothing
+    if (arraysEqual(currentChildren, correctOrder)) {
+        return;
+    }
+
+    // Perform batch reordering to minimize DOM operations
+    for (const element of correctOrder) {
+        if (parent.contains(element)) {
+            parent.appendChild(element); // Moves it to the correct position
+        } else {
+            parent.appendChild(element); // Inserts it if it's missing
+        }
+    }
+}
+
+export function ensureElementsCorrectOrder(parent: HTMLElement, elements: HTMLElement[])
+{
+    // Get current children of A as an array
+    const currentChildren = Array.from(parent.children);
+
+    // If current order is already correct, do nothing
+    if (arraysEqual(currentChildren, elements)) {
+        return;
+    }
+
+    // Perform batch reordering to minimize DOM operations
+    for (const element of elements) {
+        if (parent.contains(element)) {
+            parent.appendChild(element); // Moves it to the correct position
+        } else {
+            parent.appendChild(element); // Inserts it if it's missing
+        }
+    }
+}
