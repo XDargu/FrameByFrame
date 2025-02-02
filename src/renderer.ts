@@ -591,7 +591,8 @@ export default class Renderer {
             document.getElementById("settings-search") as HTMLInputElement,
             this.onSettingsChanged.bind(this),
             () => { this.sceneController.purgePools(); },
-            () => { this.sceneController.restoreContext(); }
+            () => { this.sceneController.restoreContext(); },
+            () => { global.gc(); }
         );
 
         // Create info
