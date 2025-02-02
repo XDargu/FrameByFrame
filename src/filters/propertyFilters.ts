@@ -55,7 +55,7 @@ export namespace Filtering
     export function filterProperty(filter: string, property: RECORDING.IProperty, recursive: boolean = true)
     {
         if (filter == "") return true;
-        if (filterPropertyName(filter, property)) return true;
+        if (property.name && filterPropertyName(filter, property)) return true;
 
         const Type = TypeSystem.CorePropertyTypes;
         switch (property.type) {
