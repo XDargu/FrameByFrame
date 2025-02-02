@@ -485,8 +485,8 @@ export class PropertyTreeController {
     getPropertyGroup(listItem: HTMLElement) : HTMLElement
     {
         // Test to improve speed
-        const content = listItem.children[0].children[1];
-        if (content.children[0].nodeName == "I") // Icon first
+        const content = listItem.firstElementChild.children[1];
+        if (content.firstElementChild.tagName === "I") // Icon first
             return content.children[2] as HTMLElement;
         return content.children[1] as HTMLElement;
     }
@@ -1211,6 +1211,7 @@ export class PropertyTreeController {
         if (filter != "" && Filtering.filterProperty(filter, property, false))
         {
             const item = this.propertyTree.getItemWithValue(property.id+"") as HTMLElement;
+            if (!item) return;
             const wrapper = item.querySelector(".basico-tree-item-wrapper") as HTMLElement;
             const itemToQuery = RECORDING.isPropertyShape(property) ? item : wrapper;
             const candidates = itemToQuery.querySelectorAll(".property-table-row, .property-table-title, .property-name, .property-primitive, .basico-tree-item-content");
