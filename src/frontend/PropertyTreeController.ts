@@ -109,10 +109,15 @@ namespace UI
     export function wrapPropertyIcon(icon: string, color: string = null): HTMLElement
     {
         let wrapper = document.createElement("i");
-        wrapper.className = "prop-icon fas fa-" + icon;
+        return setPropertyIcon(wrapper, icon, color);
+    }
+
+    export function setPropertyIcon(iconElem: HTMLElement, icon: string, color: string = null): HTMLElement
+    {
+        iconElem.className = "prop-icon fas fa-" + icon;
         if (color)
-            wrapper.style.color = color;
-        return wrapper;
+            iconElem.style.color = color;
+        return iconElem;
     }
 
     export function getLayoutOfPrimitiveType(value: any, primitiveType: TypeSystem.EPrimitiveType)
@@ -482,6 +487,21 @@ export class PropertyTreeController {
         this.visitedElements = new Map<HTMLElement, ElementData>();
     }
 
+    getPropertyContent(listItem: HTMLElement) : HTMLElement
+    {
+        // Test to improve speed
+        return listItem.firstElementChild.children[1] as HTMLElement;
+    }
+
+    getPropertyIcon(listItem: HTMLElement) : HTMLElement
+    {
+        // Test to improve speed
+        const content = listItem.firstElementChild.children[1];
+        if (content.firstElementChild && content.firstElementChild.tagName === "I") // Icon first
+            return content.firstElementChild as HTMLElement;
+        return null;
+    }
+
     getPropertyGroup(listItem: HTMLElement) : HTMLElement
     {
         // Test to improve speed
@@ -557,7 +577,7 @@ export class PropertyTreeController {
 
     setCustomType(listItem: HTMLElement, property: RECORDING.IProperty, type: TypeSystem.IType, icon: string)
     {
-        // TODO: Icon
+        this.setPropertyIcon(listItem, property);
         const content = this.getPropertyGroup(listItem);
 
         let index = 0;
@@ -729,9 +749,9 @@ export class PropertyTreeController {
         return this.addValueToPropertyTree(parent, name, content, propertyId, icon);
     }
 
-    setVec3(listItem: HTMLElement, value: RECORDING.IVec3)
+    setVec3(listItem: HTMLElement, value: RECORDING.IVec3, icon: string)
     {
-        // TODO Icon
+        this.setIcon(listItem, icon);
         const content = this.getPropertyGroup(listItem);
 
         UI.setPrimitiveType(content.children[0] as HTMLElement, value.x, TypeSystem.EPrimitiveType.Number);
@@ -753,9 +773,9 @@ export class PropertyTreeController {
         return this.addValueToPropertyTree(parent, name, content, propertyId, icon);
     }
 
-    setColor(listItem: HTMLElement, value: RECORDING.IColor)
+    setColor(listItem: HTMLElement, value: RECORDING.IColor, icon: string)
     {
-        // TODO Icon
+        this.setIcon(listItem, icon);
         
         const content = this.getPropertyGroup(listItem);
 
@@ -773,10 +793,9 @@ export class PropertyTreeController {
         return this.addValueToPropertyTree(parent, name, [content], propertyId, icon);
     }
 
-    setNumber(listItem: HTMLElement, value: number)
+    setNumber(listItem: HTMLElement, value: number, icon: string)
     {
-        // TODO Icon
-
+        this.setIcon(listItem, icon);
         const content = this.getPropertyGroup(listItem);
 
         UI.setPrimitiveType(content, value, TypeSystem.EPrimitiveType.Number);
@@ -849,13 +868,36 @@ export class PropertyTreeController {
 
     setPrimitiveType(listItem: HTMLElement, property: RECORDING.IProperty, primitiveType: TypeSystem.EPrimitiveType, treeItemOptions: TREE.ITreeItemOptions)
     {
-        // TODO: Icon
-
-        const content = this.getPropertyGroup(listItem);
-        UI.setPrimitiveType(content, property.value, primitiveType);
+        this.setPropertyIcon(listItem, property);
+        const group = this.getPropertyGroup(listItem);
+        UI.setPrimitiveType(group, property.value, primitiveType);
         this.propertyTree.setItem(listItem, treeItemOptions);
 
         return listItem;
+    }
+
+    setPropertyIcon(listItem: HTMLElement, property: RECORDING.IProperty)
+    {
+        this.setIcon(listItem, property.icon, property.icolor);
+    }
+
+    setIcon(listItem: HTMLElement, icon: string, color: string = null)
+    {
+        const content = this.getPropertyContent(listItem);
+        const iconElem = this.getPropertyIcon(listItem);
+
+        if (icon)
+        {
+            if (iconElem)
+                UI.setPropertyIcon(iconElem, icon, color);
+            else
+                content.prepend(UI.wrapPropertyIcon(icon, color));
+        }
+        else
+        {
+            if (iconElem)
+                iconElem.remove();
+        }
     }
 
     addGroup(parent: HTMLElement, property: RECORDING.IPropertyGroup, treeItemOptions: TREE.ITreeItemOptions)
@@ -866,9 +908,9 @@ export class PropertyTreeController {
         return addedItem;
     }
 
-    setGroup(listItem: HTMLElement, treeItemOptions: TREE.ITreeItemOptions)
+    setGroup(listItem: HTMLElement, property: RECORDING.IPropertyGroup, treeItemOptions: TREE.ITreeItemOptions)
     {
-        // TODO: Icon
+        this.setPropertyIcon(listItem, property)
         this.propertyTree.setItem(listItem, treeItemOptions);
         return listItem;
     }
@@ -953,7 +995,7 @@ export class PropertyTreeController {
             const propertyGroup = property as RECORDING.IPropertyGroup;
             
             if (itemWithPath)
-                addedItem = this.setGroup(itemWithPath, treeItemOptions);
+                addedItem = this.setGroup(itemWithPath, propertyGroup, treeItemOptions);
             else
                 addedItem = this.addGroup(parent, propertyGroup, treeItemOptions);
 
@@ -1036,11 +1078,11 @@ export class PropertyTreeController {
                             {
                                 addedItem = itemWithPath;
                                 const ul = itemWithPath.children[1];
-                                // TODO: Icon
-                                this.setVec3(ul.children[0] as HTMLElement, capsule.position);
-                                this.setVec3(ul.children[1] as HTMLElement, capsule.direction);
-                                this.setNumber(ul.children[2] as HTMLElement, capsule.radius);
-                                this.setNumber(ul.children[3] as HTMLElement, capsule.height);
+                                this.setPropertyIcon(itemWithPath, property);
+                                this.setVec3(ul.children[0] as HTMLElement, capsule.position, "map-marker");
+                                this.setVec3(ul.children[1] as HTMLElement, capsule.direction, "location-arrow");
+                                this.setNumber(ul.children[2] as HTMLElement, capsule.radius, "arrows-alt-h");
+                                this.setNumber(ul.children[3] as HTMLElement, capsule.height, "arrows-alt-v");
                                 // TODO: Optional resource
                             }
                             else
@@ -1097,9 +1139,9 @@ export class PropertyTreeController {
                             {
                                 addedItem = itemWithPath;
                                 const ul = itemWithPath.children[1];
-                                // TODO: Icon
-                                this.setVec3(ul.children[0] as HTMLElement, line.origin);
-                                this.setVec3(ul.children[1] as HTMLElement, line.destination);
+                                this.setPropertyIcon(itemWithPath, property);
+                                this.setVec3(ul.children[0] as HTMLElement, line.origin, "map-marker-alt");
+                                this.setVec3(ul.children[1] as HTMLElement, line.destination, "flag-checkered");
                             }
                             else
                             {
@@ -1126,8 +1168,8 @@ export class PropertyTreeController {
                             {
                                 addedItem = itemWithPath;
                                 const ul = itemWithPath.children[1];
-                                // TODO: Icon
-                                this.setVec3(ul.children[0] as HTMLElement, vector.vector);
+                                this.setPropertyIcon(itemWithPath, property);
+                                this.setVec3(ul.children[0] as HTMLElement, vector.vector, "location-arrow");
                             }
                             else
                             {
