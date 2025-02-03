@@ -904,6 +904,8 @@ export class PropertyTreeController {
         if (filter != "" && Filtering.filterProperty(filter, property, false))
         {
             const item = this.propertyTree.getItemWithValue(property.id+"") as HTMLElement;
+            if (!item) return;
+            
             const wrapper = item.querySelector(".basico-tree-item-wrapper") as HTMLElement;
             const itemToQuery = RECORDING.isPropertyShape(property) ? item : wrapper;
             const candidates = itemToQuery.querySelectorAll(".property-table-row, .property-table-title, .property-name, .property-primitive, .basico-tree-item-content");
