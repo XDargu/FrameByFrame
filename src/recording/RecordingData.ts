@@ -33,6 +33,7 @@ export function isPropertyShape(property: IProperty)
         property.type == Type.AABB ||
         property.type == Type.OOBB ||
         property.type == Type.Capsule ||
+		property.type == Type.Cylinder ||
         property.type == Type.Mesh ||
 		property.type == Type.Path ||
 		property.type == Type.Triangle;
@@ -44,6 +45,7 @@ export function isPropertyTextured(property: IProperty)
     return property.type == Type.Sphere || 
         property.type == Type.Plane ||
         property.type == Type.AABB ||
+        property.type == Type.Cylinder ||
         property.type == Type.OOBB ||
         property.type == Type.Capsule ||
         property.type == Type.Mesh ||
@@ -147,6 +149,15 @@ export interface IPropertyCapsule extends IProperyShape {
     texture?: string;
 }
 
+export interface IPropertyCylinder extends IProperyShape {
+	position: IVec3;
+	direction: IVec3;
+	radius: number;
+	height: number;
+	value: string;
+    texture?: string;
+}
+
 export interface IPropertyAABB extends IProperyShape {
 	position: IVec3;
 	size: IVec3;
@@ -211,7 +222,7 @@ export interface IPropertyTriangle extends IProperyShape {
     texture?: string;
 }
 
-export type IPropertyTextured = IPropertySphere | IPropertyAABB | IPropertyOOBB | IPropertyCapsule | IPropertyMesh | IPropertyTriangle;
+export type IPropertyTextured = IPropertySphere | IPropertyAABB | IPropertyOOBB | IPropertyCapsule | IPropertyCylinder | IPropertyMesh | IPropertyTriangle;
 
 export interface IPropertyGroup {
 	type: string;

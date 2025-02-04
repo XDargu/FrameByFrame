@@ -138,6 +138,25 @@ export class CapsulePool extends MeshPool
     }
 }
 
+export class CylinderPool extends MeshPool
+{
+    constructor(scene: BABYLON.Scene)
+    {
+        super(scene);
+    }
+
+    getCylinder(height: number, radius: number): BABYLON.Mesh
+    {
+        const hash: string = height.toFixed(3).toString() + radius.toFixed(3).toString();
+        return this.findMesh(hash, {radius: radius, height: height});
+    }
+
+    protected buildMesh(hash: string, args: any) : BABYLON.Mesh
+    {
+        return BABYLON.Mesh.CreateCylinder(hash, args.height, args.radius * 2, args.radius * 2, 12, 2, this.scene);
+    }
+}
+
 export class SpherePool extends MeshPool
 {
     constructor(scene: BABYLON.Scene)

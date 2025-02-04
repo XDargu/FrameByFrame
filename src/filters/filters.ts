@@ -150,6 +150,16 @@ export function createMemberFilterFromProperty(property: RECORDING.IProperty, su
                 ...createMemberFilterOfType(CorePropertyTypes.Number, "Height", capsule.height)
             ];
         }
+        case CorePropertyTypes.Cylinder:
+        {
+            const cylinder = property as RECORDING.IPropertyCylinder;
+            return [
+                ...createMemberFilterOfType(CorePropertyTypes.Vec3, "Position", cylinder.position),
+                ...createMemberFilterOfType(CorePropertyTypes.Vec3, "Direction", cylinder.direction),
+                ...createMemberFilterOfType(CorePropertyTypes.Number, "Radius", cylinder.radius),
+                ...createMemberFilterOfType(CorePropertyTypes.Number, "Height", cylinder.height)
+            ];
+        }
         case CorePropertyTypes.AABB:
         {
             const aabb = property as RECORDING.IPropertyAABB;
@@ -492,6 +502,13 @@ export namespace Common {
             filterVec3("direction", property.direction, filters);
     }
 
+    export function filterPropertyCylinder(property: RECORDING.IPropertyCylinder, filters: MemberFilter[]): boolean {
+        return filterNumber("radius", property.radius, filters) ||
+            filterNumber("height", property.height, filters) ||
+            filterVec3("position", property.position, filters) ||
+            filterVec3("direction", property.direction, filters);
+    }
+
     export function filterPropertyMesh(property: RECORDING.IPropertyMesh, filters: MemberFilter[]): boolean {
         return false;
     }
@@ -526,6 +543,7 @@ export namespace Common {
             case Type.AABB: return filterPropertyAABB(property as RECORDING.IPropertyAABB, filters) ? property : null;
             case Type.OOBB: return filterPropertyOOBB(property as RECORDING.IPropertyOOBB, filters) ? property : null;
             case Type.Capsule: return filterPropertyCapsule(property as RECORDING.IPropertyCapsule, filters) ? property : null;
+            case Type.Cylinder: return filterPropertyCylinder(property as RECORDING.IPropertyCylinder, filters) ? property : null;
             case Type.Mesh: return filterPropertyMesh(property as RECORDING.IPropertyMesh, filters) ? property : null;
             case Type.Vec2: return filterPropertyVec2(property, filters) ? property : null;
             case Type.Vec3: return filterPropertyVec3(property, filters) ? property : null;

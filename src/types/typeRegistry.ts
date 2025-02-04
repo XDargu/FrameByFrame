@@ -22,6 +22,7 @@ export enum CorePropertyTypes {
 	/* Shapes */
 	Sphere = "sphere",
 	Capsule = "capsule",
+    Cylinder = "cylinder",
 	AABB = "aabb",
 	OOBB = "oobb",
 	Plane = "plane",
@@ -30,7 +31,7 @@ export enum CorePropertyTypes {
     Vector = "vector",
 	Mesh = "mesh",
 	Path = "path",
-	Triangle = "triangle"
+	Triangle = "triangle",
 }
 
 export interface ITypeLayout

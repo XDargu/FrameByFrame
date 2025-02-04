@@ -1096,6 +1096,32 @@ export class PropertyTreeController {
                             }
                             break;
                         }
+                        case TypeSystem.CorePropertyTypes.Cylinder:
+                        {
+                            const cylinder = property as RECORDING.IPropertyCylinder;
+
+                            if (itemWithPath)
+                            {
+                                addedItem = itemWithPath;
+                                const ul = itemWithPath.children[1];
+                                this.setPropertyIcon(itemWithPath, property);
+                                this.setVec3(ul.children[0] as HTMLElement, cylinder.position, "map-marker");
+                                this.setVec3(ul.children[1] as HTMLElement, cylinder.direction, "location-arrow");
+                                this.setNumber(ul.children[2] as HTMLElement, cylinder.radius, "arrows-alt-h");
+                                this.setNumber(ul.children[3] as HTMLElement, cylinder.height, "arrows-alt-v");
+                                // TODO: Optional resource
+                            }
+                            else
+                            {
+                                addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
+                                this.addVec3(addedItem, "Position", cylinder.position, "map-marker", property.id);
+                                this.addVec3(addedItem, "Direction", cylinder.direction, "location-arrow", property.id);
+                                this.addNumber(addedItem, "Radius", cylinder.radius, "arrows-alt-h", property.id);
+                                this.addNumber(addedItem, "Height", cylinder.height, "arrows-alt-v", property.id);
+                                this.addOptionalResource(addedItem, "Texture", cylinder.texture, "image", property.id, this.callbacks.onOpenResource);
+                            }
+                            break;
+                        }
                         case TypeSystem.CorePropertyTypes.AABB:
                         {
                             const aabb = property as RECORDING.IPropertyAABB;

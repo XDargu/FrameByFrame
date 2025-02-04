@@ -47,6 +47,7 @@ interface ICameraChangedCallback
 const shapeBuildConfig : IPropertyBuilderConfig  = {
     [CorePropertyTypes.Sphere]: { builder: ShapeBuilders.buildSphereShape, pickable: true},
     [CorePropertyTypes.Capsule]: { builder: ShapeBuilders.buildCapsuleShape, pickable: true},
+    [CorePropertyTypes.Cylinder]: { builder: ShapeBuilders.buildCylinderShape, pickable: true},
     [CorePropertyTypes.AABB]: { builder: ShapeBuilders.buildAABBShape, pickable: true},
     [CorePropertyTypes.OOBB]: { builder: ShapeBuilders.buildOOBBShape, pickable: true},
     [CorePropertyTypes.Plane]: { builder: ShapeBuilders.buildPlaneShape, pickable: true},
