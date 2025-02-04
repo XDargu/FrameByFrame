@@ -58,8 +58,8 @@ namespace UI
         switch (primitiveType) {
             case TypeSystem.EPrimitiveType.Number:
                 {
-                    // TODO: Either check type here, or validate incomming data so this is always valid data
-                    return ((+value).toFixed(2)).toString();
+                    // This converts anything to a number or a NaN, limits decimal places to 2 and removes trailing zeroes
+                    return (+(+value).toFixed(2)).toString();
                 }
             case TypeSystem.EPrimitiveType.String:
                 {

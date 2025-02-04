@@ -1,6 +1,6 @@
 export enum EPrimitiveType
 {
-    Number,
+    Number = 1,
     String,
     Boolean
 }
