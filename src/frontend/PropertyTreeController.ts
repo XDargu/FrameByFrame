@@ -72,6 +72,14 @@ namespace UI
         }
     }
 
+    export function setPrimitiveType(element: HTMLElement, value: any, primitiveType: TypeSystem.EPrimitiveType)
+    {
+        const valueAsString = primitiveType != null ? UI.getPrimitiveTypeAsString(value, primitiveType) : value as string;
+
+        // We know the first child is the text
+        (element.childNodes[0]).textContent = valueAsString;
+    }
+
     export function wrapPrimitiveType(content: string): HTMLElement
     {
         let wrapper = document.createElement("div");
@@ -101,10 +109,15 @@ namespace UI
     export function wrapPropertyIcon(icon: string, color: string = null): HTMLElement
     {
         let wrapper = document.createElement("i");
-        wrapper.className = "prop-icon fas fa-" + icon;
+        return setPropertyIcon(wrapper, icon, color);
+    }
+
+    export function setPropertyIcon(iconElem: HTMLElement, icon: string, color: string = null): HTMLElement
+    {
+        iconElem.className = "prop-icon fas fa-" + icon;
         if (color)
-            wrapper.style.color = color;
-        return wrapper;
+            iconElem.style.color = color;
+        return iconElem;
     }
 
     export function getLayoutOfPrimitiveType(value: any, primitiveType: TypeSystem.EPrimitiveType)
@@ -451,16 +464,65 @@ namespace UI
     }
 }
 
+interface ElementData
+{
+    visited: boolean;
+    path: string;
+}
+
 export class PropertyTreeController {
     propertyTree: TREE.TreeControl;
     typeRegistry: TypeSystem.TypeRegistry;
 
     callbacks: PropertyTreeControllerCallbacks;
 
+    elementsPerPath: Map<string, HTMLElement>;
+    visitedElements: Map<HTMLElement, ElementData>;
+
     constructor(propertyTree: TREE.TreeControl, callbacks: PropertyTreeControllerCallbacks) {
         this.propertyTree = propertyTree;
         this.typeRegistry = TypeSystem.TypeRegistry.getInstance();
         this.callbacks = callbacks;
+        this.elementsPerPath = new Map<string, HTMLElement>();
+        this.visitedElements = new Map<HTMLElement, ElementData>();
+    }
+
+    getPropertyContent(listItem: HTMLElement) : HTMLElement
+    {
+        // Test to improve speed
+        return listItem.firstElementChild.children[1] as HTMLElement;
+    }
+
+    getPropertyIcon(listItem: HTMLElement) : HTMLElement
+    {
+        // Test to improve speed
+        const content = listItem.firstElementChild.children[1];
+        if (content.firstElementChild && content.firstElementChild.tagName === "I") // Icon first
+            return content.firstElementChild as HTMLElement;
+        return null;
+    }
+
+    getPropertyGroup(listItem: HTMLElement) : HTMLElement
+    {
+        // Test to improve speed
+        const content = listItem.firstElementChild.children[1];
+        if (content.firstElementChild.tagName === "I") // Icon first
+            return content.children[2] as HTMLElement;
+        return content.children[1] as HTMLElement;
+    }
+
+    getPropertyName(listItem: HTMLElement) : HTMLElement
+    {
+        return listItem.querySelector('.property-name');
+    }
+
+    getPropertyTable(listItem: HTMLElement) : HTMLElement
+    {
+        // Test to improve speed
+        const content = listItem.children[0].children[1];
+        if (content.children[0].nodeName == "I") // Icon first
+            return content.children[1] as HTMLElement;
+        return content.children[0] as HTMLElement;
     }
 
     addValueToPropertyTree(parent: HTMLElement, name: string, content: HTMLElement[], propertyId: number, icon: string, iconColor: string = null)
@@ -471,7 +533,7 @@ export class PropertyTreeController {
         elements.push(UI.wrapPropertyName(name));
         elements.push(UI.wrapPropertyGroup(content));
 
-        const listItem = this.propertyTree.addItem(parent, elements, {
+        return this.propertyTree.addItem(parent, elements, {
             value:  propertyId == null ? null : propertyId.toString(),
             selectable: false,
             callbacks: {
@@ -486,7 +548,7 @@ export class PropertyTreeController {
     addTabletoPropertyTree(parent: HTMLElement, name: string, table: HTMLElement, propertyId: number)
     {
         const elements = [table];
-        const listItem = this.propertyTree.addItem(parent, elements, {
+        return this.propertyTree.addItem(parent, elements, {
             value:  propertyId == null ? null : propertyId.toString(),
             selectable: false,
             noHover: true,
@@ -510,7 +572,26 @@ export class PropertyTreeController {
             }
         }
 
-        this.addValueToPropertyTree(parent, property.name, content, property.id, icon);
+        return this.addValueToPropertyTree(parent, property.name, content, property.id, icon);
+    }
+
+    setCustomType(listItem: HTMLElement, property: RECORDING.IProperty, type: TypeSystem.IType, icon: string)
+    {
+        this.setPropertyIcon(listItem, property);
+        const content = this.getPropertyGroup(listItem);
+
+        let index = 0;
+        for (const [layoutId, primitiveType] of Object.entries(type.layout))
+        {
+            const customTypeValue = property.value as RECORDING.IPropertyCustomType;
+            const value = customTypeValue[layoutId];
+            if (value != undefined) {
+                UI.setPrimitiveType(content.children[index] as HTMLElement, value, primitiveType);
+                ++index;
+            }
+        }
+
+        return listItem;
     }
 
     addEntityRef(parent: HTMLElement, name: string, value: RECORDING.IEntityRef, icon: string, propertyId: number)
@@ -521,7 +602,34 @@ export class PropertyTreeController {
             UI.createGoToEntityButton(value.id, this.callbacks.onGoToEntity, this.callbacks.isEntityInFrame(value.id))
         ];
 
-        this.addValueToPropertyTree(parent, name, content, propertyId, icon);
+        return this.addValueToPropertyTree(parent, name, content, propertyId, icon);
+    }
+
+    addComment(parent: HTMLElement, property: RECORDING.IProperty)
+    {
+        const iconContent = property.icon ? [UI.wrapPropertyIcon(property.icon, property.icolor)] : [];
+
+        let comment = document.createElement("div");
+        comment.classList.add("property-comment");
+        if (iconContent[0])
+        {
+            comment.append(iconContent[0]);
+            if (property.icolor)
+            {
+                comment.style.border = "1px solid " + property.icolor;
+                // Add DOM element with background
+                const background = document.createElement("div");
+                background.classList.add("property-comment-overlay");
+                background.style.backgroundColor = property.icolor;
+                comment.prepend(background);
+            }
+        }
+        comment.insertAdjacentText("beforeend", property.value as string);
+
+        return this.propertyTree.addItem(parent, [comment], {
+            value:  property.id.toString(),
+            selectable: false,
+        });
     }
 
     addLineChart(parent: HTMLElement, name: string, value: RECORDING.IPropertyLineChart, icon: string, propertyId: number)
@@ -533,7 +641,54 @@ export class PropertyTreeController {
         else
             content = [UI.createLineChart(value, height)];
 
-        this.addValueToPropertyTree(parent, name, content, propertyId, icon);
+        return this.addValueToPropertyTree(parent, name, content, propertyId, icon);
+    }
+
+    isTableSameLength(listItem: HTMLElement, value: RECORDING.IPropertyTable)
+    {
+        const tableWrapper = this.getPropertyTable(listItem);
+        const content = tableWrapper.children[1];
+
+        return content.children.length == value.header.length + value.rows.length;
+    }
+
+    setTable(listItem: HTMLElement, name: string, value: RECORDING.IPropertyTable, propertyId: number, filter: string)
+    {
+        const tableWrapper = this.getPropertyTable(listItem);
+        const title = tableWrapper.children[0];
+        title.textContent = name;
+
+        const content = tableWrapper.children[1];
+
+        let currentIdx = 0;
+        // TODO: What happens if the columns are different?
+        // What happens if there is no header?
+        for (let item of value.header)
+        {
+            const headerElement = content.children[currentIdx];
+            currentIdx++;
+            headerElement.textContent = item;
+        }
+
+        const hasFilter = filter != "";
+        for (let i=0; i<value.rows.length; ++i)
+        {
+            const row = value.rows[i];
+            const rowElement = content.children[currentIdx];
+            currentIdx++;
+
+            if (!hasFilter || Filtering.filterTableRow(filter, row))
+            {
+                let rowIdx = 0;
+                for (let item of row)
+                {
+                    rowElement.children[rowIdx].textContent = item;
+                    rowIdx++;
+                }
+            }
+        }
+
+        return listItem;
     }
 
     addTable(parent: HTMLElement, name: string, value: RECORDING.IPropertyTable, propertyId: number, filter: string)
@@ -580,7 +735,7 @@ export class PropertyTreeController {
 
         gridContainerWrapper.append(gridTitle, gridContainer);
 
-        this.addTabletoPropertyTree(parent, name, gridContainerWrapper, propertyId);
+        return this.addTabletoPropertyTree(parent, name, gridContainerWrapper, propertyId);
     }
 
     addVec3(parent: HTMLElement, name: string, value: RECORDING.IVec3, icon: string, propertyId: number)
@@ -591,7 +746,19 @@ export class PropertyTreeController {
             UI.getLayoutOfPrimitiveType(value.z, TypeSystem.EPrimitiveType.Number)
         ];
 
-        this.addValueToPropertyTree(parent, name, content, propertyId, icon);
+        return this.addValueToPropertyTree(parent, name, content, propertyId, icon);
+    }
+
+    setVec3(listItem: HTMLElement, value: RECORDING.IVec3, icon: string)
+    {
+        this.setIcon(listItem, icon);
+        const content = this.getPropertyGroup(listItem);
+
+        UI.setPrimitiveType(content.children[0] as HTMLElement, value.x, TypeSystem.EPrimitiveType.Number);
+        UI.setPrimitiveType(content.children[1] as HTMLElement, value.y, TypeSystem.EPrimitiveType.Number);
+        UI.setPrimitiveType(content.children[2] as HTMLElement, value.z, TypeSystem.EPrimitiveType.Number);
+
+        return listItem;
     }
 
     addColor(parent: HTMLElement, name: string, value: RECORDING.IColor, icon: string, propertyId: number)
@@ -603,13 +770,37 @@ export class PropertyTreeController {
             UI.getLayoutOfPrimitiveType(value.a, TypeSystem.EPrimitiveType.Number)
         ];
 
-        this.addValueToPropertyTree(parent, name, content, propertyId, icon);
+        return this.addValueToPropertyTree(parent, name, content, propertyId, icon);
+    }
+
+    setColor(listItem: HTMLElement, value: RECORDING.IColor, icon: string)
+    {
+        this.setIcon(listItem, icon);
+        
+        const content = this.getPropertyGroup(listItem);
+
+        UI.setPrimitiveType(content.children[0] as HTMLElement, value.r, TypeSystem.EPrimitiveType.Number);
+        UI.setPrimitiveType(content.children[1] as HTMLElement, value.g, TypeSystem.EPrimitiveType.Number);
+        UI.setPrimitiveType(content.children[2] as HTMLElement, value.b, TypeSystem.EPrimitiveType.Number);
+        UI.setPrimitiveType(content.children[3] as HTMLElement, value.a, TypeSystem.EPrimitiveType.Number);
+
+        return listItem;
     }
 
     addNumber(parent: HTMLElement, name: string, value: number, icon: string, propertyId: number)
     {
         const content = UI.getLayoutOfPrimitiveType(value, TypeSystem.EPrimitiveType.Number)
-        this.addValueToPropertyTree(parent, name, [content], propertyId, icon);
+        return this.addValueToPropertyTree(parent, name, [content], propertyId, icon);
+    }
+
+    setNumber(listItem: HTMLElement, value: number, icon: string)
+    {
+        this.setIcon(listItem, icon);
+        const content = this.getPropertyGroup(listItem);
+
+        UI.setPrimitiveType(content, value, TypeSystem.EPrimitiveType.Number);
+
+        return listItem;
     }
 
     addNumberHistory(parent: HTMLElement, name: string, value: number, icon: string, propertyId: number, propertiesWithHistory: string[][], callbacks: PropertyTreeControllerCallbacks)
@@ -617,8 +808,7 @@ export class PropertyTreeController {
         const path = callbacks.getPropertyPath(propertyId);
         if (!path)
         {
-            this.addNumber(parent, name, value, icon, propertyId);
-            return;
+            return this.addNumber(parent, name, value, icon, propertyId);
         }
 
         if (propertiesWithHistory.length > 0 && propertiesWithHistory.findIndex((propPath) => { return Utils.compareStringArrays(propPath, path); }) != -1)
@@ -639,13 +829,11 @@ export class PropertyTreeController {
             const chart = UI.createLineChart(chartData, height);
             const button = UI.createDisplayChartButton(propertyId, callbacks.onTogglePropertyHistory);
 
-            this.addValueToPropertyTree(parent, name, [chart, button], propertyId, icon);
-
-            return;
+            return this.addValueToPropertyTree(parent, name, [chart, button], propertyId, icon);
         }
         const content = UI.getLayoutOfPrimitiveType(value, TypeSystem.EPrimitiveType.Number)
         const button = UI.createDisplayChartButton(propertyId, callbacks.onTogglePropertyHistory);
-        this.addValueToPropertyTree(parent, name, [content, button], propertyId, icon);
+        return this.addValueToPropertyTree(parent, name, [content, button], propertyId, icon);
     }
 
     addOptionalResource(parent: HTMLElement, name: string, value: string, icon: string, propertyId: number, callback: IOpenResourceCallback)
@@ -654,7 +842,6 @@ export class PropertyTreeController {
         {
             const content = UI.getLayoutOfPrimitiveType(value, TypeSystem.EPrimitiveType.String)
             const button = UI.createOpenResourceButton(value, callback);
-            this.addValueToPropertyTree(parent, name, [content, button], propertyId, icon);
             content.onmouseenter = (ev) => {
                 ResourcePreview.Instance().showAtPosition(ev.pageX, ev.pageY, value);
             };
@@ -664,10 +851,110 @@ export class PropertyTreeController {
             content.onmouseout = () => {
                 ResourcePreview.Instance().hide();
             }
+            
+            return this.addValueToPropertyTree(parent, name, [content, button], propertyId, icon);
+        }
+
+        return null;
+    }
+
+    addPrimitiveType(parent: HTMLElement, property: RECORDING.IProperty, primitiveType: TypeSystem.EPrimitiveType)
+    {
+        const value = primitiveType ? UI.getPrimitiveTypeAsString(property.value, primitiveType) : property.value as string;
+        
+        const content = UI.wrapPrimitiveType(value);
+        return this.addValueToPropertyTree(parent, property.name, [content], property.id, property.icon, property.icolor);
+    }
+
+    setPrimitiveType(listItem: HTMLElement, property: RECORDING.IProperty, primitiveType: TypeSystem.EPrimitiveType, treeItemOptions: TREE.ITreeItemOptions)
+    {
+        this.setPropertyIcon(listItem, property);
+        const group = this.getPropertyGroup(listItem);
+        UI.setPrimitiveType(group, property.value, primitiveType);
+        this.propertyTree.setItem(listItem, treeItemOptions);
+
+        return listItem;
+    }
+
+    setPropertyIcon(listItem: HTMLElement, property: RECORDING.IProperty)
+    {
+        this.setIcon(listItem, property.icon, property.icolor);
+    }
+
+    setIcon(listItem: HTMLElement, icon: string, color: string = null)
+    {
+        const content = this.getPropertyContent(listItem);
+        const iconElem = this.getPropertyIcon(listItem);
+
+        if (icon)
+        {
+            if (iconElem)
+                UI.setPropertyIcon(iconElem, icon, color);
+            else
+                content.prepend(UI.wrapPropertyIcon(icon, color));
+        }
+        else
+        {
+            if (iconElem)
+                iconElem.remove();
         }
     }
 
-    addToPropertyTree(parent: HTMLElement, property: RECORDING.IProperty, filter: string, propertiesWithHistory: string[][], parentMatchedName: boolean = false)
+    addGroup(parent: HTMLElement, property: RECORDING.IPropertyGroup, treeItemOptions: TREE.ITreeItemOptions)
+    {
+        const iconContent = property.icon ? [UI.wrapPropertyIcon(property.icon, property.icolor)] : [];
+        const addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
+
+        return addedItem;
+    }
+
+    setGroup(listItem: HTMLElement, property: RECORDING.IPropertyGroup, treeItemOptions: TREE.ITreeItemOptions)
+    {
+        this.setPropertyIcon(listItem, property)
+        this.propertyTree.setItem(listItem, treeItemOptions);
+        return listItem;
+    }
+
+    // TODO: Move
+    propertyPathAsString(path: string[])
+    {
+        return path.join("#%#");
+    }
+
+    clearVisited()
+    {
+        let toRemove = [];
+        let visited = [];
+
+        for (let item of this.visitedElements)
+        {
+            if (!item[1].visited)
+            {
+                toRemove.push(item);
+            }
+            else
+                visited.push(item);
+            
+            item[1].visited = false;
+        }
+
+        for (let [element, data] of toRemove)
+        {
+            element.remove();
+            this.visitedElements.delete(element);
+
+            // Remove from the path map
+            this.elementsPerPath.delete(data.path);
+        }
+
+        // We might have deleted existing elements on the previous step
+        for (let item of visited)
+        {
+            this.elementsPerPath.set(item[1].path, item[0]);
+        }
+    }
+
+    addToPropertyTree(parent: HTMLElement, property: RECORDING.IProperty, filter: string, propertiesWithHistory: string[][], parentMatchedName: boolean, optimizeUpdates: boolean, displayUpdates: boolean) : HTMLElement
     {
         const treeItemOptions : TREE.ITreeItemOptions = {
             text: property.name,
@@ -681,7 +968,6 @@ export class PropertyTreeController {
                 onItemMouseOut: this.onPropertyMouseLeave.bind(this),
             }
         };
-
         
         const isHidden = property.flags != undefined && ((property.flags & RECORDING.EPropertyFlags.Hidden) != 0);
         if (isHidden) return;
@@ -689,16 +975,47 @@ export class PropertyTreeController {
         if (!parentMatchedName && !Filtering.filterProperty(filter, property))
             return;
         
-        const iconContent = property.icon ? [UI.wrapPropertyIcon(property.icon, property.icolor)] : [];
+        
 
-        if (property.type == TypeSystem.CorePropertyTypes.Group) {
-            
-            let addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
+        const propertyPath = optimizeUpdates ? property.path : null;// this.callbacks.getPropertyPath(property.id) : null;
+        const propertyPathStr = propertyPath ? this.propertyPathAsString(propertyPath) : null;
+        
+        const itemWithPath = propertyPathStr ? this.elementsPerPath.get(propertyPathStr) : null;
+
+        // For now, assume same type
+        if (itemWithPath)
+        {
+            // It exists! No need to add, only fill values
+        }
+
+        let addedItem : HTMLElement = null;
+
+        if (property.type == TypeSystem.CorePropertyTypes.Group)
+        {
             const propertyGroup = property as RECORDING.IPropertyGroup;
+            
+            if (itemWithPath)
+                addedItem = this.setGroup(itemWithPath, propertyGroup, treeItemOptions);
+            else
+                addedItem = this.addGroup(parent, propertyGroup, treeItemOptions);
+
+            let sortedElements: HTMLElement[] = [];
 
             for (let i = 0; i < propertyGroup.value.length; ++i)
             {
-                this.addToPropertyTree(addedItem, propertyGroup.value[i], filter, propertiesWithHistory, parentMatchedName || Filtering.filterPropertyName(filter, property));
+                const child = this.addToPropertyTree(addedItem, propertyGroup.value[i], filter, propertiesWithHistory, parentMatchedName || Filtering.filterPropertyName(filter, property), optimizeUpdates, displayUpdates);
+
+                if (child)
+                {
+                    sortedElements.push(child);
+                }
+            }
+
+            // Sort created groups
+            if (optimizeUpdates)
+            {
+                let targetList = addedItem.querySelector("ul");
+                DOMUtils.ensureElementsCorrectOrder(targetList, sortedElements);
             }
         }
         // Find type
@@ -707,59 +1024,47 @@ export class PropertyTreeController {
             const type = this.typeRegistry.findType(property.type);
             if (type)
             {
-                this.addCustomTypeToPropertyTree(parent, property, type, property.icon);
+                if (itemWithPath)
+                    addedItem = this.setCustomType(itemWithPath, property, type, property.icon);
+                else
+                    addedItem = this.addCustomTypeToPropertyTree(parent, property, type, property.icon);
             }
             else if (property.type == TypeSystem.CorePropertyTypes.Comment)
             {
-                let comment = document.createElement("div");
-                comment.classList.add("property-comment");
-                if (iconContent[0])
-                {
-                    comment.append(iconContent[0]);
-                    if (property.icolor)
-                    {
-                        comment.style.border = "1px solid " + property.icolor;
-                        // Add DOM element with background
-                        const background = document.createElement("div");
-                        background.classList.add("property-comment-overlay");
-                        background.style.backgroundColor = property.icolor;
-                        comment.prepend(background);
-                    }
-                }
-                comment.insertAdjacentText("beforeend", property.value as string);
-
-                this.propertyTree.addItem(parent, [comment], {
-                    value:  property.id.toString(),
-                    selectable: false,
-                });
+                addedItem = this.addComment(parent, property);
             }
             else if (property.type == TypeSystem.CorePropertyTypes.Resource)
             {
-                this.addOptionalResource(parent, property.name, property.value as string, property.icon, property.id, this.callbacks.onOpenResource);
+                addedItem = this.addOptionalResource(parent, property.name, property.value as string, property.icon, property.id, this.callbacks.onOpenResource);
             }
             else if (property.type == TypeSystem.CorePropertyTypes.EntityRef)
             {
-                this.addEntityRef(parent, property.name, property.value as RECORDING.IEntityRef, property.icon, property.id);
+                addedItem = this.addEntityRef(parent, property.name, property.value as RECORDING.IEntityRef, property.icon, property.id);
             }
             else if (property.type == TypeSystem.CorePropertyTypes.LineChart)
             {
-                this.addLineChart(parent, property.name, property.value as RECORDING.IPropertyLineChart, property.icon, property.id);
+                addedItem = this.addLineChart(parent, property.name, property.value as RECORDING.IPropertyLineChart, property.icon, property.id);
             }
             else if (property.type == TypeSystem.CorePropertyTypes.Table)
             {
-                this.addTable(parent, property.name, property.value as RECORDING.IPropertyTable, property.id, filter);
+                if (itemWithPath && this.isTableSameLength(itemWithPath, property.value as RECORDING.IPropertyTable))
+                    addedItem = this.setTable(itemWithPath, property.name, property.value as RECORDING.IPropertyTable, property.id, filter);
+                else
+                    addedItem = this.addTable(parent, property.name, property.value as RECORDING.IPropertyTable, property.id, filter);
             }
             else if (RECORDING.isPropertyShape(property))
             {
                 if (property.name.length > 0)
                 {
+                    const iconContent = property.icon ? [UI.wrapPropertyIcon(property.icon, property.icolor)] : [];
+
                     switch(property.type)
                     {
                         case TypeSystem.CorePropertyTypes.Sphere:
                         {
                             const sphere = property as RECORDING.IPropertySphere;
 
-                            let addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
+                            addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
                             this.addVec3(addedItem, "Position", sphere.position, "map-marker", property.id);
                             this.addNumber(addedItem, "Radius", sphere.radius, "arrows-alt-h", property.id);
                             this.addOptionalResource(addedItem, "Texture", sphere.texture, "image", property.id, this.callbacks.onOpenResource);
@@ -769,19 +1074,33 @@ export class PropertyTreeController {
                         {
                             const capsule = property as RECORDING.IPropertyCapsule;
 
-                            let addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
-                            this.addVec3(addedItem, "Position", capsule.position, "map-marker", property.id);
-                            this.addVec3(addedItem, "Direction", capsule.direction, "location-arrow", property.id);
-                            this.addNumber(addedItem, "Radius", capsule.radius, "arrows-alt-h", property.id);
-                            this.addNumber(addedItem, "Height", capsule.height, "arrows-alt-v", property.id);
-                            this.addOptionalResource(addedItem, "Texture", capsule.texture, "image", property.id, this.callbacks.onOpenResource);
+                            if (itemWithPath)
+                            {
+                                addedItem = itemWithPath;
+                                const ul = itemWithPath.children[1];
+                                this.setPropertyIcon(itemWithPath, property);
+                                this.setVec3(ul.children[0] as HTMLElement, capsule.position, "map-marker");
+                                this.setVec3(ul.children[1] as HTMLElement, capsule.direction, "location-arrow");
+                                this.setNumber(ul.children[2] as HTMLElement, capsule.radius, "arrows-alt-h");
+                                this.setNumber(ul.children[3] as HTMLElement, capsule.height, "arrows-alt-v");
+                                // TODO: Optional resource
+                            }
+                            else
+                            {
+                                addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
+                                this.addVec3(addedItem, "Position", capsule.position, "map-marker", property.id);
+                                this.addVec3(addedItem, "Direction", capsule.direction, "location-arrow", property.id);
+                                this.addNumber(addedItem, "Radius", capsule.radius, "arrows-alt-h", property.id);
+                                this.addNumber(addedItem, "Height", capsule.height, "arrows-alt-v", property.id);
+                                this.addOptionalResource(addedItem, "Texture", capsule.texture, "image", property.id, this.callbacks.onOpenResource);
+                            }
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.AABB:
                         {
                             const aabb = property as RECORDING.IPropertyAABB;
 
-                            let addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
+                            addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
                             this.addVec3(addedItem, "Position", aabb.position, "map-marker", property.id);
                             this.addVec3(addedItem, "Size", aabb.size, "arrows-alt", property.id);
                             this.addOptionalResource(addedItem, "Texture", aabb.texture, "image", property.id, this.callbacks.onOpenResource);
@@ -791,7 +1110,7 @@ export class PropertyTreeController {
                         {
                             const oobb = property as RECORDING.IPropertyOOBB;
 
-                            let addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
+                            addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
                             this.addVec3(addedItem, "Position", oobb.position, "map-marker", property.id);
                             this.addVec3(addedItem, "Size", oobb.size, "arrows-alt", property.id);
                             this.addVec3(addedItem, "Forward", oobb.forward, "arrow-right", property.id);
@@ -803,7 +1122,7 @@ export class PropertyTreeController {
                         {
                             const plane = property as RECORDING.IPropertyPlane;
 
-                            let addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
+                            addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
                             this.addVec3(addedItem, "Position", plane.position, "map-marker", property.id);
                             this.addVec3(addedItem, "Normal", plane.normal, "level-up-alt", property.id);
                             this.addVec3(addedItem, "Up", plane.up, "arrow-up", property.id);
@@ -816,16 +1135,27 @@ export class PropertyTreeController {
                         {
                             const line = property as RECORDING.IPropertyLine;
 
-                            let addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
-                            this.addVec3(addedItem, "Origin", line.origin, "map-marker-alt", property.id);
-                            this.addVec3(addedItem, "Destination", line.destination, "flag-checkered", property.id);
+                            if (itemWithPath)
+                            {
+                                addedItem = itemWithPath;
+                                const ul = itemWithPath.children[1];
+                                this.setPropertyIcon(itemWithPath, property);
+                                this.setVec3(ul.children[0] as HTMLElement, line.origin, "map-marker-alt");
+                                this.setVec3(ul.children[1] as HTMLElement, line.destination, "flag-checkered");
+                            }
+                            else
+                            {
+                                addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
+                                this.addVec3(addedItem, "Origin", line.origin, "map-marker-alt", property.id);
+                                this.addVec3(addedItem, "Destination", line.destination, "flag-checkered", property.id);
+                            }
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Arrow:
                         {
                             const arrow = property as RECORDING.IPropertyArrow;
 
-                            let addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
+                            addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
                             this.addVec3(addedItem, "Origin", arrow.origin, "map-marker-alt", property.id);
                             this.addVec3(addedItem, "Destination", arrow.destination, "flag-checkered", property.id);
                             break;
@@ -834,15 +1164,25 @@ export class PropertyTreeController {
                         {
                             const vector = property as RECORDING.IPropertyVector;
 
-                            let addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
-                            this.addVec3(addedItem, "Vector", vector.vector, "location-arrow", property.id);
+                            if (itemWithPath)
+                            {
+                                addedItem = itemWithPath;
+                                const ul = itemWithPath.children[1];
+                                this.setPropertyIcon(itemWithPath, property);
+                                this.setVec3(ul.children[0] as HTMLElement, vector.vector, "location-arrow");
+                            }
+                            else
+                            {
+                                addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
+                                this.addVec3(addedItem, "Vector", vector.vector, "location-arrow", property.id);
+                            }
                             break;
                         }
                         case TypeSystem.CorePropertyTypes.Mesh:
                         {
                             const mesh = property as RECORDING.IPropertyMesh;
 
-                            let addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
+                            addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
                             // Ignore vertices/indices
                             this.addOptionalResource(addedItem, "Texture", mesh.texture, "image", property.id, this.callbacks.onOpenResource);
                             break;
@@ -850,7 +1190,7 @@ export class PropertyTreeController {
                         case TypeSystem.CorePropertyTypes.Path:
                         {
                             const path = property as RECORDING.IPropertyPath;
-                            let addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
+                            addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
                             let idx = 0;
                             for (const point of path.points)
                             {
@@ -863,7 +1203,7 @@ export class PropertyTreeController {
                         {
                             const triangle = property as RECORDING.IPropertyTriangle;
 
-                            let addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
+                            addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
                             this.addVec3(addedItem, "p1", triangle.p1, "map-marker", property.id);
                             this.addVec3(addedItem, "p2", triangle.p2, "map-marker", property.id);
                             this.addVec3(addedItem, "p3", triangle.p3, "map-marker", property.id);
@@ -880,13 +1220,14 @@ export class PropertyTreeController {
                 // Uncomment once number history is a bit more mature
                 /*if (property.type == TypeSystem.CorePropertyTypes.Number)
                 {
-                    this.addNumberHistory(parent, property.name, property.value as number, property.icon, property.id, propertiesWithHistory, this.callbacks);
+                    addedItem = this.addNumberHistory(parent, property.name, property.value as number, property.icon, property.id, propertiesWithHistory, this.callbacks);
                 }
                 else*/
                 {
-                    const value = primitiveType ? UI.getPrimitiveTypeAsString(property.value, primitiveType) : property.value as string;
-                    const content = UI.wrapPrimitiveType(value);
-                    this.addValueToPropertyTree(parent, property.name, [content], property.id, property.icon, property.icolor);
+                    if (itemWithPath)
+                        addedItem = this.setPrimitiveType(itemWithPath, property, primitiveType, treeItemOptions);
+                    else
+                        addedItem = this.addPrimitiveType(parent, property, primitiveType);
 
                     if (primitiveType == undefined)
                     {
@@ -896,7 +1237,34 @@ export class PropertyTreeController {
             }
         }
 
+        if (addedItem)
+        {
+            this.elementsPerPath.set(propertyPathStr, addedItem);
+            this.visitedElements.set(addedItem, { visited: true, path: propertyPathStr });
+
+            if (addedItem == itemWithPath)
+                this.propertyTree.setItem(addedItem, treeItemOptions);
+
+            if (displayUpdates)
+            {
+                const isNew = itemWithPath == null;
+                const reUsing = itemWithPath == addedItem;
+
+                if (isNew)
+                    addedItem.style.backgroundColor = "red";
+                else if (reUsing)
+                    addedItem.style.backgroundColor = "green";
+                else // Not new, but we didn't re-use
+                    addedItem.style.backgroundColor = "yellow";
+                setTimeout(function(){
+                    addedItem.style.backgroundColor = "";
+                },1000);
+            }
+        }
+
         this.highlightSearch(property, filter);
+
+        return addedItem;
     }
 
     highlightSearch(property: RECORDING.IProperty, filter: string)

@@ -37,6 +37,8 @@ export interface ISettings
     showComments: boolean,
     /* Debug */
     showRenderDebug: boolean,
+    optimizePropertyTreeUpdates: boolean,
+    showProperyTreeUpdates: boolean,
     /* Graphics */
     antialiasingSamples: number,
     lightIntensity: number,
@@ -83,6 +85,8 @@ export function createDefaultSettings() : ISettings
         showComments: true,
         /* Debug */
         showRenderDebug: false,
+        optimizePropertyTreeUpdates: false,
+        showProperyTreeUpdates: false,
         /* Graphics */
         antialiasingSamples: 4,
         lightIntensity: 0.7,

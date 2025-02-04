@@ -290,12 +290,13 @@ export class SettingsList
 {
     private onSettingsChanged: ISettingsChanged;
     private onPurgePools: IButtonCallback;
+    private onTriggerGC: IButtonCallback;
     private onRestoreContext: IButtonCallback;
     private settingsList: HTMLElement;
     private searchFilter: HTMLInputElement;
     private filter: string;
 
-    constructor(settingsList: HTMLElement, searchFilter: HTMLInputElement, onSettingsChanged: ISettingsChanged, onPurgePools: IButtonCallback, onRestoreContext: IButtonCallback)
+    constructor(settingsList: HTMLElement, searchFilter: HTMLInputElement, onSettingsChanged: ISettingsChanged, onPurgePools: IButtonCallback, onRestoreContext: IButtonCallback, onTriggerGC: IButtonCallback)
     {
         this.settingsList = settingsList;
         this.searchFilter = searchFilter;
@@ -304,6 +305,7 @@ export class SettingsList
         this.onSettingsChanged = onSettingsChanged;
         this.onPurgePools = onPurgePools;
         this.onRestoreContext = onRestoreContext;
+        this.onTriggerGC = onTriggerGC;
     }
 
     setSettings(settings: ISettings)
@@ -458,9 +460,12 @@ You can use the following formatting options:
         {
             let group = SettingsBuilder.createGroup("Debug");
             SettingsBuilder.addBooleanSetting(group, "Show render debug info", settings.showRenderDebug, (value) => {settings.showRenderDebug = value; this.onSettingsChanged(); })
+            SettingsBuilder.addBooleanSetting(group, "Experimental: Optimize property tree updates", settings.optimizePropertyTreeUpdates, (value) => {settings.optimizePropertyTreeUpdates = value; this.onSettingsChanged(); })
+            SettingsBuilder.addBooleanSetting(group, "Show property tree updates", settings.showProperyTreeUpdates, (value) => {settings.showProperyTreeUpdates = value; this.onSettingsChanged(); })
             this.settingsList.appendChild(group.fragment);
 
             SettingsBuilder.addButtonSetting(group, "Purge pools", "Empty mesh and material pools", this.onPurgePools);
+            SettingsBuilder.addButtonSetting(group, "Collect garbage", "Run the garbage collection", this.onTriggerGC);
             SettingsBuilder.addButtonSetting(group, "Restore context", "Try to restore a lost WebGL context", this.onRestoreContext);
         }
 

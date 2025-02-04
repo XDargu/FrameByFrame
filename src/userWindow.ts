@@ -110,7 +110,7 @@ async function displayPropertyGroup(propData: Messaging.IPropertyGroupData)
         flags = flags | UI.TreeFlags.IsLocked;
 
     const buildTree = () => {
-        propertiesBuilder.buildSinglePropertyTreeBlock(wrapper, property, propData.name, -1, propertySearchInput.value, [], propData.tag, flags);
+        propertiesBuilder.buildSinglePropertyTreeBlock(wrapper, property, propData.name, -1, propertySearchInput.value, [], propData.tag, flags, 0);
 
         // A bit hacky: remove click event from title
         const title = document.querySelector("#events > div.basico-title") as HTMLElement;

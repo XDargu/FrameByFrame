@@ -591,7 +591,8 @@ export default class Renderer {
             document.getElementById("settings-search") as HTMLInputElement,
             this.onSettingsChanged.bind(this),
             () => { this.sceneController.purgePools(); },
-            () => { this.sceneController.restoreContext(); }
+            () => { this.sceneController.restoreContext(); },
+            () => { global.gc(); }
         );
 
         // Create info
@@ -695,6 +696,9 @@ export default class Renderer {
         {
             this.sceneController.stopFollowEntity();
         }
+
+        this.entityPropsBuilder.setDebugEnabled(settings.showProperyTreeUpdates);
+        this.entityPropsBuilder.setOptimizationsEnabled(settings.optimizePropertyTreeUpdates);
 
         this.sceneController.setGridHeight(settings.gridHeight);
         this.sceneController.setGridSpacing(settings.gridSpacing);
