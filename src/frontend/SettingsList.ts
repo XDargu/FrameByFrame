@@ -4,7 +4,7 @@ import { filterText } from "../utils/utils";
 
 export interface ISettingsChanged
 {
-    () : void
+    (requiresRedraw?: boolean) : void
 }
 
 export interface IButtonCallback
@@ -357,7 +357,7 @@ export class SettingsList
                 defaultSettings.entityPathLength, settings.entityPathLength,
                 (value) => {
                     settings.entityPathLength = Number.parseInt(value);
-                    this.onSettingsChanged();
+                    this.onSettingsChanged(true);
                 }
             );
             this.settingsList.appendChild(group.fragment);

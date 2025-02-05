@@ -662,22 +662,22 @@ export default class Renderer {
         }
     }
 
-    onSettingsChanged()
+    onSettingsChanged(requiresRedraw?: boolean)
     {
         if (this.settings)
         {
             this.saveSettings();
-            this.applySettings(this.settings);
+            this.applySettings(this.settings, requiresRedraw);
         }
     }
 
     onSettingsLoaded(settings: ISettings)
     {
-        this.applySettings(settings);
+        this.applySettings(settings, true);
         this.connectionsList.addConnection("localhost", settings.defaultPort, false);
     }
 
-    applySettings(settings: ISettings)
+    applySettings(settings: ISettings, requiresRedraw: boolean)
     {
         if (settings.showAllLayersOnStart)
         {
@@ -716,6 +716,9 @@ export default class Renderer {
         this.timeline.setCommentPopupActive(settings.showCommentPopup);
 
         this.comments.showComments(settings.showComments);
+
+        if (requiresRedraw)
+            this.requestApplyFrame({ frame: this.getCurrentFrame() });
     }
 
     updateSettings(settings: ISettings)
