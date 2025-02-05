@@ -1,6 +1,6 @@
 import * as BABYLON from 'babylonjs';
 import { IGetResourceFunction, MaterialPool } from './materialPool';
-import { ArrowPool, BoxPool, CapsulePool, LinePool, MeshPool, PathPool, PlanePool, SpherePool } from './meshPools';
+import { ArrowPool, BoxPool, CapsulePool, CylinderPool, LinePool, MeshPool, PathPool, PlanePool, SpherePool } from './meshPools';
 
 export default class RenderPools
 {
@@ -8,6 +8,7 @@ export default class RenderPools
 
     // Mesh pools
     capsulePool: CapsulePool;
+    cylinderPool: CylinderPool;
     spherePool: SpherePool;
     boxPool: BoxPool;
     planePool: PlanePool;
@@ -24,6 +25,7 @@ export default class RenderPools
         this.scene = scene;
         this.materialPool = new MaterialPool(scene, getResourceFunc);
         this.capsulePool = new CapsulePool(scene);
+        this.cylinderPool = new CylinderPool(scene);
         this.spherePool = new SpherePool(scene);
         this.boxPool = new BoxPool(scene);
         this.planePool = new PlanePool(scene);
@@ -31,7 +33,7 @@ export default class RenderPools
         this.arrowPool = new ArrowPool(scene);
         this.pathPool = new PathPool(scene);
 
-        this.pools = [this.capsulePool, this.spherePool, this.boxPool, this.planePool, this.linePool, this.arrowPool, this.pathPool];
+        this.pools = [this.capsulePool, this.cylinderPool, this.spherePool, this.boxPool, this.planePool, this.linePool, this.arrowPool, this.pathPool];
     }
 
     tryFreeMesh(mesh: BABYLON.Mesh) : boolean

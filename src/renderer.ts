@@ -27,6 +27,7 @@ import { EntityTree } from "./frontend/EntityTree";
 import FiltersList, { ExportedFilters, FilterId } from "./frontend/FiltersList";
 import * as Utils from "./utils/utils";
 import * as DOMUtils from "./utils/DOMUtils";
+import * as RecordingUtils from "./recording/RecordingUtils";
 import * as UserWindows from "./frontend/UserWindows";
 import FilterTickers from "./frontend/FilterTickers";
 import EntityPropertiesBuilder from "./frontend/EntityPropertiesBuilder";
@@ -228,13 +229,11 @@ export default class Renderer {
 
                     let values : number[] = [];
 
-                    const currentFrame = this.getCurrentFrame();
+                    const historicalFrameData = RecordingUtils.collectHistoricalData(this.recordedData, this.getCurrentFrame(), amount, RECORDING.BuildFrameDataFlags.All);
 
-                    const start = Math.max(0, currentFrame - amount);
-
-                    for (let i=start; i<=currentFrame; ++i)
+                    for (let i=0; i<historicalFrameData.length; ++i)
                     {
-                        const frameData = this.recordedData.buildFrameData(i);
+                        const frameData = historicalFrameData[i];
                         const testEntity = frameData.entities[this.selectedEntityId];
                         if (testEntity)
                         {
@@ -591,7 +590,8 @@ export default class Renderer {
             document.getElementById("settings-search") as HTMLInputElement,
             this.onSettingsChanged.bind(this),
             () => { this.sceneController.purgePools(); },
-            () => { this.sceneController.restoreContext(); }
+            () => { this.sceneController.restoreContext(); },
+            () => { global.gc(); }
         );
 
         // Create info
@@ -662,22 +662,22 @@ export default class Renderer {
         }
     }
 
-    onSettingsChanged()
+    onSettingsChanged(requiresRedraw?: boolean)
     {
         if (this.settings)
         {
             this.saveSettings();
-            this.applySettings(this.settings);
+            this.applySettings(this.settings, requiresRedraw);
         }
     }
 
     onSettingsLoaded(settings: ISettings)
     {
-        this.applySettings(settings);
+        this.applySettings(settings, true);
         this.connectionsList.addConnection("localhost", settings.defaultPort, false);
     }
 
-    applySettings(settings: ISettings)
+    applySettings(settings: ISettings, requiresRedraw: boolean)
     {
         if (settings.showAllLayersOnStart)
         {
@@ -696,6 +696,9 @@ export default class Renderer {
             this.sceneController.stopFollowEntity();
         }
 
+        this.entityPropsBuilder.setDebugEnabled(settings.showProperyTreeUpdates);
+        this.entityPropsBuilder.setOptimizationsEnabled(settings.optimizePropertyTreeUpdates);
+
         this.sceneController.setGridHeight(settings.gridHeight);
         this.sceneController.setGridSpacing(settings.gridSpacing);
         this.sceneController.setBackgroundColor(settings.backgroundColor);
@@ -713,6 +716,9 @@ export default class Renderer {
         this.timeline.setCommentPopupActive(settings.showCommentPopup);
 
         this.comments.showComments(settings.showComments);
+
+        if (requiresRedraw)
+            this.requestApplyFrame({ frame: this.getCurrentFrame() });
     }
 
     updateSettings(settings: ISettings)
@@ -784,6 +790,8 @@ export default class Renderer {
 
         // Show only selected names as default when opening a file
         this.layerController.setLayerState(CoreLayers.EntityNames, LayerState.Selected);
+        // Paths are niche feature, set as off by default
+        this.layerController.setLayerState(CoreLayers.EntityPaths, LayerState.Off);
 
         // Try to find the screenshot entity if needed
         if (this.settings.autoPinScreenshotEntity)
@@ -1069,12 +1077,19 @@ export default class Renderer {
             this.sceneController.setCoordinateSystem(this.frameData.coordSystem ?? RECORDING.ECoordinateSystem.LeftHand);
             this.sceneController.hideAllEntities();
 
-            for (let entityID in this.frameData.entities) {
+            // Frame data for historical info
+            const isEntityPathActive = this.sceneController.getLaterStatus(CoreLayers.EntityPaths) != LayerState.Off;
+            const historicalDataLength = this.settings && isEntityPathActive ? this.settings.entityPathLength : 0;
+            const historicalFrameData = RecordingUtils.collectHistoricalData(this.recordedData, this.getCurrentFrame(), historicalDataLength, RECORDING.BuildFrameDataFlags.Entities);
 
+            for (let entityID in this.frameData.entities)
+            {
                 const entity = this.frameData.entities[entityID];
 
+                const entityPath = RecordingUtils.collectHistoricalEntityPositions(historicalFrameData, entity.id);
+                
                 // Set in the scene renderer
-                this.sceneController.setEntity(entity);
+                this.sceneController.setEntity(entity, entityPath);
             }
 
             if (this.settings && this.settings.followCurrentSelection)
@@ -1315,6 +1330,7 @@ export default class Renderer {
             let sceneController = this.sceneController;
             sceneController.removeAllProperties();
             sceneController.hideAllLabels();
+            sceneController.hideAllPaths();
 
             for (let entityID in this.frameData.entities) {
                 const entity = this.frameData.entities[entityID];
@@ -1329,6 +1345,7 @@ export default class Renderer {
                     });
                 });
 
+                sceneController.updateEntityPath(entity);
                 sceneController.updateEntityLabel(entity);
             }
 

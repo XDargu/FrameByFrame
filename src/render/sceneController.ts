@@ -17,6 +17,7 @@ import ScenePropertySelection from './scenePropertySelection';
 import { CorePropertyTypes } from '../types/typeRegistry';
 import TextLabels from './textLabel';
 import { IGetResourceFunction } from './materialPool';
+import { createCustomLinesystem } from './customLineMesh';
 
 export interface IOnDebugDataUpdated
 {
@@ -47,6 +48,7 @@ interface ICameraChangedCallback
 const shapeBuildConfig : IPropertyBuilderConfig  = {
     [CorePropertyTypes.Sphere]: { builder: ShapeBuilders.buildSphereShape, pickable: true},
     [CorePropertyTypes.Capsule]: { builder: ShapeBuilders.buildCapsuleShape, pickable: true},
+    [CorePropertyTypes.Cylinder]: { builder: ShapeBuilders.buildCylinderShape, pickable: true},
     [CorePropertyTypes.AABB]: { builder: ShapeBuilders.buildAABBShape, pickable: true},
     [CorePropertyTypes.OOBB]: { builder: ShapeBuilders.buildOOBBShape, pickable: true},
     [CorePropertyTypes.Plane]: { builder: ShapeBuilders.buildPlaneShape, pickable: true},
@@ -197,6 +199,15 @@ export default class SceneController
         }
     }
 
+    hideAllPaths()
+    {
+        for (const [id, data] of this.sceneEntityData.entities)
+        {
+            if (data.path)
+                data.path.setEnabled(false);
+        }
+    }
+
     addProperty(entity: RECORDING.IEntity, property: RECORDING.IProperty)
     {
         if (!RECORDING.isPropertyShape(property)) { return; }
@@ -240,14 +251,14 @@ export default class SceneController
         sphere.isPickable = true;
         sphere.id = entity.id.toString();
         const labelMesh = this.labels.buildLabel(RECORDING.NaiveRecordedData.getEntityName(entity));
-        let entityData: IEntityRenderData = { mesh: sphere, label: labelMesh, properties: new Map<number, IPropertyRenderData>() };
+        let entityData: IEntityRenderData = { mesh: sphere, label: labelMesh, properties: new Map<number, IPropertyRenderData>(), pathPoints: [] };
         this.sceneEntityData.setEntityData(entity.id, entityData);
         this.sceneEntityData.setEntityProperty(entity.id, entity.id);
 
         return entityData;
     }
 
-    setEntity(entity: RECORDING.IEntity)
+    setEntity(entity: RECORDING.IEntity, path : RECORDING.IVec3[])
     {
         let entityData = this.sceneEntityData.getEntityById(entity.id);
         if (!entityData)
@@ -264,6 +275,8 @@ export default class SceneController
 
         RenderUtils.setShapeOrientationFromUpAndFwd(entityData.mesh, up, forward, this.coordSystem);
 
+        this.setEntityPath(entityData, path);
+        this.updateEntityPathInternal(entityData, entity.id);
         this.updateEntityLabelInternal(entityData, position, entity.id);
     }
 
@@ -276,6 +289,54 @@ export default class SceneController
 
             this.updateEntityLabelInternal(entityData, position, entity.id);
         }
+    }
+
+    updateEntityPath(entity: RECORDING.IEntity)
+    {
+        let entityData = this.sceneEntityData.getEntityById(entity.id);
+        if (entityData)
+        {
+            this.updateEntityPathInternal(entityData, entity.id);
+        }
+    }
+
+    private setEntityPath(entityData: IEntityRenderData, path : RECORDING.IVec3[])
+    {
+        if (entityData.path && entityData.pathPoints.length != path.length)
+        {
+            // The path length has changed, we can't reuse the existing, dispose it
+            this._scene.removeMesh(entityData.path);
+            entityData.path = null;
+        }
+
+        entityData.pathPoints = [];
+
+        for (let i=0; i<path.length; ++i)
+        {
+            entityData.pathPoints[i] = RenderUtils.createVec3(path[i], this.coordSystem);
+        }
+    }
+
+    private updateEntityPathInternal(entityData: IEntityRenderData, entityId: number)
+    {
+        const isEnabled = this.isLayerActiveForEntity(CoreLayers.EntityPaths, entityId);
+        if (isEnabled)
+        {
+            if (!entityData.path)
+            {
+                entityData.path = BABYLON.MeshBuilder.CreateLines("path",{ points: entityData.pathPoints, updatable: true }, this._scene);
+            }
+            else
+            {
+                entityData.path = BABYLON.MeshBuilder.CreateLines("path",{ points: entityData.pathPoints, updatable: true, instance: entityData.path }, this._scene);
+                entityData.path.refreshBoundingInfo();
+            }
+
+            entityData.path.isPickable = false;
+        }
+
+        if (entityData.path)
+            entityData.path.setEnabled(isEnabled);
     }
 
     private updateEntityLabelInternal(entityData: IEntityRenderData, position: BABYLON.Vector3, entityId: number)
@@ -380,6 +441,11 @@ export default class SceneController
         this.layerManager.setLayerState(layer, state);
     }
 
+    getLaterStatus(layer: string) : LayerState
+    {
+        return this.layerManager.getLayerState(layer);
+    }
+
     refreshOutlineTargets()
     {
         this.entitySelection.refreshOutlineTargets();
@@ -471,6 +537,8 @@ export default class SceneController
             this._scene.removeMesh(entityData.mesh);
             this._scene.removeMaterial(entityData.label.material);
             this._scene.removeMesh(entityData.label);
+            if (entityData.path)
+                this._scene.removeMesh(entityData.path);
         }
 
         this.sceneEntityData.clear();

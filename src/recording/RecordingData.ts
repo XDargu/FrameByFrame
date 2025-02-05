@@ -33,6 +33,7 @@ export function isPropertyShape(property: IProperty)
         property.type == Type.AABB ||
         property.type == Type.OOBB ||
         property.type == Type.Capsule ||
+		property.type == Type.Cylinder ||
         property.type == Type.Mesh ||
 		property.type == Type.Path ||
 		property.type == Type.Triangle;
@@ -44,6 +45,7 @@ export function isPropertyTextured(property: IProperty)
     return property.type == Type.Sphere || 
         property.type == Type.Plane ||
         property.type == Type.AABB ||
+        property.type == Type.Cylinder ||
         property.type == Type.OOBB ||
         property.type == Type.Capsule ||
         property.type == Type.Mesh ||
@@ -120,6 +122,7 @@ export interface IProperty {
 	name?: string;
 	value: string | number | boolean | IVec2 | IVec3 | IPropertyCustomType | IEntityRef | IPropertyTable | IPropertyLineChart | IProperty[];
 	id?: number;
+    path?: string[];
 	flags?: EPropertyFlags;
     icon?: string;
     icolor?: string;
@@ -138,6 +141,15 @@ export interface IPropertySphere extends IProperyShape {
 }
 
 export interface IPropertyCapsule extends IProperyShape {
+	position: IVec3;
+	direction: IVec3;
+	radius: number;
+	height: number;
+	value: string;
+    texture?: string;
+}
+
+export interface IPropertyCylinder extends IProperyShape {
 	position: IVec3;
 	direction: IVec3;
 	radius: number;
@@ -210,7 +222,7 @@ export interface IPropertyTriangle extends IProperyShape {
     texture?: string;
 }
 
-export type IPropertyTextured = IPropertySphere | IPropertyAABB | IPropertyOOBB | IPropertyCapsule | IPropertyMesh | IPropertyTriangle;
+export type IPropertyTextured = IPropertySphere | IPropertyAABB | IPropertyOOBB | IPropertyCapsule | IPropertyCylinder | IPropertyMesh | IPropertyTriangle;
 
 export interface IPropertyGroup {
 	type: string;
@@ -260,7 +272,7 @@ export enum VisitorResult
 
 export interface IPropertyVisitorCallback
 {
-    (property: IProperty) : VisitorResult | void
+    (property: IProperty, path?: string[]) : VisitorResult | void
 }
 
 export interface IEventVisitorCallback
@@ -580,6 +592,14 @@ export interface INaiveRecordedData extends IRecordedData {
     comments: IComments;
 }
 
+export enum BuildFrameDataFlags
+{
+    Entities = 1 << 0,
+    Properties = 1 << 1,
+
+    All = ~(~0 << 4)   // 1111
+}
+
 export class NaiveRecordedData implements INaiveRecordedData {
 	readonly version: number = 4;
 	readonly type: RecordingFileType = RecordingFileType.NaiveRecording;
@@ -845,13 +865,26 @@ export class NaiveRecordedData implements INaiveRecordedData {
 
     static findPropertyPathInEntity(entity: IEntity, propertyPath: string[]) : IProperty
     {
-        const resultProps = NaiveRecordedData.findPropertyPathInProperties(entity.properties, propertyPath);
+        let resultProps = NaiveRecordedData.findPropertyPathInProperties(entity.properties, propertyPath);
 		if (resultProps)
 		{
 			return resultProps;
 		}
 
-        return null;
+        // Not in properties, try in events
+        NaiveRecordedData.visitEvents(entity.events, (event: IEvent) => {
+
+            if (propertyPath.length > 0 && propertyPath[0] == event.name)
+            {
+                resultProps = NaiveRecordedData.findPropertyPathInProperties(event.properties.value, propertyPath.slice(1));
+                if (resultProps)
+                {
+                    return VisitorResult.Stop;
+                }
+            }
+        });
+
+        return resultProps;
     }
 
     static findPropertyPathInProperties(properties: IProperty[], propertyPath: string[]) : IProperty
@@ -884,7 +917,20 @@ export class NaiveRecordedData implements INaiveRecordedData {
 
     static getEntityPropertyPath(entity: IEntity, propertyId: number) : string[]
     {
-        return NaiveRecordedData.getPropertyPath(entity.properties, propertyId);
+        let propertyPath = NaiveRecordedData.getPropertyPath(entity.properties, propertyId);
+        if (!propertyPath)
+        {
+            NaiveRecordedData.visitEvents(entity.events, (event: IEvent) => {
+                const eventPath = NaiveRecordedData.getPropertyPath(event.properties.value, propertyId);
+                if (eventPath)
+                {
+                    propertyPath = [event.name].concat(eventPath);
+                    return VisitorResult.Stop;
+                }
+            });
+        }
+
+        return propertyPath;
     }
 
     static getPropertyPath(properties: IProperty[], propertyId: number) : string[]
@@ -915,23 +961,25 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		NaiveRecordedData.visitProperties(entity.properties, callback);
 	}
 
-	static visitProperties(properties: IProperty[], callback: IPropertyVisitorCallback, visitChildGroups: boolean = true)
+	static visitProperties(properties: IProperty[], callback: IPropertyVisitorCallback, visitChildGroups: boolean = true, path: string[] = null)
 	{
 		const propertyCount = properties.length;
 		for (let i=0; i<propertyCount; ++i)
 		{
+            const propPath = path ? path.concat(properties[i].name) : null;
+
 			if (properties[i].type == 'group')
 			{
-				const res = callback(properties[i]);
+				const res = callback(properties[i], propPath);
 				if (res == VisitorResult.Stop) { return; }
 				if (visitChildGroups)
 				{
-					NaiveRecordedData.visitProperties((properties[i] as IPropertyGroup).value, callback);
+					NaiveRecordedData.visitProperties((properties[i] as IPropertyGroup).value, callback, true, propPath);
 				}
 			}
 			else
 			{
-				const res = callback(properties[i]);
+				const res = callback(properties[i], propPath);
 				if (res == VisitorResult.Stop) { return; }
 			}
 		}
@@ -1009,7 +1057,7 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		return frameData;
 	}
 
-	buildFrameData(frame : number) : IFrameData {
+	buildFrameData(frame : number, flags: BuildFrameDataFlags = BuildFrameDataFlags.All) : IFrameData {
 
 		let frameData = this.frameData[frame];
 
@@ -1062,19 +1110,24 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		let eventId = 1;
 		let propId = 1;
 		
-		for (let id in mergedFrameData.entities)
-		{
-			NaiveRecordedData.visitProperties(mergedFrameData.entities[id].properties, (property: IProperty) => {
-				property.id = propId++;
-			});
-			NaiveRecordedData.visitEvents(mergedFrameData.entities[id].events, (event: IEvent) => {
-				event.id = eventId++;
+        if ((flags & BuildFrameDataFlags.Properties) != 0)
+        {
+            for (let id in mergedFrameData.entities)
+            {
+                NaiveRecordedData.visitProperties(mergedFrameData.entities[id].properties, (property: IProperty, path: string[]) => {
+                    property.id = propId++;
+                    property.path = path;
+                }, true, []);
+                NaiveRecordedData.visitEvents(mergedFrameData.entities[id].events, (event: IEvent) => {
+                    event.id = eventId++;
 
-				NaiveRecordedData.visitProperties([event.properties], (property: IProperty) => {
-					property.id = propId++;
-				});
-			});
-		}
+                    NaiveRecordedData.visitProperties([event.properties], (property: IProperty, path: string[]) => {
+                        property.id = propId++;
+                        property.path = [event.name].concat(path);
+                    }, true, []);
+                });
+            }
+        }
 		
 		return mergedFrameData;
 	}

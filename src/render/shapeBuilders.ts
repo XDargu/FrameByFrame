@@ -40,6 +40,17 @@ export function buildCapsuleShape(shape: RECORDING.IProperyShape, pools: RenderP
     return capsule;
 }
 
+export function buildCylinderShape(shape: RECORDING.IProperyShape, pools: RenderPools, pivotPos: BABYLON.Vector3, system: RECORDING.ECoordinateSystem) : BABYLON.Mesh
+{
+    const cylinderProperty = shape as RECORDING.IPropertyCylinder;
+
+    let cylinder = pools.cylinderPool.getCylinder(cylinderProperty.height, cylinderProperty.radius);
+    setShapeCommonData(cylinder, cylinderProperty.id, RenderUtils.createVec3(cylinderProperty.position, system), cylinderProperty.color, cylinderProperty.texture, pools);
+    RenderUtils.setShapeOrientationFromDirection(cylinder, RenderUtils.createVec3(cylinderProperty.direction, system), system);
+
+    return cylinder;
+}
+
 export function buildAABBShape(shape: RECORDING.IProperyShape, pools: RenderPools, pivotPos: BABYLON.Vector3, system: RECORDING.ECoordinateSystem) : BABYLON.Mesh
 {
     const aabbProperty = shape as RECORDING.IPropertyAABB;

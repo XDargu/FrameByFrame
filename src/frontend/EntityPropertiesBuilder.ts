@@ -409,6 +409,7 @@ interface PropertyTreeGroup
     title: HTMLElement;
     propertyTree: TreeControl;
     propertyTreeController: PropertyTreeController;
+    order: number;
 }
 
 interface PropertyTreeGlobalData
@@ -554,6 +555,8 @@ export default class EntityPropertiesBuilder
     collapsedGroups: CollapsedGroupIDsTracker;
     starredGroups: string[];
     private propertyGroupsById: Map<string, PropertyTreeGroup>;
+    private isDebuggingEnabled: boolean = false;
+    private areOptimizationsEnabled: boolean = false;
 
     private readonly contextMenuItems: IContextMenuItem[] = [
         { text: "Copy value", icon: "fa-copy", callback: this.onCopyValue.bind(this) },
@@ -573,6 +576,16 @@ export default class EntityPropertiesBuilder
         this.propertyGroupsById = new Map<string, PropertyTreeGroup>();
     }
 
+    setDebugEnabled(enabled: boolean)
+    {
+        this.isDebuggingEnabled = enabled;
+    }
+
+    setOptimizationsEnabled(enabled: boolean)
+    {
+        this.areOptimizationsEnabled = enabled;
+    }
+
     buildSinglePropertyTreeBlock(
         treeParent: HTMLElement,
         propertyGroup: RECORDING.IPropertyGroup,
@@ -581,7 +594,8 @@ export default class EntityPropertiesBuilder
         filter: string,
         propertiesWithHistory: string[][],
         tag: string = null,
-        flags: UI.TreeFlags = UI.TreeFlags.None)
+        flags: UI.TreeFlags = UI.TreeFlags.None,
+        order: number)
     {
         const ignoreChildren = UI.HasFlag(flags, UI.TreeFlags.IgnoreChildren);
         const alwaysAdd = UI.HasFlag(flags, UI.TreeFlags.AlwaysAdd);
@@ -593,13 +607,13 @@ export default class EntityPropertiesBuilder
         });
 
         const shouldAdd = propsToAdd.length > 0 || alwaysAdd;
-        if (!shouldAdd) return;
+        if (!shouldAdd) return false;
 
         const propsFiltered = propsToAdd.filter((property) => {
             return Filtering.filterProperty(filter, property);
         });
 
-        if (propsFiltered.length == 0) return;
+        if (propsFiltered.length == 0) return false;
 
         // TODO: Replace with two maps
         let storedGroup = this.propertyGroupsById.get(name + nameIndex);
@@ -620,7 +634,7 @@ export default class EntityPropertiesBuilder
         if (storedGroup)
         {
             // For now, clear and re-build tree
-            storedGroup.propertyTree.clear();
+            //storedGroup.propertyTree.clear();
             storedGroup.propertyTree.rootValue = propertyGroup.id + "";
 
             UI.updatePropertyTreeTitle(
@@ -672,7 +686,8 @@ export default class EntityPropertiesBuilder
             let newPropertyGroup = { 
                 title: propertyTree.title,
                 propertyTree: propertyTree.tree,
-                propertyTreeController: propertyTreeController
+                propertyTreeController: propertyTreeController,
+                order: order
             };
     
             this.propertyGroups.push(newPropertyGroup);
@@ -682,29 +697,54 @@ export default class EntityPropertiesBuilder
         // Fill group now that is stored
         {
             let storedGroup = this.propertyGroupsById.get(name + nameIndex);
+            storedGroup.order = order;
+
+            let sortedElements: HTMLElement[] = [];
 
             for (let i=0; i<propsToAdd.length; ++i)
             {
-                storedGroup.propertyTreeController.addToPropertyTree(storedGroup.propertyTree.root, propsToAdd[i], filter, propertiesWithHistory);
+                const child = storedGroup.propertyTreeController.addToPropertyTree(storedGroup.propertyTree.root, propsToAdd[i], filter, propertiesWithHistory, false, this.areOptimizationsEnabled, this.isDebuggingEnabled);
+
+                if (child)
+                {
+                    sortedElements.push(child);
+                }
             }
 
-            // Add to parent
-            if (shouldPrepend)
+            // Delete all non-visited nodes, mark all visited as non-visited
+            storedGroup.propertyTreeController.clearVisited();
+
+            if (!this.areOptimizationsEnabled)
             {
-                treeParent.prepend(storedGroup.title, storedGroup.propertyTree.root);
-            }
-            else
-            {
-                treeParent.append(storedGroup.title, storedGroup.propertyTree.root);
+                // Add to parent
+                if (shouldPrepend)
+                {
+                    treeParent.prepend(storedGroup.title, storedGroup.propertyTree.root);
+                }
+                else
+                {
+                    treeParent.append(storedGroup.title, storedGroup.propertyTree.root);
+                }
             }
 
             this.activePropertyGroups.push(storedGroup);
+
+            // Sort properties
+            if (this.areOptimizationsEnabled)
+            {
+                let targetList = storedGroup.propertyTree.root.querySelector("ul");
+                DOMUtils.ensureElementsCorrectOrder(targetList, sortedElements);
+            }
         }
+
+        return true;
     }
 
     buildPropertiesPropertyTrees(propertyTrees: HTMLElement, properties: RECORDING.IProperty[], filter: string, propertiesWithHistory: string[][])
     {
         let groupsWithName = new Map<string, number>();
+
+        let order = 2; // 0 is global data, 1 is basic information
 
         for (let i=0; i<properties.length; ++i)
         {
@@ -727,7 +767,7 @@ export default class EntityPropertiesBuilder
                         currentGroup.value[4].icon = "fingerprint";
 
                     const name = "Basic Information";
-                    this.buildSinglePropertyTreeBlock(propertyTrees, currentGroup, name, increaseNameId(groupsWithName, name), filter, propertiesWithHistory, null, UI.TreeFlags.ShouldPrepend | UI.TreeFlags.CanOpenNewWindow);
+                    this.buildSinglePropertyTreeBlock(propertyTrees, currentGroup, name, increaseNameId(groupsWithName, name), filter, propertiesWithHistory, null, UI.TreeFlags.ShouldPrepend | UI.TreeFlags.CanOpenNewWindow, 1);
 
                     if (currentGroup.value[0])
                         delete currentGroup.value[0].icon;
@@ -744,8 +784,9 @@ export default class EntityPropertiesBuilder
                 {
                     const name = "Uncategorized";
 
-                    this.buildSinglePropertyTreeBlock(propertyTrees, currentGroup, name, increaseNameId(groupsWithName, name), filter, propertiesWithHistory, null, UI.TreeFlags.IgnoreChildren);
-                    
+                    if (this.buildSinglePropertyTreeBlock(propertyTrees, currentGroup, name, increaseNameId(groupsWithName, name), filter, propertiesWithHistory, null, UI.TreeFlags.IgnoreChildren, order))
+                        order++;
+
                     let indices = [];
                     for (let j=0; j<currentGroup.value.length; ++j)
                     {
@@ -763,7 +804,8 @@ export default class EntityPropertiesBuilder
                         if (groupData.type == CorePropertyTypes.Group)
                         {
                             const childGroup = groupData as RECORDING.IPropertyGroup;
-                            this.buildSinglePropertyTreeBlock(propertyTrees, childGroup, childGroup.name, increaseNameId(groupsWithName, childGroup.name), filter, propertiesWithHistory, null, UI.TreeFlags.HasStar | UI.TreeFlags.CanOpenNewWindow);
+                            if (this.buildSinglePropertyTreeBlock(propertyTrees, childGroup, childGroup.name, increaseNameId(groupsWithName, childGroup.name), filter, propertiesWithHistory, null, UI.TreeFlags.HasStar | UI.TreeFlags.CanOpenNewWindow, order))
+                                order++;
                         }
                     }
                 }
@@ -779,7 +821,7 @@ export default class EntityPropertiesBuilder
             const propertyGroup = events[i].properties;
             const name = events[i].name;
 
-            this.buildSinglePropertyTreeBlock(eventTree, propertyGroup, name, increaseNameId(groupsWithName, name), filter, propertiesWithHistory, events[i].tag, UI.TreeFlags.AlwaysAdd | UI.TreeFlags.CanOpenNewWindow);
+            this.buildSinglePropertyTreeBlock(eventTree, propertyGroup, name, increaseNameId(groupsWithName, name), filter, propertiesWithHistory, events[i].tag, UI.TreeFlags.AlwaysAdd | UI.TreeFlags.CanOpenNewWindow, i);
         }
     }
 
@@ -809,8 +851,9 @@ export default class EntityPropertiesBuilder
             id: Number.MAX_SAFE_INTEGER - 1
         };
 
-        this.buildSinglePropertyTreeBlock(propertyTrees, globalDataGroup, "Frame Data", increaseNameId(groupsWithName, "Frame Data"), filter, propertiesWithHistory, null, UI.TreeFlags.ShouldPrepend);
+        this.buildSinglePropertyTreeBlock(propertyTrees, globalDataGroup, "Frame Data", increaseNameId(groupsWithName, "Frame Data"), filter, propertiesWithHistory, null, UI.TreeFlags.ShouldPrepend, 0);
     }
+
 
     buildPropertyTree(entity: RECORDING.IEntity, globalData: PropertyTreeGlobalData, filter: string, propertiesWithHistory: string[][])
     {
@@ -818,18 +861,53 @@ export default class EntityPropertiesBuilder
         let propertyTree = document.getElementById('properties');
         let eventTree = document.getElementById('events');
 
-        propertyTree.innerHTML = "";
-        eventTree.innerHTML = "";
-
+        const oldActiveGroups = this.activePropertyGroups.slice();
         this.activePropertyGroups = [];
+
+        this.buildGlobalData(propertyTree, globalData, filter, propertiesWithHistory);
 
         if (entity)
         {
             this.buildPropertiesPropertyTrees(propertyTree, entity.properties, filter, propertiesWithHistory);
+
+            const propertyGroups = this.activePropertyGroups.slice();
+            let pairsWithIndices: { first: HTMLElement, second: HTMLElement, index: number }[] = [];
+            for (let activeGroup of propertyGroups)
+            {
+                pairsWithIndices.push({
+                    first: activeGroup.title,
+                    second: activeGroup.propertyTree.root,
+                    index: activeGroup.order
+                });
+            }
+            DOMUtils.ensurePairsCorrectOrder(propertyTree, pairsWithIndices);
+
             this.buildEventsPropertyTree(eventTree, entity.events, filter, propertiesWithHistory);
+
+            const eventGroups = this.activePropertyGroups.filter((group) => { 
+                return !propertyGroups.find((propGroup) => { return propGroup == group; });
+            });
+            pairsWithIndices = [];
+            for (let activeGroup of eventGroups)
+            {
+                pairsWithIndices.push({
+                    first: activeGroup.title,
+                    second: activeGroup.propertyTree.root,
+                    index: activeGroup.order
+                });
+            }
+            DOMUtils.ensurePairsCorrectOrder(eventTree, pairsWithIndices);
         }
 
-        this.buildGlobalData(propertyTree, globalData, filter, propertiesWithHistory);
+        for (let oldActiveGroup of oldActiveGroups)
+        {
+            const found = this.activePropertyGroups.find((group) => { return oldActiveGroup == group; });
+            if (!found)
+            {
+                oldActiveGroup.title.remove();
+                oldActiveGroup.propertyTree.root.remove();
+            }
+        }
     }
 
     findItemWithValue(value: string)

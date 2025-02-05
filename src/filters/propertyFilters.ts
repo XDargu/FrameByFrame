@@ -192,6 +192,21 @@ export namespace Filtering
                     if (capsule.texture && filterText(filter, capsule.texture)) return true;
                     return false;
                 }
+            case Type.Cylinder:
+                {
+                    const cylinder = property as RECORDING.IPropertyCylinder;
+                    if (filterText(filter, "Position")) return true;
+                    if (filterVec3(filter, cylinder.position)) return true;
+                    if (filterText(filter, "Direction")) return true;
+                    if (filterVec3(filter, cylinder.direction)) return true;
+                    if (filterText(filter, "Radius")) return true;
+                    if (filterNumber(filter, cylinder.radius)) return true;
+                    if (filterText(filter, "Height")) return true;
+                    if (filterNumber(filter, cylinder.height)) return true;
+                    if (cylinder.texture && filterText(filter, "Texture")) return true;
+                    if (cylinder.texture && filterText(filter, cylinder.texture)) return true;
+                    return false;
+                }
             case Type.Mesh: return false;
             case Type.Triangle:
                 {

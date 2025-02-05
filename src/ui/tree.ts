@@ -29,6 +29,40 @@ export class TreeControl {
         this.rootValue = value;
     }
 
+    private setWrapperOptions(wrapper: HTMLElement, listItem: HTMLElement, options: ITreeItemOptions)
+    {
+        wrapper.onclick = () => {
+            if (options.selectable) {
+                this.markElementSelected(wrapper);
+            }
+            if (options.callbacks && options.callbacks.onItemSelected != null)
+            {
+                options.callbacks.onItemSelected(listItem);
+            }
+        };
+
+        wrapper.ondblclick = () => {
+            if (options.callbacks && options.callbacks.onItemDoubleClicked != null)
+            {
+                options.callbacks.onItemDoubleClicked(listItem);
+            }
+        };
+
+        if (options.callbacks && options.callbacks.onItemMouseOver != null)
+        {
+            wrapper.onmouseover = () => {
+                options.callbacks.onItemMouseOver(listItem);
+            };
+        }
+
+        if (options.callbacks && options.callbacks.onItemMouseOut != null)
+        {
+            wrapper.onmouseout = () => {
+                options.callbacks.onItemMouseOut(listItem);
+            };
+        }
+    }
+
     buildItem(content : HTMLElement[], options: ITreeItemOptions) {
 
         let listItem = document.createElement("li");
@@ -72,36 +106,7 @@ export class TreeControl {
             wrapper.appendChild(tag);
         }
 
-        wrapper.onclick = () => {
-            if (options.selectable) {
-                this.markElementSelected(wrapper);
-            }
-            if (options.callbacks && options.callbacks.onItemSelected != null)
-            {
-                options.callbacks.onItemSelected(listItem);
-            }
-        };
-
-        wrapper.ondblclick = () => {
-            if (options.callbacks && options.callbacks.onItemDoubleClicked != null)
-            {
-                options.callbacks.onItemDoubleClicked(listItem);
-            }
-        };
-
-        if (options.callbacks && options.callbacks.onItemMouseOver != null)
-        {
-            wrapper.onmouseover = () => {
-                options.callbacks.onItemMouseOver(listItem);
-            };
-        }
-
-        if (options.callbacks && options.callbacks.onItemMouseOut != null)
-        {
-            wrapper.onmouseout = () => {
-                options.callbacks.onItemMouseOut(listItem);
-            };
-        }
+        this.setWrapperOptions(wrapper, listItem, options);
 
         return listItem;
     }
@@ -123,12 +128,27 @@ export class TreeControl {
         return listItem;
     }
 
+    setItem(listItem : HTMLElement, options: ITreeItemOptions)
+    {
+        const wrapper = this.getWrapperOfItem(listItem);
+        if (options.value != null)
+        {
+            listItem.setAttribute('data-tree-value', options.value);
+        }
+
+        this.setWrapperOptions(wrapper, listItem, options);
+    }
+
     getItemParent(listItem : HTMLElement) : HTMLElement {
         return listItem.parentElement.closest("li");
     }
 
     getWrapperOfItem(listItem : HTMLElement) : HTMLSpanElement {
         return listItem.querySelector(".basico-tree-item-wrapper");
+    }
+
+    getContentOfItem(listItem : HTMLElement) : HTMLSpanElement {
+        return listItem.querySelector(".basico-tree-item-content");
     }
 
     getItemOfWrapper(treeItemWrapperElement : HTMLSpanElement) : HTMLElement {

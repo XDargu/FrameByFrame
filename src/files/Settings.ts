@@ -16,6 +16,7 @@ export interface ISettings
     hoverColor: string,
     shapeHoverColor: string,
     selectionOutlineWidth: number,
+    entityPathLength: number,
     /* Pinning */
     autoPinScreenshotEntity: boolean,
     /* Syncing */
@@ -37,6 +38,8 @@ export interface ISettings
     showComments: boolean,
     /* Debug */
     showRenderDebug: boolean,
+    optimizePropertyTreeUpdates: boolean,
+    showProperyTreeUpdates: boolean,
     /* Graphics */
     antialiasingSamples: number,
     lightIntensity: number,
@@ -62,6 +65,7 @@ export function createDefaultSettings() : ISettings
         hoverColor: "#8442B9",
         shapeHoverColor: "#FFFF00",
         selectionOutlineWidth: 1,
+        entityPathLength: 60,
         /* Pinning */
         autoPinScreenshotEntity: true,
         /* Syncing */
@@ -83,6 +87,8 @@ export function createDefaultSettings() : ISettings
         showComments: true,
         /* Debug */
         showRenderDebug: false,
+        optimizePropertyTreeUpdates: false,
+        showProperyTreeUpdates: false,
         /* Graphics */
         antialiasingSamples: 4,
         lightIntensity: 0.7,
