@@ -1,5 +1,6 @@
 import * as BABYLON from 'babylonjs';
 import { IProperty } from '../recording/RecordingData';
+import { CustomLinesMesh } from './customLineMesh';
 
 export interface IPropertyRenderData
 {
@@ -11,6 +12,8 @@ export interface IEntityRenderData
     mesh: BABYLON.Mesh;
     properties: Map<number, IPropertyRenderData>;
     label: BABYLON.Mesh;
+    path?: BABYLON.LinesMesh;
+    pathPoints: BABYLON.Vector3[];
 }
 
 export class SceneEntityData

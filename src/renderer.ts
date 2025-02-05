@@ -27,6 +27,7 @@ import { EntityTree } from "./frontend/EntityTree";
 import FiltersList, { ExportedFilters, FilterId } from "./frontend/FiltersList";
 import * as Utils from "./utils/utils";
 import * as DOMUtils from "./utils/DOMUtils";
+import * as RecordingUtils from "./recording/RecordingUtils";
 import * as UserWindows from "./frontend/UserWindows";
 import FilterTickers from "./frontend/FilterTickers";
 import EntityPropertiesBuilder from "./frontend/EntityPropertiesBuilder";
@@ -228,13 +229,11 @@ export default class Renderer {
 
                     let values : number[] = [];
 
-                    const currentFrame = this.getCurrentFrame();
+                    const historicalFrameData = RecordingUtils.collectHistoricalData(this.recordedData, this.getCurrentFrame(), amount, RECORDING.BuildFrameDataFlags.All);
 
-                    const start = Math.max(0, currentFrame - amount);
-
-                    for (let i=start; i<=currentFrame; ++i)
+                    for (let i=0; i<historicalFrameData.length; ++i)
                     {
-                        const frameData = this.recordedData.buildFrameData(i);
+                        const frameData = historicalFrameData[i];
                         const testEntity = frameData.entities[this.selectedEntityId];
                         if (testEntity)
                         {
@@ -788,6 +787,8 @@ export default class Renderer {
 
         // Show only selected names as default when opening a file
         this.layerController.setLayerState(CoreLayers.EntityNames, LayerState.Selected);
+        // Paths are niche feature, set as off by default
+        this.layerController.setLayerState(CoreLayers.EntityPaths, LayerState.Off);
 
         // Try to find the screenshot entity if needed
         if (this.settings.autoPinScreenshotEntity)
@@ -1073,12 +1074,19 @@ export default class Renderer {
             this.sceneController.setCoordinateSystem(this.frameData.coordSystem ?? RECORDING.ECoordinateSystem.LeftHand);
             this.sceneController.hideAllEntities();
 
-            for (let entityID in this.frameData.entities) {
+            // Frame data for historical info
+            const isEntityPathActive = this.sceneController.getLaterStatus(CoreLayers.EntityPaths) != LayerState.Off;
+            const historicalDataLength = this.settings && isEntityPathActive ? this.settings.entityPathLength : 0;
+            const historicalFrameData = RecordingUtils.collectHistoricalData(this.recordedData, this.getCurrentFrame(), historicalDataLength, RECORDING.BuildFrameDataFlags.Entities);
 
+            for (let entityID in this.frameData.entities)
+            {
                 const entity = this.frameData.entities[entityID];
 
+                const entityPath = RecordingUtils.collectHistoricalEntityPositions(historicalFrameData, entity.id);
+                
                 // Set in the scene renderer
-                this.sceneController.setEntity(entity);
+                this.sceneController.setEntity(entity, entityPath);
             }
 
             if (this.settings && this.settings.followCurrentSelection)
@@ -1319,6 +1327,7 @@ export default class Renderer {
             let sceneController = this.sceneController;
             sceneController.removeAllProperties();
             sceneController.hideAllLabels();
+            sceneController.hideAllPaths();
 
             for (let entityID in this.frameData.entities) {
                 const entity = this.frameData.entities[entityID];
@@ -1333,6 +1342,7 @@ export default class Renderer {
                     });
                 });
 
+                sceneController.updateEntityPath(entity);
                 sceneController.updateEntityLabel(entity);
             }
 

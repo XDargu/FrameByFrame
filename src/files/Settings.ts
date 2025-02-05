@@ -16,6 +16,7 @@ export interface ISettings
     hoverColor: string,
     shapeHoverColor: string,
     selectionOutlineWidth: number,
+    entityPathLength: number,
     /* Pinning */
     autoPinScreenshotEntity: boolean,
     /* Syncing */
@@ -64,6 +65,7 @@ export function createDefaultSettings() : ISettings
         hoverColor: "#8442B9",
         shapeHoverColor: "#FFFF00",
         selectionOutlineWidth: 1,
+        entityPathLength: 60,
         /* Pinning */
         autoPinScreenshotEntity: true,
         /* Syncing */

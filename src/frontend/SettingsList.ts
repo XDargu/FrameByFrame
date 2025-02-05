@@ -351,6 +351,15 @@ export class SettingsList
                     this.onSettingsChanged();
                 }
             );
+            SettingsBuilder.addNumberSetting(group,
+                "Entity Path Length",
+                "Controls how many frames are used to render the path of entities",
+                defaultSettings.entityPathLength, settings.entityPathLength,
+                (value) => {
+                    settings.entityPathLength = Number.parseInt(value);
+                    this.onSettingsChanged();
+                }
+            );
             this.settingsList.appendChild(group.fragment);
         }
 

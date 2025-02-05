@@ -9,7 +9,8 @@ export enum LayerState
 
 export enum CoreLayers
 {
-    EntityNames = "Entity Names"
+    EntityNames = "Entity Names",
+    EntityPaths = "Entity Paths",
 }
 
 export function getLayerStateName(state: LayerState)
@@ -75,6 +76,7 @@ export class LayerController
     setLayers(layers: string[])
     {
         this.getOrCreateLayer(CoreLayers.EntityNames);
+        this.getOrCreateLayer(CoreLayers.EntityPaths);
 
         for (let layer of layers)
         {

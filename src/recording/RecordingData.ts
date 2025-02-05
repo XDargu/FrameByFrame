@@ -592,6 +592,14 @@ export interface INaiveRecordedData extends IRecordedData {
     comments: IComments;
 }
 
+export enum BuildFrameDataFlags
+{
+    Entities = 1 << 0,
+    Properties = 1 << 1,
+
+    All = ~(~0 << 4)   // 1111
+}
+
 export class NaiveRecordedData implements INaiveRecordedData {
 	readonly version: number = 4;
 	readonly type: RecordingFileType = RecordingFileType.NaiveRecording;
@@ -1049,7 +1057,7 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		return frameData;
 	}
 
-	buildFrameData(frame : number) : IFrameData {
+	buildFrameData(frame : number, flags: BuildFrameDataFlags = BuildFrameDataFlags.All) : IFrameData {
 
 		let frameData = this.frameData[frame];
 
@@ -1102,21 +1110,24 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		let eventId = 1;
 		let propId = 1;
 		
-		for (let id in mergedFrameData.entities)
-		{
-			NaiveRecordedData.visitProperties(mergedFrameData.entities[id].properties, (property: IProperty, path: string[]) => {
-				property.id = propId++;
-                property.path = path;
-			}, true, []);
-			NaiveRecordedData.visitEvents(mergedFrameData.entities[id].events, (event: IEvent) => {
-				event.id = eventId++;
+        if ((flags & BuildFrameDataFlags.Properties) != 0)
+        {
+            for (let id in mergedFrameData.entities)
+            {
+                NaiveRecordedData.visitProperties(mergedFrameData.entities[id].properties, (property: IProperty, path: string[]) => {
+                    property.id = propId++;
+                    property.path = path;
+                }, true, []);
+                NaiveRecordedData.visitEvents(mergedFrameData.entities[id].events, (event: IEvent) => {
+                    event.id = eventId++;
 
-				NaiveRecordedData.visitProperties([event.properties], (property: IProperty, path: string[]) => {
-					property.id = propId++;
-                    property.path = [event.name].concat(path);
-				}, true, []);
-			});
-		}
+                    NaiveRecordedData.visitProperties([event.properties], (property: IProperty, path: string[]) => {
+                        property.id = propId++;
+                        property.path = [event.name].concat(path);
+                    }, true, []);
+                });
+            }
+        }
 		
 		return mergedFrameData;
 	}
