@@ -37,6 +37,7 @@ These are all the possible property types:
 | Table             | `"table"`    |
 | Sphere            | `"sphere"`   |
 | Capsule           | `"capsule"`  |
+| Cylinder          | `"cylinder"` |
 | AABB              | `"aabb"`     |
 | OOBB              | `"oobb"`     |
 | Plane             | `"plane"`    |
@@ -46,6 +47,7 @@ These are all the possible property types:
 | Mesh              | `"mesh"`     |
 | Path              | `"path"`     |
 | Triangle          | `"triangle"` |
+| Line Chart        | `"linechart"`|
 
 ## Flags
 These are all the possible property flags:
@@ -162,6 +164,34 @@ Example:
 {
     "name": string,
     "type": "capsule",
+    "layer": string,
+    "color": {
+        r: number,
+        g: number,
+        b: number,
+        a: number
+    },
+    "position": {
+        x: number,
+        y: number,
+        z: number
+    },
+    "direction": {
+        x: number,
+        y: number,
+        z: number
+    },
+    "radius": number,
+    "height": number,
+    "flags": number,
+    "texture"?: string
+}
+```
+### Cylinder
+```js
+{
+    "name": string,
+    "type": "cylinder",
     "layer": string,
     "color": {
         r: number,
@@ -457,6 +487,29 @@ Example:
     "name": string,
     "type": "comment",
     "value": string,
+    "flags": number
+}
+```
+### Line Chart
+
+#### Line Chart Data
+```js
+{
+    "values": number[],
+    "ylabel": string,
+    "color"?: string
+```
+
+#### Line Chart Property
+```js
+{
+    "name": string,
+    "type": "linechart",
+    "data": ILineChartData[],
+    "yscale": number,
+    "xscale": number,
+    "chart"?: string, // use "bar" for a bar chart instead of a line chart
+    "height"?: number,
     "flags": number
 }
 ```
