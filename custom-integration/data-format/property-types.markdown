@@ -73,6 +73,17 @@ Icons use [Font Awesome Icons](https://fontawesome.com/icons):
 - The `icon` property is the name of the icon. Examples: `question`, `circle`, `user`.
 - The `icolor` property is a [valid CSS color value](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_colors/Color_values). Examples: HEX colors like `#333` or `#565656` are valid. Named colors such as `red` or `cornflowerblue` are also valid.
 
+Properties with an `icon` property and no `icolor` will use a default color.
+
+By default, icons are displayed before the name of the property, and only the icon is affected by the color. However, a few properties have custom behavior:
+- First level groups: first level groups create blocks of properties on the [Entity Data panel](/FrameByFrame/user-interface#entity-data). A first level group with an `icolor` property tints the header of the block with a darker shade of the color.
+
+![First level group with an icon with color](/FrameByFrame/assets/images/screenshots/FirstLevelGroupPropertyColors.png)
+
+- Comments: Any comment with an `icolor` property tints the background of the comment with a darker shade of the color, and the border of the comment with the given color:
+
+![Different types of comments with icons and colors](/FrameByFrame/assets/images/screenshots/CommentPropertyColors.png)
+
 ## Primitive Properties
 ### String
 ```js
