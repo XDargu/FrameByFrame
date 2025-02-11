@@ -36,7 +36,11 @@ parent: Using Frame by Frame
  - **Selection color**: Controls the color of the outline of a selected entity. Click on the button on the right to reset to the default value.
  - **Hover color**: Controls the color of the outline of a hovered entity. Click on the button on the right to reset to the default value.
  - **Shape Hover Color**: Controls the color of the shape higlight effect. Click on the button on the right to reset to the default value.
-  - **Outline width**: Controls the width of the outline of selected and hovered entities. Click on the button on the right to reset to the default value.
+ - **Outline width**: Controls the width of the outline of selected and hovered entities. Click on the button on the right to reset to the default value.
+ - **Entity Path Length**: Controls the length in frames of the Entity Paths. The Entity Paths layer must be active to see them. The layer is disabled by default.
+
+ ## Texture Pinning
+ - **Auto-pin Screenshot Entity**: If enabled, when opening a recording Frame by Frame will try to find an entity named "Screenshot" with a texture shape, and pin that texture. This is meant to be used as a standard way of sending screenshots to Frame by Frame.
 
 ## Syncing
  - **Sync Visible Shapes**: If enabled, Frame by Frame will send the current rendered shapes back to the 3D application.
@@ -44,6 +48,7 @@ parent: Using Frame by Frame
 
 ## Timeline
  - **Show event popup**: If enabled, it will display a popup when hovering on events of the timeline. The popup shows all events happening on that frame.
+ - **Show comment popup**: If enabled, it will display a popup when hovering on comments of the timeline. The popup shows all comments of that frame.
 
 ## Grid
  - **Grid height**: Determines at which height should the grid be rendered. By default is zero, but your game might have levels with a different height, and the grid might appear very far away.
@@ -68,6 +73,16 @@ parent: Using Frame by Frame
  - **Remove old frames**: If enabled, old frames will automatically be removed when recording.
  - **Frame remval threshold**: Controls how many frames to keep when automatically removing old frames.
 
+## Comments
+ - **Show comments**: If enabled, comments will be displayed on the timeline.
+
 ## Debug
  - **Show render debug info**: Enable to display debug information on the viewer.
+ - **Experimental: Optimize property tree updates**: Enable an experimental optimization of the property tree panel. This will make navigating through the recording smoother, but certain types of data might not be displayed correctly.
+ - **Show property tree updates**: Displays with colors all updates in the property tree, and the type of update:
+    - Red: the element has been completely re-created
+    - Green: the element has been re-used
+    - Yellow: the element has been partially re-created
  - **Purge Pools**: Click on this button to clear all material and mesh pools. It will remove all meshes currently visible as well. Changing the current frame will reload them.
+ - **Collect garbage**: Force Garbage Collection, releasing all unused memory.
+ - **Restore context**: Attempts to restore the OpenGL context.
