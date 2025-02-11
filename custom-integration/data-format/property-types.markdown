@@ -66,6 +66,13 @@ Example:
 - `Collapsed` has a value of 2, in binary this is `0010`.
 - `Hidden | Collapsed` has a value of 3, in binary this is: `0011`
 
+## Icons
+All properties can have an icon.
+
+Icons use [Font Awesome Icons](https://fontawesome.com/icons):
+- The `icon` property is the name of the icon. Examples: `question`, `circle`, `user`.
+- The `icolor` property is a [valid CSS color value](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_colors/Color_values). Examples: HEX colors like `#333` or `#565656` are valid. Named colors such as `red` or `cornflowerblue` are also valid.
+
 ## Primitive Properties
 ### String
 ```js
@@ -73,7 +80,9 @@ Example:
     "name": string,
     "type": "string",
     "value": string,
-    "flags": number
+    "flags": number,
+    "icon"?: string,
+    "icolor"?: string
 }
 ```
 ### Boolean
@@ -82,7 +91,9 @@ Example:
     "name": string,
     "type": "boolean",
     "value": boolean,
-    "flags": number
+    "flags": number,
+    "icon"?: string,
+    "icolor"?: string
 }
 ```
 ### Number
@@ -91,7 +102,9 @@ Example:
     "name": string,
     "type": "number",
     "value": number,
-    "flags": number
+    "flags": number,
+    "icon"?: string,
+    "icolor"?: string
 }
 ```
 
@@ -106,7 +119,9 @@ Example:
         y: number,
         z: number
     },
-    "flags": number
+    "flags": number,
+    "icon"?: string,
+    "icolor"?: string
 }
 ```
 ### Vec2
@@ -118,7 +133,9 @@ Example:
         x: number,
         y: number,
     },
-    "flags": number
+    "flags": number,
+    "icon"?: string,
+    "icolor"?: string
 }
 ```
 ### Quat
@@ -132,7 +149,9 @@ Example:
         z: number,
         w: number
     },
-    "flags": number
+    "flags": number,
+    "icon"?: string,
+    "icolor"?: string
 }
 ```
 
@@ -156,7 +175,9 @@ Example:
     },
     "radius": number,
     "flags": number,
-    "texture"?: string
+    "texture"?: string,
+    "icon"?: string,
+    "icolor"?: string
 }
 ```
 ### Capsule
@@ -184,7 +205,9 @@ Example:
     "radius": number,
     "height": number,
     "flags": number,
-    "texture"?: string
+    "texture"?: string,
+    "icon"?: string,
+    "icolor"?: string
 }
 ```
 ### Cylinder
@@ -212,7 +235,9 @@ Example:
     "radius": number,
     "height": number,
     "flags": number,
-    "texture"?: string
+    "texture"?: string,
+    "icon"?: string,
+    "icolor"?: string
 }
 ```
 ### AABB
@@ -238,7 +263,9 @@ Example:
         z: number
     },
     "flags": number,
-    "texture"?: string
+    "texture"?: string,
+    "icon"?: string,
+    "icolor"?: string
 }
 ```
 ### OOBB
@@ -274,7 +301,9 @@ Example:
         z: number
     },
     "flags": number,
-    "texture"?: string
+    "texture"?: string,
+    "icon"?: string,
+    "icolor"?: string
 }
 ```
 ### Plane
@@ -307,7 +336,9 @@ Example:
     "width": number,
     "length": number,
     "flags": number,
-    "texture"?: string
+    "texture"?: string,
+    "icon"?: string,
+    "icolor"?: string
 }
 ```
 ### Line
@@ -332,7 +363,9 @@ Example:
         y: number,
         z: number
     },
-    "flags": number
+    "flags": number,
+    "icon"?: string,
+    "icolor"?: string
 }
 ```
 ### Arrow
@@ -357,7 +390,9 @@ Example:
         y: number,
         z: number
     },
-    "flags": number
+    "flags": number,
+    "icon"?: string,
+    "icolor"?: string
 }
 ```
 ### Vector
@@ -377,7 +412,9 @@ Example:
         y: number,
         z: number
     },
-    "flags": number
+    "flags": number,
+    "icon"?: string,
+    "icolor"?: string
 }
 ```
 ### Mesh
@@ -396,7 +433,9 @@ Example:
     "indices"?: number[],
     "wireframe"?: boolean,
     "flags": number,
-    "texture"?: string
+    "texture"?: string,
+    "icon"?: string,
+    "icolor"?: string
 }
 ```
 ### Path
@@ -426,7 +465,9 @@ Example:
         y: number,
         z: number
     },
-    "flags": number
+    "flags": number,
+    "icon"?: string,
+    "icolor"?: string
 }
 ```
 ### Triangle
@@ -443,7 +484,9 @@ Example:
     },
     "points": Vec3[],
     "flags": number,
-    "texture"?: string
+    "texture"?: string,
+    "icon"?: string,
+    "icolor"?: string
 }
 ```
 
@@ -454,7 +497,9 @@ Example:
     "name": string,
     "type": "group",
     "value": Property[],
-    "flags": number
+    "flags": number,
+    "icon"?: string,
+    "icolor"?: string
 }
 ```
 ### Entity Reference
@@ -466,7 +511,9 @@ Example:
         "name": string,
         "id": number
     },
-    "flags": number
+    "flags": number,
+    "icon"?: string,
+    "icolor"?: string
 }
 ```
 ### Table
@@ -478,7 +525,9 @@ Example:
         "header": string[],
         "rows": string[][]
     },
-    "flags": number
+    "flags": number,
+    "icon"?: string,
+    "icolor"?: string
 }
 ```
 ### Comment
@@ -487,7 +536,9 @@ Example:
     "name": string,
     "type": "comment",
     "value": string,
-    "flags": number
+    "flags": number,
+    "icon"?: string,
+    "icolor"?: string
 }
 ```
 ### Line Chart
@@ -510,6 +561,8 @@ Example:
     "xscale": number,
     "chart"?: string, // use "bar" for a bar chart instead of a line chart
     "height"?: number,
-    "flags": number
+    "flags": number,
+    "icon"?: string,
+    "icolor"?: string
 }
 ```
