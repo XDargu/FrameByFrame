@@ -49,6 +49,7 @@ Here you can download examples of Frame Data and a Full Recording.
     "serverTime": number,
     "elapsedTime": number,
     "coordSystem": number,
+    "scene": string,
     "entities": [key:number]: EntityData
 }
 ```
@@ -61,6 +62,7 @@ Here you can download examples of Frame Data and a Full Recording.
 - `coordSystem`: Id of the coordinate system of your game/engine. The possible values are:
     - `0`: Right Handed
     - `1`: Left Handed
+- `scene`: Current scene where the recording is happening. It will be included on the recording metadata. It can be used for indicating the current level of a game, for example.
 - `entities`: Object that contains entity data. Works like a map, with keys and values. The key is the unique entity id, and the value is the entity data. The entity data is documented in the [Entity Data section](#entity-data).
 
 For an example of a valid frame data object, go to the [Example section](#example-of-frame-data).
