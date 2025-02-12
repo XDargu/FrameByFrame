@@ -109,7 +109,7 @@ Comments have a few features that might come in handy in some situations:
 
 - **Automatic detection of links**: Comments detect URLs and automatically create a hyperlink that allows you to open it when clicked.
 
-![Comment with a link to a URL](/FrameByFrame/assets/images/screenshots/CommentwithLink.png)
+![Comment with a link to a URL](/FrameByFrame/assets/images/screenshots/CommentWithLink.png)
 
 - **Link to a specific frame**: It is possible to create a link to a frame by typing "frame X" where X is a number. This will create a link to the frame with index X. When cropping a recording, the frame index is shiften to account for it.
 
