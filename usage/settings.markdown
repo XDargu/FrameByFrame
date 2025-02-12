@@ -3,7 +3,7 @@
 # To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
 
 layout: default
-nav_order: 3
+nav_order: 4
 title: Settings
 description: "Detailed explanation of all the settings of Frame by Frame"
 parent: Using Frame by Frame
