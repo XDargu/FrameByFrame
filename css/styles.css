@@ -3045,6 +3045,16 @@ i.prop-icon {
 #settings-container .basico-slider {
   width: 100%; }
 
+#viewport-settings {
+  display: flex;
+  align-items: center;
+  position: absolute;
+  z-index: 1;
+  padding: 0px 15px;
+  width: 100%;
+  box-sizing: border-box;
+  height: 32px; }
+
 .full-page {
   background: #473D4F;
   color: #C4C4C4; }

@@ -588,6 +588,7 @@ export default class Renderer {
         // Create settings
         this.settingsList = new SettingsList(document.getElementById("settings"), 
             document.getElementById("settings-search") as HTMLInputElement,
+            document.getElementById("viewport-settings"),
             this.onSettingsChanged.bind(this),
             () => { this.sceneController.purgePools(); },
             () => { this.sceneController.restoreContext(); },
@@ -708,6 +709,7 @@ export default class Renderer {
         this.sceneController.setOutlineWidth(settings.selectionOutlineWidth);
         this.sceneController.setLightIntensity(settings.lightIntensity);
         this.sceneController.setBackfaceCulling(settings.backFaceCulling);
+        this.sceneController.setCameraSpeed(settings.cameraSpeed);
 
         this.shapeArrowController.setColor(settings.shapeHoverColor);
         this.shapeArrowController.setEnabled(settings.showShapeLineOnHover);

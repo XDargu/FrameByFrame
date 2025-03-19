@@ -28,6 +28,7 @@ export default class CameraControl
         this._camera.inertia = 0;
         this._camera.speed = this.cameraMinSpeed;
         this._camera.angularSensibility = 500;
+        this._camera.minZ = 0.1;
 
         // Manually add inputs here for WASD
         this._camera.keysDown = [83];
@@ -118,6 +119,13 @@ export default class CameraControl
     setSelectedEntity(selectedEntity: IEntityRenderData)
     {
         this.selectedEntity = selectedEntity;
+    }
+
+    setBaseSpeed(speed: number)
+    {
+        this.cameraMinSpeed = speed;
+        this.cameraMaxSpeed = speed * 3;
+        this._camera.speed = speed;
     }
 
     followEntity()
