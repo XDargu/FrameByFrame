@@ -45,6 +45,11 @@ interface ICameraChangedCallback
     (position: RECORDING.IVec3, up: RECORDING.IVec3, forward: RECORDING.IVec3) : void
 }
 
+interface ICameraSpeedChangedCallback
+{
+    (speed: number) : void
+}
+
 const shapeBuildConfig : IPropertyBuilderConfig  = {
     [CorePropertyTypes.Sphere]: { builder: ShapeBuilders.buildSphereShape, pickable: true},
     [CorePropertyTypes.Capsule]: { builder: ShapeBuilders.buildCapsuleShape, pickable: true},
@@ -98,6 +103,7 @@ export default class SceneController
         canvas: HTMLCanvasElement,
         onEntitySelected: IEntitySelectedCallback,
         onCameraChangedCallback: ICameraChangedCallback,
+        onCameraSpeedChanged: ICameraSpeedChangedCallback,
         getResourceFunc: IGetResourceFunction,
         selectionColor: string,
         hoverColor: string,
@@ -112,7 +118,7 @@ export default class SceneController
         const shapeHoverColor01 = Utils.RgbToRgb01(Utils.hexToRgb(shapeHoverColor));
 
         const engine = new BABYLON.Engine(canvas, false, { stencil: true });
-        this.createScene(canvas, engine, onCameraChangedCallback, getResourceFunc);
+        this.createScene(canvas, engine, onCameraChangedCallback, onCameraSpeedChanged, getResourceFunc);
         this.loseContext = engine._gl.getExtension('WEBGL_lose_context');
 
         this.outline = new SceneOutline(this._scene, this.cameraControl.getCamera(), selectionColor01, hoverColor01, outlineWidth);
@@ -138,7 +144,7 @@ export default class SceneController
         this.setCoordinateSystem(RECORDING.ECoordinateSystem.LeftHand);
     }
 
-    private createScene(canvas: HTMLCanvasElement, engine: BABYLON.Engine, onCameraChangedCallback: ICameraChangedCallback, getResourceFunc: IGetResourceFunction) {
+    private createScene(canvas: HTMLCanvasElement, engine: BABYLON.Engine, onCameraChangedCallback: ICameraChangedCallback, onCameraSpeedChanged: ICameraSpeedChangedCallback, getResourceFunc: IGetResourceFunction) {
         this._canvas = canvas;
 
         this._engine = engine;
@@ -163,7 +169,7 @@ export default class SceneController
                 RenderUtils.BabylonToVec3(up, this.coordSystem),
                 RenderUtils.BabylonToVec3(forward, this.coordSystem)
             );
-        });
+        }, onCameraSpeedChanged);
 
         // This creates a light, aiming 0,1,0 - to the sky (non-mesh)
         this.light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);

@@ -529,8 +529,9 @@ You can use the following formatting options:
         this.filterElements();
 
         // Viewport settings
+        this.viewportSettings.innerHTML = "";
         {
-            const camSpeed = SettingsBuilder.createRangeInputSetting("Camera Speed", "Camera Speed", 0.1, 15, 0.1, settings.cameraSpeed, (value: number) => {
+            const camSpeed = SettingsBuilder.createRangeInputSetting("Camera Speed", "Camera Speed (Ctrl+Mouse Wheel)", 0.1, 15, 0.1, settings.cameraSpeed, (value: number) => {
                 settings.cameraSpeed = value;
                 this.onSettingsChanged();
 
