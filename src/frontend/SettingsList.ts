@@ -16,6 +16,7 @@ interface SettingsBuilderGroup
 {
     fragment: DocumentFragment;
     list: HTMLElement;
+    name: string;
 }
 
 interface IBooleanSettingCallback
@@ -58,17 +59,33 @@ namespace SettingsBuilder
         list.classList.add("basico-list");
         fragment.appendChild(list);
 
-        return { fragment: fragment, list: list };
+        return { fragment: fragment, list: list, name: name };
+    }
+
+    export function CreateSettingId(group: string, name: string)
+    {
+        return `setting-list-${group}-${name}`;
+    }
+
+    export function CreateViewportSettingId(name: string)
+    {
+        return `setting-viewport-${name}`;
+    }
+
+    function addSettingToGroup(group: SettingsBuilderGroup, name: string, settingElem: HTMLElement)
+    {
+        settingElem.id = CreateSettingId(group.name, name);
+        group.list.appendChild(settingElem);
     }
 
     export function addButtonSetting(group: SettingsBuilderGroup, name: string, tooltip: string, callback: IButtonSettingCallback)
     {
-        group.list.appendChild(createButtonSetting(name, tooltip, callback));
+        addSettingToGroup(group, name, createButtonSetting(name, tooltip, callback));
     }
 
     export function addColorSetting(group: SettingsBuilderGroup, name: string, tooltip: string, value: string, defaultValue: string, callback: IColorSettingCallback)
     {
-        group.list.appendChild(createColorSetting(name, tooltip, value, defaultValue, callback));
+        addSettingToGroup(group, name, createColorSetting(name, tooltip, value, defaultValue, callback));
     }
 
     function createInput(type: string, value: string, placeholder?: string) : HTMLInputElement
@@ -150,9 +167,24 @@ namespace SettingsBuilder
         return createListItem(textItem, input, resetButton);
     }
 
+    export function createRangeInputSetting(id: string, tooltip: string, min: number, max: number, step: number, value: number, callback: INumberSettingCallback)
+    {
+        let input = createInput("range", value.toString());
+        input.className = "basico-slider";
+        input.min = min.toString();
+        input.max = max.toString();
+        input.step = step.toString();
+        input.value = value.toString();
+        input.title = tooltip;
+        input.oninput = () => { callback( Utils.clamp(Number.parseFloat(input.value), min, max)); }
+        input.id = CreateViewportSettingId(id);
+
+        return input;
+    }
+
     export function addRangeSetting(group: SettingsBuilderGroup, name: string, tooltip: string, min: number, max: number, step: number, value: number, defaultValue: number, callback: INumberSettingCallback)
     {
-        group.list.appendChild(createRangeSetting(name, tooltip, min, max, step, value, defaultValue, callback));
+        addSettingToGroup(group, name, createRangeSetting(name, tooltip, min, max, step, value, defaultValue, callback));
     }
 
     function createRangeSetting(name: string, tooltip: string, min: number, max: number, step: number, value: number, defaultValue: number, callback: INumberSettingCallback) : HTMLElement
@@ -175,7 +207,7 @@ namespace SettingsBuilder
 
     export function addNumberSetting(group: SettingsBuilderGroup, name: string, tooltip: string, placeholder: number, value: number, callback: IStringSettingCallback)
     {
-        group.list.appendChild(createNumberSetting(name, tooltip, placeholder, value, callback));
+        addSettingToGroup(group, name, createNumberSetting(name, tooltip, placeholder, value, callback));
     }
 
     function createNumberSetting(name: string, tooltip: string, placeholder: number, value: number, callback: IStringSettingCallback) : HTMLElement
@@ -190,7 +222,7 @@ namespace SettingsBuilder
 
     export function addStringSetting(group: SettingsBuilderGroup, name: string, tooltip: string, placeholder: string, value: string, callback: IStringSettingCallback)
     {
-        group.list.appendChild(createStringSetting(name, tooltip, placeholder, value, callback));
+        addSettingToGroup(group, name, createStringSetting(name, tooltip, placeholder, value, callback));
     }
 
     function createStringSetting(name: string, tooltip: string, placeholder: string, value: string, callback: IStringSettingCallback) : HTMLElement
@@ -205,7 +237,7 @@ namespace SettingsBuilder
 
     export function addNumberOptionsSetting(group: SettingsBuilderGroup, name: string, value: number, options: number[], callback: INumberSettingCallback)
     {
-        group.list.appendChild(createNumberOptionsSetting(name, value, options, callback));
+        addSettingToGroup(group, name, createNumberOptionsSetting(name, value, options, callback));
     }
 
     function createNumberOptionsSetting(name: string, value: number, options: number[], callback: INumberSettingCallback) : HTMLElement
@@ -218,7 +250,7 @@ namespace SettingsBuilder
 
     export function addBooleanSetting(group: SettingsBuilderGroup, name: string, value: boolean, callback: IBooleanSettingCallback)
     {
-        group.list.appendChild(createBooleanSetting(name, value, callback));
+        addSettingToGroup(group, name, createBooleanSetting(name, value, callback));
     }
 
     function createBooleanSetting(name: string, value: boolean, callback: IBooleanSettingCallback) : HTMLElement
@@ -295,11 +327,13 @@ export class SettingsList
     private settingsList: HTMLElement;
     private searchFilter: HTMLInputElement;
     private filter: string;
+    private viewportSettings: HTMLElement;
 
-    constructor(settingsList: HTMLElement, searchFilter: HTMLInputElement, onSettingsChanged: ISettingsChanged, onPurgePools: IButtonCallback, onRestoreContext: IButtonCallback, onTriggerGC: IButtonCallback)
+    constructor(settingsList: HTMLElement, searchFilter: HTMLInputElement, viewportSettings: HTMLElement, onSettingsChanged: ISettingsChanged, onPurgePools: IButtonCallback, onRestoreContext: IButtonCallback, onTriggerGC: IButtonCallback)
     {
         this.settingsList = settingsList;
         this.searchFilter = searchFilter;
+        this.viewportSettings = viewportSettings;
         this.searchFilter.onkeyup = () => { this.filterElements(); };
         this.filter = "";
         this.onSettingsChanged = onSettingsChanged;
@@ -330,6 +364,20 @@ export class SettingsList
         }
         {
             let group = SettingsBuilder.createGroup("Viewer");
+            SettingsBuilder.addRangeSetting(group,
+                "Camera Speed",
+                "Changes the base speed of the camera",
+                0.1, 15, 0.1,
+                settings.cameraSpeed,
+                defaultSettings.cameraSpeed,
+                (value) => {
+                    settings.cameraSpeed = value;
+                    this.onSettingsChanged();
+
+                    // Update viewport input too
+                    this.setViewportSettingInputValue("Camera Speed", value.toString());
+                }
+            );
             SettingsBuilder.addBooleanSetting(group, "Move camera on selection", settings.moveToEntityOnSelection, (value) => {settings.moveToEntityOnSelection = value; this.onSettingsChanged(); })
             SettingsBuilder.addBooleanSetting(group, "Open entity list on selection", settings.openEntityListOnSelection, (value) => {settings.openEntityListOnSelection = value; this.onSettingsChanged(); })
             SettingsBuilder.addBooleanSetting(group, "Follow selected entity", settings.followCurrentSelection, (value) => {settings.followCurrentSelection = value; this.onSettingsChanged(); })
@@ -479,6 +527,19 @@ You can use the following formatting options:
         }
 
         this.filterElements();
+
+        // Viewport settings
+        {
+            const camSpeed = SettingsBuilder.createRangeInputSetting("Camera Speed", "Camera Speed", 0.1, 15, 0.1, settings.cameraSpeed, (value: number) => {
+                settings.cameraSpeed = value;
+                this.onSettingsChanged();
+
+                // Update viewport input too
+                this.setListSettingInputValue("Viewer", "Camera Speed", value.toString());
+            });
+
+            this.viewportSettings.appendChild(camSpeed);
+        }
     }
 
     private filterElements()
@@ -527,6 +588,42 @@ You can use the following formatting options:
 
             titleElement.style.display = foundInGroup ? "block" : "none";
             listElement.style.display = foundInGroup ? "block" : "none";
+        }
+    }
+
+    private findListSetting(group: string, name: string)
+    {
+        return document.getElementById(SettingsBuilder.CreateSettingId(group, name));
+    }
+
+    private findViewportSetting(name: string)
+    {
+        return document.getElementById(SettingsBuilder.CreateViewportSettingId(name));
+    }
+
+    private setListSettingInputValue(group: string, name: string, value: string)
+    {
+        const elem = this.findListSetting(group, name);
+        if (elem)
+        {
+            const input = elem.querySelector("input") as HTMLInputElement;
+            if (input)
+            {
+                input.value = value;
+            }
+        }
+    }
+
+    private setViewportSettingInputValue(name: string, value: string)
+    {
+        const elem = this.findViewportSetting(name);
+        if (elem)
+        {
+            const input = (elem.matches("input") && elem || elem.querySelector("input")) as HTMLInputElement;
+            if (input)
+            {
+                input.value = value;
+            }
         }
     }
 }

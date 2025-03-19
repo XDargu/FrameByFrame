@@ -17,6 +17,7 @@ export interface ISettings
     shapeHoverColor: string,
     selectionOutlineWidth: number,
     entityPathLength: number,
+    cameraSpeed: number,
     /* Pinning */
     autoPinScreenshotEntity: boolean,
     /* Syncing */
@@ -66,6 +67,7 @@ export function createDefaultSettings() : ISettings
         shapeHoverColor: "#FFFF00",
         selectionOutlineWidth: 1,
         entityPathLength: 60,
+        cameraSpeed: 5,
         /* Pinning */
         autoPinScreenshotEntity: true,
         /* Syncing */

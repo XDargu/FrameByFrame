@@ -522,6 +522,11 @@ export default class SceneController
         this.outline.setWidth(outlineWidth);
     }
 
+    setCameraSpeed(cameraSpeed: number)
+    {
+        this.cameraControl.setBaseSpeed(cameraSpeed);
+    }
+
     purgePools()
     {
         this.pools.clear();
