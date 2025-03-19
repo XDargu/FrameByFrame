@@ -1,5 +1,6 @@
 import * as BABYLON from 'babylonjs';
 import * as RenderUtils from '../render/renderUtils';
+import * as Utils from '../utils/utils';
 import { IEntityRenderData } from './commonTypes';
 
 interface ISceneKeyboardFunctions
@@ -12,6 +13,11 @@ interface ICameraMatrixChangedCallback
     (position: BABYLON.Vector3, up: BABYLON.Vector3, forward: BABYLON.Vector3) : void;
 }
 
+interface ICameraSpeedChangedCallback
+{
+    (speed: number) : void
+}
+
 export default class CameraControl
 {
     private _camera: BABYLON.UniversalCamera;
@@ -19,8 +25,9 @@ export default class CameraControl
     private isFollowingEntity: boolean = false;
     private cameraMinSpeed: number = 5;
     private cameraMaxSpeed: number = 15;
+    private isCtrlDown: boolean = false;
 
-    initialize(scene: BABYLON.Scene, canvas: HTMLCanvasElement, cameraChangeCallback: ICameraMatrixChangedCallback)
+    initialize(scene: BABYLON.Scene, canvas: HTMLCanvasElement, cameraChangeCallback: ICameraMatrixChangedCallback, onCameraSpeedChanged: ICameraSpeedChangedCallback)
     {
         // This creates and positions a free camera (non-mesh)
         //const camera = new BABYLON.ArcRotateCamera("Camera", 3 * Math.PI / 2, Math.PI / 8, 50, BABYLON.Vector3.Zero(), scene);
@@ -37,11 +44,13 @@ export default class CameraControl
         this._camera.keysRight = [68];
 
         const keyControlsUp : ISceneKeyboardFunctions = {
-            "Shift": () => { this._camera.speed = this.cameraMinSpeed; }
+            "Shift": () => { this._camera.speed = this.cameraMinSpeed; },
+            "Control": () => { this.isCtrlDown = false; },
         }
 
         const keyControlsDown : ISceneKeyboardFunctions = {
-            "Shift": () => { this._camera.speed = this.cameraMaxSpeed; }
+            "Shift": () => { this._camera.speed = this.cameraMaxSpeed; },
+            "Control": () => { this.isCtrlDown = true; },
         }
 
         scene.onKeyboardObservable.add((kbInfo) =>
@@ -56,6 +65,7 @@ export default class CameraControl
                     break;
                 case BABYLON.KeyboardEventTypes.KEYUP:
                     {
+                        console.log(keyControlsUp[kbInfo.event.key]);
                         const func = keyControlsUp[kbInfo.event.key];
                         if (func) { func(); }
                     }
@@ -64,9 +74,20 @@ export default class CameraControl
         });
 
         // Move forward with mouse wheel
-        let zoomCallback = (evt: WheelEvent) => {
-            const delta = Math.max(-1, Math.min(1,(evt.deltaY)));
-            this._camera.position = BABYLON.Vector3.Lerp(this._camera.position, this._camera.getFrontPosition(-delta), 0.5);
+        let zoomCallback = (evt: WheelEvent) =>
+        {
+            const delta = Utils.clamp(evt.deltaY, -1, 1);
+
+            if (this.isCtrlDown)
+            {
+                this.setBaseSpeed(Utils.clamp(this.cameraMinSpeed - delta, 0.1, 15));
+                onCameraSpeedChanged(this.cameraMinSpeed);
+            }
+            else
+            {
+                
+                this._camera.position = BABYLON.Vector3.Lerp(this._camera.position, this._camera.getFrontPosition(-delta), 0.5);
+            }
         }
 
         let inputCallback = () => { this.stopFollowEntity(); };
