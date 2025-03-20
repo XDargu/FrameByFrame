@@ -1,7 +1,7 @@
 {
   "name": "frame-by-frame",
   "productName": "Frame By Frame",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Visual Debugging and Recording Tool for 3D applications",
   "main": "./app/main.js",
   "build": {
