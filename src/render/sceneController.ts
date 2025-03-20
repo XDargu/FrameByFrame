@@ -17,7 +17,7 @@ import ScenePropertySelection from './scenePropertySelection';
 import { CorePropertyTypes } from '../types/typeRegistry';
 import TextLabels from './textLabel';
 import { IGetResourceFunction } from './materialPool';
-import { createCustomLinesystem } from './customLineMesh';
+import { ResizeObserver } from 'resize-observer';
 
 export interface IOnDebugDataUpdated
 {
@@ -134,6 +134,10 @@ export default class SceneController
             engine.resize();
         });
 
+        const resizeObs = new ResizeObserver(entries => {
+            this.cameraControl.onCanvasResize();
+        }).observe(canvas.parentElement);
+
         this.sceneEntityData = new SceneEntityData();
 
         this.propertySelection = new ScenePropertySelection(this.sceneEntityData, this.pools, highlightOnHover, shapeHoverColor01);
@@ -172,8 +176,9 @@ export default class SceneController
         }, onCameraSpeedChanged);
 
         // This creates a light, aiming 0,1,0 - to the sky (non-mesh)
-        this.light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
-
+        this.light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 5, 0), scene);
+        this.light.specular = new BABYLON.Color3(0.5, 0.5, 0.5);
+        
 	    this.light.groundColor = new BABYLON.Color3(0.27, 0.18, 0.05);
 
         // Default intensity is 1. Let's dim the light a small amount
@@ -531,6 +536,20 @@ export default class SceneController
     setCameraSpeed(cameraSpeed: number)
     {
         this.cameraControl.setBaseSpeed(cameraSpeed);
+    }
+
+    toggle2DMode()
+    {
+        this.cameraControl.toggle2DMode();
+
+        if (this.cameraControl.is2DModeActive())
+        {
+            this.light.specular = new BABYLON.Color3(0, 0, 0);
+        }
+        else
+        {
+            this.light.specular = new BABYLON.Color3(0.5, 0.5, 0.5);
+        }
     }
 
     purgePools()
