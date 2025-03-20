@@ -593,7 +593,8 @@ export default class Renderer {
             this.onSettingsChanged.bind(this),
             () => { this.sceneController.purgePools(); },
             () => { this.sceneController.restoreContext(); },
-            () => { global.gc(); }
+            () => { global.gc(); },
+            () => { this.sceneController.toggle2DMode(); }
         );
 
         // Create info

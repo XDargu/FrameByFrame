@@ -324,12 +324,13 @@ export class SettingsList
     private onPurgePools: IButtonCallback;
     private onTriggerGC: IButtonCallback;
     private onRestoreContext: IButtonCallback;
+    private on2DMode: IButtonCallback;
     private settingsList: HTMLElement;
     private searchFilter: HTMLInputElement;
     private filter: string;
     private viewportSettings: HTMLElement;
 
-    constructor(settingsList: HTMLElement, searchFilter: HTMLInputElement, viewportSettings: HTMLElement, onSettingsChanged: ISettingsChanged, onPurgePools: IButtonCallback, onRestoreContext: IButtonCallback, onTriggerGC: IButtonCallback)
+    constructor(settingsList: HTMLElement, searchFilter: HTMLInputElement, viewportSettings: HTMLElement, onSettingsChanged: ISettingsChanged, onPurgePools: IButtonCallback, onRestoreContext: IButtonCallback, onTriggerGC: IButtonCallback, on2DMode: IButtonCallback)
     {
         this.settingsList = settingsList;
         this.searchFilter = searchFilter;
@@ -340,6 +341,7 @@ export class SettingsList
         this.onPurgePools = onPurgePools;
         this.onRestoreContext = onRestoreContext;
         this.onTriggerGC = onTriggerGC;
+        this.on2DMode = on2DMode;
     }
 
     setSettings(settings: ISettings)
@@ -540,6 +542,27 @@ You can use the following formatting options:
             });
 
             this.viewportSettings.appendChild(camSpeed);
+
+            let button: HTMLButtonElement = document.createElement("button");
+            button.className = "basico-button basico-small viewport-right";           
+            button.title = "Enable orthographic camera";
+            button.innerText = "3D";
+
+            button.onclick = () => {
+                this.on2DMode();
+                if (button.innerText == "3D") // TODO: Improve this
+                {
+                    button.title = "Enable perspective camera";
+                    button.innerText = "Top";
+                }
+                else
+                {
+                    button.title = "Enable orthographic camera";
+                    button.innerText = "3D";
+                }
+            };
+
+            this.viewportSettings.appendChild(button);
         }
     }
 
