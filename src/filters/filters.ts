@@ -140,6 +140,14 @@ export function createMemberFilterFromProperty(property: RECORDING.IProperty, su
                 ...createMemberFilterOfType(CorePropertyTypes.Number, "Radius", sphere.radius)
             ];
         }
+        case CorePropertyTypes.HemiSphere:
+        {
+            const sphere = property as RECORDING.IPropertyHemiSphere;
+            return [
+                ...createMemberFilterOfType(CorePropertyTypes.Vec3, "Position", sphere.position),
+                ...createMemberFilterOfType(CorePropertyTypes.Number, "Radius", sphere.radius)
+            ];
+        }
         case CorePropertyTypes.Capsule:
         {
             const capsule = property as RECORDING.IPropertyCapsule;

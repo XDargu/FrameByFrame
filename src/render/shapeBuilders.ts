@@ -29,6 +29,16 @@ export function buildSphereShape(shape: RECORDING.IProperyShape, pools: RenderPo
     return sphere;
 }
 
+export function buildHemiSphereShape(shape: RECORDING.IProperyShape, pools: RenderPools, pivotPos: BABYLON.Vector3, system: RECORDING.ECoordinateSystem) : BABYLON.Mesh
+{
+    const hemiSphereProperty = shape as RECORDING.IPropertyHemiSphere;
+
+    let sphere = pools.spherePool.getSphere(hemiSphereProperty.radius);
+    setShapeCommonData(sphere, hemiSphereProperty.id, RenderUtils.createVec3(hemiSphereProperty.position, system), hemiSphereProperty.color, hemiSphereProperty.texture, pools);
+
+    return sphere;
+}
+
 export function buildCapsuleShape(shape: RECORDING.IProperyShape, pools: RenderPools, pivotPos: BABYLON.Vector3, system: RECORDING.ECoordinateSystem) : BABYLON.Mesh
 {
     const capsuleProperty = shape as RECORDING.IPropertyCapsule;
