@@ -25,7 +25,8 @@ export function RecordingFileTypeToString(type: RecordingFileType)
 export function isPropertyShape(property: IProperty)
 {
     const Type = CorePropertyTypes;
-    return property.type == Type.Sphere || 
+    return property.type == Type.Sphere ||
+		property.type == Type.HemiSphere || 
         property.type == Type.Line ||
 		property.type == Type.Arrow ||
 		property.type == Type.Vector ||
@@ -43,6 +44,7 @@ export function isPropertyTextured(property: IProperty)
 {
     const Type = CorePropertyTypes;
     return property.type == Type.Sphere || 
+		property.type == Type.HemiSphere || 
         property.type == Type.Plane ||
         property.type == Type.AABB ||
         property.type == Type.Cylinder ||
@@ -135,6 +137,14 @@ export interface IProperyShape extends IProperty {
 
 export interface IPropertySphere extends IProperyShape {
 	position: IVec3;
+	radius: number;
+	value: string;
+	texture?: string;
+}
+
+export interface IPropertyHemiSphere extends IProperyShape {
+	position: IVec3;
+	direction: IVec3;
 	radius: number;
 	value: string;
 	texture?: string;

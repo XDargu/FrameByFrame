@@ -21,6 +21,7 @@ export enum CorePropertyTypes {
     LineChart = "linechart",
 	/* Shapes */
 	Sphere = "sphere",
+	HemiSphere = "hemisphere",
 	Capsule = "capsule",
     Cylinder = "cylinder",
 	AABB = "aabb",

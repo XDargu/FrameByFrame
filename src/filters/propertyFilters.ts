@@ -109,6 +109,19 @@ export namespace Filtering
                     if (sphere.texture && filterText(filter, sphere.texture)) return true;
                     return false;
                 }
+            case Type.HemiSphere:
+                {
+                    const hemiSphere = property as RECORDING.IPropertyHemiSphere;
+                    if (filterText(filter, "Position")) return true;
+                    if (filterVec3(filter, hemiSphere.position)) return true;
+                    if (filterText(filter, "Direction")) return true;
+                    if (filterVec3(filter, hemiSphere.direction)) return true;
+                    if (filterText(filter, "Radius")) return true;
+                    if (filterNumber(filter, hemiSphere.radius)) return true;
+                    if (hemiSphere.texture && filterText(filter, "Texture")) return true;
+                    if (hemiSphere.texture && filterText(filter, hemiSphere.texture)) return true;
+                    return false;
+                }
             case Type.Line:
                 {
                     const line = property as RECORDING.IPropertyLine;

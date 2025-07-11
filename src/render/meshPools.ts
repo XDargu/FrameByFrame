@@ -157,6 +157,26 @@ export class CylinderPool extends MeshPool
     }
 }
 
+
+export class HemiSpherePool extends MeshPool
+{
+    constructor(scene: BABYLON.Scene)
+    {
+        super(scene);
+    }
+
+    getHemiSphere(radius: number): BABYLON.Mesh
+    {
+        const hash: string = radius.toFixed(3).toString();
+        return this.findMesh(hash, {radius: radius });
+    }
+
+    protected buildMesh(hash: string, args: any) : BABYLON.Mesh
+    {
+        return BABYLON.Mesh.CreateHemisphere(hash, 8.0, args.radius * 2, this.scene);
+    }
+}
+
 export class SpherePool extends MeshPool
 {
     constructor(scene: BABYLON.Scene)

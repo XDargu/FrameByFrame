@@ -1070,6 +1070,17 @@ export class PropertyTreeController {
                             this.addOptionalResource(addedItem, "Texture", sphere.texture, "image", property.id, this.callbacks.onOpenResource);
                             break;
                         }
+                        case TypeSystem.CorePropertyTypes.HemiSphere:
+                        {
+                            const hemiSphere = property as RECORDING.IPropertyHemiSphere;
+
+                            addedItem = this.propertyTree.addItem(parent, iconContent, treeItemOptions);
+                            this.addVec3(addedItem, "Position", hemiSphere.position, "map-marker", property.id);
+                            this.addVec3(addedItem, "Direction", hemiSphere.direction, "location-arrow", property.id);
+                            this.addNumber(addedItem, "Radius", hemiSphere.radius, "arrows-alt-h" , property.id);
+                            this.addOptionalResource(addedItem, "Texture", hemiSphere.texture, "image", property.id, this.callbacks.onOpenResource);
+                            break;
+                        }
                         case TypeSystem.CorePropertyTypes.Capsule:
                         {
                             const capsule = property as RECORDING.IPropertyCapsule;
