@@ -142,10 +142,11 @@ export function createMemberFilterFromProperty(property: RECORDING.IProperty, su
         }
         case CorePropertyTypes.HemiSphere:
         {
-            const sphere = property as RECORDING.IPropertyHemiSphere;
+            const hemiSphere = property as RECORDING.IPropertyHemiSphere;
             return [
-                ...createMemberFilterOfType(CorePropertyTypes.Vec3, "Position", sphere.position),
-                ...createMemberFilterOfType(CorePropertyTypes.Number, "Radius", sphere.radius)
+                ...createMemberFilterOfType(CorePropertyTypes.Vec3, "Position", hemiSphere.position),
+                ...createMemberFilterOfType(CorePropertyTypes.Vec3, "Direction", hemiSphere.direction),
+                ...createMemberFilterOfType(CorePropertyTypes.Number, "Radius", hemiSphere.radius)
             ];
         }
         case CorePropertyTypes.Capsule:
