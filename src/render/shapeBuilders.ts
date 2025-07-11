@@ -33,10 +33,11 @@ export function buildHemiSphereShape(shape: RECORDING.IProperyShape, pools: Rend
 {
     const hemiSphereProperty = shape as RECORDING.IPropertyHemiSphere;
 
-    let sphere = pools.spherePool.getSphere(hemiSphereProperty.radius);
-    setShapeCommonData(sphere, hemiSphereProperty.id, RenderUtils.createVec3(hemiSphereProperty.position, system), hemiSphereProperty.color, hemiSphereProperty.texture, pools);
+    let hemiSphere = pools.hemiSpherePool.getHemiSphere(hemiSphereProperty.radius);
+    setShapeCommonData(hemiSphere, hemiSphereProperty.id, RenderUtils.createVec3(hemiSphereProperty.position, system), hemiSphereProperty.color, hemiSphereProperty.texture, pools);
+    RenderUtils.setShapeOrientationFromDirection(hemiSphere, RenderUtils.createVec3(hemiSphereProperty.direction, system), system);
 
-    return sphere;
+    return hemiSphere;
 }
 
 export function buildCapsuleShape(shape: RECORDING.IProperyShape, pools: RenderPools, pivotPos: BABYLON.Vector3, system: RECORDING.ECoordinateSystem) : BABYLON.Mesh

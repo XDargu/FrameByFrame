@@ -144,6 +144,7 @@ export interface IPropertySphere extends IProperyShape {
 
 export interface IPropertyHemiSphere extends IProperyShape {
 	position: IVec3;
+	direction: IVec3;
 	radius: number;
 	value: string;
 	texture?: string;
