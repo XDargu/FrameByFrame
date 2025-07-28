@@ -792,8 +792,11 @@ export default class Renderer {
             this.layerController.setAllLayersState(LayerState.All);
         }
 
-        // Show only selected names as default when opening a file
-        this.layerController.setLayerState(CoreLayers.EntityNames, LayerState.Selected);
+        if (this.settings.showAllNamesOnStart)
+            this.layerController.setLayerState(CoreLayers.EntityNames, LayerState.All);
+        else
+            this.layerController.setLayerState(CoreLayers.EntityNames, LayerState.Selected);
+
         // Paths are niche feature, set as off by default
         this.layerController.setLayerState(CoreLayers.EntityPaths, LayerState.Off);
 

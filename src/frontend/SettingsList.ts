@@ -384,6 +384,7 @@ export class SettingsList
             SettingsBuilder.addBooleanSetting(group, "Open entity list on selection", settings.openEntityListOnSelection, (value) => {settings.openEntityListOnSelection = value; this.onSettingsChanged(); })
             SettingsBuilder.addBooleanSetting(group, "Follow selected entity", settings.followCurrentSelection, (value) => {settings.followCurrentSelection = value; this.onSettingsChanged(); })
             SettingsBuilder.addBooleanSetting(group, "Show all layers on start", settings.showAllLayersOnStart, (value) => {settings.showAllLayersOnStart = value; this.onSettingsChanged(); })
+            SettingsBuilder.addBooleanSetting(group, "Show all names on start", settings.showAllNamesOnStart, (value) => {settings.showAllNamesOnStart = value; this.onSettingsChanged(); })
             SettingsBuilder.addBooleanSetting(group, "Highlight shapes on hover", settings.highlightShapesOnHover, (value) => {settings.highlightShapesOnHover = value; this.onSettingsChanged(); })
             SettingsBuilder.addBooleanSetting(group, "Show shapes line on hover", settings.showShapeLineOnHover, (value) => {settings.showShapeLineOnHover = value; this.onSettingsChanged(); })
             SettingsBuilder.addColorSetting(group, "Background Color", "Changes the background color of the viewer", settings.backgroundColor, defaultSettings.backgroundColor, (value) => {settings.backgroundColor = value; this.onSettingsChanged(); })
