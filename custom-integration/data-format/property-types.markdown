@@ -38,6 +38,7 @@ These are all the possible property types:
 | Sphere            | `"sphere"`   |
 | Capsule           | `"capsule"`  |
 | Cylinder          | `"cylinder"` |
+| HemiSphere        | `"hemisphere"` |
 | AABB              | `"aabb"`     |
 | OOBB              | `"oobb"`     |
 | Plane             | `"plane"`    |
@@ -245,6 +246,35 @@ By default, icons are displayed before the name of the property, and only the ic
     },
     "radius": number,
     "height": number,
+    "flags": number,
+    "texture"?: string,
+    "icon"?: string,
+    "icolor"?: string
+}
+```
+### Hemisphere
+```js
+{
+    "name": string,
+    "type": "hemisphere",
+    "layer": string,
+    "color": {
+        r: number,
+        g: number,
+        b: number,
+        a: number
+    },
+    "position": {
+        x: number,
+        y: number,
+        z: number
+    },
+    "direction": {
+        x: number,
+        y: number,
+        z: number
+    },
+    "radius": number,
     "flags": number,
     "texture"?: string,
     "icon"?: string,
