@@ -663,6 +663,15 @@ export default class Renderer {
             const updateElem = document.getElementById(`check-updates-result`);
             updateElem.innerHTML = "Checking updates...";
         }
+
+        // Special thanks
+        const specialThanksModal = document.getElementById("specialThanksModal");
+        document.getElementById("special-thanks-button").onclick = () => {
+            DOMUtils.setClass(specialThanksModal, "active", true);
+        };
+        document.getElementById("back-thanks-button").onclick = () => {
+            DOMUtils.setClass(specialThanksModal, "active", false);
+        };
     }
 
     onSettingsChanged(requiresRedraw?: boolean)
