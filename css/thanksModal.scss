@@ -1,0 +1,96 @@
+@import "colorStyles.scss";
+
+#specialThanksModal .modal-content
+{
+    width: 40%;
+}
+
+#specialThanksModal {
+    padding: 0;
+    z-index: 40;
+}
+
+#specialThanksModal.active {
+    display: flex;
+}
+
+#specialThanksModal .modal-content {
+    width: 500px;
+    border: none;
+    border-top: 5px solid #8e7da2;
+}
+
+#thanks-title {
+    font-size: 24px;
+    font-weight: 100;
+}
+
+#thanks-content {
+    font-size: 16px;
+    text-align: left;
+    overflow: auto;
+    max-height: 400px;
+}
+
+#thanks-content a {
+    color: $strong-secondary;
+    cursor: pointer;
+}
+
+#thanks-changes h1 {
+    font-size: 16px;
+    margin: 8px 0;
+    font-weight: 100;
+}
+
+#thanks-changes h2 {
+    font-size: 16px;
+    margin: 8px 0;
+    font-weight: 100;
+}
+
+#thanks-changes h3 {
+    font-size: 14px;
+    margin: 5px 0;
+    background-color: #5a63d2;
+    width: fit-content;
+    border-radius: 4px;
+    padding: 2px 8px;
+    color: #333333;
+    font-weight: 600;
+}
+
+#thanks-changes ul,
+#thanks-changes ol {
+    font-size: 14px;
+    margin: 0;
+    padding: 3px 30px;
+    font-weight: 100;
+}
+
+#thanks-changes b {
+    font-size: 14px;
+    margin: 5px 0;
+}
+
+#thanks-changes a {
+    font-size: 14px;
+}
+
+#back-thanks-button {
+    font-size: 16px;
+    padding: 8px 14px;
+    font-weight: 600;
+}
+
+#back-thanks-button i {
+    margin-right: 7px;
+}
+
+#back-thanks-button {
+    background-color: #ccc;
+}
+
+#back-thanks-button:hover {
+    background-color: #e6e6e6;
+}
