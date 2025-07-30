@@ -26,10 +26,12 @@ parent: Using Frame by Frame
  - **Default port**: Frame by Frame automatically creates a default connection. This is the port used for that connection. This value will also be the default value for creating new connections in the [Connection Panel](/FrameByFrame/user-interface#connections).
 
 ## Viewer
+ - **Camera Speed**: Controls the speed of the camera in the viewer.
  - **Move camera on selection**: If enabled, the camera will focus on an entity after selecting it.
  - **Open entity list on selection**: If enabled, the [Entity Data Panel](/FrameByFrame/user-interface#entity-data) will automatically be opened after selecting an entity.
  - **Follow selected entity**: If enabled, the camera will follow the selected entity on the viewer when it moves. Useful when there is an entity that moves quickly and you need to focus on it. For example, an AI charater or a player running around.
  - **Show all layers on start**: If enabled, all layers will be set automatically to `all` when opening a recording.
+ - **Show all names on start**: If enabled, the name layer will be set automatically to `all` when opening a recording.
  - **Highlight shapes on hover**: If enabled, it will highlight shapes of the currently selected entity when hovering over them, and display its name.
  - **Show shapes line on hover**: If enabled, when hovering over a shape on the property tree, a line linking the property and its location in the viewer will be displayed. The line will only be there if the shape is currently being rendered.
  - **Background color**: Controls the background color of the viewer. Click on the button on the right to reset to the default value.
@@ -72,6 +74,7 @@ parent: Using Frame by Frame
 ## Recording
  - **Remove old frames**: If enabled, old frames will automatically be removed when recording.
  - **Frame remval threshold**: Controls how many frames to keep when automatically removing old frames.
+ - **Update frame on removal**: If enabled, the current frame will be refreshed when removed.
 
 ## Comments
  - **Show comments**: If enabled, comments will be displayed on the timeline.
