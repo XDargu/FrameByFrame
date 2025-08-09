@@ -329,7 +329,7 @@ export default class Renderer {
                 const entity = this.frameData.entities[this.selectedEntityId];
 
                 if (entity)
-                    this.aiHelper.analyseEntity(entity, this.getCurrentFrame());
+                    this.aiHelper.analyseEntity(entity, this.getCurrentFrame() + 1); // We display frames starting with 1, rather than 0
             }
         );
 
