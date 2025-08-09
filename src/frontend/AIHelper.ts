@@ -115,11 +115,46 @@ namespace UI
         entry.append(icon);
         return entry;
     }
+
+    export function createEntityContext(name: string, frame: string, tag: string)
+    {
+        const entry = document.createElement("div");
+        const icon = document.createElement("i");
+        icon.classList.add("fas", "fa-user");
+        entry.append(icon, `${name} (frame ${frame}) (${tag})`);
+        return entry;
+    }
+
+    export function createRequestEntityContext(context: EntityContext[])
+    {
+        const entry = document.createElement("div");
+        entry.classList.add("ai-request-context");
+
+        for (let entityCtx of context)
+        {
+            entry.append(createEntityContext(entityCtx.name, entityCtx.frame.toString(), entityCtx.tag));
+        }
+        
+        return entry;
+    }
 }
 
 export interface IAIQueryCallback
 {
     () : void
+}
+
+export interface IAIAddEntityContextCallback
+{
+    () : void
+}
+
+interface EntityContext
+{
+    entity: RECORDING.IEntity;
+    name: string;
+    frame: number;
+    tag: string;
 }
 
 export class AIHelper
@@ -129,7 +164,10 @@ export class AIHelper
     private queryOutput: HTMLElement;
     private requestQueryBtn: HTMLElement;
     private newChatBtn: HTMLElement;
+    private addEntityContextBtn: HTMLElement;
+    private entityContextList: HTMLElement;
     private queryCallback: IAIQueryCallback;
+    private addEntityContextCallback: IAIAddEntityContextCallback;
     
     private apiKey: string;
     private model: string;
@@ -138,14 +176,22 @@ export class AIHelper
     private loadingElement: HTMLElement;
     private waitingForResponse: boolean;
 
-    constructor(preMadeQueriesDropdown: HTMLElement, queryInput: HTMLTextAreaElement, queryOutput: HTMLElement, requestQueryBtn: HTMLElement, newChatBtn: HTMLElement, queryCallback: IAIQueryCallback)
+    private entityContext: EntityContext[] = [];
+
+    constructor(preMadeQueriesDropdown: HTMLElement, queryInput: HTMLTextAreaElement, queryOutput: HTMLElement, 
+        requestQueryBtn: HTMLElement, newChatBtn: HTMLElement,
+        addEntityContextBtn: HTMLElement, entityContextList: HTMLElement,
+        queryCallback: IAIQueryCallback, addEntityContextCallback: IAIAddEntityContextCallback)
     {
         this.preMadeQueriesDropdown = preMadeQueriesDropdown;
         this.queryInput = queryInput;
         this.queryOutput = queryOutput;
         this.requestQueryBtn = requestQueryBtn;
         this.newChatBtn = newChatBtn;
+        this.addEntityContextBtn = addEntityContextBtn;
+        this.entityContextList = entityContextList;
         this.queryCallback = queryCallback;
+        this.addEntityContextCallback = addEntityContextCallback;
         this.waitingForResponse = false;
 
         this.resizeInput();
@@ -177,11 +223,13 @@ export class AIHelper
         const createEventFilter = UI.createPremadeQueryEntry("Explain Selection");
         createEventFilter.onclick = () => { 
             this.queryInput.value = "Explain what the entity is doing on this frame.";
+            this.resizeInput();
         };
 
         const createPropertyFilter = UI.createPremadeQueryEntry("Find bugs and anomalies");
         createPropertyFilter.onclick = () => {
             this.queryInput.value = "Make a brief list of any possibl bugs or anomalies.";
+            this.resizeInput();
         };
 
         content.append(createEventFilter, createPropertyFilter);
@@ -199,13 +247,20 @@ export class AIHelper
         this.newChatBtn.onclick = () => {
             this.clear();
         }
+
+        this.addEntityContextBtn.onclick = () => {
+            this.addEntityContextCallback();
+        }
     }
 
     clear()
     {
         this.contextSoFar = "";
         this.queryOutput.innerHTML = "";
+        this.queryInput.value = "";
+        this.resizeInput();
         this.loadingElement = null;
+        this.entityContext = [];
         this.lockSending(false);
     }
 
@@ -241,11 +296,16 @@ export class AIHelper
         return data;
     }
 
-    async analyseEntity(entity: RECORDING.IEntity, frame: number)
+    async analyse()
     {
         this.queryOutput.append(UI.createRequest(this.queryInput.value));
 
-        const systemPrompt = "You are an AI assistant helping finding insights of debugging data from a videogame. You might receive entity data from the game in JSON format, containing nformation about one entity on one frame, on a videogame. The entity will have properties that describe its current state on the frame, and events that happened on that frame. You will also receive a request from a user regarding that data. You will interact with the user in a chat form, giving answers, and the user asking follow-up questions, that might come with additional data. Please answer in a comprehensive way, with bullet points if it helps with clarity. Send the reply in HTML format, indicating headers, parragraphs, lists, etc. All styles should be inlined, don't create style nodes. The html content will be added to an existing page that has a dark mode. Default text color should be #EEEEEE. Header color should be #bb86fc. Don't alter the font size or family.";
+        if (this.entityContext.length > 0)
+        {
+            this.queryOutput.append(UI.createRequestEntityContext(this.entityContext));
+        }
+
+        const systemPrompt = "You are an AI assistant helping finding insights of debugging data from a videogame. You might receive entity data from the game in JSON format, containing nformation about one entity on one frame, on a videogame. The entity will have properties that describe its current state on the frame, and events that happened on that frame. You will also receive a request from a user regarding that data. You will interact with the user in a chat form, giving answers, and the user asking follow-up questions, that might come with additional data. Please answer in a comprehensive way, with bullet points if it helps with clarity, but keep it relatively short if possible. If the user hasn't provided any data ask for it, and do not mention JSON. The user can provide entity data by clicking on the 'Add Entity Context' button. Send the reply in HTML format, indicating headers, parragraphs, lists, etc. All styles should be inlined, don't create style nodes. The html content will be added to an existing page that has a dark mode. Default text color should be #EEEEEE. Header color should be #bb86fc. You can higlight important words or parts of the answer in bold with color #6DE080. Don't alter the font size or family.";
 
         this.contextSoFar += "User question: " + this.queryInput.value + "\n";
 
@@ -256,14 +316,26 @@ export class AIHelper
 
         try
         {
-            const userQuery = JSON.stringify(entity);
-            this.contextSoFar += "Entity data of frame " + frame + " in JSON: " + userQuery + "\n";
+            for (let entityCtx of this.entityContext)
+            {
+                const userQuery = JSON.stringify(entityCtx.entity);
+                this.contextSoFar += `Entity data of frame ${entityCtx.frame}, frame tag ${entityCtx.tag} in JSON:  ${userQuery}\n`;
+            }
+
+            if (this.entityContext.length == 0)
+            {
+                this.contextSoFar += "No entity data sent this frame.\n";
+            }
 
             const loader = UI.createLoader();
             let responseLoading = document.createElement("div");
             responseLoading.append(loader, " Thinking...");
             this.loadingElement = responseLoading;
             this.queryOutput.append(this.loadingElement);
+
+            // Clear context
+            this.entityContext = [];
+            this.entityContextList.innerHTML = "";
 
             const completion = await OpenAI.requestQuery(systemPrompt, this.contextSoFar, this.apiKey, this.model);
             //const completion = await this.simulateResponse();
@@ -289,6 +361,19 @@ export class AIHelper
             this.queryOutput.append(UI.createResponse("Error: " + error.message));
             Console.log(LogLevel.Error, LogChannel.Files, "Error performing an AI query: " + error.message);
         }
+    }
+
+    addEntityContext(entityName: string, entity: RECORDING.IEntity, tag: string, frame: number)
+    {
+        this.entityContext.push({
+            entity: entity,
+            name: entityName,
+            frame: frame,
+            tag: tag,
+        });
+
+        // TODO!
+        this.entityContextList.append(UI.createEntityContext(entityName, frame.toString(), tag));
     }
 
     private lockSending(isLocked: boolean)

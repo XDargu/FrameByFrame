@@ -325,11 +325,16 @@ export default class Renderer {
             document.getElementById("ai-answer"),
             document.getElementById("ai-request-query-btn"),
             document.getElementById("ai-start-new-chat"),
+            document.getElementById("ai-add-entity-context-btn"),
+            document.getElementById("ai-entity-context-list"),
+            () => {
+                this.aiHelper.analyse();
+            },
             () => {
                 const entity = this.frameData.entities[this.selectedEntityId];
 
                 if (entity)
-                    this.aiHelper.analyseEntity(entity, this.getCurrentFrame() + 1); // We display frames starting with 1, rather than 0
+                    this.aiHelper.addEntityContext(NaiveRecordedData.getEntityName(entity), entity, this.frameData.tag, this.getCurrentFrame() + 1); // We display frames starting with 1, rather than 0
             }
         );
 
@@ -950,6 +955,7 @@ export default class Renderer {
         this.timeline.clearEvents();
         this.pinnedTexture.clear();
         this.propertyWindows.clear();
+        this.aiHelper.clear();
         this.propertiesWithHistory = [];
         // Avoid clearing recording options, since in all cases when we clear it's better to keep them
         //this.recordingOptions.setOptions([]);
