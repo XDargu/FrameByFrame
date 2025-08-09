@@ -324,11 +324,12 @@ export default class Renderer {
             document.getElementById("ai-query") as HTMLTextAreaElement,
             document.getElementById("ai-answer"),
             document.getElementById("ai-request-query-btn"),
+            document.getElementById("ai-start-new-chat"),
             () => {
                 const entity = this.frameData.entities[this.selectedEntityId];
 
                 if (entity)
-                    this.aiHelper.analyseEntity(entity);
+                    this.aiHelper.analyseEntity(entity, this.getCurrentFrame());
             }
         );
 

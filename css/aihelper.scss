@@ -10,3 +10,51 @@
     text-align: left;
     overflow: hidden;
 }
+
+.ai-request
+{
+    width: 70%;
+    margin: auto;
+    margin-right: 0;
+    background: #D2C7DB;
+    color: #424242;
+    border-bottom: 1px solid #BA92D9;
+    border-radius: 3px;
+    padding: 10px;
+    font-size: 13px;
+    text-align: left;
+    overflow: hidden;
+    white-space: pre-wrap;
+}
+
+.ai-conversation-wrapper
+{
+    display: flex;
+    flex-direction: column;
+    flex: auto;
+}
+
+#ai-query
+{
+    resize:none;
+    overflow:auto;
+    max-height: 200px;
+    flex: 1;
+    margin-right: 10px;
+}
+
+#ai-answer
+{
+    overflow-y: auto;
+}
+
+#ai-premade-query-dropdown
+{
+    margin-right: 10px;
+}
+
+.ai-row
+{
+    display: flex;
+    align-items: flex-end;
+}
