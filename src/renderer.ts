@@ -471,7 +471,7 @@ export default class Renderer {
             { name: "Connection List",   binding: { keyCode: "KeyC", shift: true, ctrl: true }, id: Action.ConnectionList,   callback: () => { this.controlTabs.openTabByIndex(TabIndices.Connections); } },
             { name: "Filters List",      binding: { keyCode: "KeyF", shift: true, ctrl: true }, id: Action.FilterList,       callback: () => { this.controlTabs.openTabByIndex(TabIndices.Filters); } },
             { name: "Info List",         binding: { keyCode: "KeyI", shift: true, ctrl: true }, id: Action.InfoList,         callback: () => { this.controlTabs.openTabByIndex(TabIndices.Info); } },
-            { name: "AI Helper",         binding: { keyCode: "KeyH", shift: true, ctrl: true }, id: Action.AIHelper,         callback: () => { this.controlTabs.openTabByIndex(TabIndices.AIHelper); } },
+            { name: "AI Insights",       binding: { keyCode: "KeyH", shift: true, ctrl: true }, id: Action.AIHelper,         callback: () => { this.controlTabs.openTabByIndex(TabIndices.AIHelper); } },
             { name: "Recent Files List", binding: { keyCode: "KeyL", shift: true, ctrl: true }, id: Action.RecentFileList,   callback: () => { this.controlTabs.openTabByIndex(TabIndices.Recent); } },
             { name: "Settings",          binding: { keyCode: "KeyS", shift: true, ctrl: true }, id: Action.SettingsList,     callback: () => { this.controlTabs.openTabByIndex(TabIndices.Settings); } },
         ];
@@ -488,7 +488,7 @@ export default class Renderer {
         controlTabs[TabIndices.Connections].title = `Connections (${actionAsText(Action.ConnectionList)})`;
         controlTabs[TabIndices.Filters].title = `Filters (${actionAsText(Action.FilterList)})`;
         controlTabs[TabIndices.Info].title = `Recording Info (${actionAsText(Action.InfoList)})`;
-        controlTabs[TabIndices.AIHelper].title = `AI Helper (${actionAsText(Action.AIHelper)})`;
+        controlTabs[TabIndices.AIHelper].title = `AI Insights (${actionAsText(Action.AIHelper)})`;
         controlTabs[TabIndices.Recent].title = `Recent Files (${actionAsText(Action.RecentFileList)})`;
         controlTabs[TabIndices.Settings].title = `Settings (${actionAsText(Action.SettingsList)})`;
     }
