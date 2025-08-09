@@ -108,6 +108,7 @@
                     <div class="basico-tabs-item" title="Connections"><i class="fas fa-network-wired"></i></div>
                     <div class="basico-tabs-item" title="Filters"><i class="fas fa-filter"></i></div>
                     <div class="basico-tabs-item" title="Info"><i class="fas fa-info"></i></div>
+                    <div class="basico-tabs-item" title="AI Helper"><img class="icon" src="icons/ai-icon.png" draggable="false"></div>
                     <div class="basico-tabs-item" title="Recent Files"><i class="fas fa-folder"></i></div>
                     <div class="basico-tabs-item" title="Settings"><i class="fas fa-cog"></i></div>
                 </div>
@@ -207,6 +208,33 @@
                 <div class="basico-title basico-title-compact uppercase">Recording Info</div>
                 <div class="simple-message" id="recording-info-hint">Displays the metadata of the current recording</div>
                 <div class="basico-container" id="recording-info"></div>
+            </div>
+            <div class="sidebar basico-container basico-container-compact" id="ai-list">
+                <div class="basico-title basico-title-compact uppercase">AI Helper</div>
+                <div class="basico-container">
+                    <div class="basico-card">
+                        <div class="basico-card-element">Ask any questions about the selected entity</div>
+                        <div class="basico-card-element">
+                            <div class="basico-form">
+                                <div class="basico-form-field">
+                                    <div class="basico-form-field-label">Query:</div>
+                                    <textarea class="basico-input" id="ai-query" name="story" rows="5" cols="33" placeholder="Ask your question here..."></textarea>
+                                </div>
+                                <div class="basico-dropdown" id="ai-premade-query-dropdown">
+                                    <button class="basico-dropdown-button">Pre-made questions</button>
+                                    <div class="basico-dropdown-content">
+                                    </div>
+                                </div>
+                                <br>
+                                <br>
+                                <div class="basico-form-field">
+                                    <button class="basico-button basico-small" id="ai-request-query-btn">Ask AI Helper</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="ai-answer" class="ai-response"></div>
+                </div>
             </div>
             <div class="sidebar basico-container basico-container-compact" id="setting-list">
                 <div class="basico-title basico-title-compact uppercase">Settings</div>

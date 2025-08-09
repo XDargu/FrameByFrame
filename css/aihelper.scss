@@ -1,0 +1,12 @@
+@import "colorStyles.scss";
+@import "../ui/css/variables.scss";
+
+.ai-response
+{
+    background: $dark-background;
+    margin-bottom: 5px;
+    padding: 10px;
+    font-size: 13px;
+    text-align: left;
+    overflow: hidden;
+}

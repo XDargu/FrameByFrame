@@ -7,7 +7,7 @@ export default class TextLabels
 
     private scene: BABYLON.Scene;
     private tempTexture: BABYLON.DynamicTexture;
-    private tempContext: CanvasRenderingContext2D;
+    private tempContext: BABYLON.ICanvasRenderingContext;
 
     constructor(scene: BABYLON.Scene)
     {

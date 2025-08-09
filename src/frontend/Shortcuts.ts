@@ -21,6 +21,7 @@ export enum ShortcutActions
     RecordingOptions,
     ConnectionList,
     InfoList,
+    AIHelper,
     FilterList,
     RecentFileList,
     SettingsList,

@@ -50,6 +50,14 @@
     @include surface-elevation($form-elevation);
 }
 
+textarea.basico-input {
+    line-height: unset;
+    padding: unset;
+    height: unset;
+    font-family: inherit;
+    padding: 5px 10px;
+}
+
 .basico-input:focus {
     @include surface-hovered($form-elevation);
     border-bottom: 2px solid $primary-color;
