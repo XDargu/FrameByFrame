@@ -379,27 +379,46 @@ export class AIHelper
     {
         let content = this.preMadeQueriesDropdown.querySelector('.basico-dropdown-content') as HTMLElement;
 
-        const createEventFilter = UI.createPremadeQueryEntry("Explain Selection");
-        createEventFilter.onclick = () => { 
-            this.queryInput.value = "Explain what the entity is doing on this frame.";
+        const createEventFilter = UI.createPremadeQueryEntry("Explain selection");
+        createEventFilter.onclick = () => {
+            this.clearContext();
+            this.queryInput.value = "Explain briefly what the entity is doing on this frame.";
             this.callbacks.addEntityContext();
             this.resizeInput();
         };
 
         const createPropertyFilter = UI.createPremadeQueryEntry("Find bugs and anomalies");
         createPropertyFilter.onclick = () => {
+            this.clearContext();
             this.queryInput.value = "Make a brief list of any possible bugs or anomalies.";
             this.callbacks.addEntityContext();
             this.resizeInput();
         };
 
-        content.append(createEventFilter, createPropertyFilter);
+        const explainTimeline = UI.createPremadeQueryEntry("Summary of timeline");
+        explainTimeline.onclick = () => {
+            this.clearContext();
+            this.queryInput.value = "Make a table with the most relevant events of the timeline";
+            this.callbacks.addTimelineContext();
+            this.resizeInput();
+        };
+
+        const eventsOfEntity = UI.createPremadeQueryEntry("Important events of entity");
+        eventsOfEntity.onclick = () => {
+            this.clearContext();
+            this.queryInput.value = "Find the most important events related to this entity";
+            this.callbacks.addEntityContext();
+            this.callbacks.addTimelineContext();
+            this.resizeInput();
+        };
+
+        content.append(createEventFilter, createPropertyFilter, explainTimeline, eventsOfEntity);
 
         this.preMadeQueriesDropdown.onmouseenter = () => {
             const isNearBottom = window.innerHeight - this.preMadeQueriesDropdown.getBoundingClientRect().bottom < 70;
             DOMUtils.setClass(content, "bottom", isNearBottom);
         };
-
+        
         this.requestQueryBtn.onclick = () => {
             if (!this.waitingForResponse)
                 this.callbacks.runQuery();
@@ -455,6 +474,12 @@ export class AIHelper
         this.clear();
     }
 
+    clearContext()
+    {
+        this.contextElements = [];
+        this.entityContextList.innerHTML = "";
+    }
+
     clear()
     {
         this.contextSoFar = "";
@@ -467,9 +492,7 @@ export class AIHelper
         this.resizeInput();
         this.loadingElement = null;
 
-        // Clear context
-        this.contextElements = [];
-        this.entityContextList.innerHTML = "";
+        this.clearContext();
 
         this.lockSending(false);
         this.updateContextStyle();
@@ -566,16 +589,14 @@ export class AIHelper
             this.loadingElement = responseLoading;
             this.queryOutput.append(this.loadingElement);
 
-            // Clear context
-            this.contextElements = [];
-            this.entityContextList.innerHTML = "";
+            this.clearContext();
 
             this.updateContextStyle();
 
             console.log(this.contextSoFar);
 
-            //const completion = await OpenAI.requestQuery(systemPrompt, this.contextSoFar, this.apiKey, this.model);
-            const completion = await this.simulateResponse();
+            const completion = await OpenAI.requestQuery(systemPrompt, this.contextSoFar, this.apiKey, this.model);
+            //const completion = await this.simulateResponse();
 
             const result = completion.choices[0].message.content;
             

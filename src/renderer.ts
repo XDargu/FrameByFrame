@@ -333,6 +333,8 @@ export default class Renderer {
                     this.aiHelper.analyse();
                 },
                 addEntityContext: () => {
+                    if (!this.frameData) return;
+
                     const entity = this.frameData.entities[this.selectedEntityId];
 
                     if (entity)
@@ -369,6 +371,8 @@ export default class Renderer {
                     this.aiHelper.addTimelineContext(from + 1, to + 1, timelineContent);
                 },
                 getEntityContextData: () => {
+                    if (!this.frameData) return null;
+
                     const entity = this.frameData.entities[this.selectedEntityId];
 
                     if (entity)
