@@ -551,6 +551,14 @@ export class AIHelper
         this.queryInput.value = "";
         this.resizeInput();
 
+        const loader = UI.createLoader();
+        let responseLoading = document.createElement("div");
+        responseLoading.append(loader, " Thinking...");
+        this.loadingElement = responseLoading;
+        this.queryOutput.append(this.loadingElement);
+
+        responseLoading.scrollIntoView({behavior:'smooth', block:'end'});
+
         this.lockSending(true);
 
         try
@@ -583,12 +591,6 @@ export class AIHelper
                 this.contextSoFar += "No entity data sent this frame.\n";
             }
 
-            const loader = UI.createLoader();
-            let responseLoading = document.createElement("div");
-            responseLoading.append(loader, " Thinking...");
-            this.loadingElement = responseLoading;
-            this.queryOutput.append(this.loadingElement);
-
             this.clearContext();
 
             this.updateContextStyle();
@@ -611,6 +613,8 @@ export class AIHelper
 
             this.contextSoFar += "Your answer: " + result + "\n";
 
+            response.scrollIntoView({behavior:'smooth', block:'start'});
+
             this.lockSending(false);
         }
         catch (error)
@@ -618,6 +622,8 @@ export class AIHelper
             this.lockSending(false);
             this.queryOutput.append(UI.createResponse("Error: " + error.message));
             Console.log(LogLevel.Error, LogChannel.Files, "Error performing an AI query: " + error.message);
+            if (this.loadingElement)
+                this.loadingElement.remove();
         }
     }
 
