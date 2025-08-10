@@ -42,7 +42,7 @@ import { addContextMenu } from "./frontend/ContextMenu";
 import { PropertyWindows } from "./frontend/userWindows/PropertyWindows";
 import { CorePropertyTypes } from "./types/typeRegistry";
 import { markdownToHtml } from "./utils/markdown";
-import { AIHelper } from "./frontend/AIHelper";
+import { AIHelper, TimelineContextEntry } from "./frontend/AIHelper";
 
 const zlib = require('zlib');
 
@@ -326,6 +326,7 @@ export default class Renderer {
             document.getElementById("ai-request-query-btn"),
             document.getElementById("ai-start-new-chat"),
             document.getElementById("ai-add-entity-context-btn"),
+            document.getElementById("ai-add-timeline-context-btn"),
             document.getElementById("ai-entity-context-list"),
             () => {
                 this.aiHelper.analyse();
@@ -335,6 +336,36 @@ export default class Renderer {
 
                 if (entity)
                     this.aiHelper.addEntityContext(NaiveRecordedData.getEntityName(entity), entity, this.frameData.tag, this.getCurrentFrame() + 1); // We display frames starting with 1, rather than 0
+            },
+            () => {
+
+                // We display frames starting with 1, rather than 0
+                const from = this.timeline.getSelectionInit();
+                const to = this.timeline.getSelectionEnd();
+
+                let timelineContent: TimelineContextEntry[] = [];
+                
+                for (let frameIdx = from; frameIdx<to; ++frameIdx)
+                {
+                    const events = this.timeline.getEventsInFrame(frameIdx);
+
+                    if (!events)
+                        continue;
+                    
+                    for (let event of events)
+                    {
+                        const uniqueId = Number.parseInt(event.entityId);
+
+                        timelineContent.push({
+                            entityId: Utils.getEntityIdUniqueId(uniqueId),
+                            entityName: this.findEntityNameOnFrame(uniqueId, frameIdx),
+                            eventName: event.label,
+                            frame: frameIdx + 1
+                        })
+                    }
+                }
+
+                this.aiHelper.addTimelineContext(from + 1, to + 1, timelineContent);
             }
         );
 

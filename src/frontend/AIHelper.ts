@@ -89,6 +89,11 @@ namespace UI
         (context: EntityContext) : void
     }
 
+    export interface TimelineContextCallback
+    {
+        (context: TimelineContext) : void
+    }
+
     export function createPremadeQueryEntry(name: string)
     {
         const entry = document.createElement("a");
@@ -148,14 +153,45 @@ namespace UI
         return entry;
     }
 
-    export function createRequestEntityContext(context: EntityContext[])
+    export function createTimelineContext(context: TimelineContext, onDelete?: TimelineContextCallback)
+    {
+        const entry = document.createElement("div");
+        entry.classList.add("ai-context");
+
+        const icon = document.createElement("i");
+        icon.classList.add("fas", "fa-clock");
+        
+        const text = document.createElement("span");
+        text.textContent = `Timeline (frames ${context.frameFrom}-${context.frameTo})`;
+
+        entry.append(icon, text);
+
+        if (onDelete)
+        {
+            const deleteIcon = document.createElement("i");
+            deleteIcon.classList.add("fas", "fa-trash", "ai-delete");
+            deleteIcon.title = "Remove timeline context";
+
+            deleteIcon.onclick = () => { onDelete(context); }
+
+            entry.append(deleteIcon);
+        }
+
+        return entry;
+    }
+
+    export function createRequestContext(context: ContextElements[])
     {
         const entry = document.createElement("div");
         entry.classList.add("ai-request-context");
 
-        for (let entityCtx of context)
+        for (let ctx of context)
         {
-            entry.append(createEntityContext(entityCtx));
+            switch (ctx.context.type)
+            {
+                case ContextType.Entity: entry.append(createEntityContext(ctx.context)); break;
+                case ContextType.Timeline: entry.append(createTimelineContext(ctx.context)); break;
+            }
         }
         
         return entry;
@@ -172,12 +208,29 @@ export interface IAIAddEntityContextCallback
     () : void
 }
 
-interface EntityContext
+export interface IAIAddTimelineContextCallback
+{
+    () : void
+}
+
+enum ContextType
+{
+    Entity,
+    Timeline
+}
+
+interface BaseContext
+{
+    type: ContextType;
+}
+
+interface EntityContext extends BaseContext
 {
     entity: RECORDING.IEntity;
     name: string;
     frame: number;
     tag: string;
+    type: ContextType.Entity;
 }
 
 function isEntityContextSame(a: EntityContext, b: EntityContext)
@@ -185,10 +238,45 @@ function isEntityContextSame(a: EntityContext, b: EntityContext)
     return a.entity == b.entity && a.name == b.name && a.frame == b.frame && a.tag == b.tag;
 }
 
+export interface TimelineContextEntry
+{
+    frame: number;
+    entityId: number;
+    entityName: string;
+    eventName: string;
+}
+
+interface TimelineContext extends BaseContext
+{
+    frameFrom: number;
+    frameTo: number;
+    content: TimelineContextEntry[];
+    type: ContextType.Timeline;
+}
+
+function isTimelineContextSame(a: TimelineContext, b: TimelineContext)
+{
+    return a.frameFrom == b.frameFrom && a.frameTo == b.frameTo;
+}
+
 interface ContextElements
 {
-    context: EntityContext;
+    context: EntityContext | TimelineContext;
     element: HTMLElement;
+}
+
+function isContextEqual(a: ContextElements, b: ContextElements)
+{
+    if (a.context.type != b.context.type)
+        return false;
+
+    switch (a.context.type)
+    {
+        case ContextType.Entity: return isEntityContextSame(a.context as EntityContext, b.context as EntityContext);
+        case ContextType.Timeline: return isTimelineContextSame(a.context as TimelineContext, b.context as TimelineContext);
+    }
+
+    return false;
 }
 
 export class AIHelper
@@ -199,9 +287,11 @@ export class AIHelper
     private requestQueryBtn: HTMLElement;
     private newChatBtn: HTMLElement;
     private addEntityContextBtn: HTMLElement;
+    private addTimelineContextBtn: HTMLElement;
     private entityContextList: HTMLElement;
     private queryCallback: IAIQueryCallback;
     private addEntityContextCallback: IAIAddEntityContextCallback;
+    private addTimelineContextCallback: IAIAddTimelineContextCallback;
     
     private apiKey: string;
     private model: string;
@@ -214,18 +304,25 @@ export class AIHelper
 
     constructor(preMadeQueriesDropdown: HTMLElement, queryInput: HTMLTextAreaElement, queryOutput: HTMLElement, 
         requestQueryBtn: HTMLElement, newChatBtn: HTMLElement,
-        addEntityContextBtn: HTMLElement, entityContextList: HTMLElement,
-        queryCallback: IAIQueryCallback, addEntityContextCallback: IAIAddEntityContextCallback)
+        addEntityContextBtn: HTMLElement, addTimelineContextBtn: HTMLElement,
+        entityContextList: HTMLElement,
+        queryCallback: IAIQueryCallback,
+        addEntityContextCallback: IAIAddEntityContextCallback,
+        addTimelineContextCallback: IAIAddTimelineContextCallback)
     {
         this.preMadeQueriesDropdown = preMadeQueriesDropdown;
         this.queryInput = queryInput;
         this.queryOutput = queryOutput;
         this.requestQueryBtn = requestQueryBtn;
         this.newChatBtn = newChatBtn;
+        
         this.addEntityContextBtn = addEntityContextBtn;
+        this.addTimelineContextBtn = addTimelineContextBtn;
+
         this.entityContextList = entityContextList;
         this.queryCallback = queryCallback;
         this.addEntityContextCallback = addEntityContextCallback;
+        this.addTimelineContextCallback = addTimelineContextCallback;
         this.waitingForResponse = false;
 
         this.resizeInput();
@@ -285,6 +382,10 @@ export class AIHelper
         this.addEntityContextBtn.onclick = () => {
             this.addEntityContextCallback();
         }
+
+        this.addTimelineContextBtn.onclick = () => {
+            this.addTimelineContextCallback();
+        }
     }
 
     clear()
@@ -336,7 +437,7 @@ export class AIHelper
 
         if (this.contextElements.length > 0)
         {
-            this.queryOutput.append(UI.createRequestEntityContext(this.contextElements.map(element => element.context)));
+            this.queryOutput.append(UI.createRequestContext(this.contextElements));
         }
 
         const systemPrompt = "You are an AI assistant helping finding insights of debugging data from a videogame. You might receive entity data from the game in JSON format, containing nformation about one entity on one frame, on a videogame. The entity will have properties that describe its current state on the frame, and events that happened on that frame. You will also receive a request from a user regarding that data. You will interact with the user in a chat form, giving answers, and the user asking follow-up questions, that might come with additional data. Please answer in a comprehensive way, with bullet points if it helps with clarity, but keep it relatively short if possible. If the user hasn't provided any data ask for it, and do not mention JSON. The user can provide entity data by clicking on the 'Add Entity Context' button. Send the reply in HTML format, indicating headers, parragraphs, lists, etc. All styles should be inlined, don't create style nodes. The html content will be added to an existing page that has a dark mode. Default text color should be #EEEEEE. Header color should be #bb86fc. You can higlight important words or parts of the answer in bold with color #6DE080. Don't alter the font size or family.";
@@ -353,8 +454,24 @@ export class AIHelper
             for (let contextElem of this.contextElements)
             {
                 const context = contextElem.context;
-                const userQuery = JSON.stringify(context.entity);
-                this.contextSoFar += `Entity data of frame ${context.frame}, with name: ${context.name}, frame tag ${context.tag} in JSON: ${userQuery}\n`;
+
+                switch (context.type)
+                {
+                    case ContextType.Entity:
+                        {
+                            const userQuery = JSON.stringify(context.entity);
+                            this.contextSoFar += `Entity data of frame ${context.frame}, with name: ${context.name}, frame tag ${context.tag} in JSON: ${userQuery}\n`;
+                            break;
+                        }
+                    case ContextType.Timeline:
+                        {
+                            const timelineData = JSON.stringify(context.content);
+                            this.contextSoFar += `Information about events for each entity and frame, in JSON: ` + timelineData;
+                            break;
+                        }
+                }
+
+                
             }
 
             if (this.contextElements.length == 0)
@@ -372,8 +489,10 @@ export class AIHelper
             this.contextElements = [];
             this.entityContextList.innerHTML = "";
 
-            //const completion = await OpenAI.requestQuery(systemPrompt, this.contextSoFar, this.apiKey, this.model);
-            const completion = await this.simulateResponse();
+            console.log(this.contextSoFar);
+
+            const completion = await OpenAI.requestQuery(systemPrompt, this.contextSoFar, this.apiKey, this.model);
+            //const completion = await this.simulateResponse();
 
             const result = completion.choices[0].message.content;
             
@@ -401,13 +520,18 @@ export class AIHelper
     addEntityContext(entityName: string, entity: RECORDING.IEntity, tag: string, frame: number)
     {
         const newContext: EntityContext = {
+            type: ContextType.Entity,
             entity: entity,
             name: entityName,
             frame: frame,
             tag: tag,
         };
         
-        const existing = this.contextElements.find((contextElem) => { return isEntityContextSame(contextElem.context, newContext)});
+        const existing = this.contextElements.find((contextElem) => {
+            if (contextElem.context.type == ContextType.Entity)
+                return isEntityContextSame(contextElem.context, newContext)
+            return false;
+        });
 
         if (!existing)
         {
@@ -422,7 +546,52 @@ export class AIHelper
 
     deleteEntityContext(contextToDelete: EntityContext)
     {
-        const existingIdx = this.contextElements.findIndex((contextElem) => { return isEntityContextSame(contextElem.context, contextToDelete)});
+        const existingIdx = this.contextElements.findIndex((contextElem) => {
+            if (contextElem.context.type == ContextType.Entity)
+                return isEntityContextSame(contextElem.context, contextToDelete)
+            return false;
+        });
+
+        if (existingIdx != -1)
+        {
+            this.contextElements[existingIdx].element.remove();
+            this.contextElements.splice(existingIdx, 1);
+        }
+    }
+
+    addTimelineContext(frameFrom: number, frameTo: number, content: TimelineContextEntry[])
+    {
+        const newContext: TimelineContext = {
+            type: ContextType.Timeline,
+            frameFrom: frameFrom,
+            frameTo: frameTo,
+            content: content,
+        };
+        
+        const existing = this.contextElements.find((contextElem) => {
+            if (contextElem.context.type == ContextType.Timeline)
+                return isTimelineContextSame(contextElem.context, newContext)
+            return false;
+        });
+
+        if (!existing)
+        {
+            const element = UI.createTimelineContext(newContext, (context) => {
+                this.deleteTimelineContext(context);
+            });
+            this.contextElements.push({ context: newContext, element: element });
+
+            this.entityContextList.append(element);
+        }
+    }
+
+    deleteTimelineContext(contextToDelete: TimelineContext)
+    {
+        const existingIdx = this.contextElements.findIndex((contextElem) => {
+            if (contextElem.context.type == ContextType.Timeline)
+                return isTimelineContextSame(contextElem.context, contextToDelete)
+            return false;
+        });
 
         if (existingIdx != -1)
         {
