@@ -298,8 +298,6 @@ export class AIHelper
     private requestQueryBtn: HTMLElement;
     private newChatBtn: HTMLElement;
     private addGlobalBtn: HTMLElement;
-    private addEntityContextBtn: HTMLElement;
-    private addTimelineContextBtn: HTMLElement;
     private entityContextList: HTMLElement;
     private inputWrapper: HTMLElement;
     private queryCallback: IAIQueryCallback;
@@ -318,7 +316,6 @@ export class AIHelper
     constructor(preMadeQueriesDropdown: HTMLElement, queryInput: HTMLTextAreaElement, queryOutput: HTMLElement, 
         requestQueryBtn: HTMLElement, newChatBtn: HTMLElement,
         addGlobalBtn: HTMLElement,
-        addEntityContextBtn: HTMLElement, addTimelineContextBtn: HTMLElement,
         entityContextList: HTMLElement,
         inputWrapper: HTMLElement,
         queryCallback: IAIQueryCallback,
@@ -332,8 +329,6 @@ export class AIHelper
         this.newChatBtn = newChatBtn;
         
         this.addGlobalBtn = addGlobalBtn;
-        this.addEntityContextBtn = addEntityContextBtn;
-        this.addTimelineContextBtn = addTimelineContextBtn;
 
         this.inputWrapper = inputWrapper;
         this.entityContextList = entityContextList;
@@ -393,14 +388,6 @@ export class AIHelper
 
         this.newChatBtn.onclick = () => {
             this.clear();
-        }
-
-        this.addEntityContextBtn.onclick = () => {
-            this.addEntityContextCallback();
-        }
-
-        this.addTimelineContextBtn.onclick = () => {
-            this.addTimelineContextCallback();
         }
 
         // Context menu for items

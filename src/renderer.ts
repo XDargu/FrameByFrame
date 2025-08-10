@@ -326,8 +326,6 @@ export default class Renderer {
             document.getElementById("ai-request-query-btn"),
             document.getElementById("ai-start-new-chat"),
             document.getElementById("ai-input-plus"),
-            document.getElementById("ai-add-entity-context-btn"),
-            document.getElementById("ai-add-timeline-context-btn"),
             document.getElementById("ai-entity-context-list"),
             document.getElementById("ai-input-wrapper"),
             () => {
