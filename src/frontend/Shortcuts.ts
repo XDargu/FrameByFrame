@@ -156,7 +156,6 @@ function findDefinition(e : KeyboardEvent) : ShortcutDefinition
 export function initShortcuts()
 {
     document.onkeydown = (e : KeyboardEvent) => {
-        console.log(e);
         if (canRunShortcut())
         {
             const definition = findDefinition(e);
