@@ -34,6 +34,12 @@
     color: white;
 }
 
+.menu > li.disabled > a:hover {
+    background:$faint-selection;
+    color: white;
+    cursor: default;
+}
+
 .menu > li > a > i {
     padding-right: 10px;
 }

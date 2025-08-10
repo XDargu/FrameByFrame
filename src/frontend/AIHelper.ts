@@ -1,7 +1,7 @@
 import * as DOMUtils from '../utils/DOMUtils';
 import * as RECORDING from '../recording/RecordingData';
 import { Console, LogChannel, LogLevel } from "../frontend/ConsoleController";
-import { createContextMenu } from "../frontend/ContextMenu";
+import { createContextMenu, IContextMenuItem, removeContextMenu } from "../frontend/ContextMenu";
 import { ResizeObserver } from 'resize-observer';
 
 namespace OpenAI
@@ -209,19 +209,33 @@ namespace UI
     }
 }
 
-export interface IAIQueryCallback
+export interface AIQueryCallback
 {
     () : void
 }
 
-export interface IAIAddEntityContextCallback
+export interface AddContextCallback
 {
     () : void
 }
 
-export interface IAIAddTimelineContextCallback
+export interface GetEntityContextData
 {
-    () : void
+    () : EntityContextCore
+}
+
+export interface GetTimelineContextData
+{
+    () : TimelineContextCore
+}
+
+export interface AICallbacks
+{
+    runQuery: AIQueryCallback;
+    addEntityContext: AddContextCallback;
+    addTimelineContext: AddContextCallback;
+    getEntityContextData: GetEntityContextData;
+    getTimelineContextData: GetTimelineContextData;
 }
 
 enum ContextType
@@ -235,16 +249,20 @@ interface BaseContext
     type: ContextType;
 }
 
-interface EntityContext extends BaseContext
+interface EntityContextCore
 {
     entity: RECORDING.IEntity;
     name: string;
     frame: number;
     tag: string;
+}
+
+interface EntityContext extends BaseContext, EntityContextCore
+{
     type: ContextType.Entity;
 }
 
-function isEntityContextSame(a: EntityContext, b: EntityContext)
+function isEntityContextSame(a: EntityContextCore, b: EntityContextCore)
 {
     return a.entity == b.entity && a.name == b.name && a.frame == b.frame && a.tag == b.tag;
 }
@@ -257,15 +275,19 @@ export interface TimelineContextEntry
     eventName: string;
 }
 
-interface TimelineContext extends BaseContext
+interface TimelineContextCore
 {
     frameFrom: number;
     frameTo: number;
+}
+
+interface TimelineContext extends BaseContext, TimelineContextCore
+{
     content: TimelineContextEntry[];
     type: ContextType.Timeline;
 }
 
-function isTimelineContextSame(a: TimelineContext, b: TimelineContext)
+function isTimelineContextSame(a: TimelineContextCore, b: TimelineContextCore)
 {
     return a.frameFrom == b.frameFrom && a.frameTo == b.frameTo;
 }
@@ -276,7 +298,7 @@ interface ContextElements
     element: HTMLElement;
 }
 
-function isContextEqual(a: ContextElements, b: ContextElements)
+function isContextSame(a: ContextElements, b: ContextElements)
 {
     if (a.context.type != b.context.type)
         return false;
@@ -300,9 +322,7 @@ export class AIHelper
     private addGlobalBtn: HTMLElement;
     private entityContextList: HTMLElement;
     private inputWrapper: HTMLElement;
-    private queryCallback: IAIQueryCallback;
-    private addEntityContextCallback: IAIAddEntityContextCallback;
-    private addTimelineContextCallback: IAIAddTimelineContextCallback;
+    private callbacks: AICallbacks;
     
     private apiKey: string;
     private model: string;
@@ -318,9 +338,8 @@ export class AIHelper
         addGlobalBtn: HTMLElement,
         entityContextList: HTMLElement,
         inputWrapper: HTMLElement,
-        queryCallback: IAIQueryCallback,
-        addEntityContextCallback: IAIAddEntityContextCallback,
-        addTimelineContextCallback: IAIAddTimelineContextCallback)
+        callbacks: AICallbacks,
+    )
     {
         this.preMadeQueriesDropdown = preMadeQueriesDropdown;
         this.queryInput = queryInput;
@@ -332,9 +351,7 @@ export class AIHelper
 
         this.inputWrapper = inputWrapper;
         this.entityContextList = entityContextList;
-        this.queryCallback = queryCallback;
-        this.addEntityContextCallback = addEntityContextCallback;
-        this.addTimelineContextCallback = addTimelineContextCallback;
+        this.callbacks = callbacks;
         this.waitingForResponse = false;
 
         this.queryInput.addEventListener('input', () => { this.resizeInput(); });
@@ -343,7 +360,7 @@ export class AIHelper
             if (e.key === 'Enter' && !e.shiftKey && !this.waitingForResponse)
             {
                 e.preventDefault();
-                this.queryCallback();
+                this.callbacks.runQuery();
             }
         });
     }
@@ -383,20 +400,36 @@ export class AIHelper
 
         this.requestQueryBtn.onclick = () => {
             if (!this.waitingForResponse)
-                this.queryCallback();
+                this.callbacks.runQuery();
         };
 
         this.newChatBtn.onclick = () => {
             this.clear();
         }
 
-        // Context menu for items
-        const config = [
-            { text: "Add entity context", icon: "fa-user", callback: () => { this.addEntityContextCallback(); } },
-            { text: "Add timeline context", icon: "fa-clock", callback: () => { this.addTimelineContextCallback(); } },
-        ];
-
         this.addGlobalBtn.onclick = (ev) => {
+
+            // Context menu for items
+            let config: IContextMenuItem[] = [];
+
+            const entityCtxData = this.callbacks.getEntityContextData();
+
+            if (!entityCtxData)
+                config.push({ text: "No entity selected", icon: "fa-user", callback: () => { }, enabled: () => { return false; } });
+            else if (this.canAddEntityContext(entityCtxData))
+                config.push({ text: "Add selected entity", icon: "fa-user", callback: () => { this.callbacks.addEntityContext(); } });
+            else
+                config.push({ text: "Entity already added", icon: "fa-user", callback: () => { }, enabled: () => { return false;} });
+            
+            const timelineCtxData = this.callbacks.getTimelineContextData();
+
+            if (!timelineCtxData)
+                config.push({ text: "No timeline selected", icon: "fa-clock", callback: () => { }, enabled: () => { return false;} });
+            else if (this.canAddTimelineContext(this.callbacks.getTimelineContextData()))
+                config.push({ text: "Add selected timeline", icon: "fa-clock", callback: () => { this.callbacks.addTimelineContext(); } });
+            else
+                config.push({ text: "Timeline already added", icon: "fa-clock", callback: () => { }, enabled: () => { return false;} });
+
             createContextMenu(ev.pageX, ev.pageY, ev.target as HTMLElement, config);
         }
 
@@ -565,6 +598,17 @@ export class AIHelper
         }
     }
 
+    canAddEntityContext(context: EntityContextCore)
+    {
+        const existing = this.contextElements.find((contextElem) => {
+            if (contextElem.context.type == ContextType.Entity)
+                return isEntityContextSame(contextElem.context, context)
+            return false;
+        });
+
+        return !existing;
+    }
+
     addEntityContext(entityName: string, entity: RECORDING.IEntity, tag: string, frame: number)
     {
         const newContext: EntityContext = {
@@ -574,14 +618,8 @@ export class AIHelper
             frame: frame,
             tag: tag,
         };
-        
-        const existing = this.contextElements.find((contextElem) => {
-            if (contextElem.context.type == ContextType.Entity)
-                return isEntityContextSame(contextElem.context, newContext)
-            return false;
-        });
 
-        if (!existing)
+        if (this.canAddEntityContext(newContext))
         {
             const element = UI.createEntityContext(newContext, (context) => {
                 this.deleteEntityContext(context);
@@ -610,6 +648,17 @@ export class AIHelper
         }
     }
 
+    canAddTimelineContext(context: TimelineContextCore)
+    {
+        const existing = this.contextElements.find((contextElem) => {
+            if (contextElem.context.type == ContextType.Timeline)
+                return isTimelineContextSame(contextElem.context, context)
+            return false;
+        });
+
+        return !existing;
+    }
+
     addTimelineContext(frameFrom: number, frameTo: number, content: TimelineContextEntry[])
     {
         const newContext: TimelineContext = {
@@ -618,14 +667,8 @@ export class AIHelper
             frameTo: frameTo,
             content: content,
         };
-        
-        const existing = this.contextElements.find((contextElem) => {
-            if (contextElem.context.type == ContextType.Timeline)
-                return isTimelineContextSame(contextElem.context, newContext)
-            return false;
-        });
 
-        if (!existing)
+        if (this.canAddTimelineContext(newContext))
         {
             const element = UI.createTimelineContext(newContext, (context) => {
                 this.deleteTimelineContext(context);

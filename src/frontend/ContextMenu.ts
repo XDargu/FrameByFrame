@@ -13,6 +13,7 @@ export interface IContextMenuItem {
     icon?: string;
     callback: IContextMenuCallback;
     condition?: IContextMenuCondition;
+    enabled?: IContextMenuCondition;
 }
 
 function createMenuItem(element: HTMLElement, item: IContextMenuItem)
@@ -29,6 +30,11 @@ function createMenuItem(element: HTMLElement, item: IContextMenuItem)
         icon.classList.add("fa", item.icon);
 
         link.prepend(icon);
+    }
+
+    if (item.enabled && !item.enabled(element))
+    {
+        li.classList.add("disabled");
     }
 
     li.append(link);

@@ -3350,6 +3350,11 @@ i.prop-icon {
   background: #8442B9;
   color: white; }
 
+.menu > li.disabled > a:hover {
+  background: #3F3447;
+  color: white;
+  cursor: default; }
+
 .menu > li > a > i {
   padding-right: 10px; }
 
@@ -5467,9 +5472,6 @@ i.prop-icon {
 #ai-input-wrapper.focus {
   background: #ECDDF9;
   border-bottom: 3px solid #BA92D9; }
-
-#ai-add-entity-context-btn {
-  margin-right: 10px; }
 
 #ai-input-area {
   display: flex;

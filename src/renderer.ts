@@ -328,45 +328,76 @@ export default class Renderer {
             document.getElementById("ai-input-plus"),
             document.getElementById("ai-entity-context-list"),
             document.getElementById("ai-input-wrapper"),
-            () => {
-                this.aiHelper.analyse();
-            },
-            () => {
-                const entity = this.frameData.entities[this.selectedEntityId];
+            {
+                runQuery: () => {
+                    this.aiHelper.analyse();
+                },
+                addEntityContext: () => {
+                    const entity = this.frameData.entities[this.selectedEntityId];
 
-                if (entity)
-                    this.aiHelper.addEntityContext(NaiveRecordedData.getEntityName(entity), entity, this.frameData.tag, this.getCurrentFrame() + 1); // We display frames starting with 1, rather than 0
-            },
-            () => {
+                    if (entity)
+                        this.aiHelper.addEntityContext(NaiveRecordedData.getEntityName(entity), entity, this.frameData.tag, this.getCurrentFrame() + 1); // We display frames starting with 1, rather than 0
+                },
+                addTimelineContext: () => {
 
-                // We display frames starting with 1, rather than 0
-                const from = this.timeline.getSelectionInit();
-                const to = this.timeline.getSelectionEnd();
+                    const from = this.timeline.getSelectionInit();
+                    const to = this.timeline.getSelectionEnd();
 
-                let timelineContent: TimelineContextEntry[] = [];
-                
-                for (let frameIdx = from; frameIdx<to; ++frameIdx)
-                {
-                    const events = this.timeline.getEventsInFrame(frameIdx);
-
-                    if (!events)
-                        continue;
+                    let timelineContent: TimelineContextEntry[] = [];
                     
-                    for (let event of events)
+                    for (let frameIdx = from; frameIdx<to; ++frameIdx)
                     {
-                        const uniqueId = Number.parseInt(event.entityId);
+                        const events = this.timeline.getEventsInFrame(frameIdx);
 
-                        timelineContent.push({
-                            entityId: Utils.getEntityIdUniqueId(uniqueId),
-                            entityName: this.findEntityNameOnFrame(uniqueId, frameIdx),
-                            eventName: event.label,
-                            frame: frameIdx + 1
-                        })
+                        if (!events)
+                            continue;
+                        
+                        for (let event of events)
+                        {
+                            const uniqueId = Number.parseInt(event.entityId);
+
+                            timelineContent.push({
+                                entityId: Utils.getEntityIdUniqueId(uniqueId),
+                                entityName: this.findEntityNameOnFrame(uniqueId, frameIdx),
+                                eventName: event.label,
+                                frame: frameIdx + 1
+                            })
+                        }
                     }
-                }
 
-                this.aiHelper.addTimelineContext(from + 1, to + 1, timelineContent);
+                    // We display frames starting with 1, rather than 0
+                    this.aiHelper.addTimelineContext(from + 1, to + 1, timelineContent);
+                },
+                getEntityContextData: () => {
+                    const entity = this.frameData.entities[this.selectedEntityId];
+
+                    if (entity)
+                    {
+                        return {
+                            entity: entity,
+                            name: NaiveRecordedData.getEntityName(entity),
+                            frame: this.getCurrentFrame() + 1, // We display frames starting with 1, rather than 0
+                            tag: this.frameData.tag,
+                        }
+                    }
+
+                    return null;
+                },
+                getTimelineContextData: () => {
+                    const from = this.timeline.getSelectionInit();
+                    const to = this.timeline.getSelectionEnd();
+
+                    if (this.timeline.getLength() > 0)
+                    {
+                        // We display frames starting with 1, rather than 0
+                        return { frameFrom: from + 1, frameTo: to + 1 };
+                    }
+
+                    return null;
+                },
             }
+            
+            
         );
 
         this.aiHelper.initialize();
