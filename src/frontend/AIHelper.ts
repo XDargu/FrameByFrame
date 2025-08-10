@@ -364,7 +364,7 @@ export class AIHelper
 
         const createPropertyFilter = UI.createPremadeQueryEntry("Find bugs and anomalies");
         createPropertyFilter.onclick = () => {
-            this.queryInput.value = "Make a brief list of any possibl bugs or anomalies.";
+            this.queryInput.value = "Make a brief list of any possible bugs or anomalies.";
             this.resizeInput();
         };
 
