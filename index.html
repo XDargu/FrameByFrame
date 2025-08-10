@@ -219,21 +219,23 @@
                                 <div class="basico-form-field ai-row">
                                     <div id="ai-input-wrapper">
                                         <div id="ai-entity-context-list" class="ai-entity-context"></div>
-                                        <textarea class="basico-input" id="ai-query" name="story" rows="1" placeholder="Ask your question here..."></textarea>
+                                        <div id="ai-input-area">
+                                            <i id="ai-input-plus" class="fas fa-plus"></i>
+                                            <textarea class="basico-input" id="ai-query" name="story" rows="1" placeholder="Ask your question here..."></textarea>
+                                            <button class="basico-button basico-small" id="ai-request-query-btn">Send</button>
+                                        </div>
                                     </div>
-                                    <button class="basico-button basico-small" id="ai-request-query-btn">Send</button>
                                 </div>
-                                <div class="ai-row">
+                                <div class="basico-dropdown" id="ai-premade-query-dropdown">
+                                    <button class="basico-dropdown-button">Suggestions</button>
+                                    <div class="basico-dropdown-content">
+                                    </div>
+                                </div>
+                                <div class="ai-row" style="display: none;">
                                     <button class="basico-button basico-small" id="ai-add-entity-context-btn">Add entity context</button>
                                     <button class="basico-button basico-small" id="ai-add-timeline-context-btn">Add timeline context</button>
                                 </div>
-                                <br>
                                 <div class="ai-row">
-                                    <div class="basico-dropdown" id="ai-premade-query-dropdown">
-                                        <button class="basico-dropdown-button">Suggestions</button>
-                                        <div class="basico-dropdown-content">
-                                        </div>
-                                    </div>
                                     <button class="basico-button basico-small" id="ai-start-new-chat">Start New Chat</button>
                                 </div>
                             </div>

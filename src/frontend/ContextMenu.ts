@@ -35,7 +35,7 @@ function createMenuItem(element: HTMLElement, item: IContextMenuItem)
     return li;
 }
 
-function createContextMenu(posX:  number, posY: number, element: HTMLElement, items: IContextMenuItem[])
+export function createContextMenu(posX:  number, posY: number, element: HTMLElement, items: IContextMenuItem[])
 {
     let menu = document.getElementById("contextMenu");
     menu.style.display = 'block';
@@ -66,7 +66,9 @@ function createContextMenu(posX:  number, posY: number, element: HTMLElement, it
         document.removeEventListener("click", hideMenu);        
     };
 
-    document.addEventListener("click", hideMenu, { passive: true });
+    setTimeout(() => {
+        document.addEventListener("click", hideMenu, { passive: true });
+    })
 }
 
 export function addContextMenu(element: HTMLElement, items: IContextMenuItem[])

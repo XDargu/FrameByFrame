@@ -1516,6 +1516,9 @@ body {
 .basico-input {
   z-index: unset; }
 
+.hide-element {
+  display: none; }
+
 #title-bar-wrapper {
   min-height: 48px;
   height: 48px;
@@ -5467,5 +5470,25 @@ i.prop-icon {
 
 #ai-add-entity-context-btn {
   margin-right: 10px; }
+
+#ai-input-area {
+  display: flex;
+  align-items: flex-end; }
+
+#ai-input-plus {
+  margin: 1px;
+  padding: 5px;
+  margin-left: 5px;
+  cursor: pointer; }
+
+#ai-input-plus:hover {
+  color: #8442B9; }
+
+#ai-request-query-btn {
+  margin: 2.5px;
+  margin-right: 5px; }
+
+#ai-start-new-chat {
+  margin: auto; }
 
 /*# sourceMappingURL=styles.css.map */

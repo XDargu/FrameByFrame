@@ -1,6 +1,8 @@
 import * as DOMUtils from '../utils/DOMUtils';
 import * as RECORDING from '../recording/RecordingData';
 import { Console, LogChannel, LogLevel } from "../frontend/ConsoleController";
+import { createContextMenu } from "../frontend/ContextMenu";
+import { ResizeObserver } from 'resize-observer';
 
 namespace OpenAI
 {
@@ -92,6 +94,13 @@ namespace UI
     export interface TimelineContextCallback
     {
         (context: TimelineContext) : void
+    }
+
+    export function createIntroMessage()
+    {
+        const entry = document.createElement("span");
+        entry.innerHTML = `Attach data with the <i class="fas fa-plus"></i> button and ask anything you want`;
+        return entry;
     }
 
     export function createPremadeQueryEntry(name: string)
@@ -288,6 +297,7 @@ export class AIHelper
     private queryOutput: HTMLElement;
     private requestQueryBtn: HTMLElement;
     private newChatBtn: HTMLElement;
+    private addGlobalBtn: HTMLElement;
     private addEntityContextBtn: HTMLElement;
     private addTimelineContextBtn: HTMLElement;
     private entityContextList: HTMLElement;
@@ -307,6 +317,7 @@ export class AIHelper
 
     constructor(preMadeQueriesDropdown: HTMLElement, queryInput: HTMLTextAreaElement, queryOutput: HTMLElement, 
         requestQueryBtn: HTMLElement, newChatBtn: HTMLElement,
+        addGlobalBtn: HTMLElement,
         addEntityContextBtn: HTMLElement, addTimelineContextBtn: HTMLElement,
         entityContextList: HTMLElement,
         inputWrapper: HTMLElement,
@@ -320,6 +331,7 @@ export class AIHelper
         this.requestQueryBtn = requestQueryBtn;
         this.newChatBtn = newChatBtn;
         
+        this.addGlobalBtn = addGlobalBtn;
         this.addEntityContextBtn = addEntityContextBtn;
         this.addTimelineContextBtn = addTimelineContextBtn;
 
@@ -330,7 +342,6 @@ export class AIHelper
         this.addTimelineContextCallback = addTimelineContextCallback;
         this.waitingForResponse = false;
 
-        this.resizeInput();
         this.queryInput.addEventListener('input', () => { this.resizeInput(); });
 
         this.queryInput.addEventListener('keydown', (e) => {
@@ -392,6 +403,16 @@ export class AIHelper
             this.addTimelineContextCallback();
         }
 
+        // Context menu for items
+        const config = [
+            { text: "Add entity context", icon: "fa-user", callback: () => { this.addEntityContextCallback(); } },
+            { text: "Add timeline context", icon: "fa-clock", callback: () => { this.addTimelineContextCallback(); } },
+        ];
+
+        this.addGlobalBtn.onclick = (ev) => {
+            createContextMenu(ev.pageX, ev.pageY, ev.target as HTMLElement, config);
+        }
+
         // Update wrapper
         this.queryInput.addEventListener('focus', () => {
             DOMUtils.setClass(this.inputWrapper, "focus", true);
@@ -400,16 +421,34 @@ export class AIHelper
         this.queryInput.addEventListener('blur', () => {
             DOMUtils.setClass(this.inputWrapper, "focus", false);
         });
+
+        // Resize observe
+        let resizeObserver = new ResizeObserver(entries => {
+            this.resizeInput();
+        });
+
+        resizeObserver.observe(this.inputWrapper);
+
+
+        this.clear();
     }
 
     clear()
     {
         this.contextSoFar = "";
         this.queryOutput.innerHTML = "";
+        this.queryOutput.append(UI.createIntroMessage());
+        DOMUtils.setClass(this.newChatBtn, "hide-element", true);
+        DOMUtils.setClass(this.preMadeQueriesDropdown, "hide-element", false);
+
         this.queryInput.value = "";
         this.resizeInput();
         this.loadingElement = null;
+
+        // Clear context
         this.contextElements = [];
+        this.entityContextList.innerHTML = "";
+
         this.lockSending(false);
         this.updateContextStyle();
     }
@@ -454,6 +493,9 @@ export class AIHelper
         {
             request.prepend(UI.createRequestContext(this.contextElements));
         }
+
+        DOMUtils.setClass(this.newChatBtn, "hide-element", false);
+        DOMUtils.setClass(this.preMadeQueriesDropdown, "hide-element", true);
 
         this.queryOutput.append(request);
 
