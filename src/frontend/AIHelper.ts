@@ -382,12 +382,14 @@ export class AIHelper
         const createEventFilter = UI.createPremadeQueryEntry("Explain Selection");
         createEventFilter.onclick = () => { 
             this.queryInput.value = "Explain what the entity is doing on this frame.";
+            this.callbacks.addEntityContext();
             this.resizeInput();
         };
 
         const createPropertyFilter = UI.createPremadeQueryEntry("Find bugs and anomalies");
         createPropertyFilter.onclick = () => {
             this.queryInput.value = "Make a brief list of any possible bugs or anomalies.";
+            this.callbacks.addEntityContext();
             this.resizeInput();
         };
 
