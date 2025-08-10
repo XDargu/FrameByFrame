@@ -84,6 +84,11 @@ namespace OpenAI
 
 namespace UI
 {
+    export interface EntityContextCallback
+    {
+        (context: EntityContext) : void
+    }
+
     export function createPremadeQueryEntry(name: string)
     {
         const entry = document.createElement("a");
@@ -116,12 +121,30 @@ namespace UI
         return entry;
     }
 
-    export function createEntityContext(name: string, frame: string, tag: string)
+    export function createEntityContext(context: EntityContext, onDelete?: EntityContextCallback)
     {
         const entry = document.createElement("div");
+        entry.classList.add("ai-context");
+
         const icon = document.createElement("i");
         icon.classList.add("fas", "fa-user");
-        entry.append(icon, `${name} (frame ${frame}) (${tag})`);
+        
+        const text = document.createElement("span");
+        text.textContent = `${context.name} (frame ${context.frame}) (${context.tag})`;
+
+        entry.append(icon, text);
+
+        if (onDelete)
+        {
+            const deleteIcon = document.createElement("i");
+            deleteIcon.classList.add("fas", "fa-trash", "ai-delete");
+            deleteIcon.title = "Remove entity context";
+
+            deleteIcon.onclick = () => { onDelete(context); }
+
+            entry.append(deleteIcon);
+        }
+
         return entry;
     }
 
@@ -132,7 +155,7 @@ namespace UI
 
         for (let entityCtx of context)
         {
-            entry.append(createEntityContext(entityCtx.name, entityCtx.frame.toString(), entityCtx.tag));
+            entry.append(createEntityContext(entityCtx));
         }
         
         return entry;
@@ -157,6 +180,17 @@ interface EntityContext
     tag: string;
 }
 
+function isEntityContextSame(a: EntityContext, b: EntityContext)
+{
+    return a.entity == b.entity && a.name == b.name && a.frame == b.frame && a.tag == b.tag;
+}
+
+interface ContextElements
+{
+    context: EntityContext;
+    element: HTMLElement;
+}
+
 export class AIHelper
 {
     private preMadeQueriesDropdown: HTMLElement;
@@ -176,7 +210,7 @@ export class AIHelper
     private loadingElement: HTMLElement;
     private waitingForResponse: boolean;
 
-    private entityContext: EntityContext[] = [];
+    private contextElements: ContextElements[] = [];
 
     constructor(preMadeQueriesDropdown: HTMLElement, queryInput: HTMLTextAreaElement, queryOutput: HTMLElement, 
         requestQueryBtn: HTMLElement, newChatBtn: HTMLElement,
@@ -260,7 +294,7 @@ export class AIHelper
         this.queryInput.value = "";
         this.resizeInput();
         this.loadingElement = null;
-        this.entityContext = [];
+        this.contextElements = [];
         this.lockSending(false);
     }
 
@@ -300,9 +334,9 @@ export class AIHelper
     {
         this.queryOutput.append(UI.createRequest(this.queryInput.value));
 
-        if (this.entityContext.length > 0)
+        if (this.contextElements.length > 0)
         {
-            this.queryOutput.append(UI.createRequestEntityContext(this.entityContext));
+            this.queryOutput.append(UI.createRequestEntityContext(this.contextElements.map(element => element.context)));
         }
 
         const systemPrompt = "You are an AI assistant helping finding insights of debugging data from a videogame. You might receive entity data from the game in JSON format, containing nformation about one entity on one frame, on a videogame. The entity will have properties that describe its current state on the frame, and events that happened on that frame. You will also receive a request from a user regarding that data. You will interact with the user in a chat form, giving answers, and the user asking follow-up questions, that might come with additional data. Please answer in a comprehensive way, with bullet points if it helps with clarity, but keep it relatively short if possible. If the user hasn't provided any data ask for it, and do not mention JSON. The user can provide entity data by clicking on the 'Add Entity Context' button. Send the reply in HTML format, indicating headers, parragraphs, lists, etc. All styles should be inlined, don't create style nodes. The html content will be added to an existing page that has a dark mode. Default text color should be #EEEEEE. Header color should be #bb86fc. You can higlight important words or parts of the answer in bold with color #6DE080. Don't alter the font size or family.";
@@ -316,13 +350,14 @@ export class AIHelper
 
         try
         {
-            for (let entityCtx of this.entityContext)
+            for (let contextElem of this.contextElements)
             {
-                const userQuery = JSON.stringify(entityCtx.entity);
-                this.contextSoFar += `Entity data of frame ${entityCtx.frame}, frame tag ${entityCtx.tag} in JSON:  ${userQuery}\n`;
+                const context = contextElem.context;
+                const userQuery = JSON.stringify(context.entity);
+                this.contextSoFar += `Entity data of frame ${context.frame}, with name: ${context.name}, frame tag ${context.tag} in JSON: ${userQuery}\n`;
             }
 
-            if (this.entityContext.length == 0)
+            if (this.contextElements.length == 0)
             {
                 this.contextSoFar += "No entity data sent this frame.\n";
             }
@@ -334,11 +369,11 @@ export class AIHelper
             this.queryOutput.append(this.loadingElement);
 
             // Clear context
-            this.entityContext = [];
+            this.contextElements = [];
             this.entityContextList.innerHTML = "";
 
-            const completion = await OpenAI.requestQuery(systemPrompt, this.contextSoFar, this.apiKey, this.model);
-            //const completion = await this.simulateResponse();
+            //const completion = await OpenAI.requestQuery(systemPrompt, this.contextSoFar, this.apiKey, this.model);
+            const completion = await this.simulateResponse();
 
             const result = completion.choices[0].message.content;
             
@@ -365,15 +400,35 @@ export class AIHelper
 
     addEntityContext(entityName: string, entity: RECORDING.IEntity, tag: string, frame: number)
     {
-        this.entityContext.push({
+        const newContext: EntityContext = {
             entity: entity,
             name: entityName,
             frame: frame,
             tag: tag,
-        });
+        };
+        
+        const existing = this.contextElements.find((contextElem) => { return isEntityContextSame(contextElem.context, newContext)});
 
-        // TODO!
-        this.entityContextList.append(UI.createEntityContext(entityName, frame.toString(), tag));
+        if (!existing)
+        {
+            const element = UI.createEntityContext(newContext, (context) => {
+                this.deleteEntityContext(context);
+            });
+            this.contextElements.push({ context: newContext, element: element });
+
+            this.entityContextList.append(element);
+        }
+    }
+
+    deleteEntityContext(contextToDelete: EntityContext)
+    {
+        const existingIdx = this.contextElements.findIndex((contextElem) => { return isEntityContextSame(contextElem.context, contextToDelete)});
+
+        if (existingIdx != -1)
+        {
+            this.contextElements[existingIdx].element.remove();
+            this.contextElements.splice(existingIdx, 1);
+        }
     }
 
     private lockSending(isLocked: boolean)

@@ -5417,4 +5417,23 @@ i.prop-icon {
   display: flex;
   align-items: flex-end; }
 
+.ai-context {
+  display: grid;
+  grid-template-columns: 15px auto 10px; }
+
+.ai-request .ai-context {
+  display: grid;
+  grid-template-columns: 15px auto; }
+
+.ai-context span {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden; }
+
+.ai-delete {
+  cursor: pointer; }
+
+.ai-delete:hover {
+  color: white; }
+
 /*# sourceMappingURL=styles.css.map */
