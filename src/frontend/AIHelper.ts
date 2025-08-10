@@ -105,7 +105,9 @@ namespace UI
     {
         const entry = document.createElement("div");
         entry.classList.add("ai-request");
-        entry.textContent = content;
+        const text = document.createElement("span");
+        text.textContent = content;
+        entry.append(text);
         return entry;
     }
 
@@ -289,6 +291,7 @@ export class AIHelper
     private addEntityContextBtn: HTMLElement;
     private addTimelineContextBtn: HTMLElement;
     private entityContextList: HTMLElement;
+    private inputWrapper: HTMLElement;
     private queryCallback: IAIQueryCallback;
     private addEntityContextCallback: IAIAddEntityContextCallback;
     private addTimelineContextCallback: IAIAddTimelineContextCallback;
@@ -306,6 +309,7 @@ export class AIHelper
         requestQueryBtn: HTMLElement, newChatBtn: HTMLElement,
         addEntityContextBtn: HTMLElement, addTimelineContextBtn: HTMLElement,
         entityContextList: HTMLElement,
+        inputWrapper: HTMLElement,
         queryCallback: IAIQueryCallback,
         addEntityContextCallback: IAIAddEntityContextCallback,
         addTimelineContextCallback: IAIAddTimelineContextCallback)
@@ -319,6 +323,7 @@ export class AIHelper
         this.addEntityContextBtn = addEntityContextBtn;
         this.addTimelineContextBtn = addTimelineContextBtn;
 
+        this.inputWrapper = inputWrapper;
         this.entityContextList = entityContextList;
         this.queryCallback = queryCallback;
         this.addEntityContextCallback = addEntityContextCallback;
@@ -386,6 +391,15 @@ export class AIHelper
         this.addTimelineContextBtn.onclick = () => {
             this.addTimelineContextCallback();
         }
+
+        // Update wrapper
+        this.queryInput.addEventListener('focus', () => {
+            DOMUtils.setClass(this.inputWrapper, "focus", true);
+        });
+
+        this.queryInput.addEventListener('blur', () => {
+            DOMUtils.setClass(this.inputWrapper, "focus", false);
+        });
     }
 
     clear()
@@ -397,6 +411,7 @@ export class AIHelper
         this.loadingElement = null;
         this.contextElements = [];
         this.lockSending(false);
+        this.updateContextStyle();
     }
 
     async simulateResponse()
@@ -433,12 +448,14 @@ export class AIHelper
 
     async analyse()
     {
-        this.queryOutput.append(UI.createRequest(this.queryInput.value));
+        const request = UI.createRequest(this.queryInput.value);
 
         if (this.contextElements.length > 0)
         {
-            this.queryOutput.append(UI.createRequestContext(this.contextElements));
+            request.prepend(UI.createRequestContext(this.contextElements));
         }
+
+        this.queryOutput.append(request);
 
         const systemPrompt = "You are an AI assistant helping finding insights of debugging data from a videogame. You might receive entity data from the game in JSON format, containing nformation about one entity on one frame, on a videogame. The entity will have properties that describe its current state on the frame, and events that happened on that frame. You will also receive a request from a user regarding that data. You will interact with the user in a chat form, giving answers, and the user asking follow-up questions, that might come with additional data. Please answer in a comprehensive way, with bullet points if it helps with clarity, but keep it relatively short if possible. If the user hasn't provided any data ask for it, and do not mention JSON. The user can provide entity data by clicking on the 'Add Entity Context' button. Send the reply in HTML format, indicating headers, parragraphs, lists, etc. All styles should be inlined, don't create style nodes. The html content will be added to an existing page that has a dark mode. Default text color should be #EEEEEE. Header color should be #bb86fc. You can higlight important words or parts of the answer in bold with color #6DE080. Don't alter the font size or family.";
 
@@ -489,10 +506,12 @@ export class AIHelper
             this.contextElements = [];
             this.entityContextList.innerHTML = "";
 
+            this.updateContextStyle();
+
             console.log(this.contextSoFar);
 
-            const completion = await OpenAI.requestQuery(systemPrompt, this.contextSoFar, this.apiKey, this.model);
-            //const completion = await this.simulateResponse();
+            //const completion = await OpenAI.requestQuery(systemPrompt, this.contextSoFar, this.apiKey, this.model);
+            const completion = await this.simulateResponse();
 
             const result = completion.choices[0].message.content;
             
@@ -541,6 +560,8 @@ export class AIHelper
             this.contextElements.push({ context: newContext, element: element });
 
             this.entityContextList.append(element);
+
+            this.updateContextStyle()
         }
     }
 
@@ -556,6 +577,7 @@ export class AIHelper
         {
             this.contextElements[existingIdx].element.remove();
             this.contextElements.splice(existingIdx, 1);
+            this.updateContextStyle();
         }
     }
 
@@ -582,6 +604,8 @@ export class AIHelper
             this.contextElements.push({ context: newContext, element: element });
 
             this.entityContextList.append(element);
+
+            this.updateContextStyle();
         }
     }
 
@@ -597,6 +621,7 @@ export class AIHelper
         {
             this.contextElements[existingIdx].element.remove();
             this.contextElements.splice(existingIdx, 1);
+            this.updateContextStyle();
         }
     }
 
@@ -621,14 +646,19 @@ export class AIHelper
 
       // computed min/max (visual values from CSS) -> convert to content values
       const visualMax = parseFloat(cs.maxHeight) || 200;
-      const visualMin = parseFloat(cs.minHeight) || 38;
+      const visualMin = parseFloat(cs.minHeight) || 35;
       const contentMax = Math.max(0, visualMax - padding);
       const contentMin = Math.max(0, visualMin - padding);
 
       // scrollHeight includes padding; subtract padding to obtain content height
-      const contentHeight = Math.max(this.queryInput.scrollHeight - padding + 15, contentMin);
+      const contentHeight = Math.max(this.queryInput.scrollHeight - padding + 11, contentMin);
       const finalHeight = Math.min(contentHeight, contentMax);
 
       this.queryInput.style.height = finalHeight + 'px';
+    }
+
+    private updateContextStyle()
+    {
+        DOMUtils.setClass(this.entityContextList, "has-children", this.entityContextList.children.length > 0);
     }
 }

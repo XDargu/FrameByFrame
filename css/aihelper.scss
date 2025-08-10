@@ -25,20 +25,18 @@
     text-align: left;
     overflow: hidden;
     white-space: pre-wrap;
+    margin-bottom: 10px;
+    margin-top: 10px;
 }
 
 .ai-request-context
 {
-    width: 70%;
-    margin: auto;
-    margin-right: 0;
-
     font-size: 12px;
     white-space: nowrap;
     text-overflow: ellipsis;
     text-align: left;
     overflow: hidden;
-    padding: 5px;
+    margin-bottom: 10px;
 }
 
 .ai-entity-context
@@ -48,6 +46,12 @@
     text-overflow: ellipsis;
     text-align: left;
     overflow: hidden;
+    margin: 0;
+    padding: 0;
+}
+
+.ai-entity-context.has-children
+{
     padding: 5px;
     margin-bottom: 5px;
 }
@@ -72,6 +76,8 @@
     max-height: 200px;
     flex: 1;
     margin-right: 10px;
+    border: none;
+    background: none;
 }
 
 #ai-answer
@@ -94,12 +100,24 @@
 {
     display: grid;
     grid-template-columns: 15px auto 10px;
+    margin-bottom: 2px;
+    background: #ba92d9;
+    padding: 4px;
+    border-radius: 3px;
+    color: black;
+    font-size: 11px;
 }
 
 .ai-request .ai-context
 {
     display: grid;
     grid-template-columns: 15px auto;
+    margin-bottom: 2px;
+    background: #ba92d9;
+    padding: 4px;
+    border-radius: 3px;
+    color: black;
+    font-size: 11px;
 }
 
 .ai-context span
@@ -115,4 +133,23 @@
 
 .ai-delete:hover {
     color: white;
+}
+
+#ai-input-wrapper {
+    background: $form-background;
+    color: $text-color-darker;
+    border-bottom: 1px solid $form-accent;
+    border-radius: 3px;
+
+    margin-right: 10px;
+    flex: 1;
+}
+
+#ai-input-wrapper.focus {
+    background: $form-background-focus;
+    border-bottom: 3px solid $form-accent;
+}
+
+#ai-add-entity-context-btn {
+    margin-right: 10px;
 }

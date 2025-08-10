@@ -217,10 +217,12 @@
                         <div class="basico-card-element">
                             <div class="basico-form">
                                 <div class="basico-form-field ai-row">
-                                    <textarea class="basico-input" id="ai-query" name="story" rows="1" placeholder="Ask your question here..."></textarea>
+                                    <div id="ai-input-wrapper">
+                                        <div id="ai-entity-context-list" class="ai-entity-context"></div>
+                                        <textarea class="basico-input" id="ai-query" name="story" rows="1" placeholder="Ask your question here..."></textarea>
+                                    </div>
                                     <button class="basico-button basico-small" id="ai-request-query-btn">Send</button>
                                 </div>
-                                <div id="ai-entity-context-list" class="ai-entity-context"></div>
                                 <div class="ai-row">
                                     <button class="basico-button basico-small" id="ai-add-entity-context-btn">Add entity context</button>
                                     <button class="basico-button basico-small" id="ai-add-timeline-context-btn">Add timeline context</button>

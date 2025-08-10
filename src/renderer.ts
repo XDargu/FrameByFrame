@@ -328,6 +328,7 @@ export default class Renderer {
             document.getElementById("ai-add-entity-context-btn"),
             document.getElementById("ai-add-timeline-context-btn"),
             document.getElementById("ai-entity-context-list"),
+            document.getElementById("ai-input-wrapper"),
             () => {
                 this.aiHelper.analyse();
             },
