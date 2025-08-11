@@ -338,7 +338,11 @@ export default class Renderer {
                     const entity = this.frameData.entities[this.selectedEntityId];
 
                     if (entity)
-                        this.aiHelper.addEntityContext(NaiveRecordedData.getEntityName(entity), entity, this.frameData.tag, this.getCurrentFrame() + 1); // We display frames starting with 1, rather than 0
+                    {
+                        const clientId = Utils.getClientIdUniqueId(entity.id);
+                        const tag = this.recordedData.getTagByClientId(clientId);
+                        this.aiHelper.addEntityContext(NaiveRecordedData.getEntityName(entity), entity, tag, this.getCurrentFrame() + 1); // We display frames starting with 1, rather than 0
+                    }
                 },
                 addTimelineContext: () => {
 
@@ -377,11 +381,14 @@ export default class Renderer {
 
                     if (entity)
                     {
+                        const clientId = Utils.getClientIdUniqueId(entity.id);
+                        const tag = this.recordedData.getTagByClientId(clientId);
+
                         return {
                             entity: entity,
                             name: NaiveRecordedData.getEntityName(entity),
                             frame: this.getCurrentFrame() + 1, // We display frames starting with 1, rather than 0
-                            tag: this.frameData.tag,
+                            tag: tag,
                         }
                     }
 
