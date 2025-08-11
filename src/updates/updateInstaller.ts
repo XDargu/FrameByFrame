@@ -17,6 +17,8 @@ export async function installUpdate(updateResult: Messaging.IUpdateInstallReques
         mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LongOperationOngoing, "Installing Frame by Frame " + updateResult.version));
         await fileManager.unblockFileWindows(filePath)
         await runUpdateInstaller(filePath);
+        mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LongOperationOver, ""));
+
     }
     catch(error)
     {

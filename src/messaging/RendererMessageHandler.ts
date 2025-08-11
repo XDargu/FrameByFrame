@@ -91,6 +91,11 @@ export function initMessageHandling(renderer: Renderer)
                 renderer.openModal(arg.data as string);
                 break;
             }
+            case Messaging.MessageType.LongOperationOver:
+            {
+                renderer.closeModal();
+                break;
+            }
             case Messaging.MessageType.ImportFiltersResult:
             {
                 const result = arg.data as string;

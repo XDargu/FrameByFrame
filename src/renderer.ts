@@ -465,6 +465,13 @@ export default class Renderer {
             return;
         }
 
+        if (buffer.length == 0)
+        {
+            this.closeModal();
+            Console.log(LogLevel.Error, LogChannel.Updates, "Error downloading the file");
+            return;
+        }
+
         const installRequest: Messaging.IUpdateInstallRequest = {
             buffer: buffer,
             downloadUrl: result.downloadUrl,
