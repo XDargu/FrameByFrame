@@ -43,6 +43,7 @@ import { PropertyWindows } from "./frontend/userWindows/PropertyWindows";
 import { CorePropertyTypes } from "./types/typeRegistry";
 import { markdownToHtml } from "./utils/markdown";
 import { AIHelper, TimelineContextEntry } from "./frontend/AIHelper";
+import * as AutoUpdater from "./updates/updateCheker";
 
 const zlib = require('zlib');
 
@@ -416,6 +417,68 @@ export default class Renderer {
         this.requestApplyFrame({ frame: 0});
     }
 
+    async checkForUpdates(isAutomaticCheck: boolean)
+    {
+        const result = await AutoUpdater.findLatestUpdate();
+        const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+
+        await delay(500);
+
+        if (result.error != undefined)
+            Console.log(LogLevel.Error, LogChannel.Updates, "Error checking for updates: " + result.error);
+
+        this.onUpdateResult(result, !isAutomaticCheck);
+    }
+
+    async downloadUpdate()
+    {
+        this.openModal("Fetching update data");
+
+        const result = await AutoUpdater.findLatestUpdate();
+        if (result.error != undefined)
+        {
+            Console.log(LogLevel.Error, LogChannel.Updates, "Error downloading update: " + result.error);
+            return;
+        }
+
+        if (!result.available)
+        {
+            Console.log(LogLevel.Error, LogChannel.Updates, "Error downloading update: Update not available");
+            return;
+        }
+
+        if (!result.downloadUrl)
+        {
+            Console.log(LogLevel.Error, LogChannel.Updates, "Error downloading update: Invalid download url");
+            return;
+        }
+
+        this.openModal("Downloading Frame by Frame: " + result.version);
+
+        const buffer = await AutoUpdater.downloadUpdate(result.downloadUrl);
+        if (!buffer)
+        {
+            this.closeModal();
+            Console.log(LogLevel.Error, LogChannel.Updates, "Error downloading the update");
+            return;
+        }
+
+        if (buffer.length == 0)
+        {
+            this.closeModal();
+            Console.log(LogLevel.Error, LogChannel.Updates, "Error downloading the file");
+            return;
+        }
+
+        const installRequest: Messaging.IUpdateInstallRequest = {
+            buffer: buffer,
+            downloadUrl: result.downloadUrl,
+            version: result.version,
+        }
+
+        ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.RequestInstallUpdate, installRequest));
+    }
+
     render()
     {
         if (this.currentFrameRequest)
@@ -760,10 +823,11 @@ export default class Renderer {
 
         // Check for updates button
         document.getElementById("check-updates-button").onclick = () => {
-            ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.RequestCheckForUpdates, ""));
 
             const updateElem = document.getElementById(`check-updates-result`);
             updateElem.innerHTML = "Checking updates...";
+            
+            this.checkForUpdates(false);
         }
 
         // Special thanks
@@ -789,6 +853,8 @@ export default class Renderer {
     {
         this.applySettings(settings, true);
         this.connectionsList.addConnection("localhost", settings.defaultPort, false);
+
+        this.checkForUpdates(true);
     }
 
     applySettings(settings: ISettings, requiresRedraw: boolean)
@@ -1894,21 +1960,21 @@ export default class Renderer {
     }
 
     // Update modal
-    onUpdateResult(updateResult: Messaging.IUpdateResult)
+    onUpdateResult(updateResult: AutoUpdater.ICheckUpdateResult, displayAlways: boolean)
     {
         const updateElem = document.getElementById(`check-updates-result`);
 
         if (!updateResult.error)
         {
             if (!Utils.compareVersions(updateResult.version, LIB_VERSION))
-                updateElem.innerHTML = `Frame by Frame is up to date`;
+                updateElem.innerHTML = `Frame by Frame is up to date (latest: ${updateResult.version})`;
             else
                 updateElem.innerHTML = `<i class="fas fa-bell" style="margin-right: 10px;"></i>New Frame by Frame version available: ${updateResult.version}`;
         }
         else
             updateElem.innerHTML = `<i class="fas fa-exclamation-triangle" style="margin-right: 10px;"></i>Couldn't find latest Frame by Frame version`;
 
-        if (updateResult.available)
+        if (updateResult.available && (displayAlways || Utils.compareVersions(updateResult.version, this.settings.lastUpdateVersionSeen)))
         {
             DOMUtils.setClass(document.getElementById("updateModal"), "active", true);
             document.getElementById("update-title").innerHTML = '<i class="fas fa-bell" style="margin-right: 10px;"></i>Update Available';
@@ -1937,10 +2003,13 @@ export default class Renderer {
             
             document.getElementById('install-update-button').onclick = () =>
             {
-                ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.RequestInstallUpdate, updateResult));
-                this.openModal("Downloading update");
+                this.downloadUpdate();
             }
-            document.getElementById('decline-update-button').onclick = () => { this.closeUpdateModal(); }
+            document.getElementById('decline-update-button').onclick = () => {
+                this.closeUpdateModal();
+                this.settings.lastUpdateVersionSeen = updateResult.version;
+                this.saveSettings();
+            }
         }
     }
 

@@ -98,8 +98,6 @@ function onRendererReady()
   }
 
   loadMods();
-
-  AutoUpdater.checkForUpdates();
 }
 
 // Increase available memory

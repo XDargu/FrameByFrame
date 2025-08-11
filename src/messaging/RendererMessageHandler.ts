@@ -91,6 +91,11 @@ export function initMessageHandling(renderer: Renderer)
                 renderer.openModal(arg.data as string);
                 break;
             }
+            case Messaging.MessageType.LongOperationOver:
+            {
+                renderer.closeModal();
+                break;
+            }
             case Messaging.MessageType.ImportFiltersResult:
             {
                 const result = arg.data as string;
@@ -123,12 +128,6 @@ export function initMessageHandling(renderer: Renderer)
             {
                 const result = arg.data as Messaging.IWindowsClosed;
                 renderer.onUserWindowClosed(result.id);
-                break;
-            }
-            case Messaging.MessageType.UpdateResult:
-            {
-                const result = arg.data as Messaging.IUpdateResult;
-                renderer.onUpdateResult(result);
                 break;
             }
             case Messaging.MessageType.UpdateInstallFailed:
