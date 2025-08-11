@@ -42,6 +42,7 @@ import { addContextMenu } from "./frontend/ContextMenu";
 import { PropertyWindows } from "./frontend/userWindows/PropertyWindows";
 import { CorePropertyTypes } from "./types/typeRegistry";
 import { markdownToHtml } from "./utils/markdown";
+import { AIHelper, TimelineContextEntry } from "./frontend/AIHelper";
 
 const zlib = require('zlib');
 
@@ -56,6 +57,7 @@ enum TabIndices
     Connections,
     Filters,
     Info,
+    AIHelper,
     Recent,
     Settings
 }
@@ -141,6 +143,9 @@ export default class Renderer {
 
     // Property history
     private propertiesWithHistory: string[][] = [];
+
+    // AI
+    private aiHelper: AIHelper;
 
     initialize(canvas: HTMLCanvasElement) {
         const defaultSettings = createDefaultSettings();
@@ -314,6 +319,100 @@ export default class Renderer {
             (propertyId) => { return this.entityPropsBuilder.findItemWithValue(propertyId + "") as HTMLElement; },
         );
 
+        this.aiHelper = new AIHelper(
+            document.getElementById("ai-premade-query-dropdown"),
+            document.getElementById("ai-query") as HTMLTextAreaElement,
+            document.getElementById("ai-answer"),
+            document.getElementById("ai-request-query-btn"),
+            document.getElementById("ai-start-new-chat"),
+            document.getElementById("ai-input-plus"),
+            document.getElementById("ai-entity-context-list"),
+            document.getElementById("ai-input-wrapper"),
+            {
+                runQuery: () => {
+                    this.aiHelper.analyse();
+                },
+                addEntityContext: () => {
+                    if (!this.frameData) return;
+
+                    const entity = this.frameData.entities[this.selectedEntityId];
+
+                    if (entity)
+                    {
+                        const clientId = Utils.getClientIdUniqueId(entity.id);
+                        const tag = this.recordedData.getTagByClientId(clientId);
+                        this.aiHelper.addEntityContext(NaiveRecordedData.getEntityName(entity), entity, tag, this.getCurrentFrame() + 1); // We display frames starting with 1, rather than 0
+                    }
+                },
+                addTimelineContext: () => {
+
+                    const from = this.timeline.getSelectionInit();
+                    const to = this.timeline.getSelectionEnd();
+
+                    let timelineContent: TimelineContextEntry[] = [];
+                    
+                    for (let frameIdx = from; frameIdx<to; ++frameIdx)
+                    {
+                        const events = this.timeline.getEventsInFrame(frameIdx);
+
+                        if (!events)
+                            continue;
+                        
+                        for (let event of events)
+                        {
+                            const uniqueId = Number.parseInt(event.entityId);
+
+                            timelineContent.push({
+                                entityId: Utils.getEntityIdUniqueId(uniqueId),
+                                entityName: this.findEntityNameOnFrame(uniqueId, frameIdx),
+                                eventName: event.label,
+                                frame: frameIdx + 1
+                            })
+                        }
+                    }
+
+                    // We display frames starting with 1, rather than 0
+                    this.aiHelper.addTimelineContext(from + 1, to + 1, timelineContent);
+                },
+                getEntityContextData: () => {
+                    if (!this.frameData) return null;
+
+                    const entity = this.frameData.entities[this.selectedEntityId];
+
+                    if (entity)
+                    {
+                        const clientId = Utils.getClientIdUniqueId(entity.id);
+                        const tag = this.recordedData.getTagByClientId(clientId);
+
+                        return {
+                            entity: entity,
+                            name: NaiveRecordedData.getEntityName(entity),
+                            frame: this.getCurrentFrame() + 1, // We display frames starting with 1, rather than 0
+                            tag: tag,
+                        }
+                    }
+
+                    return null;
+                },
+                getTimelineContextData: () => {
+                    const from = this.timeline.getSelectionInit();
+                    const to = this.timeline.getSelectionEnd();
+
+                    if (this.timeline.getLength() > 0)
+                    {
+                        // We display frames starting with 1, rather than 0
+                        return { frameFrom: from + 1, frameTo: to + 1 };
+                    }
+
+                    return null;
+                },
+            }
+            
+            
+        );
+
+        this.aiHelper.initialize();
+
         this.requestApplyFrame({ frame: 0});
     }
 
@@ -424,6 +523,7 @@ export default class Renderer {
             document.getElementById("connection-list"),
             document.getElementById("filters-list"),
             document.getElementById("info-list"),
+            document.getElementById("ai-list"),
             document.getElementById("recent-list"),
             document.getElementById("setting-list")
         ];
@@ -450,6 +550,7 @@ export default class Renderer {
             { name: "Connection List",   binding: { keyCode: "KeyC", shift: true, ctrl: true }, id: Action.ConnectionList,   callback: () => { this.controlTabs.openTabByIndex(TabIndices.Connections); } },
             { name: "Filters List",      binding: { keyCode: "KeyF", shift: true, ctrl: true }, id: Action.FilterList,       callback: () => { this.controlTabs.openTabByIndex(TabIndices.Filters); } },
             { name: "Info List",         binding: { keyCode: "KeyI", shift: true, ctrl: true }, id: Action.InfoList,         callback: () => { this.controlTabs.openTabByIndex(TabIndices.Info); } },
+            { name: "AI Insights",       binding: { keyCode: "KeyH", shift: true, ctrl: true }, id: Action.AIHelper,         callback: () => { this.controlTabs.openTabByIndex(TabIndices.AIHelper); } },
             { name: "Recent Files List", binding: { keyCode: "KeyL", shift: true, ctrl: true }, id: Action.RecentFileList,   callback: () => { this.controlTabs.openTabByIndex(TabIndices.Recent); } },
             { name: "Settings",          binding: { keyCode: "KeyS", shift: true, ctrl: true }, id: Action.SettingsList,     callback: () => { this.controlTabs.openTabByIndex(TabIndices.Settings); } },
         ];
@@ -466,6 +567,7 @@ export default class Renderer {
         controlTabs[TabIndices.Connections].title = `Connections (${actionAsText(Action.ConnectionList)})`;
         controlTabs[TabIndices.Filters].title = `Filters (${actionAsText(Action.FilterList)})`;
         controlTabs[TabIndices.Info].title = `Recording Info (${actionAsText(Action.InfoList)})`;
+        controlTabs[TabIndices.AIHelper].title = `AI Insights (${actionAsText(Action.AIHelper)})`;
         controlTabs[TabIndices.Recent].title = `Recent Files (${actionAsText(Action.RecentFileList)})`;
         controlTabs[TabIndices.Settings].title = `Settings (${actionAsText(Action.SettingsList)})`;
     }
@@ -732,6 +834,9 @@ export default class Renderer {
 
         if (requiresRedraw)
             this.requestApplyFrame({ frame: this.getCurrentFrame() });
+
+        this.aiHelper.setApiKey(settings.openaiApiKey);
+        this.aiHelper.setModel(settings.openaiModel);
     }
 
     updateSettings(settings: ISettings)
@@ -923,6 +1028,7 @@ export default class Renderer {
         this.timeline.clearEvents();
         this.pinnedTexture.clear();
         this.propertyWindows.clear();
+        this.aiHelper.clear();
         this.propertiesWithHistory = [];
         // Avoid clearing recording options, since in all cases when we clear it's better to keep them
         //this.recordingOptions.setOptions([]);

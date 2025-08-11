@@ -13,6 +13,7 @@ export interface IContextMenuItem {
     icon?: string;
     callback: IContextMenuCallback;
     condition?: IContextMenuCondition;
+    enabled?: IContextMenuCondition;
 }
 
 function createMenuItem(element: HTMLElement, item: IContextMenuItem)
@@ -31,11 +32,16 @@ function createMenuItem(element: HTMLElement, item: IContextMenuItem)
         link.prepend(icon);
     }
 
+    if (item.enabled && !item.enabled(element))
+    {
+        li.classList.add("disabled");
+    }
+
     li.append(link);
     return li;
 }
 
-function createContextMenu(posX:  number, posY: number, element: HTMLElement, items: IContextMenuItem[])
+export function createContextMenu(posX:  number, posY: number, element: HTMLElement, items: IContextMenuItem[])
 {
     let menu = document.getElementById("contextMenu");
     menu.style.display = 'block';
@@ -66,7 +72,9 @@ function createContextMenu(posX:  number, posY: number, element: HTMLElement, it
         document.removeEventListener("click", hideMenu);        
     };
 
-    document.addEventListener("click", hideMenu, { passive: true });
+    setTimeout(() => {
+        document.addEventListener("click", hideMenu, { passive: true });
+    })
 }
 
 export function addContextMenu(element: HTMLElement, items: IContextMenuItem[])

@@ -38,6 +38,9 @@ export interface ISettings
     removeOldFramesUpdate: boolean,
     /* Comments */
     showComments: boolean,
+    /* AI Helper */
+    openaiApiKey: string,
+    openaiModel: string,
     /* Debug */
     showRenderDebug: boolean,
     optimizePropertyTreeUpdates: boolean,
@@ -89,6 +92,9 @@ export function createDefaultSettings() : ISettings
         removeOldFramesUpdate: true,
         /* Comments */
         showComments: true,
+        /* AI Helper */
+        openaiApiKey: "",
+        openaiModel: "gpt-4.1-mini",
         /* Debug */
         showRenderDebug: false,
         optimizePropertyTreeUpdates: false,

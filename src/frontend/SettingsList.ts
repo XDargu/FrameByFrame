@@ -518,6 +518,13 @@ You can use the following formatting options:
         }
 
         {
+            let group = SettingsBuilder.createGroup("AI Insights");
+            SettingsBuilder.addStringSetting(group, "OpenAI API Key", "OpenAI API key to do requests", "", settings.openaiApiKey, (value) => {settings.openaiApiKey = value; this.onSettingsChanged(); })
+            SettingsBuilder.addStringSetting(group, "OpenAI Model", "OpenAI model for requests", "", settings.openaiModel, (value) => {settings.openaiModel = value; this.onSettingsChanged(); })
+            this.settingsList.appendChild(group.fragment);
+        }
+
+        {
             let group = SettingsBuilder.createGroup("Debug");
             SettingsBuilder.addBooleanSetting(group, "Show render debug info", settings.showRenderDebug, (value) => {settings.showRenderDebug = value; this.onSettingsChanged(); })
             SettingsBuilder.addBooleanSetting(group, "Experimental: Optimize property tree updates", settings.optimizePropertyTreeUpdates, (value) => {settings.optimizePropertyTreeUpdates = value; this.onSettingsChanged(); })

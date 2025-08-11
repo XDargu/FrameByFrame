@@ -1,0 +1,176 @@
+@import "colorStyles.scss";
+@import "../ui/css/variables.scss";
+
+.ai-response
+{
+    background: $dark-background;
+    margin-bottom: 5px;
+    padding: 10px;
+    font-size: 13px;
+    text-align: left;
+    overflow: hidden;
+}
+
+.ai-request
+{
+    width: 70%;
+    margin: auto;
+    margin-right: 0;
+    background: #D2C7DB;
+    color: #424242;
+    border-bottom: 1px solid #BA92D9;
+    border-radius: 3px;
+    padding: 10px;
+    font-size: 13px;
+    text-align: left;
+    overflow: hidden;
+    white-space: pre-wrap;
+    margin-bottom: 10px;
+    margin-top: 10px;
+}
+
+.ai-request-context
+{
+    font-size: 12px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    text-align: left;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.ai-entity-context
+{
+    font-size: 12px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    text-align: left;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+}
+
+.ai-entity-context.has-children
+{
+    padding: 5px;
+    margin-bottom: 5px;
+}
+
+.ai-entity-context i,
+.ai-request-context i
+{
+    margin-right: 5px;
+}
+
+.ai-conversation-wrapper
+{
+    display: flex;
+    flex-direction: column;
+    flex: auto;
+}
+
+#ai-query
+{
+    resize:none;
+    overflow:auto;
+    max-height: 200px;
+    flex: 1;
+    margin-right: 10px;
+    border: none;
+    background: none;
+}
+
+#ai-answer
+{
+    overflow-y: auto;
+}
+
+#ai-premade-query-dropdown
+{
+    margin-right: 10px;
+}
+
+.ai-row
+{
+    display: flex;
+    align-items: flex-end;
+}
+
+.ai-context
+{
+    display: grid;
+    grid-template-columns: 15px auto 10px;
+    margin-bottom: 2px;
+    background: #ba92d9;
+    padding: 4px;
+    border-radius: 3px;
+    color: black;
+    font-size: 11px;
+}
+
+.ai-request .ai-context
+{
+    display: grid;
+    grid-template-columns: 15px auto;
+    margin-bottom: 2px;
+    background: #ba92d9;
+    padding: 4px;
+    border-radius: 3px;
+    color: black;
+    font-size: 11px;
+}
+
+.ai-context span
+{
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.ai-delete {
+    cursor: pointer;
+}
+
+.ai-delete:hover {
+    color: white;
+}
+
+#ai-input-wrapper {
+    background: $form-background;
+    color: $text-color-darker;
+    border-bottom: 1px solid $form-accent;
+    border-radius: 3px;
+
+    margin-right: 10px;
+    flex: 1;
+}
+
+#ai-input-wrapper.focus {
+    background: $form-background-focus;
+    border-bottom: 3px solid $form-accent;
+}
+
+#ai-input-area {
+    display: flex;
+    align-items: flex-end;
+}
+
+#ai-input-plus {
+    margin: 1px;
+    padding: 5px;
+    margin-left: 5px;
+    cursor: pointer;
+}
+
+#ai-input-plus:hover {
+    color: $strong-primary;
+}
+
+#ai-request-query-btn {
+    margin: 2.5px;
+    margin-right: 5px;
+}
+
+#ai-start-new-chat {
+    margin: auto;
+}

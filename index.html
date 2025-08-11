@@ -108,6 +108,7 @@
                     <div class="basico-tabs-item" title="Connections"><i class="fas fa-network-wired"></i></div>
                     <div class="basico-tabs-item" title="Filters"><i class="fas fa-filter"></i></div>
                     <div class="basico-tabs-item" title="Info"><i class="fas fa-info"></i></div>
+                    <div class="basico-tabs-item" title="AI Insights"><img class="icon" src="icons/ai-icon.png" draggable="false"></div>
                     <div class="basico-tabs-item" title="Recent Files"><i class="fas fa-folder"></i></div>
                     <div class="basico-tabs-item" title="Settings"><i class="fas fa-cog"></i></div>
                 </div>
@@ -207,6 +208,40 @@
                 <div class="basico-title basico-title-compact uppercase">Recording Info</div>
                 <div class="simple-message" id="recording-info-hint">Displays the metadata of the current recording</div>
                 <div class="basico-container" id="recording-info"></div>
+            </div>
+            <div class="sidebar basico-container basico-container-compact" id="ai-list">
+                <div class="basico-title basico-title-compact uppercase">AI Insights</div>
+                <div class="basico-container ai-conversation-wrapper">
+                    <div id="ai-answer" class="ai-response"></div>
+                    <div class="basico-card">
+                        <div class="basico-card-element">
+                            <div class="basico-form">
+                                <div class="basico-form-field ai-row">
+                                    <div id="ai-input-wrapper">
+                                        <div id="ai-entity-context-list" class="ai-entity-context"></div>
+                                        <div id="ai-input-area">
+                                            <i id="ai-input-plus" class="fas fa-plus"></i>
+                                            <textarea class="basico-input" id="ai-query" name="story" rows="1" placeholder="Ask your question here..."></textarea>
+                                            <button class="basico-button basico-small" id="ai-request-query-btn">Send</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="basico-dropdown" id="ai-premade-query-dropdown">
+                                    <button class="basico-dropdown-button">Examples</button>
+                                    <div class="basico-dropdown-content">
+                                    </div>
+                                </div>
+                                <div class="ai-row" style="display: none;">
+                                    <button class="basico-button basico-small" id="ai-add-entity-context-btn">Add entity context</button>
+                                    <button class="basico-button basico-small" id="ai-add-timeline-context-btn">Add timeline context</button>
+                                </div>
+                                <div class="ai-row">
+                                    <button class="basico-button basico-small" id="ai-start-new-chat">Start New Chat</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="sidebar basico-container basico-container-compact" id="setting-list">
                 <div class="basico-title basico-title-compact uppercase">Settings</div>
