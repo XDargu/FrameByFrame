@@ -600,20 +600,28 @@ export default class EntityPropertiesBuilder
         const ignoreChildren = UI.HasFlag(flags, UI.TreeFlags.IgnoreChildren);
         const alwaysAdd = UI.HasFlag(flags, UI.TreeFlags.AlwaysAdd);
         const shouldPrepend = UI.HasFlag(flags, UI.TreeFlags.ShouldPrepend);
-        
+        const isUncategorizedGroup = name == "Uncategorized";
+        const isEmptyGroup = propertyGroup.type == CorePropertyTypes.Group && propertyGroup.value.length == 0;
+
+        if (isUncategorizedGroup && isEmptyGroup)
+            return false;
+
         const propsToAdd = propertyGroup.value.filter((property) => {
             const shouldAdd = !ignoreChildren || ignoreChildren && property.type != CorePropertyTypes.Group;
             return shouldAdd;
         });
 
-        const shouldAdd = propsToAdd.length > 0 || alwaysAdd;
+        const shouldAdd = propsToAdd.length > 0 || alwaysAdd || isEmptyGroup;
         if (!shouldAdd) return false;
 
-        const propsFiltered = propsToAdd.filter((property) => {
-            return Filtering.filterProperty(filter, property);
-        });
+        if (filter != "")
+        {
+            const propsFiltered = propsToAdd.filter((property) => {
+                return Filtering.filterProperty(filter, property);
+            });
 
-        if (propsFiltered.length == 0) return false;
+            if (propsFiltered.length == 0) return false;
+        }
 
         // TODO: Replace with two maps
         let storedGroup = this.propertyGroupsById.get(name + nameIndex);
