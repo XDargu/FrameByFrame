@@ -415,11 +415,9 @@ export default class Renderer {
         this.aiHelper.initialize();
 
         this.requestApplyFrame({ frame: 0});
-
-        this.checkForUpdates();
     }
 
-    async checkForUpdates()
+    async checkForUpdates(isAutomaticCheck: boolean)
     {
         const result = await AutoUpdater.findLatestUpdate();
         const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
@@ -429,7 +427,7 @@ export default class Renderer {
         if (result.error != undefined)
             Console.log(LogLevel.Error, LogChannel.Updates, "Error checking for updates: " + result.error);
 
-        this.onUpdateResult(result);
+        this.onUpdateResult(result, !isAutomaticCheck);
     }
 
     async downloadUpdate()
@@ -829,7 +827,7 @@ export default class Renderer {
             const updateElem = document.getElementById(`check-updates-result`);
             updateElem.innerHTML = "Checking updates...";
             
-            this.checkForUpdates();
+            this.checkForUpdates(false);
         }
 
         // Special thanks
@@ -855,6 +853,8 @@ export default class Renderer {
     {
         this.applySettings(settings, true);
         this.connectionsList.addConnection("localhost", settings.defaultPort, false);
+
+        this.checkForUpdates(true);
     }
 
     applySettings(settings: ISettings, requiresRedraw: boolean)
@@ -1960,7 +1960,7 @@ export default class Renderer {
     }
 
     // Update modal
-    onUpdateResult(updateResult: AutoUpdater.ICheckUpdateResult)
+    onUpdateResult(updateResult: AutoUpdater.ICheckUpdateResult, displayAlways: boolean)
     {
         const updateElem = document.getElementById(`check-updates-result`);
 
@@ -1974,7 +1974,7 @@ export default class Renderer {
         else
             updateElem.innerHTML = `<i class="fas fa-exclamation-triangle" style="margin-right: 10px;"></i>Couldn't find latest Frame by Frame version`;
 
-        if (updateResult.available)
+        if (updateResult.available && (displayAlways || Utils.compareVersions(updateResult.version, this.settings.lastUpdateVersionSeen)))
         {
             DOMUtils.setClass(document.getElementById("updateModal"), "active", true);
             document.getElementById("update-title").innerHTML = '<i class="fas fa-bell" style="margin-right: 10px;"></i>Update Available';
@@ -2005,7 +2005,11 @@ export default class Renderer {
             {
                 this.downloadUpdate();
             }
-            document.getElementById('decline-update-button').onclick = () => { this.closeUpdateModal(); }
+            document.getElementById('decline-update-button').onclick = () => {
+                this.closeUpdateModal();
+                this.settings.lastUpdateVersionSeen = updateResult.version;
+                this.saveSettings();
+            }
         }
     }
 
