@@ -6,6 +6,7 @@ import * as Messaging from "../messaging/MessageDefinitions";
 import * as UserWindowUtils from "../mainThread/userWindowUtils";
 import { fileManager, sessionOptions } from "../main";
 import * as AutoUpdater from "../updates/updateCheker";
+import * as UpdateInstaller from "../updates/updateInstaller";
 
 const shell = require('electron').shell;
 
@@ -271,12 +272,8 @@ export function initMessageHandling()
             openUserWindow(event, arg.data as Messaging.IOpenWindowRequest);
             break;
 
-        case Messaging.MessageType.RequestCheckForUpdates:
-            AutoUpdater.checkForUpdates();
-            break;
-
         case Messaging.MessageType.RequestInstallUpdate:
-            AutoUpdater.installUpdate(arg.data as Messaging.IUpdateResult)
+            UpdateInstaller.installUpdate(arg.data as Messaging.IUpdateInstallRequest)
             break;
         }
     });

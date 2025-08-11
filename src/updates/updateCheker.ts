@@ -1,16 +1,7 @@
-import * as https from 'https';
-import * as path from 'path';
-import * as os from 'os';
-import * as fs from 'fs';
+
 import * as Utils from "../utils/utils";
-import * as Messaging from "../messaging/MessageDefinitions";
 import { LIB_VERSION } from "../version";
-import { exec } from 'child_process';
-import { app } from 'electron';
-import { fileManager, mainWindow } from "../main";
 import { GitHubRelease } from './gitHub';
-import { logToConsole } from '../mainThread/logging';
-import { LogChannel, LogLevel } from '../frontend/ConsoleController';
 
 export interface ICheckUpdateResult
 {
@@ -26,46 +17,23 @@ const currentVersion = LIB_VERSION;
 const repoOwner = 'XDargu';
 const repoName = 'FrameByFrame';
 
-// Utility to make HTTPS GET requests with a promise
-function httpsGet(url: string)
-{
-    return new Promise((resolve, reject) =>
-    {
-        https.get(url, { headers: { 'User-Agent': 'FrameByFrame' } }, (res) =>
-        {
-            if (res.statusCode !== 200) {
-                reject(new Error(`Request Failed. Status Code: ${res.statusCode}`));
-                return;
-            }
-
-            let data = '';
-            res.on('data', (chunk) => (data += chunk));
-            res.on('end', () => resolve(data));
-        })
-        .on('error', reject);
-    });
-}
-
-export async function checkForUpdates()
-{
-    const updateResult = await findLatestUpdate();
-    const updateData : Messaging.IUpdateResult = updateResult;
-    if (updateResult.error != undefined)
-    {
-        logToConsole(LogLevel.Error, LogChannel.Updates, "Error checking for updates: " + updateResult.error);
-    }
-
-    mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.UpdateResult, updateData));
-}
-
-async function findLatestUpdate() : Promise<ICheckUpdateResult>
+// Runs on the renderer!
+export async function findLatestUpdate() : Promise<ICheckUpdateResult>
 {
     try
     {
         const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/releases/latest`;
-        const releaseData = await httpsGet(apiUrl) as string;
-        const release = JSON.parse(releaseData) as GitHubRelease;
-        const latestVersion = release.tag_name.replace(/^v/, ''); // Remove 'v' if present
+
+        const response = await fetch(apiUrl, {
+            headers: { 'User-Agent': 'FrameByFrame' }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Request Failed. Status Code: ${response.status}`);
+        }
+
+        const release = await response.json() as GitHubRelease;
+        const latestVersion = release.tag_name.replace(/^v/, '');
 
         if (Utils.compareVersions(latestVersion, currentVersion))
         {
@@ -93,92 +61,39 @@ async function findLatestUpdate() : Promise<ICheckUpdateResult>
     {
         return {
             available: false,
-            version: 'Unkown',
+            version: 'Unknown',
             error: error.message
-        }
-    }
-}
-
-export async function installUpdate(updateResult: ICheckUpdateResult)
-{
-    try 
-    {
-        if (updateResult.available && updateResult.downloadUrl)
-        {
-            mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LongOperationOngoing, "Downloading Frame by Frame " + updateResult.version));
-            const filePath = path.join(os.tmpdir(), path.basename(updateResult.downloadUrl));
-            await downloadUpdate(updateResult.downloadUrl, filePath);
-
-            mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.LongOperationOngoing, "Installing Frame by Frame " + updateResult.version));
-            await fileManager.unblockFileWindows(filePath)
-            await runUpdateInstaller(filePath);
-        }
-    }
-    catch(error)
-    {
-        mainWindow.webContents.send('asynchronous-reply', new Messaging.Message(Messaging.MessageType.UpdateInstallFailed, error.message));
-    }
-}
-
-async function downloadUpdate(downloadUrl: string, filePath: string) : Promise<void>
-{
-    return new Promise((resolve, reject) => {
-        const makeRequest = (url: string) =>
-        {
-            https.get(url, (res) =>
-            {
-                if (res.statusCode === 302 && res.headers.location)
-                {
-                    // Follow redirect
-                    makeRequest(res.headers.location);
-                }
-                else if (res.statusCode !== 200)
-                {
-                    reject(new Error(`Download failed. Status Code: ${res.statusCode}`));
-                }
-                else
-                {
-                    // Pipe the response to a file
-                    const file = fs.createWriteStream(filePath);
-                    res.pipe(file);
-
-                    file.on('finish', () => {
-                        file.close();
-                        console.log('Update downloaded to:', filePath);
-                        resolve();
-                    });
-
-                    file.on('error', (err) => {
-                        fs.unlink(filePath, () => reject(err)); // Delete incomplete file on error
-                    });
-                }
-            })
-            .on('error', (err) => {
-                reject(err);
-            });
         };
-
-        makeRequest(downloadUrl); // Start the request
-    });
+    }
 }
 
-async function runUpdateInstaller(filePath: string) : Promise<void>
+export async function downloadUpdate(downloadUrl: string)
 {
-    return new Promise((resolve, reject) =>
+    try
     {
-        console.log('Installing update...');
-        exec(`start ${filePath}`, (error) => {
-            if (error)
-            {
-                console.error('Error starting installer:', error.message);
-                reject(error);
-            }
-            else
-            {
-                console.log('Installer started successfully. Quitting app...');
-                resolve();
-                app.quit();
-            }
+        const response = await fetch(downloadUrl);
+
+        if (!response.ok) {
+            throw new Error(`Download failed. Status Code: ${response.status}`);
+        }
+
+        const blob = await response.blob();
+
+        // Convert blob to ArrayBuffer using FileReader
+        const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as ArrayBuffer);
+            reader.onerror = reject;
+            reader.readAsArrayBuffer(blob);
         });
-    });
+        
+        const buffer = Buffer.from(arrayBuffer);
+
+        return buffer;
+    }
+    catch (err)
+    {
+        console.error('Download error:', err);
+        return null;
+    }
 }

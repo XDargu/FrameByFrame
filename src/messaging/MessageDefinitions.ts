@@ -33,9 +33,7 @@ export enum MessageType { // TODO: Maybe rename these to make clear the directio
     CloseAllWindows,
     WindowsClosed,
     // Updates
-    UpdateResult, // Main to Renderer
     UpdateInstallFailed, // Main to Renderer
-    RequestCheckForUpdates, // Renderer to Main
     RequestInstallUpdate, // Renderer to Main
 }
 
@@ -131,16 +129,14 @@ export interface IWindowsClosed
     id: number;
 }
 
-export interface IUpdateResult
+export interface IUpdateInstallRequest
 {
-    available: boolean,
-    version: string,
-    release?: GitHubRelease,
-    error?: string,
-    downloadUrl?: string,
+    buffer: Buffer;
+    downloadUrl: string;
+    version: string;
 }
 
-type MessageData = string | IClearResultData | ILogData | ISettings | ISaveFileData | IRequestSavePathData | IResultSavePathData | IDownloadResource | IOpenResource | IOpenWindowRequest | IOpenWindowResult | IUpdateWindowsContent | IWindowsClosed | ICloseWindowRequest | IUpdateResult;
+type MessageData = string | IClearResultData | ILogData | ISettings | ISaveFileData | IRequestSavePathData | IResultSavePathData | IDownloadResource | IOpenResource | IOpenWindowRequest | IOpenWindowResult | IUpdateWindowsContent | IWindowsClosed | ICloseWindowRequest | IUpdateInstallRequest;
 export class Message
 {
     public type: MessageType;
