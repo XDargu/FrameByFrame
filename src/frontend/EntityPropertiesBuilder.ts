@@ -410,6 +410,7 @@ interface PropertyTreeGroup
     propertyTree: TreeControl;
     propertyTreeController: PropertyTreeController;
     order: number;
+    id: number;
 }
 
 interface PropertyTreeGlobalData
@@ -595,7 +596,8 @@ export default class EntityPropertiesBuilder
         propertiesWithHistory: string[][],
         tag: string = null,
         flags: UI.TreeFlags = UI.TreeFlags.None,
-        order: number)
+        order: number,
+        id: number = null)
     {
         const ignoreChildren = UI.HasFlag(flags, UI.TreeFlags.IgnoreChildren);
         const alwaysAdd = UI.HasFlag(flags, UI.TreeFlags.AlwaysAdd);
@@ -695,7 +697,8 @@ export default class EntityPropertiesBuilder
                 title: propertyTree.title,
                 propertyTree: propertyTree.tree,
                 propertyTreeController: propertyTreeController,
-                order: order
+                order: order,
+                id: id,
             };
     
             this.propertyGroups.push(newPropertyGroup);
@@ -705,7 +708,9 @@ export default class EntityPropertiesBuilder
         // Fill group now that is stored
         {
             let storedGroup = this.propertyGroupsById.get(name + nameIndex);
+            storedGroup.id = id;
             storedGroup.order = order;
+            //storedGroup.title.title = `${name} (${id})`;
 
             let sortedElements: HTMLElement[] = [];
 
@@ -828,8 +833,9 @@ export default class EntityPropertiesBuilder
         {
             const propertyGroup = events[i].properties;
             const name = events[i].name;
+            const eventId = events[i].id;
 
-            this.buildSinglePropertyTreeBlock(eventTree, propertyGroup, name, increaseNameId(groupsWithName, name), filter, propertiesWithHistory, events[i].tag, UI.TreeFlags.AlwaysAdd | UI.TreeFlags.CanOpenNewWindow, i);
+            this.buildSinglePropertyTreeBlock(eventTree, propertyGroup, name, increaseNameId(groupsWithName, name), filter, propertiesWithHistory, events[i].tag, UI.TreeFlags.AlwaysAdd | UI.TreeFlags.CanOpenNewWindow, i, eventId);
         }
     }
 
@@ -920,9 +926,9 @@ export default class EntityPropertiesBuilder
 
     findItemWithValue(value: string)
     {
-        for (let i=0; i<this.activePropertyGroups.length; ++i)
+        for (let propTreeGroup of this.activePropertyGroups)
         {
-            const tree = this.activePropertyGroups[i].propertyTree;
+            const tree = propTreeGroup.propertyTree;
 
             if (tree.rootValue == value)
                 return tree.root;
@@ -931,6 +937,19 @@ export default class EntityPropertiesBuilder
             if (item)
             {
                 return item;
+            }
+        }
+
+        return null;
+    }
+
+    findTreeWithId(id: number)
+    {
+        for (let propTreeGroup of this.activePropertyGroups)
+        {
+            if (propTreeGroup.id == id)
+            {
+                return propTreeGroup.title;
             }
         }
 

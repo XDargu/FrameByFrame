@@ -1,4 +1,5 @@
 import * as RECORDING from './RecordingData';
+import * as Utils from "../utils/utils";
 
 export function collectHistoricalData(recordedData: RECORDING.NaiveRecordedData, currentFrame: number, length: number, flags: RECORDING.BuildFrameDataFlags)
 {
@@ -27,4 +28,24 @@ export function collectHistoricalEntityPositions(historicalFrameData: RECORDING.
     }
 
     return values;
+}
+
+export function tryGetUniqueID(header: RECORDING.IFrameData, id: number)
+{
+    if (header.entities[id])
+    {
+        // We need to convert to unique id
+        return Utils.toUniqueID(header.clientId, id);
+    }
+    else
+    {
+        // Verify it is a valid unique ID
+        const entityId = Utils.getEntityIdUniqueId(id);
+        if (header.entities[entityId])
+        {
+            return id;
+        }
+    }
+
+    return null;
 }

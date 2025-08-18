@@ -209,6 +209,26 @@ namespace UI
     }
 }
 
+export interface EntitySelectedCallback
+{
+    (id: number, frame: number) : void
+}
+
+export interface FrameSelectedCallback
+{
+    (frame: number) : void
+}
+
+export interface PropertySelectionCallback
+{
+    (entityId: number, propertyId: number, frame: number) : void
+}
+
+export interface EventSelectionCallback
+{
+    (entityId: number, eventIdx: number, frame: number) : void
+}
+
 export interface AIQueryCallback
 {
     () : void
@@ -236,6 +256,10 @@ export interface AICallbacks
     addTimelineContext: AddContextCallback;
     getEntityContextData: GetEntityContextData;
     getTimelineContextData: GetTimelineContextData;
+    onEntityClicked: EntitySelectedCallback;
+    onFrameClicked: FrameSelectedCallback;
+    onPropertyClicked: PropertySelectionCallback;
+    onEventClicked: EventSelectionCallback;
 }
 
 enum ContextType
@@ -272,6 +296,7 @@ export interface TimelineContextEntry
     frame: number;
     entityId: number;
     entityName: string;
+    eventId: number;
     eventName: string;
 }
 
@@ -322,6 +347,7 @@ export class AIHelper
     private addGlobalBtn: HTMLElement;
     private entityContextList: HTMLElement;
     private inputWrapper: HTMLElement;
+    private statsItem: HTMLElement;
     private callbacks: AICallbacks;
     
     private apiKey: string;
@@ -333,11 +359,16 @@ export class AIHelper
 
     private contextElements: ContextElements[] = [];
 
+    private inputTokens: number = 0;
+    private outputTokens: number = 0;
+    private cachedTokens: number = 0;
+
     constructor(preMadeQueriesDropdown: HTMLElement, queryInput: HTMLTextAreaElement, queryOutput: HTMLElement, 
         requestQueryBtn: HTMLElement, newChatBtn: HTMLElement,
         addGlobalBtn: HTMLElement,
         entityContextList: HTMLElement,
         inputWrapper: HTMLElement,
+        statsItem: HTMLElement,
         callbacks: AICallbacks,
     )
     {
@@ -353,6 +384,7 @@ export class AIHelper
         this.entityContextList = entityContextList;
         this.callbacks = callbacks;
         this.waitingForResponse = false;
+        this.statsItem = statsItem;
 
         this.queryInput.addEventListener('input', () => { this.resizeInput(); });
 
@@ -496,6 +528,12 @@ export class AIHelper
 
         this.lockSending(false);
         this.updateContextStyle();
+
+        this.inputTokens = 0;
+        this.outputTokens = 0;
+        this.cachedTokens = 0;
+        this.statsItem.textContent = "";
+        DOMUtils.setClass(this.statsItem, "hide-element", true);
     }
 
     async simulateResponse()
@@ -544,7 +582,56 @@ export class AIHelper
 
         this.queryOutput.append(request);
 
-        const systemPrompt = "You are an AI assistant helping finding insights of debugging data from a videogame. You might receive entity data from the game in JSON format, containing nformation about one entity on one frame, on a videogame. The entity will have properties that describe its current state on the frame, and events that happened on that frame. You will also receive a request from a user regarding that data. You will interact with the user in a chat form, giving answers, and the user asking follow-up questions, that might come with additional data. Please answer in a comprehensive way, with bullet points if it helps with clarity, but keep it relatively short if possible. If the user hasn't provided any data ask for it, and do not mention JSON. The user can provide entity data by clicking on the 'Add Entity Context' button. Send the reply in HTML format, indicating headers, parragraphs, lists, etc. All styles should be inlined, don't create style nodes. The html content will be added to an existing page that has a dark mode. Default text color should be #EEEEEE. Header color should be #bb86fc. You can higlight important words or parts of the answer in bold with color #6DE080. Don't alter the font size or family.";
+        const systemPrompt = 
+`# Goals
+You are an AI assistant helping finding insights of debugging data from a videogame.
+You might receive entity data from the game in JSON format, containing nformation about one entity on one frame, on a videogame.
+The entity will have properties that describe its current state on the frame, and events that happened on that frame.
+You will also receive a request from a user regarding that data.
+You will interact with the user in a chat form, giving answers, and the user asking follow-up questions, that might come with additional data.
+Please answer in a comprehensive way, with bullet points, tables or diagramas if it helps with clarity, but keep it relatively short if possible.
+# Needing more data
+If you need more data to give an answer, ask the user to do so.
+If the user hasn't provided any data ask for it, and do not mention JSON.
+The user can provide entity data by clicking on the 'Add' icon next to the chat, and give entity or timeline context data.
+# Style and format of the answer
+Send the reply in HTML format, indicating headers, parragraphs, lists, etc.
+All styles should be inlined, don't create style nodes.
+The html content will be added to an existing page that has a dark mode.
+Default text color should be #EEEEEE. Header color should be #bb86fc.
+You can higlight important words or parts of the answer in bold with color #6DE080.
+Don't alter the font size or family.
+# Special syntax for data with context
+## Entities
+Never reference or mention entities only by name or id. Do not ever do it.
+Every single time in your response you refer to any entity, always use the special syntax: $[id: entityId, frame: frameNumber, name: entityName].
+The frameNumber must correspond to the most relevant frame for the entity. Ensure there is always a frame, try to get it from context.
+## Frames
+During your answer, you might refer to frames in the recording.
+Every single time you refer to a frame, always use the special syntax: @[frame: frameNumber, text: displayText].
+For example, instead of saying "During frame 5, multiple events happened" you must say "During @[frame: 5, text: frame 5], multiple events happened"
+Another example: instead of saying "During frames 5, 6 and 8, multiple events happened" you must say "During frames @[frame: 5, text: 5], @[frame: 6, text: 6] and @[frame: 7, text: 7] multiple events happened"
+## Properties and events
+All properties and events (in JSON) have an associated id, represented by the "id" field on the json. Important: ignore the "idx" field!
+That id is only unique within the frame. Events or properties from different frames might have the same id.
+For example, this is a property representing velocity with id 55. { "value":-10 "type":"number", "name":"velocity", "id":55 }
+This is an event with id 6: { "id":6, "name":"Finished", "tag":"Query", "properties":{} }
+Every single time you refer to a property of an entity, always use the special syntax: $[id: entityId, propId: propertyId, frame: frameNumber, name: propertyName].
+For example, if there is a velocity property id 55, in the frame 120, that belongs to an entity with ID 678, instead of saying "the velocity was -10" you must say "the $[id: 678, propId: 55, frame: 120, name: velocity] was -10".
+Every single time you refer to an event of an entity, always use the special syntax: $[id: entityId, eventId: eventId, frame: frameNumber, name: propertyName].
+Example: if there is an event of id 853, in the frame 23, that belongs to an entity with ID 50, instead of saying "the Finished event happened...", you must say "the $[id: 50, eventId: 853, frame: 23, name: Finished] even happened...".
+The frameNumber must correspond to the most relevant frame for the entity.
+There is no need to use this format if you are referring to entities or events that are not clearly part of an specific entity or frame.
+## Conclusions on usage of special syntax
+The more you use the special syntax, the more helpful your are to the user. Use it as much as possible. Use it every single time you can.
+If you can't use it because you are missing one of the fields, then leave it out, and write normally.
+Ensure you use the rigth syntax for each case. Do not mix them up.
+When using the special syntax, always use the full syntax, don't leave fields out. Don't create incomplete special syntax.
+Never use it to represent multiple events or properties as one.
+Example: $[id: 1025, eventId: 7,8, frame: 8 and 10] is incorrect, too many events ids, too many frames and it doesn't follow the format.
+$[id: 1025, propId: 3,4,8,12] is also incorrect, there is more than one propId, and it's missing fields.
+Before sending each answer, make sure all special syntax is correct, and carefully consider every use of it.
+`;
 
         this.contextSoFar += "User question: " + this.queryInput.value + "\n";
 
@@ -591,6 +678,8 @@ export class AIHelper
                 this.contextSoFar += "No entity data sent this frame.\n";
             }
 
+            this.contextSoFar += "Note from system: Remember to keep using the correct special syntax.\n";
+
             this.clearContext();
 
             this.updateContextStyle();
@@ -600,7 +689,46 @@ export class AIHelper
             const completion = await OpenAI.requestQuery(systemPrompt, this.contextSoFar, this.apiKey, this.model);
             //const completion = await this.simulateResponse();
 
+            this.inputTokens += completion.usage.prompt_tokens;
+            this.outputTokens += completion.usage.completion_tokens;
+            this.cachedTokens = completion.usage.prompt_tokens_details.cached_tokens;
+            
+            const estimatedCost = (this.inputTokens * 0.4 / 1000000) + (this.cachedTokens * 0.1 / 1000000) + (this.outputTokens * 1.6 / 1000000);
+
+            this.statsItem.innerText = `Input tokens: ${this.inputTokens}\nOutput tokens: ${this.outputTokens}\nCached tokens: ${this.cachedTokens}\nEstimated cost: $${estimatedCost}`;
+            DOMUtils.setClass(this.statsItem, "hide-element", false);
+
             const result = completion.choices[0].message.content;
+
+            const entityRefRegex = /\$\[id:\s*(\d+),\s*frame:\s*(\d+)\,\s*name:\s*([^\],]+)]/g;
+
+            const resultWithEntities = result.replace(entityRefRegex, (match, id, frame, name) => {
+                return `<span class="ai-entity-ref" data-id="${id}" data-frame="${frame}" data-name="${name}"><i class="fas fa-user"></i>${name}</span>`;
+            });
+
+            const frameRefRegex = /[@$]\[frame:\s*(\d+)\,\s*text:\s*([^\],]+)]/g;
+            
+            const resultWithFrames = resultWithEntities.replace(frameRefRegex, (match, frame, text) => {
+                return `<span class="ai-frame-ref" data-frame="${frame}"><i class="fas fa-clock"></i>${text}</span>`;
+            });
+
+            const frameSimpleRefRegex = /[@$]\[frame:\s*(\d+)\]/g; // Make it work also with $, sometimes results use it
+            
+            const resultWithFramesSimple = resultWithFrames.replace(frameSimpleRefRegex, (match, frame) => {
+                return `<span class="ai-frame-ref" data-frame="${frame}"><i class="fas fa-clock"></i>${frame}</span>`;
+            });
+
+            const propertyRefRegex = /\$\[id:\s*(\d+),\s*propId:\s*(\d+),\s*frame:\s*(\d+)\,\s*name:\s*([^\],]+)]/g;
+            
+            const resultWithProperties = resultWithFramesSimple.replace(propertyRefRegex, (match, eid, propId, frame, name) => {
+                return `<span class="ai-property-ref" data-eid="${eid}" data-id="${propId}" data-frame="${frame}" data-name="${name}"><i class="fas fa-tag"></i>${name}</span>`;
+            });
+
+            const eventRefRegex = /\$\[id:\s*(\d+),\s*eventId:\s*(\d+),\s*frame:\s*(\d+)\,\s*name:\s*([^\],]+)]/g;
+            
+            const resultWithEvents = resultWithProperties.replace(eventRefRegex, (match, eid, eventId, frame, name) => {
+                return `<span class="ai-event-ref" data-eid="${eid}" data-id="${eventId}" data-frame="${frame}" data-name="${name}"><i class="fas fa-bolt"></i>${name}</span>`;
+            });
             
             console.log(completion);
 
@@ -608,8 +736,58 @@ export class AIHelper
                 this.loadingElement.remove();
 
             let response = document.createElement("div");
-            response.innerHTML = result;
+            response.innerHTML = resultWithEvents;
             this.queryOutput.append(response);
+
+            response.querySelectorAll("span.ai-entity-ref").forEach(elem => {
+                const span = elem as HTMLSpanElement;
+                const id = span.dataset.id;
+                const frame = span.dataset.frame;
+                const name = span.dataset.name;
+
+                span.title = `${name} in frame ${frame} (${id})`;
+
+                span.onclick = () => {
+                    this.callbacks.onEntityClicked(parseInt(id), parseInt(frame));
+                }
+            });
+            
+            response.querySelectorAll("span.ai-frame-ref").forEach(elem => {
+                const span = elem as HTMLSpanElement;
+                const frame = span.dataset.frame;
+
+                span.onclick = () => {
+                    this.callbacks.onFrameClicked(parseInt(frame));
+                }
+            });
+
+            response.querySelectorAll("span.ai-property-ref").forEach(elem => {
+                const span = elem as HTMLSpanElement;
+                const eid = span.dataset.eid;
+                const id = span.dataset.id;
+                const frame = span.dataset.frame;
+                const name = span.dataset.name;
+
+                span.title = `${name} in frame ${frame} (${id})`;
+
+                span.onclick = () => {
+                    this.callbacks.onPropertyClicked(parseInt(eid), parseInt(id), parseInt(frame));
+                }
+            });
+
+            response.querySelectorAll("span.ai-event-ref").forEach(elem => {
+                const span = elem as HTMLSpanElement;
+                const eid = span.dataset.eid;
+                const id = span.dataset.id;
+                const frame = span.dataset.frame;
+                const name = span.dataset.name;
+
+                span.title = `${name} in frame ${frame} (${id})`;
+
+                span.onclick = () => {
+                    this.callbacks.onEventClicked(parseInt(eid), parseInt(id), parseInt(frame));
+                }
+            });
 
             this.contextSoFar += "Your answer: " + result + "\n";
 
