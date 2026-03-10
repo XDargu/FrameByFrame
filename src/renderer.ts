@@ -415,12 +415,12 @@ export default class Renderer {
                     // We display frames starting with 1, rather than 0
                     const frameCorrected = frame - 1;
                     
-                    const header = this.recordedData.buildFrameDataHeader(frameCorrected);
-                    const uniqueId = RecordingUtils.tryGetUniqueID(header, id);
+                    const frameData = this.recordedData.buildFrameData(frameCorrected, RECORDING.BuildFrameDataFlags.Entities);
+                    const uniqueId = RecordingUtils.tryGetUniqueID(frameData, id);
 
                     if (uniqueId)
                     {
-                        this.requestApplyFrame({ frame: frameCorrected, entityIdSel: uniqueId});
+                        this.requestApplyFrame({ frame: frameCorrected, entityIdSel: id});
                     }
                 },
                 onFrameClicked: (frame) => {
@@ -434,12 +434,12 @@ export default class Renderer {
                     const frameCorrected = frame - 1;
                     RecordingUtils.collectHistoricalData
 
-                    const header = this.recordedData.buildFrameDataHeader(frameCorrected);
-                    const uniqueEntityId = RecordingUtils.tryGetUniqueID(header, eid);
+                    const frameData = this.recordedData.buildFrameData(frameCorrected, RECORDING.BuildFrameDataFlags.Entities);
+                    const uniqueEntityId = RecordingUtils.tryGetUniqueID(frameData, eid);
 
                     if (uniqueEntityId)
                     {
-                        this.requestApplyFrame({ frame: frameCorrected, entityIdSel: uniqueEntityId, propertyIdSel: propertyId});
+                        this.requestApplyFrame({ frame: frameCorrected, entityIdSel: eid, propertyIdSel: propertyId});
                     }
                 },
                 onEventClicked: (eid, eventIdx, frame) => {
@@ -447,12 +447,12 @@ export default class Renderer {
                     const frameCorrected = frame - 1;
                     RecordingUtils.collectHistoricalData
 
-                    const header = this.recordedData.buildFrameDataHeader(frameCorrected);
-                    const uniqueEntityId = RecordingUtils.tryGetUniqueID(header, eid);
+                    const frameData = this.recordedData.buildFrameData(frameCorrected, RECORDING.BuildFrameDataFlags.Entities);
+                    const uniqueEntityId = RecordingUtils.tryGetUniqueID(frameData, eid);
 
                     if (uniqueEntityId)
                     {
-                        this.requestApplyFrame({ frame: frameCorrected, entityIdSel: uniqueEntityId, eventIdSel: eventIdx});
+                        this.requestApplyFrame({ frame: frameCorrected, entityIdSel: eid, eventIdSel: eventIdx});
                     }
                 }
             }
