@@ -30,21 +30,19 @@ export function collectHistoricalEntityPositions(historicalFrameData: RECORDING.
     return values;
 }
 
-export function tryGetUniqueID(header: RECORDING.IFrameData, id: number)
+export function tryGetValidEntityID(frameData: RECORDING.IFrameData, id: number)
 {
-    if (header.entities[id])
+    if (frameData.entities[id])
+        return id;
+
+    const uniqueId = Utils.toUniqueID(frameData.clientId, id);
+    if (frameData.entities[uniqueId])
+        return uniqueId;
+    
+    const extractId = Utils.getEntityIdUniqueId(id);
+    if (frameData.entities[extractId])
     {
-        // We need to convert to unique id
-        return Utils.toUniqueID(header.clientId, id);
-    }
-    else
-    {
-        // Verify it is a valid unique ID
-        const entityId = Utils.getEntityIdUniqueId(id);
-        if (header.entities[entityId])
-        {
-            return id;
-        }
+        return extractId;
     }
 
     return null;

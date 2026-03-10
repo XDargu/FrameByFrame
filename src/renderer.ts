@@ -416,11 +416,11 @@ export default class Renderer {
                     const frameCorrected = frame - 1;
                     
                     const frameData = this.recordedData.buildFrameData(frameCorrected, RECORDING.BuildFrameDataFlags.Entities);
-                    const uniqueId = RecordingUtils.tryGetUniqueID(frameData, id);
+                    const entityId = RecordingUtils.tryGetValidEntityID(frameData, id);
 
-                    if (uniqueId)
+                    if (entityId)
                     {
-                        this.requestApplyFrame({ frame: frameCorrected, entityIdSel: id});
+                        this.requestApplyFrame({ frame: frameCorrected, entityIdSel: entityId});
                     }
                 },
                 onFrameClicked: (frame) => {
@@ -432,27 +432,25 @@ export default class Renderer {
                 onPropertyClicked: (eid, propertyId, frame) => {
                     // We display frames starting with 1, rather than 0
                     const frameCorrected = frame - 1;
-                    RecordingUtils.collectHistoricalData
 
                     const frameData = this.recordedData.buildFrameData(frameCorrected, RECORDING.BuildFrameDataFlags.Entities);
-                    const uniqueEntityId = RecordingUtils.tryGetUniqueID(frameData, eid);
+                    const entityId = RecordingUtils.tryGetValidEntityID(frameData, eid);
 
-                    if (uniqueEntityId)
+                    if (entityId)
                     {
-                        this.requestApplyFrame({ frame: frameCorrected, entityIdSel: eid, propertyIdSel: propertyId});
+                        this.requestApplyFrame({ frame: frameCorrected, entityIdSel: entityId, propertyIdSel: propertyId});
                     }
                 },
                 onEventClicked: (eid, eventIdx, frame) => {
                     // We display frames starting with 1, rather than 0
                     const frameCorrected = frame - 1;
-                    RecordingUtils.collectHistoricalData
 
                     const frameData = this.recordedData.buildFrameData(frameCorrected, RECORDING.BuildFrameDataFlags.Entities);
-                    const uniqueEntityId = RecordingUtils.tryGetUniqueID(frameData, eid);
+                    const entityId = RecordingUtils.tryGetValidEntityID(frameData, eid);
 
-                    if (uniqueEntityId)
+                    if (entityId)
                     {
-                        this.requestApplyFrame({ frame: frameCorrected, entityIdSel: eid, eventIdSel: eventIdx});
+                        this.requestApplyFrame({ frame: frameCorrected, entityIdSel: entityId, eventIdSel: eventIdx});
                     }
                 }
             }
@@ -1474,8 +1472,8 @@ export default class Renderer {
                 block: 'center',
                 inline: 'center'
             });
-            item.style.background = "red";
-            setTimeout(() => { item.style.background = "unset"; }, 2000);
+            item.style.background = "#DE0000";
+            setTimeout(() => { item.style.background = ''; }, 2000);
         }
     }
 
@@ -1492,8 +1490,8 @@ export default class Renderer {
                 block: 'center',
                 inline: 'center'
             });
-            item.style.background = "red";
-            setTimeout(() => { item.style.background = "unset"; }, 2000);
+            item.style.background = "#DE0000";
+            setTimeout(() => { item.style.background = ''; }, 2000);
         }
     }
 
