@@ -334,7 +334,8 @@ export default class Renderer {
             document.getElementById("ai-info"),
             {
                 runQuery: () => {
-                    this.aiHelper.analyse();
+                    //this.aiHelper.analyse(this.timeline.getCurrentFrame(), this.frameData.entities);
+                    this.aiHelper.analyseOldTest();
                 },
                 addEntityContext: () => {
                     if (!this.frameData) return;
@@ -415,12 +416,17 @@ export default class Renderer {
                     // We display frames starting with 1, rather than 0
                     const frameCorrected = frame - 1;
                     
-                    const header = this.recordedData.buildFrameDataHeader(frameCorrected);
-                    const uniqueId = RecordingUtils.tryGetUniqueID(header, id);
+                    const headers = this.recordedData.buildFrameDataHeaders(frameCorrected);
 
-                    if (uniqueId)
+                    for (let header of headers)
                     {
-                        this.requestApplyFrame({ frame: frameCorrected, entityIdSel: uniqueId});
+                        const uniqueId = RecordingUtils.tryGetUniqueID(header, id);
+
+                        if (uniqueId)
+                        {
+                            this.requestApplyFrame({ frame: frameCorrected, entityIdSel: uniqueId});
+                            break;
+                        }
                     }
                 },
                 onFrameClicked: (frame) => {
@@ -434,12 +440,16 @@ export default class Renderer {
                     const frameCorrected = frame - 1;
                     RecordingUtils.collectHistoricalData
 
-                    const header = this.recordedData.buildFrameDataHeader(frameCorrected);
-                    const uniqueEntityId = RecordingUtils.tryGetUniqueID(header, eid);
-
-                    if (uniqueEntityId)
+                    const headers = this.recordedData.buildFrameDataHeaders(frameCorrected);
+                    for (let header of headers)
                     {
-                        this.requestApplyFrame({ frame: frameCorrected, entityIdSel: uniqueEntityId, propertyIdSel: propertyId});
+                        const uniqueEntityId = RecordingUtils.tryGetUniqueID(header, eid);
+
+                        if (uniqueEntityId)
+                        {
+                            this.requestApplyFrame({ frame: frameCorrected, entityIdSel: uniqueEntityId, propertyIdSel: propertyId});
+                            break;
+                        }
                     }
                 },
                 onEventClicked: (eid, eventIdx, frame) => {
@@ -447,12 +457,17 @@ export default class Renderer {
                     const frameCorrected = frame - 1;
                     RecordingUtils.collectHistoricalData
 
-                    const header = this.recordedData.buildFrameDataHeader(frameCorrected);
-                    const uniqueEntityId = RecordingUtils.tryGetUniqueID(header, eid);
+                    const headers = this.recordedData.buildFrameDataHeaders(frameCorrected);
 
-                    if (uniqueEntityId)
+                    for (let header of headers)
                     {
-                        this.requestApplyFrame({ frame: frameCorrected, entityIdSel: uniqueEntityId, eventIdSel: eventIdx});
+                        const uniqueEntityId = RecordingUtils.tryGetUniqueID(header, eid);
+
+                        if (uniqueEntityId)
+                        {
+                            this.requestApplyFrame({ frame: frameCorrected, entityIdSel: uniqueEntityId, eventIdSel: eventIdx});
+                            break;
+                        }
                     }
                 }
             }
@@ -983,6 +998,7 @@ export default class Renderer {
     {
         this.clear();
         const dataJson = JSON.parse(data) as RECORDING.IRecordedData;
+        console.log(data);
 
         switch(dataJson.type)
         {

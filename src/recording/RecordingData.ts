@@ -1067,6 +1067,31 @@ export class NaiveRecordedData implements INaiveRecordedData {
 		return frameData;
 	}
 
+    // Includes multiple clients
+    buildFrameDataHeaders(frame: number) : IFrameData[] {
+		let frameData = this.frameData[frame];
+
+		if (!frameData) {
+			return [emptyFrameData];
+		}
+        
+        let dataPerClientID = new Map<number, IFrameData>();
+		dataPerClientID.set(frameData.clientId, frameData);
+		const maxPrevFrames = 10;
+		for (let i=0; i<maxPrevFrames; ++i)
+		{
+			const prevFrameData = this.frameData[frame - i - 1];
+			if (prevFrameData) {
+				const prevFrameClientId = prevFrameData.clientId;
+				if (!dataPerClientID.has(prevFrameClientId)) {
+					dataPerClientID.set(prevFrameClientId, prevFrameData);
+				}
+			}
+		}
+
+		return [...dataPerClientID].map(([_, value]) => (value));
+	}
+
 	buildFrameData(frame : number, flags: BuildFrameDataFlags = BuildFrameDataFlags.All) : IFrameData {
 
 		let frameData = this.frameData[frame];

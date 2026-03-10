@@ -3,6 +3,7 @@ import * as RECORDING from '../recording/RecordingData';
 import { Console, LogChannel, LogLevel } from "../frontend/ConsoleController";
 import { createContextMenu, IContextMenuItem, removeContextMenu } from "../frontend/ContextMenu";
 import { ResizeObserver } from 'resize-observer';
+import { runInvestigationStep } from '../ai/investigation';
 
 namespace OpenAI
 {
@@ -568,7 +569,72 @@ export class AIHelper
         return data;
     }
 
-    async analyse()
+    async analyse(currentFrame: number, entities: RECORDING.IFrameEntityData)
+    {
+        const request = UI.createRequest(this.queryInput.value);
+
+        if (this.contextElements.length > 0)
+        {
+            request.prepend(UI.createRequestContext(this.contextElements));
+        }
+
+        DOMUtils.setClass(this.newChatBtn, "hide-element", false);
+        DOMUtils.setClass(this.preMadeQueriesDropdown, "hide-element", true);
+
+        this.queryOutput.append(request);
+
+
+        this.queryInput.value = "";
+        this.resizeInput();
+
+        const loader = UI.createLoader();
+        let responseLoading = document.createElement("div");
+        responseLoading.append(loader, " Thinking...");
+        this.loadingElement = responseLoading;
+        this.queryOutput.append(this.loadingElement);
+
+        responseLoading.scrollIntoView({behavior:'smooth', block:'end'});
+
+        this.lockSending(true);
+
+        try
+        {
+            let entityInfo = [];
+
+            for (let entity in entities)
+            {
+                entityInfo.push({
+                    name: RECORDING.NaiveRecordedData.getEntityName(entities[entity]),
+                    id: entities[entity].id
+                });
+            }
+
+            const state = {
+                user_question: "this.queryInput.value",
+                currentFrame: currentFrame,
+                entitiesCurrentFrame: entityInfo
+            }
+            const resultQuery = await runInvestigationStep(this.apiKey, this.model, state);
+
+            let response = document.createElement("div");
+            response.innerHTML = JSON.stringify(resultQuery);
+            this.queryOutput.append(response);
+
+            response.scrollIntoView({behavior:'smooth', block:'start'});
+
+            this.lockSending(false);
+        }
+        catch (error)
+        {
+            this.lockSending(false);
+            this.queryOutput.append(UI.createResponse("Error: " + error.message));
+            Console.log(LogLevel.Error, LogChannel.Files, "Error performing an AI query: " + error.message);
+            if (this.loadingElement)
+                this.loadingElement.remove();
+        }
+    }
+
+    async analyseOldTest()
     {
         const request = UI.createRequest(this.queryInput.value);
 
@@ -601,35 +667,64 @@ The html content will be added to an existing page that has a dark mode.
 Default text color should be #EEEEEE. Header color should be #bb86fc.
 You can higlight important words or parts of the answer in bold with color #6DE080.
 Don't alter the font size or family.
-# Special syntax for data with context
+
+# Sources for data with context
+When you refer to data from the recording, give sources whenever possible. To do so, you need to source data using a special syntax.
+Sources are vital for users, they need to know where the information comes from.
+Always give sources when you refer to data, if possible.
+IMPORTANT: Use as many sources as possible.
+
 ## Entities
 Never reference or mention entities only by name or id. Do not ever do it.
-Every single time in your response you refer to any entity, always use the special syntax: $[id: entityId, frame: frameNumber, name: entityName].
-The frameNumber must correspond to the most relevant frame for the entity. Ensure there is always a frame, try to get it from context.
+Every single time in your response you refer to any entity, always use the special syntax. You must add a source to be helpful.
+The syntax for entities is: $[id: entityId, frame: frameNumber, name: entityName].
+- entityId: entityId of the entity
+- frameNumber: must correspond to the most relevant frame for the entity. Ensure there is always a frame, try to get it from context.
+- name: name of the entity.
+
 ## Frames
 During your answer, you might refer to frames in the recording.
-Every single time you refer to a frame, always use the special syntax: @[frame: frameNumber, text: displayText].
+Every single time you refer to a frame, always use the special syntax.
+Do not mention frames without using special syntax or giving a source.
+The syntax for frames is : @[frame: frameNumber, text: displayText]
+- frameNumber: frame number
+- displayText: the text you want to display to the user
 For example, instead of saying "During frame 5, multiple events happened" you must say "During @[frame: 5, text: frame 5], multiple events happened"
 Another example: instead of saying "During frames 5, 6 and 8, multiple events happened" you must say "During frames @[frame: 5, text: 5], @[frame: 6, text: 6] and @[frame: 7, text: 7] multiple events happened"
+
 ## Properties and events
 All properties and events (in JSON) have an associated id, represented by the "id" field on the json. Important: ignore the "idx" field!
 That id is only unique within the frame. Events or properties from different frames might have the same id.
+
+## Properties
 For example, this is a property representing velocity with id 55. { "value":-10 "type":"number", "name":"velocity", "id":55 }
+Every single time you refer to a property of an entity, always use the special syntax.
+The syntax for properties is the following: $[id: entityId, propId: propertyId, frame: frameNumber, name: propertyName]
+- entityId: entityId of the entity
+- propertyId: propertyId, the "id" field in the JSON mentioned earlier.
+- frameNumber: relevant frame number
+- propertyName: name of the property, the "name" field in the JSON mentioned earlier
+Example: if there is a velocity property id 55, in the frame 120, that belongs to an entity with ID 678, instead of saying "the velocity was -10" you must say "the $[id: 678, propId: 55, frame: 120, name: velocity] was -10".
+
+## Events
 This is an event with id 6: { "id":6, "name":"Finished", "tag":"Query", "properties":{} }
-Every single time you refer to a property of an entity, always use the special syntax: $[id: entityId, propId: propertyId, frame: frameNumber, name: propertyName].
-For example, if there is a velocity property id 55, in the frame 120, that belongs to an entity with ID 678, instead of saying "the velocity was -10" you must say "the $[id: 678, propId: 55, frame: 120, name: velocity] was -10".
-Every single time you refer to an event of an entity, always use the special syntax: $[id: entityId, eventId: eventId, frame: frameNumber, name: propertyName].
+Every single time you refer to an event of an entity, always use the special syntax.
+The syntax for events is the following: $[id: entityId, eventId: eventId, frame: frameNumber, name: eventName]
+- entityId: entityId of the entity
+- eventId: eventId, the "id" field in the JSON mentioned earlier.
+- frameNumber: frame number that correspond to the most relevant frame for the entity.
+- eventName: name of the event, the "name" field in the JSON mentioned earlier
 Example: if there is an event of id 853, in the frame 23, that belongs to an entity with ID 50, instead of saying "the Finished event happened...", you must say "the $[id: 50, eventId: 853, frame: 23, name: Finished] even happened...".
-The frameNumber must correspond to the most relevant frame for the entity.
-There is no need to use this format if you are referring to entities or events that are not clearly part of an specific entity or frame.
-## Conclusions on usage of special syntax
-The more you use the special syntax, the more helpful your are to the user. Use it as much as possible. Use it every single time you can.
+
+## Conclusions on usage of sources
+The more sources you give, the more helpful your are to the user. Use it as much as possible. Use it every single time you can.
 If you can't use it because you are missing one of the fields, then leave it out, and write normally.
-Ensure you use the rigth syntax for each case. Do not mix them up.
+Ensure you use the rigth syntax for each type of source. Do not mix them up.
 When using the special syntax, always use the full syntax, don't leave fields out. Don't create incomplete special syntax.
 Never use it to represent multiple events or properties as one.
-Example: $[id: 1025, eventId: 7,8, frame: 8 and 10] is incorrect, too many events ids, too many frames and it doesn't follow the format.
-$[id: 1025, propId: 3,4,8,12] is also incorrect, there is more than one propId, and it's missing fields.
+Never do this: $[id: 1025, eventId: 7,8, frame: 8 and 10] This is incorrect, too many events ids, too many frames and it doesn't follow the format.
+Never do this: $[id: 1025, propId: 3,4,8,12] This is also incorrect, there is more than one propId, and it's missing fields.
+Never do this: $[id: 43012, propId: 52, frame: 3] This is also incorrect, the name is missing.
 Before sending each answer, make sure all special syntax is correct, and carefully consider every use of it.
 `;
 
@@ -693,10 +788,9 @@ Before sending each answer, make sure all special syntax is correct, and careful
             this.outputTokens += completion.usage.completion_tokens;
             this.cachedTokens = completion.usage.prompt_tokens_details.cached_tokens;
             
-            const estimatedCost = (this.inputTokens * 0.4 / 1000000) + (this.cachedTokens * 0.1 / 1000000) + (this.outputTokens * 1.6 / 1000000);
-
-            this.statsItem.innerText = `Input tokens: ${this.inputTokens}\nOutput tokens: ${this.outputTokens}\nCached tokens: ${this.cachedTokens}\nEstimated cost: $${estimatedCost}`;
-            DOMUtils.setClass(this.statsItem, "hide-element", false);
+            //const estimatedCost = (this.inputTokens * 0.4 / 1000000) + (this.cachedTokens * 0.1 / 1000000) + (this.outputTokens * 1.6 / 1000000);
+            //this.statsItem.innerText = `Input tokens: ${this.inputTokens}\nOutput tokens: ${this.outputTokens}\nCached tokens: ${this.cachedTokens}\nEstimated cost: $${estimatedCost}`;
+            //DOMUtils.setClass(this.statsItem, "hide-element", false);
 
             const result = completion.choices[0].message.content;
 
