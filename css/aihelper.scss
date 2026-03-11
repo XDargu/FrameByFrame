@@ -183,6 +183,7 @@
     cursor: pointer;
     font-weight: bold;
     color: #f1b964;
+    display: inline-block;
 }
 
 .ai-entity-ref:hover,
@@ -199,4 +200,12 @@
 .ai-event-ref i
 {
     margin-right: 3px;
+}
+
+.ai-response pre
+{
+    color: #EEEEEE;
+    background: #2b2530;
+    padding: 10px;
+    overflow: auto;
 }
