@@ -75,9 +75,15 @@ parent: Using Frame by Frame
  - **Remove old frames**: If enabled, old frames will automatically be removed when recording.
  - **Frame remval threshold**: Controls how many frames to keep when automatically removing old frames.
  - **Update frame on removal**: If enabled, the current frame will be refreshed when removed.
+ - **Go to new frames**: If enabled, every time a new frame is recorded, it will be selected.
 
 ## Comments
  - **Show comments**: If enabled, comments will be displayed on the timeline.
+
+ ## AI Insights
+ - **Use OPENAI_API_KEY Env. Variable**: If enabled, the computer OPENAI_API_KEY environment variable will be used as the Open AI API Key.
+ - **OpenAI API Key**: Open AI API Key to use, in case the environmental variable option is not enabled.
+ - **OpenAI Model**: Open AI model to use. See full list with prices here: [https://developers.openai.com/api/docs/pricing](https://developers.openai.com/api/docs/pricing)
 
 ## Debug
  - **Show render debug info**: Enable to display debug information on the viewer.
