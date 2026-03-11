@@ -4531,6 +4531,9 @@ i.prop-icon {
 .comment.visible {
   display: unset; }
 
+body.welcome-active .comment {
+  display: none; }
+
 .comment.editing {
   cursor: text;
   box-shadow: 0 0 0 2px #8442B9; }
