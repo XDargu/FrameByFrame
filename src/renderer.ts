@@ -1198,6 +1198,11 @@ export default class Renderer {
                     this.removeOldFrames();
                     this.addFrameData(frame);
                     this.updateMetadata();
+
+                    if (this.settings.goToNewFrames)
+                    {
+                        this.applyFrame(this.recordedData.frameData.length - 1);
+                    }
                     
                     break;
                 }

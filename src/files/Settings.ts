@@ -36,6 +36,7 @@ export interface ISettings
     removeOldFrames: boolean,
     removeOldFramesAmount: number,
     removeOldFramesUpdate: boolean,
+    goToNewFrames: boolean,
     /* Comments */
     showComments: boolean,
     /* AI Helper */
@@ -93,6 +94,7 @@ export function createDefaultSettings() : ISettings
         removeOldFrames: false,
         removeOldFramesAmount: 500,
         removeOldFramesUpdate: true,
+        goToNewFrames: false,
         /* Comments */
         showComments: true,
         /* AI Helper */
