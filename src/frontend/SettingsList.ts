@@ -1,4 +1,5 @@
 import * as Utils from '../utils/utils';
+import * as DOMUtils from '../utils/DOMUtils';
 import { createDefaultSettings, ISettings } from "../files/Settings";
 import { filterText } from "../utils/utils";
 
@@ -136,6 +137,19 @@ namespace SettingsBuilder
         return resetButton;
     }
 
+    function createEyeButton() : HTMLButtonElement
+    {
+        let eyeButton: HTMLButtonElement = document.createElement("button");
+        eyeButton.className = "basico-button basico-small setting-reset-button";
+        eyeButton.title = "Restore to default value";
+
+        let icon: HTMLElement = document.createElement("i");
+        icon.className = "fa fa-eye-slash";
+        eyeButton.append(icon);
+
+        return eyeButton;
+    }
+
     function createButton(text: string, tooltip: string) : HTMLButtonElement
     {
         let button: HTMLButtonElement = document.createElement("button");
@@ -233,6 +247,39 @@ namespace SettingsBuilder
         let textItem = createTextItem(name, tooltip);
 
         return createListItem(textItem, input);
+    }
+
+    export function addPasswordSetting(group: SettingsBuilderGroup, name: string, tooltip: string, placeholder: string, value: string, callback: IStringSettingCallback)
+    {
+        addSettingToGroup(group, name, createPasswordSetting(name, tooltip, placeholder, value, callback));
+    }
+
+    function createPasswordSetting(name: string, tooltip: string, placeholder: string, value: string, callback: IStringSettingCallback) : HTMLElement
+    {
+        let input = createInput("password", value, placeholder);
+        input.oninput = () => { callback(input.value); }
+
+        let eyeButton = createEyeButton();
+        eyeButton.onclick = () => {
+            const icon = eyeButton.querySelector('i');
+            if (input.type == "text")
+            { 
+                input.type = "password";
+                DOMUtils.setClass(icon, "fa-eye", false);
+                DOMUtils.setClass(icon, "fa-eye-slash", true);
+            } 
+            else
+            {
+                input.type = "text";
+                DOMUtils.setClass(icon, "fa-eye", true);
+                DOMUtils.setClass(icon, "fa-eye-slash", false);
+            }
+
+        };
+
+        let textItem = createTextItem(name, tooltip);
+
+        return createListItem(textItem, input, eyeButton);
     }
 
     export function addNumberOptionsSetting(group: SettingsBuilderGroup, name: string, value: number, options: number[], callback: INumberSettingCallback)
@@ -508,6 +555,7 @@ You can use the following formatting options:
                 settings.removeOldFramesAmount,
                 (value) => {  settings.removeOldFramesAmount = Math.max(1, Number.parseInt(value)); this.onSettingsChanged(); });
             SettingsBuilder.addBooleanSetting(group, "Update frame on removal", settings.removeOldFramesUpdate, (value) => {settings.removeOldFramesUpdate = value; this.onSettingsChanged(); })
+            SettingsBuilder.addBooleanSetting(group, "Go to new frames", settings.goToNewFrames, (value) => {settings.goToNewFrames = value; this.onSettingsChanged(); })
             this.settingsList.appendChild(group.fragment);
         }
 
@@ -519,7 +567,8 @@ You can use the following formatting options:
 
         {
             let group = SettingsBuilder.createGroup("AI Insights");
-            SettingsBuilder.addStringSetting(group, "OpenAI API Key", "OpenAI API key to do requests", "", settings.openaiApiKey, (value) => {settings.openaiApiKey = value; this.onSettingsChanged(); })
+            SettingsBuilder.addBooleanSetting(group, "Use OPENAI_API_KEY Env. Variable", settings.openaiAiKeyUseEnvVariable, (value) => {settings.openaiAiKeyUseEnvVariable = value; this.onSettingsChanged(); })
+            SettingsBuilder.addPasswordSetting(group, "OpenAI API Key", "OpenAI API key to do requests", "", settings.openaiApiKey, (value) => {settings.openaiApiKey = value; this.onSettingsChanged(); })
             SettingsBuilder.addStringSetting(group, "OpenAI Model", "OpenAI model for requests", "", settings.openaiModel, (value) => {settings.openaiModel = value; this.onSettingsChanged(); })
             this.settingsList.appendChild(group.fragment);
         }

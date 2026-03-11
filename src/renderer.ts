@@ -67,6 +67,8 @@ export interface FrameRequest
 {
     frame: number;
     entityIdSel?: number;
+    propertyIdSel?: number;
+    eventIdSel?: number;
 }
 
 export default class Renderer {
@@ -329,6 +331,7 @@ export default class Renderer {
             document.getElementById("ai-input-plus"),
             document.getElementById("ai-entity-context-list"),
             document.getElementById("ai-input-wrapper"),
+            document.getElementById("ai-info"),
             {
                 runQuery: () => {
                     this.aiHelper.analyse();
@@ -367,6 +370,7 @@ export default class Renderer {
                                 entityId: Utils.getEntityIdUniqueId(uniqueId),
                                 entityName: this.findEntityNameOnFrame(uniqueId, frameIdx),
                                 eventName: event.label,
+                                eventId: event.id,
                                 frame: frameIdx + 1
                             })
                         }
@@ -407,6 +411,48 @@ export default class Renderer {
 
                     return null;
                 },
+                onEntityClicked: (id, frame) => {
+                    // We display frames starting with 1, rather than 0
+                    const frameCorrected = frame - 1;
+                    
+                    const frameData = this.recordedData.buildFrameData(frameCorrected, RECORDING.BuildFrameDataFlags.Entities);
+                    const entityId = RecordingUtils.tryGetValidEntityID(frameData, id);
+
+                    if (entityId)
+                    {
+                        this.requestApplyFrame({ frame: frameCorrected, entityIdSel: entityId});
+                    }
+                },
+                onFrameClicked: (frame) => {
+                    // We display frames starting with 1, rather than 0
+                    const frameCorrected = frame - 1;
+                    
+                    this.requestApplyFrame({ frame: frameCorrected});
+                },
+                onPropertyClicked: (eid, propertyId, frame) => {
+                    // We display frames starting with 1, rather than 0
+                    const frameCorrected = frame - 1;
+
+                    const frameData = this.recordedData.buildFrameData(frameCorrected, RECORDING.BuildFrameDataFlags.Entities);
+                    const entityId = RecordingUtils.tryGetValidEntityID(frameData, eid);
+
+                    if (entityId)
+                    {
+                        this.requestApplyFrame({ frame: frameCorrected, entityIdSel: entityId, propertyIdSel: propertyId});
+                    }
+                },
+                onEventClicked: (eid, eventIdx, frame) => {
+                    // We display frames starting with 1, rather than 0
+                    const frameCorrected = frame - 1;
+
+                    const frameData = this.recordedData.buildFrameData(frameCorrected, RECORDING.BuildFrameDataFlags.Entities);
+                    const entityId = RecordingUtils.tryGetValidEntityID(frameData, eid);
+
+                    if (entityId)
+                    {
+                        this.requestApplyFrame({ frame: frameCorrected, entityIdSel: entityId, eventIdSel: eventIdx});
+                    }
+                }
             }
             
             
@@ -487,6 +533,16 @@ export default class Renderer {
             if (this.currentFrameRequest.entityIdSel)
             {
                 this.selectEntity(this.currentFrameRequest.entityIdSel);
+            }
+
+            if (this.currentFrameRequest.eventIdSel)
+            {
+                this.highlightEvent(this.currentFrameRequest.eventIdSel);
+            }
+
+            if (this.currentFrameRequest.propertyIdSel)
+            {
+                this.highlightProperty(this.currentFrameRequest.propertyIdSel);
             }
 
             this.currentFrameRequest = null;
@@ -901,7 +957,16 @@ export default class Renderer {
         if (requiresRedraw)
             this.requestApplyFrame({ frame: this.getCurrentFrame() });
 
-        this.aiHelper.setApiKey(settings.openaiApiKey);
+        if (settings.openaiAiKeyUseEnvVariable)
+        {
+            // We will get the result later
+            ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.RequestOpenAIEnvVar, ""));
+        }
+        else
+        {
+            this.aiHelper.setApiKey(settings.openaiApiKey);
+        }
+
         this.aiHelper.setModel(settings.openaiModel);
     }
 
@@ -1133,6 +1198,11 @@ export default class Renderer {
                     this.removeOldFrames();
                     this.addFrameData(frame);
                     this.updateMetadata();
+
+                    if (this.settings.goToNewFrames)
+                    {
+                        this.applyFrame(this.recordedData.frameData.length - 1);
+                    }
                     
                     break;
                 }
@@ -1401,6 +1471,42 @@ export default class Renderer {
         const filter = this.propertySearchInput.value.toLowerCase();
         
         this.entityPropsBuilder.buildPropertyTree(selectedEntity, globalData, filter, this.propertiesWithHistory);
+    }
+
+    highlightEvent(eventId: number)
+    {
+        // TODO: Improve display
+        const item = this.entityPropsBuilder.findTreeWithId(eventId) as HTMLElement;
+        console.log("Selecting item with id " + eventId);
+        console.log(item);
+        if (item)
+        {
+            item.scrollIntoView({
+                behavior: 'auto',
+                block: 'center',
+                inline: 'center'
+            });
+            item.style.background = "#DE0000";
+            setTimeout(() => { item.style.background = ''; }, 2000);
+        }
+    }
+
+    highlightProperty(propertyId: number)
+    {
+        // TODO: Improve display
+        const item = this.entityPropsBuilder.findItemWithValue(propertyId.toString()) as HTMLElement;
+        console.log("Selecting item with id " + propertyId);
+        console.log(item);
+        if (item)
+        {
+            item.scrollIntoView({
+                behavior: 'auto',
+                block: 'center',
+                inline: 'center'
+            });
+            item.style.background = "#DE0000";
+            setTimeout(() => { item.style.background = ''; }, 2000);
+        }
     }
 
     updateFrameDataEvents(frameData: RECORDING.IFrameData, frameIdx: number)
@@ -2214,6 +2320,11 @@ export default class Renderer {
         }
 
         this.propertyWindows.onWindowClosed(id);
+    }
+
+    onOpenAIEnvVar(value: string)
+    {
+        this.aiHelper.setApiKey(value);
     }
 }
 

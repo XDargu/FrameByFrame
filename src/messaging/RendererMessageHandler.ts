@@ -135,6 +135,11 @@ export function initMessageHandling(renderer: Renderer)
                 renderer.onUpdateInstallationFailed(arg.data as string);
                 break;
             }
+            case Messaging.MessageType.OpenAIEnvVarResponse:
+            {
+                renderer.onOpenAIEnvVar(arg.data as string);
+                break;
+            }
         }
     });
 }

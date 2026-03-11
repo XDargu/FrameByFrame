@@ -21,6 +21,11 @@
     display: unset;
 }
 
+body.welcome-active .comment
+{
+    display: none;
+}
+
 .comment.editing
 {
     cursor: text;
