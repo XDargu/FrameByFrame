@@ -29,7 +29,7 @@ Store your recordings and examine them later on. Let each member of the team do 
 Connect to any game or engine, Frame by Frame can be integrated with anything. If you are using a popular game engine like [Unity](/FrameByFrame/Unity) you can try the integration plugins. Or you can [integrate Frame by Frame on your own](/FrameByFrame/custom-integrations/).
 
 ![Frame by Frame Screenshot](/FrameByFrame/assets/images/screenshots/ExampleScreen.png)
-*Example of a Frame by Frame capture. In this capture we can see the frame when the destination position of an AI agent was changed, as well as its current path, position, collider, etc.*
+*Example of a Frame by Frame capture. In this capture we can see that a character has received damaged, enough to trigger its death. We can explore its properties, like the NavMesh Agent or Animation state.*
 
 ## Getting started
 
