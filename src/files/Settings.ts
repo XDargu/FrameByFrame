@@ -39,6 +39,7 @@ export interface ISettings
     /* Comments */
     showComments: boolean,
     /* AI Helper */
+    openaiAiKeyUseEnvVariable: boolean,
     openaiApiKey: string,
     openaiModel: string,
     /* Debug */
@@ -95,8 +96,9 @@ export function createDefaultSettings() : ISettings
         /* Comments */
         showComments: true,
         /* AI Helper */
+        openaiAiKeyUseEnvVariable: false,
         openaiApiKey: "",
-        openaiModel: "gpt-4.1-mini",
+        openaiModel: "gpt-5-mini",
         /* Debug */
         showRenderDebug: false,
         optimizePropertyTreeUpdates: false,

@@ -957,7 +957,16 @@ export default class Renderer {
         if (requiresRedraw)
             this.requestApplyFrame({ frame: this.getCurrentFrame() });
 
-        this.aiHelper.setApiKey(settings.openaiApiKey);
+        if (settings.openaiAiKeyUseEnvVariable)
+        {
+            // We will get the result later
+            ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.RequestOpenAIEnvVar, ""));
+        }
+        else
+        {
+            this.aiHelper.setApiKey(settings.openaiApiKey);
+        }
+
         this.aiHelper.setModel(settings.openaiModel);
     }
 
@@ -2306,6 +2315,11 @@ export default class Renderer {
         }
 
         this.propertyWindows.onWindowClosed(id);
+    }
+
+    onOpenAIEnvVar(value: string)
+    {
+        this.aiHelper.setApiKey(value);
     }
 }
 

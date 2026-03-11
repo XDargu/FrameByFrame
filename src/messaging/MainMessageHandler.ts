@@ -275,6 +275,10 @@ export function initMessageHandling()
         case Messaging.MessageType.RequestInstallUpdate:
             UpdateInstaller.installUpdate(arg.data as Messaging.IUpdateInstallRequest)
             break;
+
+        case Messaging.MessageType.RequestOpenAIEnvVar:
+            event.reply('asynchronous-reply', new Messaging.Message(Messaging.MessageType.OpenAIEnvVarResponse, process.env.OPENAI_API_KEY));
+            break;
         }
     });
 }
