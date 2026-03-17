@@ -80,7 +80,7 @@ parent: Using Frame by Frame
 ## Comments
  - **Show comments**: If enabled, comments will be displayed on the timeline.
 
- ## AI Insights
+## AI Insights
  - **Use OPENAI_API_KEY Env. Variable**: If enabled, the computer OPENAI_API_KEY environment variable will be used as the Open AI API Key.
  - **OpenAI API Key**: Open AI API Key to use, in case the environmental variable option is not enabled.
  - **OpenAI Model**: Open AI model to use. See full list with prices here: [https://developers.openai.com/api/docs/pricing](https://developers.openai.com/api/docs/pricing)
