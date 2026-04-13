@@ -830,6 +830,9 @@ Before sending each answer, make sure all special syntax is correct, and careful
                                 tool_call_id: toolCall.id,
                                 content: JSON.stringify(res)
                             });
+
+                            this.queryOutput.append(responseLoading);
+                            responseLoading.scrollIntoView({behavior:'smooth', block:'end'});
                             break;
                         }
                         case "get_entity_data":
@@ -852,6 +855,9 @@ Before sending each answer, make sure all special syntax is correct, and careful
                             response.classList.add("ai-tool-usage");
                             response.innerHTML = `<span>Checking entity ${res.name} at frame ${args.frame} - ${args.reason}</span>`;
                             this.queryOutput.append(response);
+
+                            this.queryOutput.append(responseLoading);
+                            responseLoading.scrollIntoView({behavior:'smooth', block:'end'});
                             break;
                         }
                         case "get_entities_at_frame":
@@ -867,6 +873,9 @@ Before sending each answer, make sure all special syntax is correct, and careful
                                 tool_call_id: toolCall.id,
                                 content: JSON.stringify(res)
                             });
+
+                            this.queryOutput.append(responseLoading);
+                            responseLoading.scrollIntoView({behavior:'smooth', block:'end'});
                             break;
                         }
                         case "get_selected_entity":
@@ -882,6 +891,9 @@ Before sending each answer, make sure all special syntax is correct, and careful
                                 tool_call_id: toolCall.id,
                                 content: JSON.stringify(res)
                             });
+
+                            this.queryOutput.append(responseLoading);
+                            responseLoading.scrollIntoView({behavior:'smooth', block:'end'});
                             break;
                         }
                     }
