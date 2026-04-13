@@ -1438,7 +1438,9 @@ body {
   white-space: pre-line;
   line-height: 60%;
   user-select: none;
-  text-shadow: 1px 1px black; }
+  text-shadow: 1px 1px black;
+  margin-top: 30px;
+  pointer-events: none; }
 
 #render-debug.enabled {
   display: block; }
