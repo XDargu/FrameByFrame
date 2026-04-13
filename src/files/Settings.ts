@@ -36,9 +36,11 @@ export interface ISettings
     removeOldFrames: boolean,
     removeOldFramesAmount: number,
     removeOldFramesUpdate: boolean,
+    goToNewFrames: boolean,
     /* Comments */
     showComments: boolean,
     /* AI Helper */
+    openaiAiKeyUseEnvVariable: boolean,
     openaiApiKey: string,
     openaiModel: string,
     /* Debug */
@@ -92,11 +94,13 @@ export function createDefaultSettings() : ISettings
         removeOldFrames: false,
         removeOldFramesAmount: 500,
         removeOldFramesUpdate: true,
+        goToNewFrames: false,
         /* Comments */
         showComments: true,
         /* AI Helper */
+        openaiAiKeyUseEnvVariable: false,
         openaiApiKey: "",
-        openaiModel: "gpt-4.1-mini",
+        openaiModel: "gpt-5-mini",
         /* Debug */
         showRenderDebug: false,
         optimizePropertyTreeUpdates: false,

@@ -91,7 +91,7 @@ function createMemberFilterOfType(type: CorePropertyTypes, name: string, value: 
             { name: name + ".x", type: MemberFilterType.Number, value: (value as RECORDING.IQuat).x, mode: FilterMode.Similar },
             { name: name + ".y", type: MemberFilterType.Number, value: (value as RECORDING.IQuat).y, mode: FilterMode.Similar },
             { name: name + ".z", type: MemberFilterType.Number, value: (value as RECORDING.IQuat).z, mode: FilterMode.Similar },
-            { name: name + ".w", type: MemberFilterType.Number, value: (value as RECORDING.IQuat).z, mode: FilterMode.Similar }
+            { name: name + ".w", type: MemberFilterType.Number, value: (value as RECORDING.IQuat).w, mode: FilterMode.Similar }
         ]
         case CorePropertyTypes.Table:
         {

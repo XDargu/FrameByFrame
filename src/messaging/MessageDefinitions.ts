@@ -36,6 +36,9 @@ export enum MessageType { // TODO: Maybe rename these to make clear the directio
     // Updates
     UpdateInstallFailed, // Main to Renderer
     RequestInstallUpdate, // Renderer to Main
+    // API Key
+    RequestOpenAIEnvVar, // Renderer to Main
+    OpenAIEnvVarResponse, // Main to Renderer
 }
 
 export interface IClearResultData

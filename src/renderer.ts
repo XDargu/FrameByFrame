@@ -416,17 +416,12 @@ export default class Renderer {
                     // We display frames starting with 1, rather than 0
                     const frameCorrected = frame - 1;
                     
-                    const headers = this.recordedData.buildFrameDataHeaders(frameCorrected);
+                    const frameData = this.recordedData.buildFrameData(frameCorrected, RECORDING.BuildFrameDataFlags.Entities);
+                    const entityId = RecordingUtils.tryGetValidEntityID(frameData, id);
 
-                    for (let header of headers)
+                    if (entityId)
                     {
-                        const uniqueId = RecordingUtils.tryGetUniqueID(header, id);
-
-                        if (uniqueId)
-                        {
-                            this.requestApplyFrame({ frame: frameCorrected, entityIdSel: uniqueId});
-                            break;
-                        }
+                        this.requestApplyFrame({ frame: frameCorrected, entityIdSel: entityId});
                     }
                 },
                 onFrameClicked: (frame) => {
@@ -438,36 +433,25 @@ export default class Renderer {
                 onPropertyClicked: (eid, propertyId, frame) => {
                     // We display frames starting with 1, rather than 0
                     const frameCorrected = frame - 1;
-                    RecordingUtils.collectHistoricalData
 
-                    const headers = this.recordedData.buildFrameDataHeaders(frameCorrected);
-                    for (let header of headers)
+                    const frameData = this.recordedData.buildFrameData(frameCorrected, RECORDING.BuildFrameDataFlags.Entities);
+                    const entityId = RecordingUtils.tryGetValidEntityID(frameData, eid);
+
+                    if (entityId)
                     {
-                        const uniqueEntityId = RecordingUtils.tryGetUniqueID(header, eid);
-
-                        if (uniqueEntityId)
-                        {
-                            this.requestApplyFrame({ frame: frameCorrected, entityIdSel: uniqueEntityId, propertyIdSel: propertyId});
-                            break;
-                        }
+                        this.requestApplyFrame({ frame: frameCorrected, entityIdSel: entityId, propertyIdSel: propertyId});
                     }
                 },
                 onEventClicked: (eid, eventIdx, frame) => {
                     // We display frames starting with 1, rather than 0
                     const frameCorrected = frame - 1;
-                    RecordingUtils.collectHistoricalData
 
-                    const headers = this.recordedData.buildFrameDataHeaders(frameCorrected);
+                    const frameData = this.recordedData.buildFrameData(frameCorrected, RECORDING.BuildFrameDataFlags.Entities);
+                    const entityId = RecordingUtils.tryGetValidEntityID(frameData, eid);
 
-                    for (let header of headers)
+                    if (entityId)
                     {
-                        const uniqueEntityId = RecordingUtils.tryGetUniqueID(header, eid);
-
-                        if (uniqueEntityId)
-                        {
-                            this.requestApplyFrame({ frame: frameCorrected, entityIdSel: uniqueEntityId, eventIdSel: eventIdx});
-                            break;
-                        }
+                        this.requestApplyFrame({ frame: frameCorrected, entityIdSel: entityId, eventIdSel: eventIdx});
                     }
                 },
                 getFrameLength: () => {
@@ -1050,7 +1034,16 @@ export default class Renderer {
         if (requiresRedraw)
             this.requestApplyFrame({ frame: this.getCurrentFrame() });
 
-        this.aiHelper.setApiKey(settings.openaiApiKey);
+        if (settings.openaiAiKeyUseEnvVariable)
+        {
+            // We will get the result later
+            ipcRenderer.send('asynchronous-message', new Messaging.Message(Messaging.MessageType.RequestOpenAIEnvVar, ""));
+        }
+        else
+        {
+            this.aiHelper.setApiKey(settings.openaiApiKey);
+        }
+
         this.aiHelper.setModel(settings.openaiModel);
     }
 
@@ -1283,6 +1276,11 @@ export default class Renderer {
                     this.removeOldFrames();
                     this.addFrameData(frame);
                     this.updateMetadata();
+
+                    if (this.settings.goToNewFrames)
+                    {
+                        this.applyFrame(this.recordedData.frameData.length - 1);
+                    }
                     
                     break;
                 }
@@ -1566,8 +1564,8 @@ export default class Renderer {
                 block: 'center',
                 inline: 'center'
             });
-            item.style.background = "red";
-            setTimeout(() => { item.style.background = "unset"; }, 2000);
+            item.style.background = "#DE0000";
+            setTimeout(() => { item.style.background = ''; }, 2000);
         }
     }
 
@@ -1584,8 +1582,8 @@ export default class Renderer {
                 block: 'center',
                 inline: 'center'
             });
-            item.style.background = "red";
-            setTimeout(() => { item.style.background = "unset"; }, 2000);
+            item.style.background = "#DE0000";
+            setTimeout(() => { item.style.background = ''; }, 2000);
         }
     }
 
@@ -2400,6 +2398,11 @@ export default class Renderer {
         }
 
         this.propertyWindows.onWindowClosed(id);
+    }
+
+    onOpenAIEnvVar(value: string)
+    {
+        this.aiHelper.setApiKey(value);
     }
 }
 

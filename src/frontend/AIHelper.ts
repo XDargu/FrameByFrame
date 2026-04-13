@@ -740,30 +740,16 @@ Default text color should be #EEEEEE. Header color should be #bb86fc.
 You can higlight important words or parts of the answer in bold with color #6DE080.
 Don't alter the font size or family.
 
-# Sources for data with context
-When you refer to data from the recording, give sources whenever possible. To do so, you need to source data using a special syntax.
-Sources are vital for users, they need to know where the information comes from.
-Always give sources when you refer to data, if possible.
-IMPORTANT: Use as many sources as possible.
-
+# Special format for data with context
 ## Entities
 Never reference or mention entities only by name or id. Do not ever do it.
-Every single time in your response you refer to any entity, always use the special syntax. You must add a source to be helpful.
-The syntax for entities is: $[id: entityId, frame: frameNumber, name: entityName].
-- entityId: entityId of the entity
-- frameNumber: must correspond to the most relevant frame for the entity. Ensure there is always a frame, try to get it from context.
-- name: name of the entity.
-
+Every single time in your response you refer to any entity, always use an html span element with the following format: <span data-entityId="entityId" data-frame="frameNumber">entityName</span>.
+The frameNumber must correspond to the most relevant frame for the entity. Ensure there is always a frame, try to get it from context.
 ## Frames
 During your answer, you might refer to frames in the recording.
-Every single time you refer to a frame, always use the special syntax.
-Do not mention frames without using special syntax or giving a source.
-The syntax for frames is : @[frame: frameNumber, text: displayText]
-- frameNumber: frame number
-- displayText: the text you want to display to the user
-For example, instead of saying "During frame 5, multiple events happened" you must say "During @[frame: 5, text: frame 5], multiple events happened"
-Another example: instead of saying "During frames 5, 6 and 8, multiple events happened" you must say "During frames @[frame: 5, text: 5], @[frame: 6, text: 6] and @[frame: 7, text: 7] multiple events happened"
-
+Every single time you refer to a frame, always use an html span element with the following format: <span data-frame="frameNumber">displayText</span>.
+For example, instead of saying "During frame 5, multiple events happened" you must say "During <span data-frame="5">frame 5</span>, multiple events happened"
+Another example: instead of saying "During frames 5, 6 and 8, multiple events happened" you must say "During frames <span data-frame="5">5</span>, <span data-frame="6">6</span> and <span data-frame="7">7</span> multiple events happened"
 ## Properties and events
 All properties and events (in JSON) have an associated id, represented by the "id" field on the json. Important: ignore the "idx" field!
 That id is only unique within the frame. Events or properties from different frames might have the same id.
@@ -780,23 +766,20 @@ Example: if there is a velocity property id 55, in the frame 120, that belongs t
 
 ## Events
 This is an event with id 6: { "id":6, "name":"Finished", "tag":"Query", "properties":{} }
-Every single time you refer to an event of an entity, always use the special syntax.
-The syntax for events is the following: $[id: entityId, eventId: eventId, frame: frameNumber, name: eventName]
-- entityId: entityId of the entity
-- eventId: eventId, the "id" field in the JSON mentioned earlier.
-- frameNumber: frame number that correspond to the most relevant frame for the entity.
-- eventName: name of the event, the "name" field in the JSON mentioned earlier
-Example: if there is an event of id 853, in the frame 23, that belongs to an entity with ID 50, instead of saying "the Finished event happened...", you must say "the $[id: 50, eventId: 853, frame: 23, name: Finished] even happened...".
-
-## Conclusions on usage of sources
-The more sources you give, the more helpful your are to the user. Use it as much as possible. Use it every single time you can.
+Every single time you refer to a property of an entity, always create an html span element with the following format: <span data-entityId="entityId" data-propId="propertyId" data-frame="frameNumber">PropertyName</span>.
+For example, if there is a velocity property id 55, in the frame 120, that belongs to an entity with ID 678, instead of saying "the velocity was -10" you must say "the <span data-entityId="678" data-propId="55" data-frame="120">velocity</span> was -10.
+Every single time you refer to an event of an entity, always create an html span element with the following format: <span data-entityId="entityId" data-eventId="eventId" data-frame="frameNumber">PropertyName</span>.
+Example: if there is an event of id 853, in the frame 23, that belongs to an entity with ID 50, instead of saying "the Finished event happened...", you must say "the <span data-entityId="50" data-eventId="853" data-frame="23">Finished</span> event happened.
+The frameNumber must correspond to the most relevant frame for the entity.
+There is no need to use this format if you are referring to entities or events that are not clearly part of an specific entity or frame.
+## Conclusions on usage of special format
+The more you use the special format, the more helpful your are to the user. Use it as much as possible. Use it every single time you can.
 If you can't use it because you are missing one of the fields, then leave it out, and write normally.
-Ensure you use the rigth syntax for each type of source. Do not mix them up.
-When using the special syntax, always use the full syntax, don't leave fields out. Don't create incomplete special syntax.
+Ensure you use the rigth format for each case. Do not mix them up.
+When using the special format, always use the full format, don't leave fields out. Don't create incomplete special format.
 Never use it to represent multiple events or properties as one.
-Never do this: $[id: 1025, eventId: 7,8, frame: 8 and 10] This is incorrect, too many events ids, too many frames and it doesn't follow the format.
-Never do this: $[id: 1025, propId: 3,4,8,12] This is also incorrect, there is more than one propId, and it's missing fields.
-Never do this: $[id: 43012, propId: 52, frame: 3] This is also incorrect, the name is missing.
+Example: <span data-entityId="1025" data-eventId="7, 8" data-frame="8 and 10">frames 8 and 10</span> is incorrect. the data-frame field contains more than one frame, and the same goes for the data-eventId field.
+<span data-entityId="1025" data-propId="3,4,8,12">Health property</span> is also incorrect, there is more than one property id, and it's missing fields! The frame number is not there.
 Before sending each answer, make sure all special syntax is correct, and carefully consider every use of it.
 `;
 
@@ -964,55 +947,67 @@ Before sending each answer, make sure all special syntax is correct, and careful
 
             const result = lastMessage.content;
 
-            const entityRefRegex = /\$\[id:\s*(\d+),\s*frame:\s*(\d+)\,\s*name:\s*([^\],]+)]/g;
-
-            const resultWithEntities = result.replace(entityRefRegex, (match, id, frame, name) => {
-                return `<span class="ai-entity-ref" data-id="${id}" data-frame="${frame}" data-name="${name}"><i class="fas fa-user"></i>${name}</span>`;
-            });
-
-            const frameRefRegex = /[@$]\[frame:\s*(\d+)\,\s*text:\s*([^\],]+)]/g;
-            
-            const resultWithFrames = resultWithEntities.replace(frameRefRegex, (match, frame, text) => {
-                return `<span class="ai-frame-ref" data-frame="${frame}"><i class="fas fa-clock"></i>${text}</span>`;
-            });
-
-            const frameSimpleRefRegex = /[@$]\[frame:\s*(\d+)\]/g; // Make it work also with $, sometimes results use it
-            
-            const resultWithFramesSimple = resultWithFrames.replace(frameSimpleRefRegex, (match, frame) => {
-                return `<span class="ai-frame-ref" data-frame="${frame}"><i class="fas fa-clock"></i>${frame}</span>`;
-            });
-
-            const propertyRefRegex = /\$\[id:\s*(\d+),\s*propId:\s*(\d+),\s*frame:\s*(\d+)\,\s*name:\s*([^\],]+)]/g;
-            
-            const resultWithProperties = resultWithFramesSimple.replace(propertyRefRegex, (match, eid, propId, frame, name) => {
-                return `<span class="ai-property-ref" data-eid="${eid}" data-id="${propId}" data-frame="${frame}" data-name="${name}"><i class="fas fa-tag"></i>${name}</span>`;
-            });
-
-            const eventRefRegex = /\$\[id:\s*(\d+),\s*eventId:\s*(\d+),\s*frame:\s*(\d+)\,\s*name:\s*([^\],]+)]/g;
-            
-            const resultWithEvents = resultWithProperties.replace(eventRefRegex, (match, eid, eventId, frame, name) => {
-                return `<span class="ai-event-ref" data-eid="${eid}" data-id="${eventId}" data-frame="${frame}" data-name="${name}"><i class="fas fa-bolt"></i>${name}</span>`;
-            });
-            
             console.log(completion);
 
             if (this.loadingElement)
                 this.loadingElement.remove();
 
             let response = document.createElement("div");
-            response.innerHTML = resultWithEvents;
+            response.innerHTML = result;
             this.queryOutput.append(response);
+
+            /* Types of refs:
+            FrameRef: <span data-frame="frameNumber">displayText</span>.
+            EntityRef: <span data-entityId="entityId" data-frame="frameNumber">entityName</span>.
+            PropertyRef: <span data-entityId="entityId" data-propId="propertyId" data-frame="frameNumber">PropertyName</span>
+            EventRef: <span data-entityId="entityId" data-eventId="eventId" data-frame="frameNumber">PropertyName</span>
+            */
+            response.querySelectorAll("span").forEach(elem => {
+                const span = elem as HTMLSpanElement;
+
+                const eid = span.dataset.entityId || span.dataset.entityid;
+                const propId = span.dataset.propId || span.dataset.propid;
+                const eventId = span.dataset.eventId || span.dataset.eventid;
+                const frame = span.dataset.frame;
+
+                // In case resulting values are not capitalized. Happens often
+                span.dataset.entityId = eid;
+                span.dataset.propId = propId;
+                span.dataset.eventId = eventId;
+                span.dataset.entityId = eid;
+
+                if (eid && eventId && frame)
+                {
+                    span.classList.add('ai-event-ref');
+                    span.innerHTML = `<i class="fas fa-bolt"></i>${span.textContent}`;
+                }
+                else if (eid && propId && frame)
+                {
+                    span.classList.add('ai-property-ref');
+                    span.innerHTML = `<i class="fas fa-tag"></i>${span.textContent}`
+                }
+                else if (eid && frame)
+                {
+                    span.classList.add('ai-entity-ref');
+                    span.innerHTML = `<i class="fas fa-user"></i>${span.textContent}`
+                }
+                else if (frame)
+                {
+                    span.classList.add('ai-frame-ref');
+                    span.innerHTML = `<i class="fas fa-clock"></i>${span.textContent}`
+                }
+            });
 
             response.querySelectorAll("span.ai-entity-ref").forEach(elem => {
                 const span = elem as HTMLSpanElement;
-                const id = span.dataset.id;
+                const eid = span.dataset.entityId;
                 const frame = span.dataset.frame;
-                const name = span.dataset.name;
+                const name = span.innerText;
 
-                span.title = `${name} in frame ${frame} (${id})`;
+                span.title = `${name} in frame ${frame} (${eid})`;
 
                 span.onclick = () => {
-                    this.callbacks.onEntityClicked(parseInt(id), parseInt(frame));
+                    this.callbacks.onEntityClicked(parseInt(eid), parseInt(frame));
                 }
             });
             
@@ -1027,10 +1022,10 @@ Before sending each answer, make sure all special syntax is correct, and careful
 
             response.querySelectorAll("span.ai-property-ref").forEach(elem => {
                 const span = elem as HTMLSpanElement;
-                const eid = span.dataset.eid;
-                const id = span.dataset.id;
+                const eid = span.dataset.entityId;
+                const id = span.dataset.propId;
                 const frame = span.dataset.frame;
-                const name = span.dataset.name;
+                const name = span.textContent;
 
                 span.title = `${name} in frame ${frame} (${id})`;
 
@@ -1041,10 +1036,10 @@ Before sending each answer, make sure all special syntax is correct, and careful
 
             response.querySelectorAll("span.ai-event-ref").forEach(elem => {
                 const span = elem as HTMLSpanElement;
-                const eid = span.dataset.eid;
-                const id = span.dataset.id;
+                const eid = span.dataset.entityId;
+                const id = span.dataset.eventId;
                 const frame = span.dataset.frame;
-                const name = span.dataset.name;
+                const name = span.textContent;
 
                 span.title = `${name} in frame ${frame} (${id})`;
 
