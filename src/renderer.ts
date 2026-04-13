@@ -527,7 +527,24 @@ export default class Renderer {
                     }
 
                     return summary;
+                },
+                toolGetSelectedEntity: () => {
+                    const entity = this.frameData.entities[this.selectedEntityId];
 
+                    if (entity)
+                    {
+                        const clientId = Utils.getClientIdUniqueId(entity.id);
+                        const tag = this.recordedData.getTagByClientId(clientId);
+
+                        return {
+                            entity: entity,
+                            name: NaiveRecordedData.getEntityName(entity),
+                            frame: this.getCurrentFrame() + 1, // We display frames starting with 1, rather than 0
+                            tag: tag,
+                        }
+                    }
+
+                    return null;
                 }
             }
             

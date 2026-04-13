@@ -6,6 +6,7 @@ import { ResizeObserver } from 'resize-observer';
 import { ToolGetTimelineEvents } from '../ai/tools';
 import { ToolGetEntitiesAtFrame } from '../ai/tools';
 import { ToolGetEntityData } from '../ai/tools';
+import { ToolGetSelectedEntity } from '../ai/tools';
 
 namespace OpenAI
 {
@@ -82,7 +83,7 @@ namespace OpenAI
             body: JSON.stringify({
             model: model,
             messages: messages,
-            tools: [ ToolGetTimelineEvents, ToolGetEntitiesAtFrame, ToolGetEntityData ],
+            tools: [ ToolGetTimelineEvents, ToolGetEntitiesAtFrame, ToolGetEntityData, ToolGetSelectedEntity ],
             }),
         });
 
@@ -288,6 +289,11 @@ export interface ToolGetEntityDataCallback
     (entityId: number, frame: number) : EntityContextCore
 }
 
+export interface ToolGetSelectedEntityDataCallback
+{
+    () : EntityContextCore
+}
+
 export interface AICallbacks
 {
     runQuery: AIQueryCallback;
@@ -305,6 +311,7 @@ export interface AICallbacks
     toolGetTimelineEvents: ToolGetTimelineEventsCallback;
     toolGetEntityData: ToolGetEntityDataCallback;
     toolGetEntitiesAtFrame: ToolGetEntitiesAtFrameCallback;
+    toolGetSelectedEntity: ToolGetSelectedEntityDataCallback;
 }
 
 enum ContextType
@@ -855,6 +862,21 @@ Before sending each answer, make sure all special syntax is correct, and careful
                             this.queryOutput.append(response);
 
                             const res = this.callbacks.toolGetEntitiesAtFrame(args.frame);
+                            this.messages.push({
+                                role: "tool",
+                                tool_call_id: toolCall.id,
+                                content: JSON.stringify(res)
+                            });
+                            break;
+                        }
+                        case "get_selected_entity":
+                        {
+                            let response = document.createElement("div");
+                            response.classList.add("ai-tool-usage");
+                            response.innerHTML = `<span>Checking selected entity - ${args.reason}</span>`;
+                            this.queryOutput.append(response);
+
+                            const res = this.callbacks.toolGetSelectedEntity();
                             this.messages.push({
                                 role: "tool",
                                 tool_call_id: toolCall.id,

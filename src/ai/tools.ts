@@ -11,7 +11,7 @@ export const ToolGetTimelineEvents = {
             frameTo: { type: "number", description: "Last frame on the range." },
             reason: { type: "string", description: "Very brief summary explaining why this tool is called, in first person"},
             },
-            required: ["frameFrom", "frameTo"],
+            required: ["frameFrom", "frameTo", "reason"],
             additionalProperties: false,
         }
         }
@@ -29,7 +29,7 @@ export const ToolGetEntityData = {
           frame: { type: "number" },
           reason: { type: "string", description: "Very brief summary explaining why this tool is called, in first person"},
         },
-        required: ["entityId", "frame"],
+        required: ["entityId", "frame", "reason"],
       }
     }
 };
@@ -45,7 +45,22 @@ export const ToolGetEntitiesAtFrame = {
           frame: { type: "number" },
           reason: { type: "string", description: "Very brief summary explaining why this tool is called, in first person"},
         },
-        required: ["frame"],
+        required: ["frame", "reason"],
+      },
+    }
+};
+
+export const ToolGetSelectedEntity = {
+    type: "function",
+    function: {
+      name: "get_selected_entity",
+      description: "Returns the entity currently selected by the user",
+      parameters: {
+        type: "object",
+        properties: {
+          reason: { type: "string", description: "Very brief summary explaining why this tool is called, in first person"},
+        },
+        required: ["reason"],
       },
     }
 };
