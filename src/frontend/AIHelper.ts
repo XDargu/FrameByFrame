@@ -795,7 +795,7 @@ Before sending each answer, make sure all special syntax is correct, and careful
             this.cachedTokens = completion.usage.prompt_tokens_details.cached_tokens;
             
             const estimatedCost = (this.inputTokens * 0.4 / 1000000) + (this.cachedTokens * 0.1 / 1000000) + (this.outputTokens * 1.6 / 1000000);
-            this.statsItem.innerText = `Input tokens: ${this.inputTokens}\nOutput tokens: ${this.outputTokens}\nCached tokens: ${this.cachedTokens}\nEstimated cost: $${estimatedCost}`;
+            this.statsItem.innerText = `Input tokens: ${this.inputTokens}\nOutput tokens: ${this.outputTokens}\nCached tokens: ${this.cachedTokens}\nEstimated cost: $${estimatedCost.toFixed(4)}`;
             DOMUtils.setClass(this.statsItem, "hide-element", false);
 
             console.log(completion)
@@ -910,7 +910,7 @@ Before sending each answer, make sure all special syntax is correct, and careful
                 this.cachedTokens = completion.usage.prompt_tokens_details.cached_tokens;
 
                 const estimatedCost = (this.inputTokens * 0.4 / 1000000) + (this.cachedTokens * 0.1 / 1000000) + (this.outputTokens * 1.6 / 1000000);
-                this.statsItem.innerText = `Input tokens: ${this.inputTokens}\nOutput tokens: ${this.outputTokens}\nCached tokens: ${this.cachedTokens}\nEstimated cost: $${estimatedCost}`;
+                this.statsItem.innerText = `Input tokens: ${this.inputTokens}\nOutput tokens: ${this.outputTokens}\nCached tokens: ${this.cachedTokens}\nEstimated cost: $${estimatedCost.toFixed(4)}`;
                 DOMUtils.setClass(this.statsItem, "hide-element", false);
 
                 lastMessage = completion.choices[0].message;
