@@ -111,7 +111,7 @@ namespace UI
     export function createIntroMessage()
     {
         const entry = document.createElement("span");
-        entry.innerHTML = `Attach data with the <i class="fas fa-plus"></i> button and ask anything you want`;
+        entry.innerHTML = `Ask anything you want. Attach additional data with the <i class="fas fa-plus"></i> button`;
         return entry;
     }
 
@@ -813,7 +813,8 @@ Before sending each answer, make sure all special syntax is correct, and careful
                         case "get_timeline_events":
                         {
                             let response = document.createElement("div");
-                            response.innerHTML = `<span>Checking the timeline from frame ${args.frameFrom} to ${args.frameTo}</span>`;
+                            response.classList.add("ai-tool-usage");
+                            response.innerHTML = `<span>Checking the timeline from frame ${args.frameFrom} to ${args.frameTo} - ${args.reason}</span>`;
                             this.queryOutput.append(response);
 
                             const res = this.callbacks.toolGetTimelineEvents(args.frameFrom, args.frameTo);
@@ -841,14 +842,16 @@ Before sending each answer, make sure all special syntax is correct, and careful
                                 })
                             });
                             let response = document.createElement("div");
-                            response.innerHTML = `<span>Checking entity ${res.name} at frame ${args.frame}</span>`;
+                            response.classList.add("ai-tool-usage");
+                            response.innerHTML = `<span>Checking entity ${res.name} at frame ${args.frame} - ${args.reason}</span>`;
                             this.queryOutput.append(response);
                             break;
                         }
                         case "get_entities_at_frame":
                         {
                             let response = document.createElement("div");
-                            response.innerHTML = `<span>Checking entities at fame ${args.frame}</span>`;
+                            response.classList.add("ai-tool-usage");
+                            response.innerHTML = `<span>Checking entities at frame ${args.frame} - ${args.reason}</span>`;
                             this.queryOutput.append(response);
 
                             const res = this.callbacks.toolGetEntitiesAtFrame(args.frame);

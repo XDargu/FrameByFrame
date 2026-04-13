@@ -9,6 +9,7 @@ export const ToolGetTimelineEvents = {
             properties: {
             frameFrom: { type: "number", description: "First frame on the range." },
             frameTo: { type: "number", description: "Last frame on the range." },
+            reason: { type: "string", description: "Very brief summary explaining why this tool is called, in first person"},
             },
             required: ["frameFrom", "frameTo"],
             additionalProperties: false,
@@ -26,6 +27,7 @@ export const ToolGetEntityData = {
         properties: {
           entityId: { type: "number" },
           frame: { type: "number" },
+          reason: { type: "string", description: "Very brief summary explaining why this tool is called, in first person"},
         },
         required: ["entityId", "frame"],
       }
@@ -41,6 +43,7 @@ export const ToolGetEntitiesAtFrame = {
         type: "object",
         properties: {
           frame: { type: "number" },
+          reason: { type: "string", description: "Very brief summary explaining why this tool is called, in first person"},
         },
         required: ["frame"],
       },
