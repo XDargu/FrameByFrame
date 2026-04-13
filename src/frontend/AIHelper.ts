@@ -4,14 +4,28 @@ import { Console, LogChannel, LogLevel } from "../frontend/ConsoleController";
 import { createContextMenu, IContextMenuItem, removeContextMenu } from "../frontend/ContextMenu";
 import { ResizeObserver } from 'resize-observer';
 import { runInvestigationStep } from '../ai/investigation';
+import { ToolGetTimelineEvents } from '../ai/tools';
+import { ToolGetEntitiesAtFrame } from '../ai/tools';
+import { ToolGetEntityData } from '../ai/tools';
 
 namespace OpenAI
 {
+    interface ToolCall
+    {
+        id: string,
+        type: string,
+        function: {
+            name: string,
+            arguments: string, // Args as JSON
+        }
+    };
+
     interface Message
     {
         role: string;
         content: string;
         refusal: any;
+        tool_calls?: ToolCall[];
         annotations: any[]
     }
 
@@ -58,7 +72,7 @@ namespace OpenAI
         system_fingerprint: string;
     }
 
-    export async function requestQuery(systemPrompt: string, userQuery: string, apiKey: string, model: string)
+    export async function requestQuery(apiKey: string, model: string, messages: any[])
     {
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
@@ -68,10 +82,8 @@ namespace OpenAI
             },
             body: JSON.stringify({
             model: model,
-            messages: [
-                { role: "system", content: systemPrompt },
-                { role: "user", content: userQuery },
-            ],
+            messages: messages,
+            tools: [ ToolGetTimelineEvents, ToolGetEntitiesAtFrame, ToolGetEntityData ],
             }),
         });
 
@@ -250,6 +262,33 @@ export interface GetTimelineContextData
     () : TimelineContextCore
 }
 
+export interface GetFrameLength
+{
+    () : number
+}
+
+export interface ToolGetTimelineEventsCallback
+{
+    (frameFrom: number, frameTo: number) : TimelineContextEntry[]
+}
+
+export interface EntitySummary
+{
+    entityId: string,
+    name: string,
+    tag: string,
+}
+
+export interface ToolGetEntitiesAtFrameCallback
+{
+    (frame: number) : EntitySummary[]
+}
+
+export interface ToolGetEntityDataCallback
+{
+    (entityId: number, frame: number) : EntityContextCore
+}
+
 export interface AICallbacks
 {
     runQuery: AIQueryCallback;
@@ -261,6 +300,12 @@ export interface AICallbacks
     onFrameClicked: FrameSelectedCallback;
     onPropertyClicked: PropertySelectionCallback;
     onEventClicked: EventSelectionCallback;
+    getFrameLength: GetFrameLength;
+
+    //
+    toolGetTimelineEvents: ToolGetTimelineEventsCallback;
+    toolGetEntityData: ToolGetEntityDataCallback;
+    toolGetEntitiesAtFrame: ToolGetEntitiesAtFrameCallback;
 }
 
 enum ContextType
@@ -354,6 +399,7 @@ export class AIHelper
     private apiKey: string;
     private model: string;
     
+    private messages: any[];
     private contextSoFar: string;
     private loadingElement: HTMLElement;
     private waitingForResponse: boolean;
@@ -515,6 +561,7 @@ export class AIHelper
 
     clear()
     {
+        this.messages = [];
         this.contextSoFar = "";
         this.queryOutput.innerHTML = "";
         this.queryOutput.append(UI.createIntroMessage());
@@ -657,6 +704,31 @@ You will also receive a request from a user regarding that data.
 You will interact with the user in a chat form, giving answers, and the user asking follow-up questions, that might come with additional data.
 Please answer in a comprehensive way, with bullet points, tables or diagramas if it helps with clarity, but keep it relatively short if possible.
 # Needing more data
+You have several tools available to query the recording. Always start by using those. The tools are:
+ - get_timeline_events
+ - get_entity_data
+ - get_entities_at_frame
+
+The tool get_timeline_events is a good starting point to do investigation, unless the user query suggests other approach.
+
+Please investigate first with tools before asking further data to the user. Try to resolve the user question autonomously.
+Be conservative with the requests for new data. Try to reach a conclusion without using too many tokens.
+
+## IMPORTANT: Avoid asking for the same information twice
+Treat every tool response as cached context. Never re-request the same entity/frame data or the same timeline range.
+If information has already been obtained, reuse it.
+Only request new data if it adds genuinely new information needed to answer the question.
+Before making any tool call, list the specific missing fact you need. If you cannot name a new fact that is not already in context, do not call a tool.
+
+A few rules for tool usage:
+- Cache rule: If a tool result has already been retrieved, reuse it and never ask for it again.
+- No duplicate requests: Do not call get_entity_data for the same entity and frame more than once.
+- No duplicate timeline scans: Do not call get_timeline_events again for a range that was already queried unless a strictly narrower range is needed and the previous result was insufficient.
+- Prefer existing evidence: Before any new tool call, check whether the current context already answers the question.
+- Ask only when necessary: If the answer can be inferred from existing data, do not request more.
+
+
+## Further data
 If you need more data to give an answer, ask the user to do so.
 If the user hasn't provided any data ask for it, and do not mention JSON.
 The user can provide entity data by clicking on the 'Add' icon next to the chat, and give entity or timeline context data.
@@ -728,7 +800,14 @@ Never do this: $[id: 43012, propId: 52, frame: 3] This is also incorrect, the na
 Before sending each answer, make sure all special syntax is correct, and carefully consider every use of it.
 `;
 
-        this.contextSoFar += "User question: " + this.queryInput.value + "\n";
+        if (this.messages.length == 0)
+        {
+            this.messages.push({ role: "system", content: systemPrompt });
+        }
+
+        let userMessage = "";
+        userMessage += "User question: " + this.queryInput.value + "\n";
+        userMessage += "The recording has " + this.callbacks.getFrameLength() + " frames\n";
 
         this.queryInput.value = "";
         this.resizeInput();
@@ -754,13 +833,13 @@ Before sending each answer, make sure all special syntax is correct, and careful
                     case ContextType.Entity:
                         {
                             const userQuery = JSON.stringify(context.entity);
-                            this.contextSoFar += `Entity data of frame ${context.frame}, with name: ${context.name}, frame tag ${context.tag} in JSON: ${userQuery}\n`;
+                            userMessage += `Entity data of frame ${context.frame}, with name: ${context.name}, frame tag ${context.tag} in JSON: ${userQuery}\n`;
                             break;
                         }
                     case ContextType.Timeline:
                         {
                             const timelineData = JSON.stringify(context.content);
-                            this.contextSoFar += `Information about events for each entity and frame, in JSON: ` + timelineData;
+                            userMessage += `Information about events for each entity and frame, in JSON: ` + timelineData;
                             break;
                         }
                 }
@@ -770,29 +849,120 @@ Before sending each answer, make sure all special syntax is correct, and careful
 
             if (this.contextElements.length == 0)
             {
-                this.contextSoFar += "No entity data sent this frame.\n";
+                userMessage += "No entity data sent this frame.\n";
             }
 
-            this.contextSoFar += "Note from system: Remember to keep using the correct special syntax.\n";
+            userMessage += "Note from system: Remember to avoid using a tool if you already have the result cached.\n";
+            userMessage += "Note from system: Remember to keep using the correct special syntax.\n";
 
             this.clearContext();
 
             this.updateContextStyle();
 
-            console.log(this.contextSoFar);
+            console.log(userMessage);
 
-            const completion = await OpenAI.requestQuery(systemPrompt, this.contextSoFar, this.apiKey, this.model);
+            this.messages.push({ role: "user", content: userMessage });
+
+            const completion = await OpenAI.requestQuery(this.apiKey, this.model, this.messages);
             //const completion = await this.simulateResponse();
 
             this.inputTokens += completion.usage.prompt_tokens;
             this.outputTokens += completion.usage.completion_tokens;
             this.cachedTokens = completion.usage.prompt_tokens_details.cached_tokens;
             
-            //const estimatedCost = (this.inputTokens * 0.4 / 1000000) + (this.cachedTokens * 0.1 / 1000000) + (this.outputTokens * 1.6 / 1000000);
-            //this.statsItem.innerText = `Input tokens: ${this.inputTokens}\nOutput tokens: ${this.outputTokens}\nCached tokens: ${this.cachedTokens}\nEstimated cost: $${estimatedCost}`;
-            //DOMUtils.setClass(this.statsItem, "hide-element", false);
+            const estimatedCost = (this.inputTokens * 0.4 / 1000000) + (this.cachedTokens * 0.1 / 1000000) + (this.outputTokens * 1.6 / 1000000);
+            this.statsItem.innerText = `Input tokens: ${this.inputTokens}\nOutput tokens: ${this.outputTokens}\nCached tokens: ${this.cachedTokens}\nEstimated cost: $${estimatedCost}`;
+            DOMUtils.setClass(this.statsItem, "hide-element", false);
 
-            const result = completion.choices[0].message.content;
+            console.log(completion)
+
+            // Keep answer
+            this.messages.push(completion.choices[0].message);
+
+            let lastMessage = completion.choices[0].message;
+            // Tool loop
+            while (lastMessage.tool_calls)
+            {
+                for (const toolCall of lastMessage.tool_calls)
+                {
+                    const args = JSON.parse(toolCall.function.arguments);
+
+                    switch(toolCall.function.name)
+                    {
+                        // TODO: Make a tool for timeline events of a single entity?
+                        // Also, perhaps make a tool for filtering?
+                        // For example: value of a given property on a frame time
+                        // Another example: all relevant frames where a certain property has X value
+                        case "get_timeline_events":
+                        {
+                            let response = document.createElement("div");
+                            response.innerHTML = `<span>Checking the timeline from frame ${args.frameFrom} to ${args.frameTo}</span>`;
+                            this.queryOutput.append(response);
+
+                            const res = this.callbacks.toolGetTimelineEvents(args.frameFrom, args.frameTo);
+                            this.messages.push({
+                                role: "tool",
+                                tool_call_id: toolCall.id,
+                                content: JSON.stringify(res)
+                            });
+                            break;
+                        }
+                        case "get_entity_data":
+                        {
+                            const res = this.callbacks.toolGetEntityData(args.entityId, args.frame);
+                            this.messages.push({
+                                role: "tool",
+                                tool_call_id: toolCall.id,
+                                content: JSON.stringify(res, (key, value) =>
+                                {
+                                    if (key=="icolor") return undefined;
+                                    if (key=="path") return undefined;
+                                    if (key=="icon") return undefined;
+                                    if (key=="flags") return undefined;
+                                    if (key=="type") return undefined;
+                                    return value;
+                                })
+                            });
+                            let response = document.createElement("div");
+                            response.innerHTML = `<span>Checking entity ${res.name} at frame ${args.frame}</span>`;
+                            this.queryOutput.append(response);
+                            break;
+                        }
+                        case "get_entities_at_frame":
+                        {
+                            let response = document.createElement("div");
+                            response.innerHTML = `<span>Checking entities at fame ${args.frame}</span>`;
+                            this.queryOutput.append(response);
+
+                            const res = this.callbacks.toolGetEntitiesAtFrame(args.frame);
+                            this.messages.push({
+                                role: "tool",
+                                tool_call_id: toolCall.id,
+                                content: JSON.stringify(res)
+                            });
+                            break;
+                        }
+                    }
+                }
+
+                // Call again
+                const completion = await OpenAI.requestQuery(this.apiKey, this.model, this.messages);
+                this.messages.push(completion.choices[0].message);
+
+                console.log(completion);
+
+                this.inputTokens += completion.usage.prompt_tokens;
+                this.outputTokens += completion.usage.completion_tokens;
+                this.cachedTokens = completion.usage.prompt_tokens_details.cached_tokens;
+
+                const estimatedCost = (this.inputTokens * 0.4 / 1000000) + (this.cachedTokens * 0.1 / 1000000) + (this.outputTokens * 1.6 / 1000000);
+                this.statsItem.innerText = `Input tokens: ${this.inputTokens}\nOutput tokens: ${this.outputTokens}\nCached tokens: ${this.cachedTokens}\nEstimated cost: $${estimatedCost}`;
+                DOMUtils.setClass(this.statsItem, "hide-element", false);
+
+                lastMessage = completion.choices[0].message;
+            }
+
+            const result = lastMessage.content;
 
             const entityRefRegex = /\$\[id:\s*(\d+),\s*frame:\s*(\d+)\,\s*name:\s*([^\],]+)]/g;
 

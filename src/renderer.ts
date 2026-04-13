@@ -42,7 +42,7 @@ import { addContextMenu } from "./frontend/ContextMenu";
 import { PropertyWindows } from "./frontend/userWindows/PropertyWindows";
 import { CorePropertyTypes } from "./types/typeRegistry";
 import { markdownToHtml } from "./utils/markdown";
-import { AIHelper, TimelineContextEntry } from "./frontend/AIHelper";
+import { AIHelper, EntitySummary, TimelineContextEntry } from "./frontend/AIHelper";
 import * as AutoUpdater from "./updates/updateCheker";
 
 const zlib = require('zlib');
@@ -469,6 +469,82 @@ export default class Renderer {
                             break;
                         }
                     }
+                },
+                getFrameLength: () => {
+                    return this.timeline.getLength();
+                },
+                toolGetTimelineEvents: (from, to) => {
+                    
+                    let timelineContent: TimelineContextEntry[] = [];
+                    
+                    for (let frameIdx = from-1; frameIdx<to-1; ++frameIdx)
+                    {
+                        const events = this.timeline.getEventsInFrame(frameIdx);
+
+                        if (!events)
+                            continue;
+                        
+                        for (let event of events)
+                        {
+                            const uniqueId = Number.parseInt(event.entityId);
+
+                            timelineContent.push({
+                                entityId: Utils.getEntityIdUniqueId(uniqueId),
+                                entityName: this.findEntityNameOnFrame(uniqueId, frameIdx),
+                                eventName: event.label,
+                                eventId: event.id,
+                                frame: frameIdx + 1
+                            })
+                        }
+                    }
+
+                    return timelineContent;
+                },
+                toolGetEntityData: (id, frame) => {
+
+                    const frameData = this.recordedData.buildFrameData(frame - 1);
+
+                    const entityId = RecordingUtils.tryGetValidEntityID(frameData, id);
+
+                    const entity = frameData.entities[entityId];
+
+                    if (entity)
+                    {
+                        const clientId = Utils.getClientIdUniqueId(entity.id);
+                        const tag = this.recordedData.getTagByClientId(clientId);
+
+                        return {
+                            entity: entity,
+                            name: NaiveRecordedData.getEntityName(entity),
+                            frame: this.getCurrentFrame() + 1, // We display frames starting with 1, rather than 0
+                            tag: tag,
+                        }
+                    }
+
+                    return null;
+
+                },
+                toolGetEntitiesAtFrame: (frame) => {
+                    
+                    const frameData = this.recordedData.buildFrameData(frame -1);
+
+                    let summary: EntitySummary[] = [];
+
+                    if (frameData)
+                    {
+                        for (let id in frameData.entities)
+                        {
+                            const entityData = frameData.entities[id];
+                            summary.push({
+                                entityId: id,
+                                name: NaiveRecordedData.getEntityName(entityData),
+                                tag: frameData.tag
+                            })
+                        }
+                    }
+
+                    return summary;
+
                 }
             }
             
