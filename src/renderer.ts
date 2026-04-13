@@ -334,8 +334,7 @@ export default class Renderer {
             document.getElementById("ai-info"),
             {
                 runQuery: () => {
-                    //this.aiHelper.analyse(this.timeline.getCurrentFrame(), this.frameData.entities);
-                    this.aiHelper.analyseOldTest();
+                    this.aiHelper.analyse();
                 },
                 addEntityContext: () => {
                     if (!this.frameData) return;

@@ -3,7 +3,6 @@ import * as RECORDING from '../recording/RecordingData';
 import { Console, LogChannel, LogLevel } from "../frontend/ConsoleController";
 import { createContextMenu, IContextMenuItem, removeContextMenu } from "../frontend/ContextMenu";
 import { ResizeObserver } from 'resize-observer';
-import { runInvestigationStep } from '../ai/investigation';
 import { ToolGetTimelineEvents } from '../ai/tools';
 import { ToolGetEntitiesAtFrame } from '../ai/tools';
 import { ToolGetEntityData } from '../ai/tools';
@@ -616,72 +615,7 @@ export class AIHelper
         return data;
     }
 
-    async analyse(currentFrame: number, entities: RECORDING.IFrameEntityData)
-    {
-        const request = UI.createRequest(this.queryInput.value);
-
-        if (this.contextElements.length > 0)
-        {
-            request.prepend(UI.createRequestContext(this.contextElements));
-        }
-
-        DOMUtils.setClass(this.newChatBtn, "hide-element", false);
-        DOMUtils.setClass(this.preMadeQueriesDropdown, "hide-element", true);
-
-        this.queryOutput.append(request);
-
-
-        this.queryInput.value = "";
-        this.resizeInput();
-
-        const loader = UI.createLoader();
-        let responseLoading = document.createElement("div");
-        responseLoading.append(loader, " Thinking...");
-        this.loadingElement = responseLoading;
-        this.queryOutput.append(this.loadingElement);
-
-        responseLoading.scrollIntoView({behavior:'smooth', block:'end'});
-
-        this.lockSending(true);
-
-        try
-        {
-            let entityInfo = [];
-
-            for (let entity in entities)
-            {
-                entityInfo.push({
-                    name: RECORDING.NaiveRecordedData.getEntityName(entities[entity]),
-                    id: entities[entity].id
-                });
-            }
-
-            const state = {
-                user_question: "this.queryInput.value",
-                currentFrame: currentFrame,
-                entitiesCurrentFrame: entityInfo
-            }
-            const resultQuery = await runInvestigationStep(this.apiKey, this.model, state);
-
-            let response = document.createElement("div");
-            response.innerHTML = JSON.stringify(resultQuery);
-            this.queryOutput.append(response);
-
-            response.scrollIntoView({behavior:'smooth', block:'start'});
-
-            this.lockSending(false);
-        }
-        catch (error)
-        {
-            this.lockSending(false);
-            this.queryOutput.append(UI.createResponse("Error: " + error.message));
-            Console.log(LogLevel.Error, LogChannel.Files, "Error performing an AI query: " + error.message);
-            if (this.loadingElement)
-                this.loadingElement.remove();
-        }
-    }
-
-    async analyseOldTest()
+    async analyse()
     {
         const request = UI.createRequest(this.queryInput.value);
 
