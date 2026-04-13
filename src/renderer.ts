@@ -416,7 +416,7 @@ export default class Renderer {
                     // We display frames starting with 1, rather than 0
                     const frameCorrected = frame - 1;
                     
-                    const frameData = this.recordedData.buildFrameData(frameCorrected, RECORDING.BuildFrameDataFlags.Entities);
+                    const frameData = this.recordedData.buildFrameData(frameCorrected);
                     const entityId = RecordingUtils.tryGetValidEntityID(frameData, id);
 
                     if (entityId)
@@ -434,7 +434,7 @@ export default class Renderer {
                     // We display frames starting with 1, rather than 0
                     const frameCorrected = frame - 1;
 
-                    const frameData = this.recordedData.buildFrameData(frameCorrected, RECORDING.BuildFrameDataFlags.Entities);
+                    const frameData = this.recordedData.buildFrameData(frameCorrected);
                     const entityId = RecordingUtils.tryGetValidEntityID(frameData, eid);
 
                     if (entityId)
@@ -446,7 +446,7 @@ export default class Renderer {
                     // We display frames starting with 1, rather than 0
                     const frameCorrected = frame - 1;
 
-                    const frameData = this.recordedData.buildFrameData(frameCorrected, RECORDING.BuildFrameDataFlags.Entities);
+                    const frameData = this.recordedData.buildFrameData(frameCorrected);
                     const entityId = RecordingUtils.tryGetValidEntityID(frameData, eid);
 
                     if (entityId)
@@ -1617,7 +1617,7 @@ export default class Renderer {
                         for (let i=0; i<result.length; ++i)
                         {
                             const entry = result[i];
-                            const clientId = this.recordedData.buildFrameDataHeader(entry.frameIdx).clientId;
+                            const clientId = this.recordedData.buildFrameData(entry.frameIdx).clientId;
                             const uniqueEntityID = Utils.toUniqueID(clientId, entry.entityId);
                             this.timeline.addEvent(i, uniqueEntityID.toString(), entry.frameIdx, filterColor, entry.name, 0);
                         }
