@@ -389,6 +389,19 @@ function isContextSame(a: ContextElements, b: ContextElements)
     return false;
 }
 
+// Used to remove extra unused info from entity data
+const replacer = (key: string, value: any) =>
+{
+    if (key=="icolor") return undefined;
+    if (key=="path") return undefined;
+    if (key=="icon") return undefined;
+    if (key=="flags") return undefined;
+    if (key=="type") return undefined;
+    if (key=="category" && value=="") return undefined;
+    if (value.x != undefined && value.y != undefined && value.z != undefined && Object.keys(value).length == 3) return [value.x, value.y, value.z]
+    return value;
+};
+
 export class AIHelper
 {
     private preMadeQueriesDropdown: HTMLElement;
@@ -756,7 +769,7 @@ Before sending each answer, make sure all special syntax is correct, and careful
                 {
                     case ContextType.Entity:
                         {
-                            const userQuery = JSON.stringify(context.entity);
+                            const userQuery = JSON.stringify(context.entity, replacer);
                             userMessage += `Entity data of frame ${context.frame}, with name: ${context.name}, frame tag ${context.tag} in JSON: ${userQuery}\n`;
                             break;
                         }
@@ -804,6 +817,7 @@ Before sending each answer, make sure all special syntax is correct, and careful
             this.messages.push(completion.choices[0].message);
 
             let lastMessage = completion.choices[0].message;
+
             // Tool loop
             while (lastMessage.tool_calls)
             {
@@ -841,15 +855,7 @@ Before sending each answer, make sure all special syntax is correct, and careful
                             this.messages.push({
                                 role: "tool",
                                 tool_call_id: toolCall.id,
-                                content: JSON.stringify(res, (key, value) =>
-                                {
-                                    if (key=="icolor") return undefined;
-                                    if (key=="path") return undefined;
-                                    if (key=="icon") return undefined;
-                                    if (key=="flags") return undefined;
-                                    if (key=="type") return undefined;
-                                    return value;
-                                })
+                                content: JSON.stringify(res, replacer)
                             });
                             let response = document.createElement("div");
                             response.classList.add("ai-tool-usage");
@@ -889,7 +895,7 @@ Before sending each answer, make sure all special syntax is correct, and careful
                             this.messages.push({
                                 role: "tool",
                                 tool_call_id: toolCall.id,
-                                content: JSON.stringify(res)
+                                content: JSON.stringify(res, replacer)
                             });
 
                             this.queryOutput.append(responseLoading);
