@@ -99,6 +99,8 @@ function onRendererReady()
   loadMods();
 }
 
+app.commandLine.appendSwitch("ignore-gpu-blocklist");
+
 // Increase available memory
 app.commandLine.appendSwitch('js-flags', '--max-old-space-size=8192');
 

@@ -23,6 +23,10 @@ export function createDebugData(scene: BABYLON.Scene, engine: BABYLON.Engine, po
     const heapStats = process.getHeapStatistics();
     
     return `
+        Renderer: ${engine._gl?.getParameter(engine._gl?.getExtension("WEBGL_debug_renderer_info").UNMASKED_RENDERER_WEBGL)}\n
+        GLSL version: ${engine._gl?.getParameter(engine._gl.SHADING_LANGUAGE_VERSION)}\n
+        WebGL version: ${engine.webGLVersion}\n
+        Vendor: ${engine._gl?.getParameter(engine._gl.VENDOR)}\n
         FPS: ${engine.getFps().toFixed(2)}\n
         Material Pool size: ${pools.materialPool.getPoolSize()}\n
         ${detailsMaterials}Total materials: ${scene.materials.length}\n

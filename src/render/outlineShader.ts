@@ -148,18 +148,17 @@ const outlineShader: string = `
     {
     vec2 texelSize = vec2(1.0 / screenSize.x, 1.0 / screenSize.y);
     vec4 baseColor = texture2D(textureSampler, vUV);
-    vec4 outlineSample = texture2D(selectionSampler, vUV, -1.0);
+    vec4 outlineSample = texture2D(selectionSampler, vUV);
 
     float val = 0.0;
     float valMin = 1.0;
-    int samples = 5;
-    int init = -((samples - 1) / 2);
-    int end = (samples - 1) / 2;
+    const int samples = 5;
+    const int halfSamples = 2;
     float width = max(outlineWidth, 0.01);
 
-    for (int x=init; x<=end; ++x)
+    for (int x=-halfSamples; x<=halfSamples; ++x)
     {
-        for (int y=init; y<=end; ++y)
+        for (int y=-halfSamples; y<=halfSamples; ++y)
         {
             float offsetX = float(x) * texelSize.x * width;
             float offsetY = float(y) * texelSize.y * width;
@@ -223,19 +222,18 @@ void main(void)
 {
 vec2 texelSize = vec2(1.0 / screenSize.x, 1.0 / screenSize.y);
 vec4 baseColor = texture2D(textureSampler, vUV);
-vec4 outlineSample = texture2D(selectionSampler, vUV, -1.0);
+vec4 outlineSample = texture2D(selectionSampler, vUV);
 
 float val = 0.0;
 float valMin = 1.0;
-int samples = 5;
-int init = -((samples - 1) / 2);
-int end = (samples - 1) / 2;
+const int samples = 5;
+const int halfSamples = 2;
 float width =1.0;
 float minSelectionDepth = 1.0;
 
-for (int x=init; x<=end; ++x)
+for (int x=-halfSamples; x<=halfSamples; ++x)
 {
-    for (int y=init; y<=end; ++y)
+    for (int y=-halfSamples; y<=halfSamples; ++y)
     {
         float offsetX = float(x) * texelSize.x * width;
         float offsetY = float(y) * texelSize.y * width;
