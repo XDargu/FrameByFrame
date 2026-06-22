@@ -26,7 +26,7 @@ export interface IOnDebugDataUpdated
 
 interface IPropertyBuilderFunction
 {
-    (shape: RECORDING.IProperyShape, pools: RenderPools, pivotPos: BABYLON.Vector3, system: RECORDING.ECoordinateSystem) : BABYLON.Mesh
+    (shape: RECORDING.IProperyShape, pools: RenderPools, pivotPos: BABYLON.Vector3, system: RECORDING.ECoordinateSystem, scale: number) : BABYLON.Mesh
 }
 
 interface IPropertyBuilderConfigEntry
@@ -96,6 +96,7 @@ export default class SceneController
 
     // Config
     private coordSystem: RECORDING.ECoordinateSystem;
+    private scale = 1;
 
     // WebGL
     private loseContext: WEBGL_lose_context;
@@ -113,7 +114,6 @@ export default class SceneController
         outlineWidth: number
     )
     {
-
         const selectionColor01 = Utils.RgbToRgb01(Utils.hexToRgb(selectionColor));
         const hoverColor01 = Utils.RgbToRgb01(Utils.hexToRgb(hoverColor));
         const shapeHoverColor01 = Utils.RgbToRgb01(Utils.hexToRgb(shapeHoverColor));
@@ -147,6 +147,7 @@ export default class SceneController
         this.entitySelection.initialize(this._scene, this._canvas, this.propertySelection);
 
         this.setCoordinateSystem(RECORDING.ECoordinateSystem.LeftHand);
+        this.setScale(1);
     }
 
     private createScene(canvas: HTMLCanvasElement, engine: BABYLON.Engine, onCameraChangedCallback: ICameraChangedCallback, onCameraSpeedChanged: ICameraSpeedChangedCallback, getResourceFunc: IGetResourceFunction) {
@@ -240,7 +241,7 @@ export default class SceneController
         {
             try
             {
-                let mesh = shapeConfig.builder(shape, this.pools, entityData.mesh.position, this.coordSystem);
+                let mesh = shapeConfig.builder(shape, this.pools, entityData.mesh.position, this.coordSystem, this.scale);
                 mesh.isPickable = shapeConfig.pickable;
                 if (shapeConfig.pickable)
                 {
@@ -278,7 +279,7 @@ export default class SceneController
             entityData = this.createEntity(entity);
         }
         
-        const position = RenderUtils.createVec3(RECORDING.NaiveRecordedData.getEntityPosition(entity), this.coordSystem);
+        const position = RenderUtils.createVec3(RECORDING.NaiveRecordedData.getEntityPosition(entity), this.coordSystem, this.scale);
         const up = RenderUtils.createVec3(RECORDING.NaiveRecordedData.getEntityUp(entity), this.coordSystem);
         const forward = RenderUtils.createVec3(RECORDING.NaiveRecordedData.getEntityForward(entity), this.coordSystem);
 
@@ -297,7 +298,7 @@ export default class SceneController
         let entityData = this.sceneEntityData.getEntityById(entity.id);
         if (entityData)
         {
-            const position = RenderUtils.createVec3(RECORDING.NaiveRecordedData.getEntityPosition(entity), this.coordSystem);
+            const position = RenderUtils.createVec3(RECORDING.NaiveRecordedData.getEntityPosition(entity), this.coordSystem, this.scale);
 
             this.updateEntityLabelInternal(entityData, position, entity.id);
         }
@@ -325,7 +326,7 @@ export default class SceneController
 
         for (let i=0; i<path.length; ++i)
         {
-            entityData.pathPoints[i] = RenderUtils.createVec3(path[i], this.coordSystem);
+            entityData.pathPoints[i] = RenderUtils.createVec3(path[i], this.coordSystem, this.scale);
         }
     }
 
@@ -513,6 +514,11 @@ export default class SceneController
         return this.coordSystem;
     }
 
+    setScale(scale: number)
+    {
+        this.scale = scale;
+    }
+
     setOutlineColors(selectionColor: string, hoverColor: string)
     {
         const selectionColor01 = Utils.RgbToRgb01(Utils.hexToRgb(selectionColor));
@@ -644,21 +650,21 @@ export default class SceneController
             const pathProperty = property as RECORDING.IPropertyPath;
             if (subIndex >= 0 && pathProperty.points.length > subIndex)
             {
-                return RenderUtils.createVec3(pathProperty.points[subIndex], this.coordSystem);
+                return RenderUtils.createVec3(pathProperty.points[subIndex], this.coordSystem, this.scale);
             }
 
             // Select path as a whole
             if (pathProperty.points.length > 0)
             {
-                return RenderUtils.createVec3(pathProperty.points[0], this.coordSystem);
+                return RenderUtils.createVec3(pathProperty.points[0], this.coordSystem, this.scale);
             }
         }
         if (property.type == CorePropertyTypes.Line)
         {
             const lineProperty = property as RECORDING.IPropertyLine;
 
-            const origin = RenderUtils.createVec3(lineProperty.origin, this.coordSystem);
-            const dest = RenderUtils.createVec3(lineProperty.destination, this.coordSystem);
+            const origin = RenderUtils.createVec3(lineProperty.origin, this.coordSystem, this.scale);
+            const dest = RenderUtils.createVec3(lineProperty.destination, this.coordSystem, this.scale);
             const midPoint = dest.subtract(origin).scale(0.5);
 
             if (subIndex == 0) { return origin; }
@@ -670,8 +676,8 @@ export default class SceneController
         {
             const arrowProperty = property as RECORDING.IPropertyArrow;
 
-            const origin = RenderUtils.createVec3(arrowProperty.origin, this.coordSystem);
-            const dest = RenderUtils.createVec3(arrowProperty.destination, this.coordSystem);
+            const origin = RenderUtils.createVec3(arrowProperty.origin, this.coordSystem, this.scale);
+            const dest = RenderUtils.createVec3(arrowProperty.destination, this.coordSystem, this.scale);
             const midPoint = dest.subtract(origin).scale(0.5);
 
             if (subIndex == 0) { return origin; }
@@ -683,7 +689,7 @@ export default class SceneController
         {
             const vectorProperty = property as RECORDING.IPropertyVector;
 
-            const vector = RenderUtils.createVec3(vectorProperty.vector, this.coordSystem);
+            const vector = RenderUtils.createVec3(vectorProperty.vector, this.coordSystem, this.scale);
             const origin = entityMesh.getAbsolutePosition();
             const midPoint = vector.scale(0.5);
 

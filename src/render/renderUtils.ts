@@ -59,22 +59,22 @@ export function createVec3Raw(vec3: IVec3) : BABYLON.Vector3
     return new BABYLON.Vector3(vec3.x, vec3.y, vec3.z);
 }
 
-export function createVec3(vec3: IVec3, system: RECORDING.ECoordinateSystem) : BABYLON.Vector3
+export function createVec3(vec3: IVec3, system: RECORDING.ECoordinateSystem, scale = 1) : BABYLON.Vector3
 {
     switch(system)
     {
-        case RECORDING.ECoordinateSystem.LeftHand: return new BABYLON.Vector3(vec3.x, vec3.y, vec3.z);
-        case RECORDING.ECoordinateSystem.RightHand: return new BABYLON.Vector3(vec3.x, vec3.z, vec3.y);
+        case RECORDING.ECoordinateSystem.LeftHand: return new BABYLON.Vector3(vec3.x * scale, vec3.y * scale, vec3.z * scale);
+        case RECORDING.ECoordinateSystem.RightHand: return new BABYLON.Vector3(vec3.x *scale, vec3.z * scale, vec3.y * scale);
         default: return new BABYLON.Vector3(vec3.x, vec3.y, vec3.z);
     }
 }
 
-export function BabylonToVec3(vec3: BABYLON.Vector3, system: RECORDING.ECoordinateSystem) : IVec3
+export function BabylonToVec3(vec3: BABYLON.Vector3, system: RECORDING.ECoordinateSystem, scale = 1) : IVec3
 {
     switch(system)
     {
         case RECORDING.ECoordinateSystem.LeftHand: return { x: vec3.x, y: vec3.y, z: vec3.z };
-        case RECORDING.ECoordinateSystem.RightHand: return { x: vec3.x, y: vec3.z, z: vec3.y };
+        case RECORDING.ECoordinateSystem.RightHand: return { x: vec3.x * scale, y: vec3.z * scale, z: vec3.y * scale };
         default: return { x: vec3.x, y: vec3.y, z: vec3.z };
     }
 }

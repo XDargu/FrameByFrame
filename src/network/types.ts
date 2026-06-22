@@ -26,6 +26,7 @@ export interface IMessageFrameData {
 	scene: string;
 	coordSystem?: RECORDING.ECoordinateSystem;
 	resources?: RECORDING.IResource[]
+	scale?: number;
 }
 
 // Sent by the 3D application to Frame by Frame or the other way around
