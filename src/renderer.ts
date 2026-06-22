@@ -1181,6 +1181,7 @@ export default class Renderer {
     {        
         const message: NET_TYPES.IMessage = JSON.parse(data) as NET_TYPES.IMessage;
 
+        console.log(data)
         // TODO: Make message types: frame data, command, etc. In an enum.
         // Also, move to a helper class
         if (message.type !== undefined)
@@ -1254,7 +1255,13 @@ export default class Renderer {
         {
             frameToBuild.coordSystem = frame.coordSystem;
         }
+        if (frame.scale != null)
+        {
+            frameToBuild.scale = frame.scale;
+        }
 
+        console.log(frame)
+        console.log(frame.entities)
         // Add all entity data
         const length = frame.entities.length;
         for (let i=0; i<length; ++i)
@@ -1333,6 +1340,7 @@ export default class Renderer {
 
             // Update renderer
             this.sceneController.setCoordinateSystem(this.frameData.coordSystem ?? RECORDING.ECoordinateSystem.LeftHand);
+            this.sceneController.setScale(this.frameData.scale ?? 1);
             this.sceneController.hideAllEntities();
 
             // Frame data for historical info

@@ -4,7 +4,8 @@ import * as Utils from '../utils/utils'
 export enum ECoordinateSystem
 {
     RightHand = 0,
-    LeftHand
+    LeftHand = 1,
+	UnrealEngine = 2,
 }
 
 export enum RecordingFileType {
@@ -272,6 +273,7 @@ export interface IFrameData {
 	scene: string;
 	tag: string;
 	coordSystem?: ECoordinateSystem;
+	scale?: number;
 }
 
 export enum VisitorResult
@@ -303,7 +305,8 @@ const emptyFrameData: IFrameData = {
 	clientId: 0,
 	tag: "",
 	scene: "",
-	coordSystem: ECoordinateSystem.LeftHand
+	coordSystem: ECoordinateSystem.LeftHand,
+	scale: 1,
 };
 
 export class PropertyTable {
@@ -1097,7 +1100,8 @@ export class NaiveRecordedData implements INaiveRecordedData {
 			elapsedTime: frameData.elapsedTime,
 			tag: frameData.tag,
 			scene: frameData.scene,
-			coordSystem: frameData.coordSystem
+			coordSystem: frameData.coordSystem,
+			scale: frameData.scale,
 		};
 
 		// Merge all entities
