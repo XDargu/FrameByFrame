@@ -112,6 +112,7 @@ namespace UI
     export function createIntroMessage()
     {
         const entry = document.createElement("span");
+        entry.classList.add("ai-intro");
         entry.innerHTML = `Ask anything you want. Attach additional data with the <i class="fas fa-plus"></i> button`;
         return entry;
     }
@@ -690,9 +691,9 @@ The user can provide entity data by clicking on the 'Add' icon next to the chat,
 Send the reply in HTML format, indicating headers, parragraphs, lists, etc.
 All styles should be inlined, don't create style nodes.
 The html content will be added to an existing page that has a dark mode.
-Default text color should be #EEEEEE. Header color should be #bb86fc.
-You can higlight important words or parts of the answer in bold with color #6DE080.
-Don't alter the font size or family.
+Use semantic HTML elements such as headings, paragraphs, lists, and strong text.
+Do not add inline colors, backgrounds, font sizes, or font families. The application themes the response.
+Use bold text sparingly to highlight important conclusions.
 
 # Special format for data with context
 ## Entities
@@ -930,6 +931,7 @@ Before sending each answer, make sure all special syntax is correct, and careful
                 this.loadingElement.remove();
 
             let response = document.createElement("div");
+            response.classList.add("ai-answer-content");
             response.innerHTML = result;
             this.queryOutput.append(response);
 

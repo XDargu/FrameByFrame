@@ -140,6 +140,16 @@ export class PlaybackController {
         // TODO: Optimize this
         const prevEvent = this.getPreviousEventFrame(false);
         const nextEvent = this.getNextEventFrame(false);
+        const setDisabled = (id: string, disabled: boolean) => {
+            const button = document.getElementById(id) as HTMLButtonElement;
+            button.classList.toggle("basico-disabled", disabled);
+            button.disabled = disabled;
+            button.setAttribute("aria-disabled", disabled.toString());
+        };
+
+        const playButton = document.getElementById("timeline-play");
+        playButton.classList.toggle("playback-active", this.isPlaying);
+        playButton.setAttribute("aria-pressed", this.isPlaying.toString());
 
         if (this.isPlaying) {
             document.getElementById("timeline-play-icon").classList.remove("fa-play");
@@ -149,43 +159,15 @@ export class PlaybackController {
             document.getElementById("timeline-play-icon").classList.remove("fa-stop");
             document.getElementById("timeline-play-icon").classList.add("fa-play");
 
-            if (isLastFrame)
-                document.getElementById("timeline-play").classList.add("basico-disabled");
-            else
-                document.getElementById("timeline-play").classList.remove("basico-disabled");
         }
 
-        if (isFirstFrame) {
-            document.getElementById("timeline-first").classList.add("basico-disabled");
-            document.getElementById("timeline-prev").classList.add("basico-disabled");
-        }
-        else {
-            document.getElementById("timeline-first").classList.remove("basico-disabled");
-            document.getElementById("timeline-prev").classList.remove("basico-disabled");
-        }
-
-        if (isLastFrame) {
-            document.getElementById("timeline-last").classList.add("basico-disabled");
-            document.getElementById("timeline-next").classList.add("basico-disabled");
-        }
-        else {
-            document.getElementById("timeline-last").classList.remove("basico-disabled");
-            document.getElementById("timeline-next").classList.remove("basico-disabled");
-        }
-
-        if (!prevEvent) {
-            document.getElementById("timeline-event-prev").classList.add("basico-disabled");
-        }
-        else {
-            document.getElementById("timeline-event-prev").classList.remove("basico-disabled");
-        }
-
-        if (!nextEvent) {
-            document.getElementById("timeline-event-next").classList.add("basico-disabled");
-        }
-        else {
-            document.getElementById("timeline-event-next").classList.remove("basico-disabled");
-        }
+        setDisabled("timeline-play", !this.isPlaying && isLastFrame);
+        setDisabled("timeline-first", isFirstFrame);
+        setDisabled("timeline-prev", isFirstFrame);
+        setDisabled("timeline-last", isLastFrame);
+        setDisabled("timeline-next", isLastFrame);
+        setDisabled("timeline-event-prev", prevEvent == null);
+        setDisabled("timeline-event-next", nextEvent == null);
     }
 
     startPlayback() {

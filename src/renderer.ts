@@ -44,6 +44,7 @@ import { CorePropertyTypes } from "./types/typeRegistry";
 import { markdownToHtml } from "./utils/markdown";
 import { AIHelper, EntitySummary, TimelineContextEntry } from "./frontend/AIHelper";
 import * as AutoUpdater from "./updates/updateCheker";
+import { initializeTheme } from "./frontend/ThemeController";
 
 const zlib = require('zlib');
 
@@ -2431,6 +2432,7 @@ export default class Renderer {
 }
 
 const renderer = new Renderer();
+initializeTheme();
 renderer.initialize(document.getElementById('render-canvas') as unknown as HTMLCanvasElement);
 initWindowControls();
 initMessageHandling(renderer);

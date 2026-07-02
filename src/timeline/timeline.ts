@@ -481,11 +481,23 @@ class TimelineInputHandler {
     {
         const canvasPos = this.pageToCanvas(event.pageX, event.pageY);
 
-        if (this.data.length == 0) { return; }
-        this.renderer.hoveredEvent = this.renderer.findEventAtPosition(canvasPos.x, canvasPos.y);
-        this.renderer.hoveredComment = this.renderer.findCommentAtPosition(event.offsetX, event.offsetY);
-        this.renderer.hoveredLeftRange = this.renderer.isInRange(canvasPos.x, canvasPos.y, true);
-        this.renderer.hoveredRightRange = this.renderer.isInRange(canvasPos.x, canvasPos.y, false);
+        if (this.data.length == 0)
+        {
+            this.popup.hide();
+            this.commentPopup.hide();
+            return;
+        }
+
+        const isOverCanvas =
+            canvasPos.x >= 0 &&
+            canvasPos.y >= 0 &&
+            canvasPos.x <= this.renderer.width &&
+            canvasPos.y <= this.renderer.height;
+
+        this.renderer.hoveredEvent = isOverCanvas ? this.renderer.findEventAtPosition(canvasPos.x, canvasPos.y) : null;
+        this.renderer.hoveredComment = isOverCanvas ? this.renderer.findCommentAtPosition(canvasPos.x, canvasPos.y) : null;
+        this.renderer.hoveredLeftRange = isOverCanvas && this.renderer.isInRange(canvasPos.x, canvasPos.y, true);
+        this.renderer.hoveredRightRange = isOverCanvas && this.renderer.isInRange(canvasPos.x, canvasPos.y, false);
 
         const canvasPosition : number = canvasPos.x;
         let targetFrame = null;
@@ -550,7 +562,7 @@ class TimelineInputHandler {
             {
                 const events = this.data.events.getEventsInFrame(this.renderer.hoveredEvent.frame);
 
-                const pageY = this.canvas.offsetTop + TimelineRenderer.eventHeight;
+                const pageY = this.canvas.getBoundingClientRect().top + TimelineRenderer.eventHeight;
                 this.popup.showAtPosition(event.pageX, pageY, events, this.onEventClicked);
                 this.commentPopup.hide();
             }
@@ -558,7 +570,7 @@ class TimelineInputHandler {
             {
                 const comments = this.data.comments.getCommentsInFrame(this.renderer.hoveredComment.frame);
 
-                const pageY = this.canvas.offsetTop + TimelineRenderer.eventHeight;
+                const pageY = this.canvas.getBoundingClientRect().top + TimelineRenderer.eventHeight;
                 this.commentPopup.showAtPosition(event.pageX, pageY, comments, this.onCommentClicked);
 
                 this.popup.hide();
@@ -703,9 +715,6 @@ class TimelineRenderer {
     static readonly commentWidth : number = 10;
     static readonly commentHeight : number = 9;
     
-    static readonly headerColor: Utils.RGBColor = Utils.hexToRgb("#574D5F");
-    static readonly bodyColor: Utils.RGBColor = Utils.hexToRgb("#473D4F");
-
     // Canvas information
     canvas : HTMLCanvasElement;
     ctx : CanvasRenderingContext2D;
@@ -735,6 +744,20 @@ class TimelineRenderer {
     // Data
     private data: TimelineData;
 
+    // Theme
+    private palette: {
+        header: string;
+        body: string;
+        bodyRgb: Utils.RGBColor;
+        ruler: string;
+        markerBackground: string;
+        selectedOutline: string;
+        range: string;
+        hover: string;
+        overlay: string;
+        comment: string;
+    };
+
     // Callbacks
     ontimelineUpdated : ITimelineUpdatedCallback;
 
@@ -745,6 +768,8 @@ class TimelineRenderer {
 
         this.canvas = canvas;
         this.ctx = this.canvas.getContext("2d");
+        this.refreshPalette();
+        window.addEventListener("framebyframe-themechange", () => this.refreshPalette());
 
         window.requestAnimationFrame(this.render.bind(this));
         this.ratio = window.devicePixelRatio;
@@ -767,6 +792,29 @@ class TimelineRenderer {
         resizeObserver.observe(wrapper);
     }
 
+    private refreshPalette()
+    {
+        const styles = getComputedStyle(document.documentElement);
+        const getColor = (property: string, fallback: string) => {
+            const value = styles.getPropertyValue(property).trim();
+            return value || fallback;
+        };
+
+        const body = getColor("--timeline-body", "#171a21");
+        this.palette = {
+            header: getColor("--timeline-header", "#20242e"),
+            body,
+            bodyRgb: Utils.hexToRgb(body),
+            ruler: getColor("--timeline-ruler", "#aeb5c2"),
+            markerBackground: getColor("--timeline-marker-bg", "#111319"),
+            selectedOutline: getColor("--timeline-selected-outline", "#ffffff"),
+            range: getColor("--timeline-range", "#a99dfb"),
+            hover: getColor("--timeline-hover", "#55d69d"),
+            overlay: getColor("--timeline-overlay", "#08090c"),
+            comment: getColor("--timeline-comment", "#cdd2dc"),
+        };
+    }
+
     render(timeStamp : number)
     {
         if (this.timeStampLastUpdate != timeStamp)
@@ -780,7 +828,7 @@ class TimelineRenderer {
             }
         }
 
-        this.ctx.fillStyle = "#473D4F";
+        this.ctx.fillStyle = this.palette.body;
         this.ctx.fillRect(0,0,this.width,this.height);
 
         this.renderHeader();
@@ -802,7 +850,7 @@ class TimelineRenderer {
 
     private renderHeader()
     {
-        this.ctx.fillStyle = "#574D5F";
+        this.ctx.fillStyle = this.palette.header;
         this.ctx.fillRect(0, 0, this.width, TimelineRenderer.headerHeight);
 
         const firstFrameOnCanvas : number = Math.floor(this.getMinFrameOnCanvas());
@@ -815,11 +863,11 @@ class TimelineRenderer {
 
         this.ctx.textAlign = "center";
         this.ctx.font = "8px Arial";
-        this.ctx.fillStyle = "#C4C4C4";
+        this.ctx.fillStyle = this.palette.ruler;
         this.ctx.textBaseline = "top";
 
         this.ctx.lineWidth = 1;
-        this.ctx.strokeStyle = "#C4C4C4";
+        this.ctx.strokeStyle = this.palette.ruler;
 
         this.ctx.beginPath();
 
@@ -899,7 +947,7 @@ class TimelineRenderer {
                     {
                         const position : number = this.frame2canvas(event.frame);
 
-                        const blend = Utils.blend(TimelineRenderer.bodyColor, event.color, opacity);
+                        const blend = Utils.blend(this.palette.bodyRgb, event.color, opacity);
                         this.ctx.fillStyle = Utils.rgbToHex(blend);
                         this.ctx.beginPath();
                         this.drawCircle(position);
@@ -907,7 +955,7 @@ class TimelineRenderer {
 
                         if (selectedOnly)
                         {
-                            this.ctx.strokeStyle = "#FFFFFF";
+                            this.ctx.strokeStyle = this.palette.selectedOutline;
                             this.ctx.lineWidth = 1;
                             this.ctx.stroke();
                         }
@@ -922,7 +970,7 @@ class TimelineRenderer {
             {
                 const color = this.data.events.getEventColorByIndex(colIdx);
                 const rgbColor = Utils.hexToRgb(color);
-                const blend = Utils.blend(TimelineRenderer.bodyColor, rgbColor, opacity);
+                const blend = Utils.blend(this.palette.bodyRgb, rgbColor, opacity);
 
                 let i : number = firstFrame;
                 for (; i < lastFrame; )
@@ -988,7 +1036,7 @@ class TimelineRenderer {
                             this.ctx.fill();
                             if (selectedOnly)
                             {
-                                this.ctx.strokeStyle = "#FFFFFF";
+                                this.ctx.strokeStyle = this.palette.selectedOutline;
                                 this.ctx.lineWidth = 1;
                                 this.ctx.stroke();
                             }
@@ -1005,7 +1053,7 @@ class TimelineRenderer {
             const position : number = this.frame2canvas(this.hoveredEvent.frame);
             const lighten = Utils.blend(this.hoveredEvent.color, {r: 255, g: 255, b: 255}, 0.5);
 
-            this.ctx.strokeStyle = "#6DE080";
+            this.ctx.strokeStyle = this.palette.hover;
             this.ctx.fillStyle = Utils.rgbToHex(lighten);
 
             this.ctx.beginPath();
@@ -1023,8 +1071,8 @@ class TimelineRenderer {
         const isHovering = this.hoveredLeftRange && rightOriented || this.hoveredRightRange && !rightOriented;
 
         this.ctx.lineWidth = 1;
-        this.ctx.strokeStyle = isHovering ? "#6DE080" : "#D6A3FF";
-        this.ctx.fillStyle = isHovering ? "#6DE080" : "#D6A3FF";
+        this.ctx.strokeStyle = isHovering ? this.palette.hover : this.palette.range;
+        this.ctx.fillStyle = isHovering ? this.palette.hover : this.palette.range;
 
         // Triangle at the bottom
         this.ctx.beginPath();
@@ -1047,7 +1095,7 @@ class TimelineRenderer {
         const end : number = this.frame2canvas(this.data.range.endFrame);
 
         this.ctx.globalAlpha = 0.5;
-        this.ctx.fillStyle = "#000000";
+        this.ctx.fillStyle = this.palette.overlay;
         this.ctx.fillRect(0,0,init,this.height);
         this.ctx.fillRect(end,0,this.width,this.height);
         this.ctx.globalAlpha = 1;
@@ -1069,18 +1117,18 @@ class TimelineRenderer {
         const rectInvert = (rectWidth + position < this.width) ? 1  : -1;
 
         // Rectangle with frame
-        this.ctx.fillStyle = "#2B2530";
+        this.ctx.fillStyle = this.palette.markerBackground;
         this.ctx.fillRect(position, rectPadding, rectWidth * rectInvert, rectHeight);
 
         this.ctx.textAlign = "center";
         this.ctx.font = "8px Arial";
-        this.ctx.fillStyle = "#C4C4C4";
+        this.ctx.fillStyle = this.palette.ruler;
         this.ctx.textBaseline = "middle";
         this.ctx.fillText(markerText, position + rectWidth * 0.5 * rectInvert, rectPadding + rectHeight * 0.5);
 
         this.ctx.lineWidth = 1;
-        this.ctx.strokeStyle = "#6DE080";
-        this.ctx.fillStyle = "#6DE080";
+        this.ctx.strokeStyle = this.palette.hover;
+        this.ctx.fillStyle = this.palette.hover;
 
         // Triangle on top
         this.ctx.beginPath();
@@ -1127,7 +1175,7 @@ class TimelineRenderer {
         this.ctx.closePath();
 
         // Fill and stroke
-        this.ctx.fillStyle = "#ccc";
+        this.ctx.fillStyle = this.palette.comment;
         this.ctx.fill();
     }
 
@@ -1147,7 +1195,7 @@ class TimelineRenderer {
 
             this.drawComment(position + TimelineRenderer.commentOffsetX, TimelineRenderer.commentY, TimelineRenderer.commentWidth, TimelineRenderer.commentHeight, 2, 3);
             // Draw outline
-            this.ctx.strokeStyle = "#6DE080";
+            this.ctx.strokeStyle = this.palette.hover;
             this.ctx.stroke();
         }
     }

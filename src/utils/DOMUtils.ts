@@ -36,13 +36,23 @@ export function setClass(element: HTMLElement, className: string, isActive: bool
 
 export function clampElementToScreen(pageX: number, pageY: number, element: HTMLElement, offsetX: number = 0, offsetY: number = 0)
 {
-    const isNearRight = (window.innerWidth - pageX) < element.offsetWidth + offsetX;
-    const isNearBottom = (window.innerHeight - pageY) < element.offsetHeight + offsetY;
+    const screenPadding = 8;
+    const width = element.offsetWidth;
+    const height = element.offsetHeight;
 
-    const x = isNearRight ? pageX - element.offsetWidth - offsetX : pageX + offsetX;
-    const y = isNearBottom ? pageY - element.offsetHeight - offsetY : pageY + offsetY;
+    let x = pageX + offsetX;
+    let y = pageY + offsetY;
 
-    return {x: x, y: y};
+    if (x + width > window.innerWidth - screenPadding)
+        x = pageX - width - Math.abs(offsetX);
+
+    if (y + height > window.innerHeight - screenPadding)
+        y = pageY - height - Math.abs(offsetY);
+
+    x = Math.max(screenPadding, Math.min(x, window.innerWidth - width - screenPadding));
+    y = Math.max(screenPadding, Math.min(y, window.innerHeight - height - screenPadding));
+
+    return {x, y};
 }
 
 export function isHidden(el: HTMLElement)

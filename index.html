@@ -6,7 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=2">
     <title>Frame By Frame</title>
     <link rel="stylesheet" type="text/css" href="css/styles.css">
+    <link rel="stylesheet" type="text/css" href="css/modern-theme.css">
     <link rel="stylesheet" type="text/css" href="css/all.min.css">
+    <script>
+        try {
+            var savedTheme = localStorage.getItem("frame-by-frame-theme");
+            document.documentElement.setAttribute("data-theme", savedTheme === "light" ? "light" : "dark");
+        } catch (error) {
+            document.documentElement.setAttribute("data-theme", "dark");
+        }
+    </script>
 </head>
 
 <body class="welcome-active">
@@ -45,6 +54,7 @@
     <div id="eventPopup" class="event-popup hidden"></div>
     <div id="commentPopup" class="event-popup hidden"></div>
     <div id="sceneTooltip" class="disabled">Hellau</div>
+    <div id="propertyTooltip" class="app-tooltip disabled"></div>
     <div id="shapeHighlightOrigin" class="disabled"></div>
     <div id="shapeHighlightTarget" class="disabled"></div>
     <div id="shapeHighlightLine" class="disabled"></div>
@@ -55,6 +65,10 @@
                 <div title="Save current recording in a new file" class="basico-tabs-item" id="title-bar-save"><i class="fas fa-save"></i></div>
                 <div title="Remove current recording data" class="basico-tabs-item" id="title-bar-clear"><i class="fas fa-trash"></i></div>
                 <div title="Open or close welcome window" class="basico-tabs-item" id="title-bar-help"><i class="fas fa-question-circle"></i></div>
+                <button id="theme-toggle" class="basico-tabs-item" type="button" aria-label="Switch to light theme" aria-pressed="false">
+                    <i class="fas fa-sun" aria-hidden="true"></i>
+                    <span class="theme-toggle-label">Light</span>
+                </button>
                 <div id="drag-region">
                     <div id="window-title">
                         <span id="window-title-text">Frame by Frame</span>

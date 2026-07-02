@@ -27,6 +27,7 @@ export function createWindow(width: number, height: number) : BrowserWindow
     let newWindow = new BrowserWindow({
         width: width,
         height: height,
+        backgroundColor: '#17121f',
         icon: __dirname + "../Icon.ico",
         fullscreen: false,
         frame: false,

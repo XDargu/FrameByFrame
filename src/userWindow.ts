@@ -5,6 +5,7 @@ import * as DOMUtils from "./utils/DOMUtils";
 import * as RECORDING from './recording/RecordingData';
 import EntityPropertiesBuilder, { UI } from "./frontend/EntityPropertiesBuilder";
 import { ResourcePreview } from "./frontend/ResourcePreview";
+import { initializeTheme } from "./frontend/ThemeController";
 
 let propertiesBuilder: EntityPropertiesBuilder = new EntityPropertiesBuilder(
     {
@@ -151,4 +152,5 @@ ipcRenderer.on('display-content', (event: any, request: Messaging.IUpdateWindows
     applyRequest(request);
 });
 
+initializeTheme();
 initWindowControls();

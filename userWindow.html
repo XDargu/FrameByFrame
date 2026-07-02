@@ -5,14 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=2">
     <title>New Window</title>
     <link rel="stylesheet" type="text/css" href="css/styles.css">
+    <link rel="stylesheet" type="text/css" href="css/modern-theme.css">
     <link rel="stylesheet" type="text/css" href="css/all.min.css">
+    <script>
+        try {
+            var savedTheme = localStorage.getItem("frame-by-frame-theme");
+            document.documentElement.setAttribute("data-theme", savedTheme === "light" ? "light" : "dark");
+        } catch (error) {
+            document.documentElement.setAttribute("data-theme", "dark");
+        }
+    </script>
 </head>
 <body>
     <div id="sceneTooltip" class="disabled">Hellau</div>
+    <div id="propertyTooltip" class="app-tooltip disabled"></div>
     <div id="resourcePreview" class="resource-preview hidden"></div>
     <div class="full-page page-wrapper">
         <div class="basico-container basico-container-compact title-bar-compact" id="title-bar-wrapper">
             <div class="basico-tabs" id="title-bar">
+                <button id="theme-toggle" class="basico-tabs-item" type="button" aria-label="Switch to light theme" aria-pressed="false">
+                    <i class="fas fa-sun" aria-hidden="true"></i>
+                    <span class="theme-toggle-label">Light</span>
+                </button>
                 <div id="drag-region">
                     <div id="window-title">
                         <span id="window-title-text">New Window</span>

@@ -241,21 +241,11 @@ namespace UI
         getHoveredIndex: (mouseX: number, mouseY: number) => number
     )
     {
-        const tooltip = document.getElementById("sceneTooltip")!;
+        const tooltip = document.getElementById("propertyTooltip") || document.getElementById("sceneTooltip")!;
         let hoveredIndex = -1;
     
         function showTooltip(x: number, y: number, index: number)
         {
-            DOMUtils.setClass(tooltip, "disabled", false);
-
-            let posX = x + 10;
-            let posY = y - 25;
-
-            const clampedPos = DOMUtils.clampElementToScreen(posX, posY, tooltip);
-
-            tooltip.style.left = `${clampedPos.x}px`;
-            tooltip.style.top = `${clampedPos.y}px`;
-
             let html = "";
             for (let lineChartData of data)
             {
@@ -265,6 +255,12 @@ namespace UI
                 html += `<div>${color} ${lineChartData.ylabel}: ${content}</div>`;
             }
             tooltip.innerHTML = html;
+            DOMUtils.setClass(tooltip, "disabled", false);
+
+            const clampedPos = DOMUtils.clampElementToScreen(x, y, tooltip, 12, 12);
+
+            tooltip.style.left = `${clampedPos.x}px`;
+            tooltip.style.top = `${clampedPos.y}px`;
         }
     
         function hideTooltip()

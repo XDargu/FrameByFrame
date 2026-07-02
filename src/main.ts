@@ -21,7 +21,7 @@ function createWindow() {
     width: 1280,
     minWidth: 650,
     minHeight: 550, 
-    backgroundColor: '#FFF',
+    backgroundColor: '#17121f',
     icon: __dirname + "../Icon.ico",
     fullscreen: false,
     frame: false,
