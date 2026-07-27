@@ -1,0 +1,15 @@
+C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/CMakeFiles/fbf_raw_converter.dir
+C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/CMakeFiles/fbf-raw-convert.dir
+C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/CMakeFiles/fbf_raw_converter_tests.dir
+C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/CMakeFiles/RUN_TESTS.dir
+C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/CMakeFiles/INSTALL.dir
+C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/CMakeFiles/ALL_BUILD.dir
+C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/CMakeFiles/ZERO_CHECK.dir
+C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/nlohmann_json-build/CMakeFiles/RUN_TESTS.dir
+C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/nlohmann_json-build/CMakeFiles/INSTALL.dir
+C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/nlohmann_json-build/CMakeFiles/ALL_BUILD.dir
+C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/zlib-build/CMakeFiles/zlib.dir
+C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/zlib-build/CMakeFiles/zlibstatic.dir
+C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/zlib-build/CMakeFiles/RUN_TESTS.dir
+C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/zlib-build/CMakeFiles/INSTALL.dir
+C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/zlib-build/CMakeFiles/ALL_BUILD.dir

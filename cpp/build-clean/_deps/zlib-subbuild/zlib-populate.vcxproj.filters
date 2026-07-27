@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\Daniel\Documents\GitHub\FrameByFrame\cpp\build-clean\_deps\zlib-subbuild\CMakeFiles\7f15b7ebb2b629fe04f01a91dae4d01f\zlib-populate-mkdir.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\Daniel\Documents\GitHub\FrameByFrame\cpp\build-clean\_deps\zlib-subbuild\CMakeFiles\7f15b7ebb2b629fe04f01a91dae4d01f\zlib-populate-download.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\Daniel\Documents\GitHub\FrameByFrame\cpp\build-clean\_deps\zlib-subbuild\CMakeFiles\7f15b7ebb2b629fe04f01a91dae4d01f\zlib-populate-update.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\Daniel\Documents\GitHub\FrameByFrame\cpp\build-clean\_deps\zlib-subbuild\CMakeFiles\7f15b7ebb2b629fe04f01a91dae4d01f\zlib-populate-patch.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\Daniel\Documents\GitHub\FrameByFrame\cpp\build-clean\_deps\zlib-subbuild\CMakeFiles\7f15b7ebb2b629fe04f01a91dae4d01f\zlib-populate-configure.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\Daniel\Documents\GitHub\FrameByFrame\cpp\build-clean\_deps\zlib-subbuild\CMakeFiles\7f15b7ebb2b629fe04f01a91dae4d01f\zlib-populate-build.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\Daniel\Documents\GitHub\FrameByFrame\cpp\build-clean\_deps\zlib-subbuild\CMakeFiles\7f15b7ebb2b629fe04f01a91dae4d01f\zlib-populate-install.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\Daniel\Documents\GitHub\FrameByFrame\cpp\build-clean\_deps\zlib-subbuild\CMakeFiles\7f15b7ebb2b629fe04f01a91dae4d01f\zlib-populate-test.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\Daniel\Documents\GitHub\FrameByFrame\cpp\build-clean\_deps\zlib-subbuild\CMakeFiles\50cdebf419b3c3990fa92ae63cccef23\zlib-populate-complete.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\Daniel\Documents\GitHub\FrameByFrame\cpp\build-clean\_deps\zlib-subbuild\CMakeFiles\865345a547633071c3605490a47430a0\zlib-populate.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\Daniel\Documents\GitHub\FrameByFrame\cpp\build-clean\_deps\zlib-subbuild\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Users\Daniel\Documents\GitHub\FrameByFrame\cpp\build-clean\_deps\zlib-subbuild\CMakeFiles\zlib-populate" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{1A40C975-06B3-302D-B6B0-54BE038E319D}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

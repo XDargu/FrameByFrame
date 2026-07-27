@@ -1,0 +1,152 @@
+^C:\USERS\DANIEL\DOCUMENTS\GITHUB\FRAMEBYFRAME\CPP\BUILD-CLEAN\_DEPS\NLOHMANN_JSON-SUBBUILD\CMAKEFILES\95C91B6928B7070DF52625E102702C07\NLOHMANN_JSON-POPULATE-MKDIR.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -Dcfgdir=/Debug -P C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/nlohmann_json-subbuild/nlohmann_json-populate-prefix/tmp/nlohmann_json-populate-mkdirs.cmake
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/nlohmann_json-subbuild/nlohmann_json-populate-prefix/src/nlohmann_json-populate-stamp/Debug/nlohmann_json-populate-mkdir
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\DANIEL\DOCUMENTS\GITHUB\FRAMEBYFRAME\CPP\BUILD-CLEAN\_DEPS\NLOHMANN_JSON-SUBBUILD\CMAKEFILES\95C91B6928B7070DF52625E102702C07\NLOHMANN_JSON-POPULATE-DOWNLOAD.RULE
+setlocal
+cd C:\Users\Daniel\Documents\GitHub\FrameByFrame\cpp\build-clean\_deps
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/nlohmann_json-subbuild/nlohmann_json-populate-prefix/src/nlohmann_json-populate-stamp/download-nlohmann_json-populate.cmake
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/nlohmann_json-subbuild/nlohmann_json-populate-prefix/src/nlohmann_json-populate-stamp/verify-nlohmann_json-populate.cmake
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/nlohmann_json-subbuild/nlohmann_json-populate-prefix/src/nlohmann_json-populate-stamp/extract-nlohmann_json-populate.cmake
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/nlohmann_json-subbuild/nlohmann_json-populate-prefix/src/nlohmann_json-populate-stamp/Debug/nlohmann_json-populate-download
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\DANIEL\DOCUMENTS\GITHUB\FRAMEBYFRAME\CPP\BUILD-CLEAN\_DEPS\NLOHMANN_JSON-SUBBUILD\CMAKEFILES\95C91B6928B7070DF52625E102702C07\NLOHMANN_JSON-POPULATE-UPDATE.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/nlohmann_json-subbuild/nlohmann_json-populate-prefix/src/nlohmann_json-populate-stamp/Debug/nlohmann_json-populate-update
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\DANIEL\DOCUMENTS\GITHUB\FRAMEBYFRAME\CPP\BUILD-CLEAN\_DEPS\NLOHMANN_JSON-SUBBUILD\CMAKEFILES\95C91B6928B7070DF52625E102702C07\NLOHMANN_JSON-POPULATE-PATCH.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/nlohmann_json-subbuild/nlohmann_json-populate-prefix/src/nlohmann_json-populate-stamp/Debug/nlohmann_json-populate-patch
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\DANIEL\DOCUMENTS\GITHUB\FRAMEBYFRAME\CPP\BUILD-CLEAN\_DEPS\NLOHMANN_JSON-SUBBUILD\CMAKEFILES\95C91B6928B7070DF52625E102702C07\NLOHMANN_JSON-POPULATE-CONFIGURE.RULE
+setlocal
+cd C:\Users\Daniel\Documents\GitHub\FrameByFrame\cpp\build-clean\_deps\nlohmann_json-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/nlohmann_json-subbuild/nlohmann_json-populate-prefix/src/nlohmann_json-populate-stamp/Debug/nlohmann_json-populate-configure
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\DANIEL\DOCUMENTS\GITHUB\FRAMEBYFRAME\CPP\BUILD-CLEAN\_DEPS\NLOHMANN_JSON-SUBBUILD\CMAKEFILES\95C91B6928B7070DF52625E102702C07\NLOHMANN_JSON-POPULATE-BUILD.RULE
+setlocal
+cd C:\Users\Daniel\Documents\GitHub\FrameByFrame\cpp\build-clean\_deps\nlohmann_json-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/nlohmann_json-subbuild/nlohmann_json-populate-prefix/src/nlohmann_json-populate-stamp/Debug/nlohmann_json-populate-build
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\DANIEL\DOCUMENTS\GITHUB\FRAMEBYFRAME\CPP\BUILD-CLEAN\_DEPS\NLOHMANN_JSON-SUBBUILD\CMAKEFILES\95C91B6928B7070DF52625E102702C07\NLOHMANN_JSON-POPULATE-INSTALL.RULE
+setlocal
+cd C:\Users\Daniel\Documents\GitHub\FrameByFrame\cpp\build-clean\_deps\nlohmann_json-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/nlohmann_json-subbuild/nlohmann_json-populate-prefix/src/nlohmann_json-populate-stamp/Debug/nlohmann_json-populate-install
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\DANIEL\DOCUMENTS\GITHUB\FRAMEBYFRAME\CPP\BUILD-CLEAN\_DEPS\NLOHMANN_JSON-SUBBUILD\CMAKEFILES\95C91B6928B7070DF52625E102702C07\NLOHMANN_JSON-POPULATE-TEST.RULE
+setlocal
+cd C:\Users\Daniel\Documents\GitHub\FrameByFrame\cpp\build-clean\_deps\nlohmann_json-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/nlohmann_json-subbuild/nlohmann_json-populate-prefix/src/nlohmann_json-populate-stamp/Debug/nlohmann_json-populate-test
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\DANIEL\DOCUMENTS\GITHUB\FRAMEBYFRAME\CPP\BUILD-CLEAN\_DEPS\NLOHMANN_JSON-SUBBUILD\CMAKEFILES\9A8828E4F62B1B85E11BB5CE87914B7C\NLOHMANN_JSON-POPULATE-COMPLETE.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -E make_directory C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/nlohmann_json-subbuild/CMakeFiles/Debug
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/nlohmann_json-subbuild/CMakeFiles/Debug/nlohmann_json-populate-complete
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/nlohmann_json-subbuild/nlohmann_json-populate-prefix/src/nlohmann_json-populate-stamp/Debug/nlohmann_json-populate-done
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\DANIEL\DOCUMENTS\GITHUB\FRAMEBYFRAME\CPP\BUILD-CLEAN\_DEPS\NLOHMANN_JSON-SUBBUILD\CMAKEFILES\69A12ABA841892C24C3E094F7249B4BF\NLOHMANN_JSON-POPULATE.RULE
+setlocal
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\DANIEL\DOCUMENTS\GITHUB\FRAMEBYFRAME\CPP\BUILD-CLEAN\_DEPS\NLOHMANN_JSON-SUBBUILD\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/nlohmann_json-subbuild -BC:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/nlohmann_json-subbuild --check-stamp-file C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/nlohmann_json-subbuild/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

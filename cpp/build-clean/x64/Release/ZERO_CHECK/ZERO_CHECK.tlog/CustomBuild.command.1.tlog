@@ -1,0 +1,10 @@
+^C:\USERS\DANIEL\DOCUMENTS\GITHUB\FRAMEBYFRAME\CPP\BUILD-CLEAN\CMAKEFILES\BE064ADF2E5065B532CF635076B077D6\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp -BC:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/FrameByFrameRawConverter.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

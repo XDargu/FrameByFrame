@@ -1,0 +1,14 @@
+# Target labels
+ zlib-populate
+# Source files and their labels
+C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/zlib-subbuild/CMakeFiles/zlib-populate
+C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/zlib-subbuild/CMakeFiles/865345a547633071c3605490a47430a0/zlib-populate.rule
+C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/zlib-subbuild/CMakeFiles/50cdebf419b3c3990fa92ae63cccef23/zlib-populate-complete.rule
+C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/zlib-subbuild/CMakeFiles/7f15b7ebb2b629fe04f01a91dae4d01f/zlib-populate-build.rule
+C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/zlib-subbuild/CMakeFiles/7f15b7ebb2b629fe04f01a91dae4d01f/zlib-populate-configure.rule
+C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/zlib-subbuild/CMakeFiles/7f15b7ebb2b629fe04f01a91dae4d01f/zlib-populate-download.rule
+C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/zlib-subbuild/CMakeFiles/7f15b7ebb2b629fe04f01a91dae4d01f/zlib-populate-install.rule
+C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/zlib-subbuild/CMakeFiles/7f15b7ebb2b629fe04f01a91dae4d01f/zlib-populate-mkdir.rule
+C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/zlib-subbuild/CMakeFiles/7f15b7ebb2b629fe04f01a91dae4d01f/zlib-populate-patch.rule
+C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/zlib-subbuild/CMakeFiles/7f15b7ebb2b629fe04f01a91dae4d01f/zlib-populate-test.rule
+C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/zlib-subbuild/CMakeFiles/7f15b7ebb2b629fe04f01a91dae4d01f/zlib-populate-update.rule

@@ -1,0 +1,10 @@
+^C:\USERS\DANIEL\DOCUMENTS\GITHUB\FRAMEBYFRAME\CPP\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp -BC:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean --check-stamp-file C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

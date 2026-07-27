@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\Daniel\Documents\GitHub\FrameByFrame\cpp\build-clean\_deps\nlohmann_json-subbuild\CMakeFiles\95c91b6928b7070df52625e102702c07\nlohmann_json-populate-mkdir.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\Daniel\Documents\GitHub\FrameByFrame\cpp\build-clean\_deps\nlohmann_json-subbuild\CMakeFiles\95c91b6928b7070df52625e102702c07\nlohmann_json-populate-download.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\Daniel\Documents\GitHub\FrameByFrame\cpp\build-clean\_deps\nlohmann_json-subbuild\CMakeFiles\95c91b6928b7070df52625e102702c07\nlohmann_json-populate-update.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\Daniel\Documents\GitHub\FrameByFrame\cpp\build-clean\_deps\nlohmann_json-subbuild\CMakeFiles\95c91b6928b7070df52625e102702c07\nlohmann_json-populate-patch.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\Daniel\Documents\GitHub\FrameByFrame\cpp\build-clean\_deps\nlohmann_json-subbuild\CMakeFiles\95c91b6928b7070df52625e102702c07\nlohmann_json-populate-configure.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\Daniel\Documents\GitHub\FrameByFrame\cpp\build-clean\_deps\nlohmann_json-subbuild\CMakeFiles\95c91b6928b7070df52625e102702c07\nlohmann_json-populate-build.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\Daniel\Documents\GitHub\FrameByFrame\cpp\build-clean\_deps\nlohmann_json-subbuild\CMakeFiles\95c91b6928b7070df52625e102702c07\nlohmann_json-populate-install.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\Daniel\Documents\GitHub\FrameByFrame\cpp\build-clean\_deps\nlohmann_json-subbuild\CMakeFiles\95c91b6928b7070df52625e102702c07\nlohmann_json-populate-test.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\Daniel\Documents\GitHub\FrameByFrame\cpp\build-clean\_deps\nlohmann_json-subbuild\CMakeFiles\9a8828e4f62b1b85e11bb5ce87914b7c\nlohmann_json-populate-complete.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\Daniel\Documents\GitHub\FrameByFrame\cpp\build-clean\_deps\nlohmann_json-subbuild\CMakeFiles\69a12aba841892c24c3e094f7249b4bf\nlohmann_json-populate.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\Daniel\Documents\GitHub\FrameByFrame\cpp\build-clean\_deps\nlohmann_json-subbuild\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Users\Daniel\Documents\GitHub\FrameByFrame\cpp\build-clean\_deps\nlohmann_json-subbuild\CMakeFiles\nlohmann_json-populate" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{8AEF5159-2008-3B75-AF57-ED59FF706CF7}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

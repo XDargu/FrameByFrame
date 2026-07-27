@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/zlib-subbuild/CMakeFiles/zlib-populate"
+		},
+		{
+			"file" : "C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/zlib-subbuild/CMakeFiles/865345a547633071c3605490a47430a0/zlib-populate.rule"
+		},
+		{
+			"file" : "C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/zlib-subbuild/CMakeFiles/50cdebf419b3c3990fa92ae63cccef23/zlib-populate-complete.rule"
+		},
+		{
+			"file" : "C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/zlib-subbuild/CMakeFiles/7f15b7ebb2b629fe04f01a91dae4d01f/zlib-populate-build.rule"
+		},
+		{
+			"file" : "C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/zlib-subbuild/CMakeFiles/7f15b7ebb2b629fe04f01a91dae4d01f/zlib-populate-configure.rule"
+		},
+		{
+			"file" : "C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/zlib-subbuild/CMakeFiles/7f15b7ebb2b629fe04f01a91dae4d01f/zlib-populate-download.rule"
+		},
+		{
+			"file" : "C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/zlib-subbuild/CMakeFiles/7f15b7ebb2b629fe04f01a91dae4d01f/zlib-populate-install.rule"
+		},
+		{
+			"file" : "C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/zlib-subbuild/CMakeFiles/7f15b7ebb2b629fe04f01a91dae4d01f/zlib-populate-mkdir.rule"
+		},
+		{
+			"file" : "C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/zlib-subbuild/CMakeFiles/7f15b7ebb2b629fe04f01a91dae4d01f/zlib-populate-patch.rule"
+		},
+		{
+			"file" : "C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/zlib-subbuild/CMakeFiles/7f15b7ebb2b629fe04f01a91dae4d01f/zlib-populate-test.rule"
+		},
+		{
+			"file" : "C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/zlib-subbuild/CMakeFiles/7f15b7ebb2b629fe04f01a91dae4d01f/zlib-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"zlib-populate"
+		],
+		"name" : "zlib-populate"
+	}
+}

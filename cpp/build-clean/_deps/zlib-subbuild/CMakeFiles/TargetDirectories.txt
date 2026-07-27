@@ -1,0 +1,3 @@
+C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/zlib-subbuild/CMakeFiles/zlib-populate.dir
+C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/zlib-subbuild/CMakeFiles/ALL_BUILD.dir
+C:/Users/Daniel/Documents/GitHub/FrameByFrame/cpp/build-clean/_deps/zlib-subbuild/CMakeFiles/ZERO_CHECK.dir
